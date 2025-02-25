@@ -1,0 +1,7 @@
+{
+  "name": "nutrition-ambition.frontend",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}

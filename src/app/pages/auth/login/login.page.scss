@@ -1,0 +1,36 @@
+@use '../auth-shared.scss';
+
+ion-content {
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  height: 100vh; /* Full viewport height to enable vertical centering */
+}
+
+/* src/app/pages/login/login.component.scss */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 16px;
+  }
+  
+  h2 {
+    margin-bottom: 24px;
+  }
+  
+  ion-button {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+/* Add any additional styles specific to the login page here */
+
+.site-title {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}

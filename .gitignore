@@ -1,0 +1,88 @@
+# Dependencies
+/node_modules
+/.angular
+/.angular/cache
+/.angular/cache/**
+
+# Build files
+/dist
+/build
+/www
+/public
+
+# Angular CLI
+/.angular/cache
+/.angular/cache/**
+/.angular/local
+
+# Vite cache
+/.vite
+/.vite-cache
+/angular/cache
+/angular/cache/**
+
+# Temporary files
+/tmp
+/temp
+/.temp
+.npm
+.npmrc
+.yarn
+.yarn-cache
+.pnpm-store
+.eslintcache
+.husky/_
+
+# Logs and debugging
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+/out-tsc
+/.turbo
+
+# IDE and Editor settings
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Local environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+/coverage
+/.nyc_output
+/junit.xml
+
+# macOS metadata
+.DS_Store
+
+# Mobile platform build files (if applicable)
+/platforms
+/plugins
+
+# Android
+/android/app/build
+/android/.gradle
+/android/gradle
+/android/local.properties
+
+# iOS
+/ios/Pods
+/ios/build
+
+# Misc
+/.firebase
+/.sass-cache
+/.cache
+/.expo
