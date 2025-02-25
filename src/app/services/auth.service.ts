@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged } from '@angular/fire/auth';
 import { Observable, from } from 'rxjs';
-import { AccountRequest, DigamStarterAppApiService, Response } from './nutrition-ambition-api.service';
+import { AccountRequest, NutritionAmbitionApiService, Response } from './nutrition-ambition-api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -10,7 +10,7 @@ export class AuthService {
   user$: Observable<any>;
   private authInstance: Auth;
 
-  constructor(private _apiService: DigamStarterAppApiService) {
+  constructor(private _apiService: NutritionAmbitionApiService) {
     this.authInstance = inject(Auth); // ✅ Ensure Auth is initialized
     this.user$ = new Observable(observer => {
       onAuthStateChanged(this.authInstance, user => {

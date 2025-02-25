@@ -1,13 +1,50 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>home</ion-title>
+    <ion-title>Home</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">home</ion-title>
+      <ion-title size="large">Home</ion-title>
     </ion-toolbar>
   </ion-header>
+
+  <!-- Food Entry Component -->
+  <app-food-entry (entryAdded)="onEntryAdded()"></app-food-entry>
+
+  <!-- Daily Summary -->
+  <div *ngIf="dailyEntries.length > 0">
+    <h2>Today's Summary</h2>
+    <p>Total Calories: {{ totalCalories }}</p>
+    <p>Total Protein: {{ totalProtein }}g</p>
+    <p>Total Carbs: {{ totalCarbs }}g</p>
+    <p>Total Fat: {{ totalFat }}g</p>
+
+    <!-- Food Log -->
+    <h2>Food Log</h2>
+    <ul>
+      <li *ngFor="let entry of dailyEntries">
+        <strong>{{ entry.description }}</strong>
+        <ul *ngIf="entry.parsedItems?.length ?? 0 > 0">
+          <li *ngFor="let item of entry.parsedItems">
+            {{ item.name }}:
+            <ul>
+              <li>Calories: {{ item.calories ?? 0 }}</li>
+              <li>Protein: {{ item.protein ?? 0 }}g</li>
+              <li>Carbs: {{ item.carbohydrates ?? 0 }}g</li>
+              <li>Fat: {{ item.fat ?? 0 }}g</li>
+            </ul>
+          </li>
+        </ul>
+        <p *ngIf="!entry.parsedItems?.length">No parsed items available.</p>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error">
+    {{ errorMessage }}
+  </div>
 </ion-content>

@@ -1,0 +1,49 @@
+<div>
+  <!-- Add Food Entry Form -->
+  <form (ngSubmit)="addEntry()">
+    <ion-input
+      [(ngModel)]="description"
+      name="description"
+      placeholder="Enter food description"
+      required
+    ></ion-input>
+    <ion-button type="submit">Add Entry</ion-button>
+  </form>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+
+  <!-- Food Entry List -->
+  <ion-list *ngIf="entries?.length ?? 0 > 0">
+    <ion-item *ngFor="let entry of entries">
+      <div>
+        <strong>{{ entry.description }}</strong>
+
+        <!-- Display Parsed Items -->
+        <div *ngIf="entry.parsedItems?.length ?? 0 > 0">
+          <ul>
+            <li *ngFor="let item of entry.parsedItems">
+              {{ item.name }}:
+              <ul>
+                <li *ngIf="item.calories">Calories: {{ item.calories }}</li>
+                <li *ngIf="item.protein">Protein: {{ item.protein }}g</li>
+                <li *ngIf="item.carbohydrates">Carbs: {{ item.carbohydrates }}g</li>
+                <li *ngIf="item.fat">Fat: {{ item.fat }}g</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Fallback if No Parsed Items -->
+        <div *ngIf="!entry.parsedItems?.length">
+          No nutritional data available.
+        </div>
+      </div>
+    </ion-item>
+  </ion-list>
+
+  <!-- Empty State -->
+  <div *ngIf="entries?.length === 0">
+    No entries added yet.
+  </div>
+</div>

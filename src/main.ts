@@ -16,7 +16,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { AuthInterceptor } from './app/services/auth.interceptor';
 
 import { InjectionToken } from '@angular/core';
-import { DigamStarterAppApiService, API_BASE_URL } from './app/services/nutrition-ambition-api.service';
+import { NutritionAmbitionApiService, API_BASE_URL } from './app/services/nutrition-ambition-api.service';
 import { environment } from './environments/environment';
 
 // Provide the API base URL
@@ -40,7 +40,7 @@ bootstrapApplication(AppComponent, {
     provideHttpClient(withInterceptors([AuthInterceptor])),
 
     // ✅ Provide NSwag API Service
-    DigamStarterAppApiService,
+    NutritionAmbitionApiService,
 
     // ✅ Provide API_BASE_URL using factory function
     { provide: API_BASE_URL, useFactory: getAPIBaseUrl },
