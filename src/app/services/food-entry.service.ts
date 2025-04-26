@@ -25,3 +25,4 @@ export class FoodEntryService {
 
     return this.apiService.getFoodEntries(request);
   }
+}
