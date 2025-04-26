@@ -1,0 +1,106 @@
+.tab-content {
+  padding: 16px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--ion-color-medium);
+}
+
+.chart-container {
+  margin-bottom: 24px;
+}
+
+/* Improved Summary Tab Styling */
+.calories-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.calories-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background-color: var(--ion-color-primary);
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calories-value {
+  font-size: 28px;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.calories-label {
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+.macros-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.macro-item {
+  background-color: var(--ion-color-light);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.macro-item:hover {
+  transform: translateY(-2px);
+}
+
+.macro-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--ion-color-dark);
+  margin-bottom: 4px;
+}
+
+.macro-label {
+  font-size: 16px;
+  color: var(--ion-color-medium);
+  text-transform: uppercase;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .macros-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .macro-value {
+    font-size: 20px;
+  }
+  
+  .macro-label {
+    font-size: 14px;
+  }
+  
+  .calories-circle {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .calories-value {
+    font-size: 24px;
+  }
+}
