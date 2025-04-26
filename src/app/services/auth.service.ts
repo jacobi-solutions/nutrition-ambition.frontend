@@ -1,5 +1,5 @@
-import { inject, Injectable } from '@angular/core';
-import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from '@angular/fire/auth';
+import { inject, Injectable, effect } from '@angular/core';
+import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged } from '@angular/fire/auth';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { AccountRequest, NutritionAmbitionApiService, Response } from './nutrition-ambition-api.service';
 
@@ -7,25 +7,26 @@ import { AccountRequest, NutritionAmbitionApiService, Response } from './nutriti
   providedIn: 'root',
 })
 export class AuthService {
-  userSubject: Observable<any>;
-  userEmailSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
-  userEmail: string | null = null;
-  private authInstance: Auth;
+  private authInstance = inject(Auth);
+  private _apiService = inject(NutritionAmbitionApiService);
 
-  constructor(private _apiService: NutritionAmbitionApiService) {
+  private _userEmailSubject = new BehaviorSubject<string | null>(null);
+  userEmail$: Observable<string | null> = this._userEmailSubject.asObservable();
+
+  private _authReadySubject = new BehaviorSubject<boolean>(false);
+  authReady$ = this._authReadySubject.asObservable();
+
+  constructor() {
     this.authInstance = inject(Auth);
-    
+
     onAuthStateChanged(this.authInstance, user => {
       if (user) {
-        this.userEmail = user.email ?? null;
-        this.userEmailSubject.next(this.userEmail);
-        console.log('User email:', this.userEmail);
+        this._userEmailSubject.next(user.email ?? null);
       } else {
-        this.userEmail = null;
-        this.userEmailSubject.next(null);
+        this._userEmailSubject.next(null);
       }
+      this._authReadySubject.next(true); // ✅ auth system has initialized
     });
-    
   }
 
   isAuthenticated(): boolean {
@@ -33,14 +34,12 @@ export class AuthService {
   }
 
   async registerWithEmail(email: string, password: string): Promise<void> {
-    if (!this.authInstance) throw new Error("Firebase Auth not initialized"); // ✅ Ensure Auth is ready
-
     const userCredential = await createUserWithEmailAndPassword(this.authInstance, email, password);
     const token = await userCredential.user.getIdToken();
 
     const request = new AccountRequest({
       username: email,
-      email: email
+      email: email,
     });
 
     return new Promise<void>((resolve, reject) => {
@@ -55,16 +54,11 @@ export class AuthService {
   }
 
   async getIdToken(): Promise<string | null> {
-    // return this._zone.runOutsideAngular(async () => {
-      const user = await this.authInstance.currentUser;
-      return user ? await getIdToken(user) : null;
-    // });
+    const user = this.authInstance.currentUser;
+    return user ? await getIdToken(user) : null;
   }
 
-  // Sign in with Google
   async signInWithGoogle(): Promise<void> {
-    if (!this.authInstance) throw new Error("Firebase Auth not initialized"); // ✅ Ensure Auth is ready
-
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(this.authInstance, provider);
@@ -74,10 +68,7 @@ export class AuthService {
     }
   }
 
-  // Sign in with Email and Password
   async signInWithEmail(email: string, password: string): Promise<void> {
-    if (!this.authInstance) throw new Error("Firebase Auth not initialized"); // ✅ Ensure Auth is ready
-
     try {
       await signInWithEmailAndPassword(this.authInstance, email, password);
       console.log('Email sign-in successful');
@@ -86,13 +77,10 @@ export class AuthService {
     }
   }
 
-  // Sign out
   async signOutUser(): Promise<void> {
-    if (!this.authInstance) throw new Error("Firebase Auth not initialized"); // ✅ Ensure Auth is ready
-
     try {
       await signOut(this.authInstance);
-      console.log('User signed out successfully.');
+      console.log('User signed out successfully');
     } catch (error) {
       console.error('Sign out failed:', error);
     }

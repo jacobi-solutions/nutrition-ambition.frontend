@@ -28,7 +28,7 @@ export class FoodEntryComponent {
   }
 
   ngOnInit() {
-    this.userEmailSubscription = this._authService.userEmailSubject.subscribe(email => {
+    this.userEmailSubscription = this._authService.userEmail$.subscribe(email => {
       this.userEmail = email;
       if (email) {
         this.loadEntries();

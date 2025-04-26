@@ -1,0 +1,104 @@
+<ion-card>
+  <ion-card-header>
+    <ion-card-title>Nutrition Information</ion-card-title>
+    <ion-card-subtitle>Nutritional breakdown of your food</ion-card-subtitle>
+  </ion-card-header>
+
+  <ion-card-content>
+    <div *ngIf="!nutritionData" class="empty-state">
+      <ion-icon name="bar-chart-outline" size="large"></ion-icon>
+      <p>No nutrition data available. Please analyze your food items first.</p>
+    </div>
+
+    <div *ngIf="nutritionData">
+      <ion-segment [(ngModel)]="activeTab" (ionChange)="segmentChanged($event)">
+        <ion-segment-button value="macros">
+          <ion-label>Summary</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="charts">
+          <ion-label>Charts</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="details">
+          <ion-label>Details</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+      <!-- Summary Tab -->
+      <div *ngIf="activeTab === 'macros'" class="tab-content">
+        <div class="calories-container">
+          <div class="calories-circle">
+            <div class="calories-value">{{ calories }}</div>
+            <div class="calories-label">calories</div>
+          </div>
+        </div>
+
+        <div class="macros-grid">
+          <div class="macro-item">
+            <div class="macro-value">{{ protein }}g</div>
+            <div class="macro-label">Protein</div>
+          </div>
+          <div class="macro-item">
+            <div class="macro-value">{{ carbs }}g</div>
+            <div class="macro-label">Carbs</div>
+          </div>
+          <div class="macro-item">
+            <div class="macro-value">{{ fat }}g</div>
+            <div class="macro-label">Fat</div>
+          </div>
+          <div class="macro-item">
+            <div class="macro-value">{{ fiber }}g</div>
+            <div class="macro-label">Fiber</div>
+          </div>
+          <div class="macro-item">
+            <div class="macro-value">{{ sugar }}g</div>
+            <div class="macro-label">Sugar</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Tab -->
+      <div *ngIf="activeTab === 'charts'" class="tab-content">
+        <div class="chart-container">
+          <h4>Macronutrient Distribution</h4>
+          <canvas id="macroChart"></canvas>
+        </div>
+        
+        <div class="chart-container">
+          <h4>Top Micronutrients (% Daily Value)</h4>
+          <canvas id="microChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Details Tab -->
+      <div *ngIf="activeTab === 'details'" class="tab-content">
+        <h4>Vitamins</h4>
+        <ion-list>
+          <ion-item *ngFor="let vitamin of vitamins">
+            <ion-label>
+              <h3>{{ vitamin.name }}</h3>
+              <p>{{ vitamin.amount }}{{ vitamin.unit }}</p>
+            </ion-label>
+            <ion-note slot="end" *ngIf="vitamin.dailyValue">
+              {{ (vitamin.amount / vitamin.dailyValue * 100) | number:'1.0-0' }}% DV
+            </ion-note>
+          </ion-item>
+        </ion-list>
+
+        <h4>Minerals</h4>
+        <ion-list>
+          <ion-item *ngFor="let mineral of minerals">
+            <ion-label>
+              <h3>{{ mineral.name }}</h3>
+              <p>{{ mineral.amount }}{{ mineral.unit }}</p>
+            </ion-label>
+            <ion-note slot="end" *ngIf="mineral.dailyValue">
+              {{ (mineral.amount / mineral.dailyValue * 100) | number:'1.0-0' }}% DV
+            </ion-note>
+          </ion-item>
+        </ion-list>
+      </div>
+
+      
+    </div>
+  </ion-card-content>
+</ion-card>

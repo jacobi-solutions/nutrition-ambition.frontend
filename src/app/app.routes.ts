@@ -18,12 +18,13 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'home',
-    loadComponent: () => import('./pages/home/home.page').then( m => m.HomePage)
-  },
-  {
     path: 'landing-transparent',
     loadComponent: () => import('./pages/landing-transparent/landing-transparent.page').then( m => m.LandingTransparentPage)
   },
+  {
+    path: 'food-logging',
+    loadComponent: () => import('./pages/food-logging/food-logging.page').then( m => m.FoodLoggingPage),
+    canActivate: [AuthGuard]
+  }
   // ...
 ];

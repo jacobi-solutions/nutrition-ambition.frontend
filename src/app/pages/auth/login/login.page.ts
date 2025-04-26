@@ -30,7 +30,7 @@ export class LoginPage {
   async onLogin() {
     try {
       await this.authService.signInWithEmail(this.email, this.password);
-      this.router.navigate(['/home']);
+      this.router.navigate(['/food-logging']);
     } catch (error) {
       console.error('Login failed:', error);
     }

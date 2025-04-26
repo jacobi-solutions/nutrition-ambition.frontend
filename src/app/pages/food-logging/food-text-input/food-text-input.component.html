@@ -1,0 +1,37 @@
+<ion-card>
+  <ion-card-header>
+    <ion-card-title>Enter Food Description</ion-card-title>
+    <ion-card-subtitle>Describe what you ate in natural language</ion-card-subtitle>
+  </ion-card-header>
+
+  <ion-card-content>
+    <ion-item>
+      <ion-textarea 
+        label="Food Description" 
+        labelPlacement="floating" 
+        placeholder="Example: 2 eggs with toast and a glass of orange juice" 
+        [(ngModel)]="foodDescription"
+        [counter]="true" 
+        maxlength="500"
+        autoGrow="true"
+        rows="3">
+      </ion-textarea>
+    </ion-item>
+
+    <ion-text color="danger" *ngIf="errorMessage">
+      <p class="error-message">{{ errorMessage }}</p>
+    </ion-text>
+
+    <div class="button-container">
+      <ion-button fill="outline" (click)="clearInput()" [disabled]="isLoading || !foodDescription">
+        <ion-icon name="trash-outline" slot="start"></ion-icon>
+        Clear
+      </ion-button>
+      <ion-button (click)="submitFoodText()" [disabled]="isLoading || !foodDescription">
+        <ion-icon name="nutrition-outline" slot="start"></ion-icon>
+        Analyze Food
+        <ion-spinner name="dots" *ngIf="isLoading"></ion-spinner>
+      </ion-button>
+    </div>
+  </ion-card-content>
+</ion-card>

@@ -1,0 +1,26 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Food Logging</ion-title>
+    <div>
+      <span *ngIf="userEmail">Signed in as: {{ userEmail }}</span>
+      <button (click)="signOut()">Sign Out</button>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="container">
+    <app-food-text-input (parsedFoodData)="onParsedFoodData($event)"></app-food-text-input>
+    
+    <app-parsed-food-items 
+      *ngIf="parsedFoodData" 
+      [parsedFoodData]="parsedFoodData"
+      (nutritionData)="onNutritionData($event)">
+    </app-parsed-food-items>
+    
+    <app-nutrition-visualization 
+      *ngIf="nutritionData" 
+      [nutritionData]="nutritionData">
+    </app-nutrition-visualization>
+  </div>
+</ion-content>
