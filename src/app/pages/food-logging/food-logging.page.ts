@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { NutritionVisualizationComponent } from './nutrition-visualization/nutrition-visualization.component';
 import { FoodTextInputComponent } from './food-text-input/food-text-input.component';
-import { ParsedFoodItemsComponent } from './parsed-food-items/parsed-food-items.component';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -17,12 +16,10 @@ import { Subscription } from 'rxjs';
     CommonModule, 
     IonicModule,
     FoodTextInputComponent,
-    ParsedFoodItemsComponent,
     NutritionVisualizationComponent
   ]
 })
 export class FoodLoggingPage {
-  parsedFoodData: any = null;
   nutritionData: any = null;
   userEmail: string | null = null;
   private userEmailSubscription: Subscription;
@@ -37,12 +34,6 @@ export class FoodLoggingPage {
     if (this.userEmailSubscription) {
       this.userEmailSubscription.unsubscribe();
     }
-  }
-
-  onParsedFoodData(data: any) {
-    this.parsedFoodData = data;
-    // Reset nutrition data when new food is parsed
-    this.nutritionData = null;
   }
 
   onNutritionData(data: any) {

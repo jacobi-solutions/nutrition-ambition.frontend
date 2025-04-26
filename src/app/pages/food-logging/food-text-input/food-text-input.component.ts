@@ -13,7 +13,7 @@ import { NutritionAmbitionApiService, ParseFoodTextRequest } from 'src/app/servi
   imports: [CommonModule, FormsModule, IonicModule]
 })
 export class FoodTextInputComponent implements OnInit {
-  @Output() parsedFoodData = new EventEmitter<any>();
+  @Output() nutritionData = new EventEmitter<any>();
   
   foodDescription: string = '';
   isLoading: boolean = false;
@@ -34,22 +34,25 @@ export class FoodTextInputComponent implements OnInit {
 
     const request = new ParseFoodTextRequest({ foodDescription: this.foodDescription });
     
-
-    this.nutritionApiService.parseFoodText(request)
+    // Use the streamlined endpoint that processes food text and gets nutrition data in one step
+    this.nutritionApiService.processFoodTextAndGetNutrition(request)
       .pipe(
         finalize(() => this.isLoading = false)
       )
       .subscribe({
         next: (response) => {
-          if (response && response.success) {
-            this.parsedFoodData.emit(response);
+          if (response && response.isSuccess) {
+            this.nutritionData.emit(response);
           } else {
-            this.errorMessage = 'Failed to parse food text. Please try again.';
+            this.errorMessage = 'Failed to get nutrition data. Please try again.';
+            if (response && response.errors && response.errors.length > 0) {
+              this.errorMessage += ' ' + response.errors.join(' ');
+            }
           }
         },
         error: (error) => {
-          console.error('Error parsing food text:', error);
-          this.errorMessage = 'An error occurred while parsing food text. Please try again.';
+          console.error('Error processing food text:', error);
+          this.errorMessage = 'An error occurred while processing food text. Please try again.';
         }
       });
   }

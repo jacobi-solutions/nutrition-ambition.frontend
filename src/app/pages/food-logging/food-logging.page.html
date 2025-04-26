@@ -10,13 +10,7 @@
 
 <ion-content>
   <div class="container">
-    <app-food-text-input (parsedFoodData)="onParsedFoodData($event)"></app-food-text-input>
-    
-    <app-parsed-food-items 
-      *ngIf="parsedFoodData" 
-      [parsedFoodData]="parsedFoodData"
-      (nutritionData)="onNutritionData($event)">
-    </app-parsed-food-items>
+    <app-food-text-input (nutritionData)="onNutritionData($event)"></app-food-text-input>
     
     <app-nutrition-visualization 
       *ngIf="nutritionData" 
