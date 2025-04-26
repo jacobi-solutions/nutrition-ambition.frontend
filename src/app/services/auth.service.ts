@@ -1,23 +1,35 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged } from '@angular/fire/auth';
-import { Observable, from } from 'rxjs';
+import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from '@angular/fire/auth';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { AccountRequest, NutritionAmbitionApiService, Response } from './nutrition-ambition-api.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  user$: Observable<any>;
+  userSubject: Observable<any>;
+  userEmailSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
+  userEmail: string | null = null;
   private authInstance: Auth;
 
   constructor(private _apiService: NutritionAmbitionApiService) {
-    this.authInstance = inject(Auth); // ✅ Ensure Auth is initialized
-    this.user$ = new Observable(observer => {
-      onAuthStateChanged(this.authInstance, user => {
-        observer.next(user);
-        observer.complete();
-      });
+    this.authInstance = inject(Auth);
+    
+    onAuthStateChanged(this.authInstance, user => {
+      if (user) {
+        this.userEmail = user.email ?? null;
+        this.userEmailSubject.next(this.userEmail);
+        console.log('User email:', this.userEmail);
+      } else {
+        this.userEmail = null;
+        this.userEmailSubject.next(null);
+      }
     });
+    
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.authInstance.currentUser;
   }
 
   async registerWithEmail(email: string, password: string): Promise<void> {

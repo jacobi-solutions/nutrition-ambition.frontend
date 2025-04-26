@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { IonInput, IonButton, IonList, IonicModule } from '@ionic/angular';
 import { FoodEntryService } from '../../services/food-entry.service';
 import { catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { of, Subscription } from 'rxjs';
 import { FoodEntry, GetFoodEntriesResponse } from 'src/app/services/nutrition-ambition-api.service';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-food-entry',
@@ -18,9 +19,22 @@ export class FoodEntryComponent {
   description: string = '';
   entries: FoodEntry[] = [];
   errorMessage: string = '';
+  userEmail: string | null = null;
+  private userEmailSubscription: Subscription;
 
-  constructor(private foodEntryService: FoodEntryService) {
-    this.loadEntries();
+  constructor(private foodEntryService: FoodEntryService, private _authService: AuthService) {
+
+    
+  }
+
+  ngOnInit() {
+    this.userEmailSubscription = this._authService.userEmailSubject.subscribe(email => {
+      this.userEmail = email;
+      if (email) {
+        this.loadEntries();
+      }
+    });
+
   }
 
   addEntry() {

@@ -1,0 +1,17 @@
+<ion-content class="ion-padding landing-container">
+  <div class="content-wrapper">
+    <div class="header-section">
+      <h1 class="headline">Nutrition apps never track <span class="highlight">every nutrient.</span><br>We want to change that.</h1>
+      <p class="subtext">
+        We're developing <strong>Nutrition Ambition</strong>, an AI-powered nutrition app designed to track <strong>ALL nutrients</strong>. Build healthy habits, not endless logging.
+      </p>
+    </div>
+
+    <div class="form-section">
+      <form [formGroup]="emailForm" (ngSubmit)="submitEmail()" class="email-form">
+        <ion-input formControlName="email" placeholder="Your email address" type="email" fill="outline"></ion-input>
+        <ion-button expand="block" type="submit" [disabled]="emailForm.invalid">Join the Waitlist</ion-button>
+      </form>
+    </div>
+  </div>
+</ion-content>

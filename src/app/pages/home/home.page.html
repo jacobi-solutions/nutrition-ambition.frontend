@@ -1,6 +1,10 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>Home</ion-title>
+    <div>
+      Signed in as: {{ userEmail }}
+      <button (click)="signOut()">Sign Out</button>
+    </div>
   </ion-toolbar>
 </ion-header>
 

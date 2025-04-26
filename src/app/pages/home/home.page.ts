@@ -1,10 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonHeader, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { FoodEntryService } from '../../services/food-entry/food-entry.service';
+import { FoodEntryService } from '../../services/food-entry.service';
 import { FoodEntry, FoodItem, GetFoodEntriesResponse } from '../../services/nutrition-ambition-api.service';
 import { FoodEntryComponent } from '../../components/food-entry/food-entry.component';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -13,22 +16,36 @@ import { FoodEntryComponent } from '../../components/food-entry/food-entry.compo
   standalone: true,
   imports: [IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule, FoodEntryComponent]
 })
-export class HomePage implements OnInit {
+export class HomePage implements OnInit, OnDestroy {
   dailyEntries: FoodEntry[] = [];
   totalCalories: number = 0;
   totalProtein: number = 0;
   totalCarbs: number = 0;
   totalFat: number = 0;
   errorMessage: string = '';
+  userEmail: string | null = null;
+  private userEmailSubscription: Subscription;
 
-  constructor(private foodEntryService: FoodEntryService) {}
+  constructor(private foodEntryService: FoodEntryService, private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
-    this.loadDailyEntries();
+    this.userEmailSubscription = this.authService.userEmailSubject.subscribe(email => {
+      this.userEmail = email;
+      if (email) {
+        this.loadDailyEntries();
+      }
+    });
+
+  }
+
+  ngOnDestroy() {
+    if (this.userEmailSubscription) {
+      this.userEmailSubscription.unsubscribe();
+    }
   }
 
   loadDailyEntries() {
-    this.foodEntryService.getDailyEntries(new Date()).subscribe(
+    this.foodEntryService.getDailyEntries().subscribe(
       (response: GetFoodEntriesResponse) => {
         if (response?.isSuccess && response.foodEntries?.length) {
           this.dailyEntries = response.foodEntries ?? [];
@@ -62,5 +79,14 @@ export class HomePage implements OnInit {
 
   onEntryAdded() {
     this.loadDailyEntries(); // Refresh the daily log after adding an entry
+  }
+
+  async signOut() {
+    try {
+      await this.authService.signOutUser();
+      this.router.navigate(['/login']); // Redirect to login page
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   }
 }

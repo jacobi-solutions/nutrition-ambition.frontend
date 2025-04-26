@@ -7,11 +7,12 @@ import { AuthService } from './auth.service';
 
 export const AuthInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn): Observable<HttpEvent<any>> => {
   const authService = inject(AuthService);
+  const backendUrl = 'http://localhost:5165/api'; // ✅ Change to match your backend URL
 
-  // Exclude certain URLs from attaching the token (e.g., login, register)
-  // if (req.url.includes('/login') || req.url.includes('/register')) {
-  //   return next(req);
-  // }
+  // ✅ Only add token if request is to the backend
+  if (!req.url.startsWith(backendUrl)) {
+    return next(req);
+  }
 
   return from(authService.getIdToken()).pipe(
     switchMap(token => {
@@ -27,3 +28,4 @@ export const AuthInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: 
     })
   );
 };
+
