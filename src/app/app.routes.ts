@@ -5,7 +5,7 @@ import { AuthGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'login',
+    redirectTo: 'food-logging',
     pathMatch: 'full',
   },
   {   
