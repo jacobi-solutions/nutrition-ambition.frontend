@@ -68,7 +68,7 @@ export class NutritionLogPage implements OnInit {
           } else {
             // Refined error message handling from response
             if (response?.errors && Array.isArray(response.errors)) {
-              this.errorMessage = response.errors.join(', ');
+              this.errorMessage = response.errors.map(err => err.errorMessage).join(', ');
             } else {
               this.errorMessage = 'Failed to load log data.'; // Default if errors format is unexpected
             }

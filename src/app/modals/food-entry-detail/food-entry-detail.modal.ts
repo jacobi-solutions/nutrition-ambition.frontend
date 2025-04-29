@@ -9,7 +9,7 @@ import { NutritionVisualizationComponent } from 'src/app/pages/food-logging/nutr
   templateUrl: './food-entry-detail.modal.html',
   styleUrls: ['./food-entry-detail.modal.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, NutritionVisualizationComponent] // Import IonicModule and CommonModule
+  imports: [CommonModule, IonicModule] // Import IonicModule and CommonModule
 })
 export class FoodEntryDetailModalComponent implements OnInit {
 
