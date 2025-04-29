@@ -1,0 +1,35 @@
+.chat-input-container {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background-color: #f8f8f8;
+  border-top: 1px solid #e0e0e0;
+
+  ion-textarea {
+    flex: 1;
+    border: 1px solid #dcdcdc;
+    border-radius: 18px;
+    padding: 8px 12px;
+    margin-right: 8px;
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --padding-top: 8px;
+    --padding-bottom: 8px;
+    max-height: 100px; // Limit growth
+    overflow-y: auto;
+    background-color: white;
+  }
+
+  ion-button {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    height: 36px;
+    width: 36px;
+    min-width: 36px;
+    
+    ion-icon {
+      font-size: 20px;
+    }
+  }
+}
+

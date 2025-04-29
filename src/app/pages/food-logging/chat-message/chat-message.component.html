@@ -1,0 +1,18 @@
+<div class="message-container" [ngClass]="{
+  'user-message': message.sender === 'user',
+  'ai-message': message.sender === 'ai'
+}">
+  <div class="message-bubble">
+    <p>{{ message.text }}</p>
+    <ion-button 
+      *ngIf="message.sender === 'ai' && message.nutritionData"
+      fill="clear"
+      size="small"
+      (click)="onViewDetailsClick()">
+      View Details
+    </ion-button>
+  </div>
+  <!-- Optional: Add timestamp display here -->
+  <!-- <span class="timestamp">{{ message.timestamp | date:'shortTime' }}</span> -->
+</div>
+

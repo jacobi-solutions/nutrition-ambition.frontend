@@ -1,20 +1,52 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Food Logging</ion-title>
-    <div>
-      <span *ngIf="userEmail">Signed in as: {{ userEmail }}</span>
-      <button (click)="signOut()">Sign Out</button>
-    </div>
+    <ion-title>Nutrition Coach</ion-title> <!-- Changed title -->
+    <ion-buttons slot="end">
+      <ion-button (click)="signOut()">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <div class="container">
-    <app-food-text-input (nutritionData)="onNutritionData($event)"></app-food-text-input>
+<ion-content class="ion-padding">
+  <!-- Chat messages container -->
+  <div class="chat-messages">
+    <app-chat-message 
+      *ngFor="let msg of messages"
+      [message]="msg"
+      (viewDetails)="showNutritionDetails($event)">
+    </app-chat-message>
     
-    <app-nutrition-visualization 
-      *ngIf="nutritionData" 
-      [nutritionData]="nutritionData">
-    </app-nutrition-visualization>
+    <!-- Loading indicator -->
+    <div *ngIf="isLoading" class="loading-indicator">
+      <ion-spinner name="dots"></ion-spinner>
+    </div>
   </div>
 </ion-content>
+
+<ion-footer>
+  <!-- Chat input component -->
+  <app-chat-input (newMessage)="handleNewMessage($event)"></app-chat-input>
+</ion-footer>
+
+<!-- Nutrition Details Modal -->
+<ion-modal [isOpen]="isModalOpen" (didDismiss)="closeNutritionModal()">
+  <ng-template>
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Nutrition Details</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeNutritionModal()">Close</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <app-nutrition-visualization 
+        *ngIf="selectedNutritionData" 
+        [nutritionData]="selectedNutritionData">
+      </app-nutrition-visualization>
+    </ion-content>
+  </ng-template>
+</ion-modal>
+
