@@ -559,7 +559,9 @@ export interface IAccountRequest {
 }
 
 export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
-    description!: string;
+    description?: string | undefined;
+    meal?: MealType;
+    loggedDateUtc?: Date;
     parsedItems?: FoodItem[] | undefined;
 
     constructor(data?: ICreateFoodEntryRequest) {
@@ -574,6 +576,8 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
     init(_data?: any) {
         if (_data) {
             this.description = _data["description"];
+            this.meal = _data["meal"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             if (Array.isArray(_data["parsedItems"])) {
                 this.parsedItems = [] as any;
                 for (let item of _data["parsedItems"])
@@ -592,6 +596,8 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["description"] = this.description;
+        data["meal"] = this.meal;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         if (Array.isArray(this.parsedItems)) {
             data["parsedItems"] = [];
             for (let item of this.parsedItems)
@@ -602,7 +608,9 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
 }
 
 export interface ICreateFoodEntryRequest {
-    description: string;
+    description?: string | undefined;
+    meal?: MealType;
+    loggedDateUtc?: Date;
     parsedItems?: FoodItem[] | undefined;
 }
 
@@ -667,7 +675,7 @@ export interface ICreateFoodEntryResponse {
 }
 
 export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
-    foodEntryId!: string;
+    foodEntryId?: string | undefined;
 
     constructor(data?: IDeleteFoodEntryRequest) {
         if (data) {
@@ -699,7 +707,7 @@ export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
 }
 
 export interface IDeleteFoodEntryRequest {
-    foodEntryId: string;
+    foodEntryId?: string | undefined;
 }
 
 export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
@@ -707,7 +715,6 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
-    success?: boolean;
 
     constructor(data?: IDeleteFoodEntryResponse) {
         if (data) {
@@ -728,7 +735,6 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
             this.isSuccess = _data["isSuccess"];
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
-            this.success = _data["success"];
         }
     }
 
@@ -749,7 +755,6 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
         data["isSuccess"] = this.isSuccess;
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
-        data["success"] = this.success;
         return data;
     }
 }
@@ -759,7 +764,6 @@ export interface IDeleteFoodEntryResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
-    success?: boolean;
 }
 
 export class ErrorDto implements IErrorDto {
@@ -809,6 +813,7 @@ export class FoodEntry implements IFoodEntry {
     accountId?: string | undefined;
     description?: string | undefined;
     loggedDateUtc?: Date;
+    meal?: MealType;
     parsedItems?: FoodItem[] | undefined;
 
     constructor(data?: IFoodEntry) {
@@ -828,6 +833,7 @@ export class FoodEntry implements IFoodEntry {
             this.accountId = _data["accountId"];
             this.description = _data["description"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.meal = _data["meal"];
             if (Array.isArray(_data["parsedItems"])) {
                 this.parsedItems = [] as any;
                 for (let item of _data["parsedItems"])
@@ -851,6 +857,7 @@ export class FoodEntry implements IFoodEntry {
         data["accountId"] = this.accountId;
         data["description"] = this.description;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["meal"] = this.meal;
         if (Array.isArray(this.parsedItems)) {
             data["parsedItems"] = [];
             for (let item of this.parsedItems)
@@ -867,6 +874,7 @@ export interface IFoodEntry {
     accountId?: string | undefined;
     description?: string | undefined;
     loggedDateUtc?: Date;
+    meal?: MealType;
     parsedItems?: FoodItem[] | undefined;
 }
 
@@ -1076,6 +1084,7 @@ export interface IFoodNutrition {
 
 export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
     loggedDateUtc?: Date | undefined;
+    meal?: MealType;
 
     constructor(data?: IGetFoodEntriesRequest) {
         if (data) {
@@ -1089,6 +1098,7 @@ export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
     init(_data?: any) {
         if (_data) {
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.meal = _data["meal"];
         }
     }
 
@@ -1102,12 +1112,14 @@ export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["meal"] = this.meal;
         return data;
     }
 }
 
 export interface IGetFoodEntriesRequest {
     loggedDateUtc?: Date | undefined;
+    meal?: MealType;
 }
 
 export class GetFoodEntriesResponse implements IGetFoodEntriesResponse {
@@ -1116,6 +1128,10 @@ export class GetFoodEntriesResponse implements IGetFoodEntriesResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     foodEntries?: FoodEntry[] | undefined;
+    totalCalories?: number | undefined;
+    totalProtein?: number | undefined;
+    totalCarbs?: number | undefined;
+    totalFat?: number | undefined;
 
     constructor(data?: IGetFoodEntriesResponse) {
         if (data) {
@@ -1141,6 +1157,10 @@ export class GetFoodEntriesResponse implements IGetFoodEntriesResponse {
                 for (let item of _data["foodEntries"])
                     this.foodEntries!.push(FoodEntry.fromJS(item));
             }
+            this.totalCalories = _data["totalCalories"];
+            this.totalProtein = _data["totalProtein"];
+            this.totalCarbs = _data["totalCarbs"];
+            this.totalFat = _data["totalFat"];
         }
     }
 
@@ -1166,6 +1186,10 @@ export class GetFoodEntriesResponse implements IGetFoodEntriesResponse {
             for (let item of this.foodEntries)
                 data["foodEntries"].push(item.toJSON());
         }
+        data["totalCalories"] = this.totalCalories;
+        data["totalProtein"] = this.totalProtein;
+        data["totalCarbs"] = this.totalCarbs;
+        data["totalFat"] = this.totalFat;
         return data;
     }
 }
@@ -1176,6 +1200,10 @@ export interface IGetFoodEntriesResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     foodEntries?: FoodEntry[] | undefined;
+    totalCalories?: number | undefined;
+    totalProtein?: number | undefined;
+    totalCarbs?: number | undefined;
+    totalFat?: number | undefined;
 }
 
 export class Macronutrients implements IMacronutrients {
@@ -1304,6 +1332,14 @@ export class MealItem implements IMealItem {
 export interface IMealItem {
     name?: string | undefined;
     quantity?: string | undefined;
+}
+
+export enum MealType {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
+    _3 = 3,
+    _4 = 4,
 }
 
 export class Micronutrient implements IMicronutrient {
@@ -1635,8 +1671,10 @@ export interface IResponse {
 }
 
 export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
-    foodEntryId!: string;
+    foodEntryId?: string | undefined;
     description?: string | undefined;
+    meal?: MealType;
+    loggedDateUtc?: Date | undefined;
     parsedItems?: FoodItem[] | undefined;
 
     constructor(data?: IUpdateFoodEntryRequest) {
@@ -1652,6 +1690,8 @@ export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
         if (_data) {
             this.foodEntryId = _data["foodEntryId"];
             this.description = _data["description"];
+            this.meal = _data["meal"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             if (Array.isArray(_data["parsedItems"])) {
                 this.parsedItems = [] as any;
                 for (let item of _data["parsedItems"])
@@ -1671,6 +1711,8 @@ export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
         data = typeof data === 'object' ? data : {};
         data["foodEntryId"] = this.foodEntryId;
         data["description"] = this.description;
+        data["meal"] = this.meal;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         if (Array.isArray(this.parsedItems)) {
             data["parsedItems"] = [];
             for (let item of this.parsedItems)
@@ -1681,8 +1723,10 @@ export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
 }
 
 export interface IUpdateFoodEntryRequest {
-    foodEntryId: string;
+    foodEntryId?: string | undefined;
     description?: string | undefined;
+    meal?: MealType;
+    loggedDateUtc?: Date | undefined;
     parsedItems?: FoodItem[] | undefined;
 }
 
