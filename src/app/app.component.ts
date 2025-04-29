@@ -8,7 +8,7 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterOutlet]
+  imports: [CommonModule, IonicModule]
 })
 export class AppComponent {
   title = 'Nutrition Ambition';
