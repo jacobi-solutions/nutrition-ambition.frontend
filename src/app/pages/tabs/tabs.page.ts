@@ -1,16 +1,23 @@
 import { Component } from '@angular/core';
-import { IonicModule } from '@ionic/angular';
+// Import specific standalone components from @ionic/angular/standalone
+import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { chatbubblesOutline, listOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-tabs',
   templateUrl: './tabs.page.html',
   styleUrls: ['./tabs.page.scss'],
   standalone: true,
-  imports: [IonicModule]
+  // Import the specific standalone components needed by the template
+  imports: [IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel]
 })
 export class TabsPage {
 
-  constructor() { }
+  constructor() {
+    // Add the icons explicitly to the library
+    addIcons({ chatbubblesOutline, listOutline });
+  }
 
 }
 

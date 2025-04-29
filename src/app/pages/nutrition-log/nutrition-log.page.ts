@@ -16,9 +16,8 @@ import { FoodEntryDetailModalComponent } from '../../modals/food-entry-detail/fo
   standalone: true,
   imports: [
     CommonModule,
-    IonicModule,
+    IonicModule, // Keep IonicModule here for ion-item, ion-label etc. used in template
     FormsModule,
-    // Note: FoodEntryDetailModalComponent is used programmatically, no need to import here unless used in template directly
   ]
 })
 export class NutritionLogPage implements OnInit {
@@ -67,12 +66,30 @@ export class NutritionLogPage implements OnInit {
               totalFat: response.totalFat
             };
           } else {
-            this.errorMessage = response?.errors?.join(', ') || 'Failed to load log data.';
+            // Refined error message handling from response
+            if (response?.errors && Array.isArray(response.errors)) {
+              this.errorMessage = response.errors.join(', ');
+            } else {
+              this.errorMessage = 'Failed to load log data.'; // Default if errors format is unexpected
+            }
           }
         },
         error: (err) => {
           console.error('Error loading nutrition log:', err);
-          this.errorMessage = 'An error occurred while loading the log.';
+          // Refined error message handling from error object
+          let msg = 'An unknown error occurred while loading the log.'; // Default
+          if (typeof err === 'string') {
+            msg = err;
+          } else if (err?.message && typeof err.message === 'string') { // Check err exists before accessing message
+            msg = err.message;
+          } else if (err?.error) { // Check err exists before accessing error
+            if (typeof err.error === 'string') {
+              msg = err.error;
+            } else if (err.error?.message && typeof err.error.message === 'string') { // Check error.message exists
+              msg = err.error.message;
+            }
+          }
+          this.errorMessage = msg;
         }
       });
   }
