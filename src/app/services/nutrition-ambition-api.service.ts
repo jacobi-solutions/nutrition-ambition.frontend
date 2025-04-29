@@ -562,7 +562,7 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
     description?: string | undefined;
     meal?: MealType;
     loggedDateUtc?: Date;
-    parsedItems?: FoodItem[] | undefined;
+    groupedItems?: FoodGroup[] | undefined;
 
     constructor(data?: ICreateFoodEntryRequest) {
         if (data) {
@@ -578,10 +578,10 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
             this.description = _data["description"];
             this.meal = _data["meal"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
-            if (Array.isArray(_data["parsedItems"])) {
-                this.parsedItems = [] as any;
-                for (let item of _data["parsedItems"])
-                    this.parsedItems!.push(FoodItem.fromJS(item));
+            if (Array.isArray(_data["groupedItems"])) {
+                this.groupedItems = [] as any;
+                for (let item of _data["groupedItems"])
+                    this.groupedItems!.push(FoodGroup.fromJS(item));
             }
         }
     }
@@ -598,10 +598,10 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
         data["description"] = this.description;
         data["meal"] = this.meal;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
-        if (Array.isArray(this.parsedItems)) {
-            data["parsedItems"] = [];
-            for (let item of this.parsedItems)
-                data["parsedItems"].push(item.toJSON());
+        if (Array.isArray(this.groupedItems)) {
+            data["groupedItems"] = [];
+            for (let item of this.groupedItems)
+                data["groupedItems"].push(item.toJSON());
         }
         return data;
     }
@@ -611,7 +611,7 @@ export interface ICreateFoodEntryRequest {
     description?: string | undefined;
     meal?: MealType;
     loggedDateUtc?: Date;
-    parsedItems?: FoodItem[] | undefined;
+    groupedItems?: FoodGroup[] | undefined;
 }
 
 export class CreateFoodEntryResponse implements ICreateFoodEntryResponse {
@@ -814,7 +814,7 @@ export class FoodEntry implements IFoodEntry {
     description?: string | undefined;
     loggedDateUtc?: Date;
     meal?: MealType;
-    parsedItems?: FoodItem[] | undefined;
+    groupedItems?: FoodGroup[] | undefined;
 
     constructor(data?: IFoodEntry) {
         if (data) {
@@ -834,10 +834,10 @@ export class FoodEntry implements IFoodEntry {
             this.description = _data["description"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             this.meal = _data["meal"];
-            if (Array.isArray(_data["parsedItems"])) {
-                this.parsedItems = [] as any;
-                for (let item of _data["parsedItems"])
-                    this.parsedItems!.push(FoodItem.fromJS(item));
+            if (Array.isArray(_data["groupedItems"])) {
+                this.groupedItems = [] as any;
+                for (let item of _data["groupedItems"])
+                    this.groupedItems!.push(FoodGroup.fromJS(item));
             }
         }
     }
@@ -858,10 +858,10 @@ export class FoodEntry implements IFoodEntry {
         data["description"] = this.description;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         data["meal"] = this.meal;
-        if (Array.isArray(this.parsedItems)) {
-            data["parsedItems"] = [];
-            for (let item of this.parsedItems)
-                data["parsedItems"].push(item.toJSON());
+        if (Array.isArray(this.groupedItems)) {
+            data["groupedItems"] = [];
+            for (let item of this.groupedItems)
+                data["groupedItems"].push(item.toJSON());
         }
         return data;
     }
@@ -875,7 +875,55 @@ export interface IFoodEntry {
     description?: string | undefined;
     loggedDateUtc?: Date;
     meal?: MealType;
-    parsedItems?: FoodItem[] | undefined;
+    groupedItems?: FoodGroup[] | undefined;
+}
+
+export class FoodGroup implements IFoodGroup {
+    groupName?: string | undefined;
+    items?: FoodItem[] | undefined;
+
+    constructor(data?: IFoodGroup) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.groupName = _data["groupName"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(FoodItem.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): FoodGroup {
+        data = typeof data === 'object' ? data : {};
+        let result = new FoodGroup();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["groupName"] = this.groupName;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IFoodGroup {
+    groupName?: string | undefined;
+    items?: FoodItem[] | undefined;
 }
 
 export class FoodItem implements IFoodItem {
