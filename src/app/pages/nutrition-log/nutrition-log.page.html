@@ -73,8 +73,8 @@
         <ion-item *ngFor="let group of entry.groupedItems" button (click)="viewGroupDetails(entry, group)"> 
           <ion-label>
             <h2>{{ group.groupName }}</h2>
-            <!-- Optionally show number of items or summary -->
-            <p>{{ group.items?.length }} items</p> 
+            <!-- Show macronutrient summary instead of just number of items -->
+            <p>{{ calculateGroupCalories(group) | number:".0-0" }} kcal | P: {{ calculateGroupProtein(group) | number:".0-1" }}g | C: {{ calculateGroupCarbs(group) | number:".0-1" }}g | F: {{ calculateGroupFat(group) | number:".0-1" }}g</p>
           </ion-label>
           <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
         </ion-item>

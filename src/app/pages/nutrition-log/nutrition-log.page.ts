@@ -19,7 +19,7 @@ import { FoodGroupDetailModalComponent } from '../../modals/food-group-detail/fo
     IonicModule,
     FormsModule,
     // 🟢 Import the modal component here so it can be used
-    FoodGroupDetailModalComponent 
+    // FoodGroupDetailModalComponent 
   ]
 })
 export class NutritionLogPage implements OnInit {
@@ -129,6 +129,38 @@ export class NutritionLogPage implements OnInit {
     return entry.groupedItems.reduce((groupSum, group) => 
       groupSum + (group.items?.reduce((itemSum, item) => itemSum + (item.calories || 0), 0) || 0),
       0);
+  }
+
+  // Calculate total protein for a group
+  calculateGroupProtein(group: FoodGroup): number {
+    if (!group || !group.items) {
+      return 0;
+    }
+    return group.items.reduce((sum, item) => sum + (item.protein || 0), 0);
+  }
+
+  // Calculate total carbs for a group
+  calculateGroupCarbs(group: FoodGroup): number {
+    if (!group || !group.items) {
+      return 0;
+    }
+    return group.items.reduce((sum, item) => sum + (item.carbohydrates || 0), 0);
+  }
+
+  // Calculate total fat for a group
+  calculateGroupFat(group: FoodGroup): number {
+    if (!group || !group.items) {
+      return 0;
+    }
+    return group.items.reduce((sum, item) => sum + (item.fat || 0), 0);
+  }
+
+  // Calculate total calories for a group
+  calculateGroupCalories(group: FoodGroup): number {
+    if (!group || !group.items) {
+      return 0;
+    }
+    return group.items.reduce((sum, item) => sum + (item.calories || 0), 0);
   }
 }
 
