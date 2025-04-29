@@ -1400,6 +1400,7 @@ export class NutritionApiResponse implements INutritionApiResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     foods?: FoodNutrition[] | undefined;
+    aiCoachResponse?: string | undefined;
 
     constructor(data?: INutritionApiResponse) {
         if (data) {
@@ -1425,6 +1426,7 @@ export class NutritionApiResponse implements INutritionApiResponse {
                 for (let item of _data["foods"])
                     this.foods!.push(FoodNutrition.fromJS(item));
             }
+            this.aiCoachResponse = _data["aiCoachResponse"];
         }
     }
 
@@ -1450,6 +1452,7 @@ export class NutritionApiResponse implements INutritionApiResponse {
             for (let item of this.foods)
                 data["foods"].push(item.toJSON());
         }
+        data["aiCoachResponse"] = this.aiCoachResponse;
         return data;
     }
 }
@@ -1460,6 +1463,7 @@ export interface INutritionApiResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     foods?: FoodNutrition[] | undefined;
+    aiCoachResponse?: string | undefined;
 }
 
 export class ParseFoodTextRequest implements IParseFoodTextRequest {
