@@ -1,0 +1,49 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Entry Details</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Check if foodEntry exists before accessing its properties -->
+  <ion-list lines="full" *ngIf="foodEntry">
+    <ion-item>
+      <ion-label position="stacked">Original Input</ion-label>
+      <ion-text>{{ foodEntry.description }}</ion-text>
+    </ion-item>
+    <ion-item>
+      <ion-label position="stacked">Logged Time</ion-label>
+      <ion-text>{{ foodEntry.loggedDateUtc | date:"medium" }}</ion-text>
+    </ion-item>
+    <ion-item>
+      <ion-label position="stacked">Meal</ion-label>
+      <ion-text>{{ foodEntry.meal }}</ion-text>
+    </ion-item>
+
+    <ion-item-divider>
+      <ion-label>Parsed Items</ion-label>
+    </ion-item-divider>
+
+    <!-- Check if parsedItems exists and has length -->
+    <div *ngIf="foodEntry.parsedItems && foodEntry.parsedItems.length > 0; else noParsedItems">
+      <ion-item *ngFor="let item of foodEntry.parsedItems" button (click)="viewFoodItemDetails(item)" class="drill-down-modal-item">
+        <ion-label>
+          <h2>{{ item.name }}</h2>
+          <p>{{ item.quantity }} {{ item.unit }}</p>
+        </ion-label>
+        <ion-note slot="end">{{ item.calories | number:".0-0" }} kcal</ion-note>
+        <ion-icon name="chevron-forward-outline" slot="end" style="margin-left: 4px;"></ion-icon> 
+      </ion-item>
+    </div>
+    <ng-template #noParsedItems>
+      <ion-item lines="none">
+        <ion-label>No items were parsed for this entry.</ion-label>
+      </ion-item>
+    </ng-template>
+
+  </ion-list>
+</ion-content>
+

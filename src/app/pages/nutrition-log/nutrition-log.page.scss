@@ -1,0 +1,20 @@
+// Add styles for the nutrition log page, including the drill-down modal if needed
+
+ion-card-content ion-grid {
+    padding: 0;
+}
+
+ion-card-content ion-col {
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.drill-down-modal-item {
+    --inner-padding-end: 8px; // Reduce padding to make space for calories
+}
+
+.drill-down-modal-item ion-note {
+    margin-left: auto; // Push calories to the right
+    font-size: 0.9em;
+}
+

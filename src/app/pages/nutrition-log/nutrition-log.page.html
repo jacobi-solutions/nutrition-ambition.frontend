@@ -1,0 +1,91 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Nutrition Log</ion-title>
+  </ion-toolbar>
+  <ion-toolbar>
+    <!-- Date Navigation -->
+    <ion-buttons slot="start">
+      <ion-button (click)="previousDay()">
+        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-datetime-button datetime="datePicker"></ion-datetime-button>
+    <ion-modal [keepContentsMounted]="true">
+      <ng-template>
+        <ion-datetime 
+          id="datePicker" 
+          [value]="selectedDate" 
+          (ionChange)="dateChanged($event)" 
+          presentation="date">
+        </ion-datetime>
+      </ng-template>
+    </ion-modal>
+    <ion-buttons slot="end">
+      <ion-button (click)="nextDay()">
+        <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="ion-text-center ion-padding">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading log...</p>
+  </div>
+
+  <!-- Error Message -->
+  <ion-item *ngIf="errorMessage && !isLoading" color="danger">
+    <ion-label>{{ errorMessage }}</ion-label>
+  </ion-item>
+
+  <!-- Daily Summary Card -->
+  <ion-card *ngIf="!isLoading && !errorMessage && dailySummary">
+    <ion-card-header>
+      <ion-card-title>Daily Summary</ion-card-title>
+      <ion-card-subtitle>{{ selectedDate | date:"fullDate" }}</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <ion-col>Calories: {{ dailySummary.totalCalories | number:".0-0" }}</ion-col>
+          <ion-col>Protein: {{ dailySummary.totalProtein | number:".0-1" }}g</ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>Carbs: {{ dailySummary.totalCarbs | number:".0-1" }}g</ion-col>
+          <ion-col>Fat: {{ dailySummary.totalFat | number:".0-1" }}g</ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Logged Entries List -->
+  <div *ngIf="!isLoading && !errorMessage">
+    <ion-list *ngIf="foodEntries.length > 0; else noEntries">
+      <!-- Grouping by Meal (Example - needs logic in TS or more complex template) -->
+      <!-- For simplicity, just listing all entries for now -->
+      <ion-item-group>
+        <ion-item-divider>
+          <ion-label>Logged Items</ion-label>
+        </ion-item-divider>
+        <ion-item *ngFor="let entry of foodEntries" button (click)="viewItemDetails(entry)">
+          <ion-label>
+            <h2>{{ entry.description }}</h2>
+            <p>{{ entry.loggedDateUtc | date:"shortTime" }} - {{ entry.meal }}</p>
+            <!-- 🟢 Use helper function for calories -->
+            <p>~{{ calculateEntryCalories(entry) | number:".0-0" }} kcal</p>
+          </ion-label>
+          <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+        </ion-item>
+      </ion-item-group>
+    </ion-list>
+    <ng-template #noEntries>
+      <ion-item lines="none">
+        <ion-label class="ion-text-center">No entries logged for this date.</ion-label>
+      </ion-item>
+    </ng-template>
+  </div>
+
+</ion-content>
+
