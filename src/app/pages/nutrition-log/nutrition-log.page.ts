@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController } from '@ionic/angular'; // Import ModalController
+import { IonicModule, ModalController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
-import { NutritionAmbitionApiService, GetFoodEntriesRequest, GetFoodEntriesResponse, FoodEntry, FoodItem } from 'src/app/services/nutrition-ambition-api.service';
+import { NutritionAmbitionApiService, GetFoodEntriesRequest, GetFoodEntriesResponse, FoodEntry, FoodGroup, FoodItem } from 'src/app/services/nutrition-ambition-api.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { finalize } from 'rxjs/operators';
 
-// Import the new modal component
-import { FoodEntryDetailModalComponent } from '../../modals/food-entry-detail/food-entry-detail.modal';
+// 🟢 Import the new FoodGroupDetailModalComponent
+import { FoodGroupDetailModalComponent } from '../../modals/food-group-detail/food-group-detail.modal';
 
 @Component({
   selector: 'app-nutrition-log',
@@ -16,8 +16,10 @@ import { FoodEntryDetailModalComponent } from '../../modals/food-entry-detail/fo
   standalone: true,
   imports: [
     CommonModule,
-    IonicModule, // Keep IonicModule here for ion-item, ion-label etc. used in template
+    IonicModule,
     FormsModule,
+    // 🟢 Import the modal component here so it can be used
+    FoodGroupDetailModalComponent 
   ]
 })
 export class NutritionLogPage implements OnInit {
@@ -31,7 +33,7 @@ export class NutritionLogPage implements OnInit {
   constructor(
     private nutritionApiService: NutritionAmbitionApiService,
     private authService: AuthService,
-    private modalCtrl: ModalController // Inject ModalController
+    private modalCtrl: ModalController
   ) { }
 
   ngOnInit() {
@@ -66,26 +68,24 @@ export class NutritionLogPage implements OnInit {
               totalFat: response.totalFat
             };
           } else {
-            // Refined error message handling from response
             if (response?.errors && Array.isArray(response.errors)) {
               this.errorMessage = response.errors.map(err => err.errorMessage).join(', ');
             } else {
-              this.errorMessage = 'Failed to load log data.'; // Default if errors format is unexpected
+              this.errorMessage = 'Failed to load log data.';
             }
           }
         },
         error: (err) => {
           console.error('Error loading nutrition log:', err);
-          // Refined error message handling from error object
-          let msg = 'An unknown error occurred while loading the log.'; // Default
+          let msg = 'An unknown error occurred while loading the log.';
           if (typeof err === 'string') {
             msg = err;
-          } else if (err?.message && typeof err.message === 'string') { // Check err exists before accessing message
+          } else if (err?.message && typeof err.message === 'string') {
             msg = err.message;
-          } else if (err?.error) { // Check err exists before accessing error
+          } else if (err?.error) {
             if (typeof err.error === 'string') {
               msg = err.error;
-            } else if (err.error?.message && typeof err.error.message === 'string') { // Check error.message exists
+            } else if (err.error?.message && typeof err.error.message === 'string') {
               msg = err.error.message;
             }
           }
@@ -94,12 +94,14 @@ export class NutritionLogPage implements OnInit {
       });
   }
 
-  // Updated method to open the FoodEntryDetailModalComponent
-  async viewItemDetails(entry: FoodEntry) {
+  // 🟢 Updated to use FoodGroupDetailModalComponent
+  async viewGroupDetails(entry: FoodEntry, group: FoodGroup) {
     const modal = await this.modalCtrl.create({
-      component: FoodEntryDetailModalComponent,
+      component: FoodGroupDetailModalComponent, // Use the new modal
       componentProps: {
-        foodEntry: entry // Pass the selected FoodEntry object to the modal
+        groupName: group.groupName,
+        items: group.items,
+        entryTime: entry.loggedDateUtc
       }
     });
     await modal.present();
@@ -119,12 +121,14 @@ export class NutritionLogPage implements OnInit {
     this.loadLogData();
   }
 
-  // 🟢 Helper function to calculate total calories for a single FoodEntry
+  // Updated helper function to calculate total calories for a single FoodEntry using GroupedItems
   calculateEntryCalories(entry: FoodEntry): number {
-    if (!entry || !entry.parsedItems) {
+    if (!entry || !entry.groupedItems) {
       return 0;
     }
-    return entry.parsedItems.reduce((sum, item) => sum + (item.calories || 0), 0);
+    return entry.groupedItems.reduce((groupSum, group) => 
+      groupSum + (group.items?.reduce((itemSum, item) => itemSum + (item.calories || 0), 0) || 0),
+      0);
   }
 }
 

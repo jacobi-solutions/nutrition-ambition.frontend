@@ -1,0 +1,28 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>{{ groupName }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">Close</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-list>
+    <ion-list-header>
+      <!-- 🟢 Corrected date pipe syntax -->
+      <ion-label>Items (Logged at {{ entryTime | date:'shortTime' }})</ion-label>
+    </ion-list-header>
+    <ion-item *ngFor="let item of items" button (click)="viewItemNutrition(item)">
+      <ion-label>
+        <h2>{{ item.name }}</h2>
+        <p>{{ item.quantity }} {{ item.unit }} - ~{{ item.calories | number:".0-0" }} kcal</p>
+      </ion-label>
+      <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
+    </ion-item>
+    <ion-item *ngIf="!items || items.length === 0">
+      <ion-label>No items found in this group.</ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>
+
