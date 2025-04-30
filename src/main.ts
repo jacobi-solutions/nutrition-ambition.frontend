@@ -16,6 +16,42 @@ import { AuthInterceptor } from './app/services/auth.interceptor';
 import { NutritionAmbitionApiService, API_BASE_URL } from './app/services/nutrition-ambition-api.service';
 import { environment } from './environments/environment';
 
+import { addIcons } from 'ionicons';
+import { 
+  logOutOutline, 
+  addOutline, 
+  cameraOutline, 
+  barcodeOutline, 
+  addCircleOutline, 
+  sendOutline, 
+  send,
+  chevronBackOutline,
+  chevronBackCircleOutline,
+  chevronUpOutline,
+  chevronDownOutline,
+  chevronForwardOutline,
+  chevronForwardCircleOutline,
+  personCircle
+} from 'ionicons/icons';
+
+addIcons({
+  'log-out-outline': logOutOutline,
+  'add-outline': addOutline,
+  'camera-outline': cameraOutline,
+  'barcode-outline': barcodeOutline,
+  'add-circle-outline': addCircleOutline,
+  'send-outline': sendOutline,
+  'send': send,
+  'chevron-back-outline': chevronBackOutline,
+  'chevron-forward-outline': chevronForwardOutline,
+  'chevron-down-outline': chevronDownOutline,
+  'chevron-up-outline': chevronUpOutline,
+  'chevron-back-circle-outline': chevronBackCircleOutline,
+  'chevron-forward-circle-outline': chevronForwardCircleOutline,
+  'person-circle': personCircle
+  
+});
+
 // Provide the API base URL
 export function getAPIBaseUrl(): string {
   return environment.backendApiUrl;

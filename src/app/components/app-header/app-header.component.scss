@@ -1,10 +1,29 @@
-ion-chip {
-  margin-right: 8px;
-  max-width: 200px; // Limit width for long email addresses
-  
-  ion-label {
+ion-toolbar {
+  --min-height: 56px;
+
+  ion-title {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  ion-buttons {
+    flex-shrink: 0;
+  }
+
+  .user-chip {
+    max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-} 
+
+  @media (max-width: 420px) {
+    .user-chip {
+      display: none;
+    }
+  }
+}

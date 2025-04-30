@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { Router, RouterModule } from '@angular/router';
 import { FoodItem } from 'src/app/services/nutrition-ambition-api.service';
+import { AppHeaderComponent } from '../../components/app-header/app-header.component';
 
 // Import the nutrition visualization component
 import { NutritionVisualizationComponent } from 'src/app/pages/food-logging/nutrition-visualization/nutrition-visualization.component';
@@ -12,7 +13,7 @@ import { NutritionVisualizationComponent } from 'src/app/pages/food-logging/nutr
   templateUrl: './food-group-detail.page.html',
   styleUrls: ['./food-group-detail.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterModule]
+  imports: [CommonModule, IonicModule, RouterModule, AppHeaderComponent]
 })
 export class FoodGroupDetailPage implements OnInit {
 

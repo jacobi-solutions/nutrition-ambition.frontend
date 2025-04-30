@@ -1,9 +1,40 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Nutrition Ambition</ion-title>
-    
+    <!-- Left Side -->
+    <ion-buttons slot="start">
+      <ng-container *ngIf="showBackButton; else dateNav">
+        <ion-back-button defaultHref="/nutrition-log"></ion-back-button>
+      </ng-container>
+      <ng-template #dateNav>
+        <ion-button (click)="previousDay.emit()">
+          <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+        </ion-button>
+      </ng-template>
+    </ion-buttons>
+
+    <!-- Center Title / Date Picker -->
+    <ion-title class="header-title">
+      <ng-container *ngIf="!showBackButton; else staticTitle">
+        <ion-datetime-button datetime="datePicker"></ion-datetime-button>
+        <ion-modal [keepContentsMounted]="true">
+          <ng-template>
+            <ion-datetime 
+              id="datePicker" 
+              [value]="selectedDate" 
+              (ionChange)="dateChanged.emit($event)" 
+              presentation="date">
+            </ion-datetime>
+          </ng-template>
+        </ion-modal>
+      </ng-container>
+      <ng-template #staticTitle>
+        {{ title }}
+      </ng-template>
+    </ion-title>
+
+    <!-- Right Side -->
     <ion-buttons slot="end">
-      <ion-chip *ngIf="userEmail">
+      <ion-chip class="user-chip" *ngIf="userEmail">
         <ion-label>{{ userEmail }}</ion-label>
         <ion-icon name="person-circle"></ion-icon>
       </ion-chip>
@@ -12,4 +43,4 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
-</ion-header> 
+</ion-header>

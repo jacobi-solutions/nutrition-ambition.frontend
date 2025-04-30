@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { AuthService } from 'src/app/services/auth.service';
@@ -13,6 +13,11 @@ import { Router } from '@angular/router';
 })
 export class AppHeaderComponent implements OnInit {
   userEmail: string | null = null;
+  @Input() selectedDate: string;
+  @Input() title: string = 'Nutrition Ambition';
+  @Input() showBackButton: boolean = false;
+  @Output() previousDay = new EventEmitter<void>();
+  @Output() dateChanged = new EventEmitter<CustomEvent>();
 
   constructor(private authService: AuthService, private router: Router) {}
 

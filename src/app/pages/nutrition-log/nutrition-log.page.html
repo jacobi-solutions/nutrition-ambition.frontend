@@ -1,31 +1,8 @@
-<app-header></app-header>
-
-<ion-header>
-  <ion-toolbar>
-    <!-- Date Navigation -->
-    <ion-buttons slot="start">
-      <ion-button (click)="previousDay()">
-        <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-    <ion-datetime-button datetime="datePicker"></ion-datetime-button>
-    <ion-modal [keepContentsMounted]="true">
-      <ng-template>
-        <ion-datetime 
-          id="datePicker" 
-          [value]="selectedDate" 
-          (ionChange)="dateChanged($event)" 
-          presentation="date">
-        </ion-datetime>
-      </ng-template>
-    </ion-modal>
-    <ion-buttons slot="end">
-      <ion-button (click)="nextDay()">
-        <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header 
+  [selectedDate]="selectedDate" 
+  (previousDay)="previousDay()" 
+  (dateChanged)="dateChanged($event)">
+</app-header>
 
 <ion-content class="ion-padding">
   <!-- Loading Indicator -->
@@ -75,7 +52,6 @@
             <!-- Show macronutrient summary instead of just number of items -->
             <p>{{ calculateGroupCalories(group) | number:".0-0" }} kcal | P: {{ calculateGroupProtein(group) | number:".0-1" }}g | C: {{ calculateGroupCarbs(group) | number:".0-1" }}g | F: {{ calculateGroupFat(group) | number:".0-1" }}g</p>
           </ion-label>
-          <ion-icon name="chevron-forward-outline" slot="end"></ion-icon>
         </ion-item>
 
       </ion-item-group>
