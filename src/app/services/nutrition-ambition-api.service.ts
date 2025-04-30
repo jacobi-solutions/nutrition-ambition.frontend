@@ -25,17 +25,17 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    log(body: LogCoachMessageRequest | undefined): Observable<void>;
+    log(body: LogChatMessageRequest | undefined): Observable<void>;
     /**
      * @param body (optional) 
      * @return Success
      */
-    getCoachMessages(body: GetCoachMessagesRequest | undefined): Observable<void>;
+    getChatMessages(body: GetChatMessagesRequest | undefined): Observable<void>;
     /**
      * @param body (optional) 
      * @return Success
      */
-    clearCoachMessages(body: ClearCoachMessagesRequest | undefined): Observable<void>;
+    clearChatMessages(body: ClearChatMessagesRequest | undefined): Observable<void>;
     /**
      * @param body (optional) 
      * @return Success
@@ -164,8 +164,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    log(body: LogCoachMessageRequest | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/CoachMessage/log";
+    log(body: LogChatMessageRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/ChatMessage/log";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -216,8 +216,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    getCoachMessages(body: GetCoachMessagesRequest | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/CoachMessage/GetCoachMessages";
+    getChatMessages(body: GetChatMessagesRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/ChatMessage/GetChatMessages";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -232,11 +232,11 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetCoachMessages(response_);
+            return this.processGetChatMessages(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processGetCoachMessages(response_ as any);
+                    return this.processGetChatMessages(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<void>;
                 }
@@ -245,7 +245,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         }));
     }
 
-    protected processGetCoachMessages(response: HttpResponseBase): Observable<void> {
+    protected processGetChatMessages(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -268,8 +268,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    clearCoachMessages(body: ClearCoachMessagesRequest | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/CoachMessage/ClearCoachMessages";
+    clearChatMessages(body: ClearChatMessagesRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/ChatMessage/ClearChatMessages";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -284,11 +284,11 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processClearCoachMessages(response_);
+            return this.processClearChatMessages(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processClearCoachMessages(response_ as any);
+                    return this.processClearChatMessages(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<void>;
                 }
@@ -297,7 +297,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         }));
     }
 
-    protected processClearCoachMessages(response: HttpResponseBase): Observable<void> {
+    protected processClearChatMessages(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -973,12 +973,12 @@ export interface IAccountRequest {
     email?: string | undefined;
 }
 
-export class ClearCoachMessagesRequest implements IClearCoachMessagesRequest {
+export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
     accountId?: string | undefined;
     isAnonymousUser?: boolean;
     loggedDateUtc?: Date | undefined;
 
-    constructor(data?: IClearCoachMessagesRequest) {
+    constructor(data?: IClearChatMessagesRequest) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -995,9 +995,9 @@ export class ClearCoachMessagesRequest implements IClearCoachMessagesRequest {
         }
     }
 
-    static fromJS(data: any): ClearCoachMessagesRequest {
+    static fromJS(data: any): ClearChatMessagesRequest {
         data = typeof data === 'object' ? data : {};
-        let result = new ClearCoachMessagesRequest();
+        let result = new ClearChatMessagesRequest();
         result.init(data);
         return result;
     }
@@ -1011,7 +1011,7 @@ export class ClearCoachMessagesRequest implements IClearCoachMessagesRequest {
     }
 }
 
-export interface IClearCoachMessagesRequest {
+export interface IClearChatMessagesRequest {
     accountId?: string | undefined;
     isAnonymousUser?: boolean;
     loggedDateUtc?: Date | undefined;
@@ -1717,12 +1717,12 @@ export interface IFoodNutrition {
     micronutrients?: { [key: string]: Micronutrient; } | undefined;
 }
 
-export class GetCoachMessagesRequest implements IGetCoachMessagesRequest {
+export class GetChatMessagesRequest implements IGetChatMessagesRequest {
     accountId?: string | undefined;
     isAnonymousUser?: boolean;
     loggedDateUtc!: Date;
 
-    constructor(data?: IGetCoachMessagesRequest) {
+    constructor(data?: IGetChatMessagesRequest) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -1739,9 +1739,9 @@ export class GetCoachMessagesRequest implements IGetCoachMessagesRequest {
         }
     }
 
-    static fromJS(data: any): GetCoachMessagesRequest {
+    static fromJS(data: any): GetChatMessagesRequest {
         data = typeof data === 'object' ? data : {};
-        let result = new GetCoachMessagesRequest();
+        let result = new GetChatMessagesRequest();
         result.init(data);
         return result;
     }
@@ -1755,7 +1755,7 @@ export class GetCoachMessagesRequest implements IGetCoachMessagesRequest {
     }
 }
 
-export interface IGetCoachMessagesRequest {
+export interface IGetChatMessagesRequest {
     accountId?: string | undefined;
     isAnonymousUser?: boolean;
     loggedDateUtc: Date;
@@ -1989,14 +1989,14 @@ export interface IGetFoodEntriesResponse {
     totalFat?: number | undefined;
 }
 
-export class LogCoachMessageRequest implements ILogCoachMessageRequest {
+export class LogChatMessageRequest implements ILogChatMessageRequest {
     accountId?: string | undefined;
     isAnonymousUser?: boolean;
-    message!: string;
+    content!: string;
     role!: string;
     foodEntryId?: string | undefined;
 
-    constructor(data?: ILogCoachMessageRequest) {
+    constructor(data?: ILogChatMessageRequest) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -2009,15 +2009,15 @@ export class LogCoachMessageRequest implements ILogCoachMessageRequest {
         if (_data) {
             this.accountId = _data["accountId"];
             this.isAnonymousUser = _data["isAnonymousUser"];
-            this.message = _data["message"];
+            this.content = _data["content"];
             this.role = _data["role"];
             this.foodEntryId = _data["foodEntryId"];
         }
     }
 
-    static fromJS(data: any): LogCoachMessageRequest {
+    static fromJS(data: any): LogChatMessageRequest {
         data = typeof data === 'object' ? data : {};
-        let result = new LogCoachMessageRequest();
+        let result = new LogChatMessageRequest();
         result.init(data);
         return result;
     }
@@ -2026,17 +2026,17 @@ export class LogCoachMessageRequest implements ILogCoachMessageRequest {
         data = typeof data === 'object' ? data : {};
         data["accountId"] = this.accountId;
         data["isAnonymousUser"] = this.isAnonymousUser;
-        data["message"] = this.message;
+        data["content"] = this.content;
         data["role"] = this.role;
         data["foodEntryId"] = this.foodEntryId;
         return data;
     }
 }
 
-export interface ILogCoachMessageRequest {
+export interface ILogChatMessageRequest {
     accountId?: string | undefined;
     isAnonymousUser?: boolean;
-    message: string;
+    content: string;
     role: string;
     foodEntryId?: string | undefined;
 }

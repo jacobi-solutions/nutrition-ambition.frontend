@@ -3,11 +3,11 @@ import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { 
   NutritionAmbitionApiService,
-  LogCoachMessageRequest,
+  LogChatMessageRequest,
 } from './nutrition-ambition-api.service';
 
 // Interface for a coach message
-export interface CoachMessage {
+export interface ChatMessage {
   id?: string;
   accountId: string;
   foodEntryId: string;
@@ -18,13 +18,13 @@ export interface CoachMessage {
 }
 
 // Interface for request to get coach messages
-export interface GetCoachMessagesRequest {
+export interface GetChatMessagesRequest {
   accountId: string;
   date: string;
 }
 
 // Interface for request to clear coach messages
-export interface ClearCoachMessagesRequest {
+export interface ClearChatMessagesRequest {
   accountId: string;
   date: string;
 }
@@ -32,7 +32,7 @@ export interface ClearCoachMessagesRequest {
 @Injectable({
   providedIn: 'root'
 })
-export class CoachMessageService {
+export class ChatMessageService {
   constructor(private apiService: NutritionAmbitionApiService) { }
 
   /**
@@ -42,7 +42,7 @@ export class CoachMessageService {
    * @param message The message text
    * @returns Observable of void (response is just success/failure)
    */
-  logCoachMessage(accountId: string, foodEntryId: string, message: string): Observable<void> {
+  logChatMessage(accountId: string, foodEntryId: string, message: string): Observable<void> {
     const requestData = {
       accountId: accountId,
       foodEntryId: foodEntryId,
@@ -51,7 +51,7 @@ export class CoachMessageService {
       isAnonymousUser: false
     };
 
-    const request = LogCoachMessageRequest.fromJS(requestData);
+    const request = LogChatMessageRequest.fromJS(requestData);
 
     return this.apiService.log(request).pipe(
       catchError(error => {
@@ -68,9 +68,9 @@ export class CoachMessageService {
    * @param date The date to get messages for
    * @returns Observable of coach messages
    */
-  loadDailyCoachMessages(accountId: string, date: string): Observable<CoachMessage[]> {
+  loadDailyChatMessages(accountId: string, date: string): Observable<ChatMessage[]> {
     // TODO: This is a stub until the backend API is implemented
-    console.warn('getCoachMessages endpoint not yet implemented in the backend');
+    console.warn('getChatMessages endpoint not yet implemented in the backend');
     return of([]);
   }
 
@@ -81,9 +81,9 @@ export class CoachMessageService {
    * @param date The date to clear messages for
    * @returns Observable that resolves to true on success, false on failure
    */
-  resetCoachMessages(accountId: string, date: string): Observable<boolean> {
+  resetChatMessages(accountId: string, date: string): Observable<boolean> {
     // TODO: This is a stub until the backend API is implemented
-    console.warn('clearCoachMessages endpoint not yet implemented in the backend');
+    console.warn('clearChatMessages endpoint not yet implemented in the backend');
     return of(false);
   }
 } 
