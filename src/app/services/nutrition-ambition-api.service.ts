@@ -25,6 +25,16 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    get(body: GetDailyGoalRequest | undefined): Observable<GetDailyGoalResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    set(body: SetDailyGoalRequest | undefined): Observable<SetDailyGoalResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     createFoodEntry(body: CreateFoodEntryRequest | undefined): Observable<CreateFoodEntryResponse>;
     /**
      * @param body (optional) 
@@ -123,6 +133,118 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<Response>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    get(body: GetDailyGoalRequest | undefined): Observable<GetDailyGoalResponse> {
+        let url_ = this.baseUrl + "/api/dailygoal/get";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetDailyGoalResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetDailyGoalResponse>;
+        }));
+    }
+
+    protected processGet(response: HttpResponseBase): Observable<GetDailyGoalResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetDailyGoalResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetDailyGoalResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    set(body: SetDailyGoalRequest | undefined): Observable<SetDailyGoalResponse> {
+        let url_ = this.baseUrl + "/api/dailygoal/set";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSet(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSet(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SetDailyGoalResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SetDailyGoalResponse>;
+        }));
+    }
+
+    protected processSet(response: HttpResponseBase): Observable<SetDailyGoalResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SetDailyGoalResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SetDailyGoalResponse>(null as any);
     }
 
     /**
@@ -674,6 +796,74 @@ export interface ICreateFoodEntryResponse {
     foodEntry?: FoodEntry;
 }
 
+export class DailyGoal implements IDailyGoal {
+    id?: string | undefined;
+    createdDateUtc?: Date;
+    lastUpdatedDateUtc?: Date;
+    accountId?: string | undefined;
+    effectiveDateUtc?: Date;
+    baseCalories?: number;
+    nutrientGoals?: NutrientGoal[] | undefined;
+
+    constructor(data?: IDailyGoal) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
+            this.lastUpdatedDateUtc = _data["lastUpdatedDateUtc"] ? new Date(_data["lastUpdatedDateUtc"].toString()) : <any>undefined;
+            this.accountId = _data["accountId"];
+            this.effectiveDateUtc = _data["effectiveDateUtc"] ? new Date(_data["effectiveDateUtc"].toString()) : <any>undefined;
+            this.baseCalories = _data["baseCalories"];
+            if (Array.isArray(_data["nutrientGoals"])) {
+                this.nutrientGoals = [] as any;
+                for (let item of _data["nutrientGoals"])
+                    this.nutrientGoals!.push(NutrientGoal.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): DailyGoal {
+        data = typeof data === 'object' ? data : {};
+        let result = new DailyGoal();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
+        data["lastUpdatedDateUtc"] = this.lastUpdatedDateUtc ? this.lastUpdatedDateUtc.toISOString() : <any>undefined;
+        data["accountId"] = this.accountId;
+        data["effectiveDateUtc"] = this.effectiveDateUtc ? this.effectiveDateUtc.toISOString() : <any>undefined;
+        data["baseCalories"] = this.baseCalories;
+        if (Array.isArray(this.nutrientGoals)) {
+            data["nutrientGoals"] = [];
+            for (let item of this.nutrientGoals)
+                data["nutrientGoals"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IDailyGoal {
+    id?: string | undefined;
+    createdDateUtc?: Date;
+    lastUpdatedDateUtc?: Date;
+    accountId?: string | undefined;
+    effectiveDateUtc?: Date;
+    baseCalories?: number;
+    nutrientGoals?: NutrientGoal[] | undefined;
+}
+
 export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
     foodEntryId?: string | undefined;
 
@@ -1130,6 +1320,102 @@ export interface IFoodNutrition {
     micronutrients?: { [key: string]: Micronutrient; } | undefined;
 }
 
+export class GetDailyGoalRequest implements IGetDailyGoalRequest {
+    date?: Date | undefined;
+
+    constructor(data?: IGetDailyGoalRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): GetDailyGoalRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetDailyGoalRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["date"] = this.date ? this.date.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IGetDailyGoalRequest {
+    date?: Date | undefined;
+}
+
+export class GetDailyGoalResponse implements IGetDailyGoalResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    dailyGoal?: DailyGoal;
+
+    constructor(data?: IGetDailyGoalResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.dailyGoal = _data["dailyGoal"] ? DailyGoal.fromJS(_data["dailyGoal"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): GetDailyGoalResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetDailyGoalResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["dailyGoal"] = this.dailyGoal ? this.dailyGoal.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IGetDailyGoalResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    dailyGoal?: DailyGoal;
+}
+
 export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
     loggedDateUtc?: Date | undefined;
     meal?: MealType;
@@ -1342,52 +1628,12 @@ export interface IMacronutrients {
     trans_fat?: NutrientInfo;
 }
 
-export class MealItem implements IMealItem {
-    name?: string | undefined;
-    quantity?: string | undefined;
-
-    constructor(data?: IMealItem) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.name = _data["name"];
-            this.quantity = _data["quantity"];
-        }
-    }
-
-    static fromJS(data: any): MealItem {
-        data = typeof data === 'object' ? data : {};
-        let result = new MealItem();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["name"] = this.name;
-        data["quantity"] = this.quantity;
-        return data;
-    }
-}
-
-export interface IMealItem {
-    name?: string | undefined;
-    quantity?: string | undefined;
-}
-
 export enum MealType {
-    _0 = 0,
-    _1 = 1,
-    _2 = 2,
-    _3 = 3,
-    _4 = 4,
+    Unknown = "Unknown",
+    Breakfast = "Breakfast",
+    Lunch = "Lunch",
+    Dinner = "Dinner",
+    Snack = "Snack",
 }
 
 export class Micronutrient implements IMicronutrient {
@@ -1432,6 +1678,58 @@ export interface IMicronutrient {
     amount?: number;
     unit?: string | undefined;
     daily_value_percent?: number | undefined;
+}
+
+export class NutrientGoal implements INutrientGoal {
+    nutrientName?: string | undefined;
+    maxValue?: number | undefined;
+    minValue?: number | undefined;
+    percentageOfCalories?: number | undefined;
+    unit?: string | undefined;
+
+    constructor(data?: INutrientGoal) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.nutrientName = _data["nutrientName"];
+            this.maxValue = _data["maxValue"];
+            this.minValue = _data["minValue"];
+            this.percentageOfCalories = _data["percentageOfCalories"];
+            this.unit = _data["unit"];
+        }
+    }
+
+    static fromJS(data: any): NutrientGoal {
+        data = typeof data === 'object' ? data : {};
+        let result = new NutrientGoal();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["nutrientName"] = this.nutrientName;
+        data["maxValue"] = this.maxValue;
+        data["minValue"] = this.minValue;
+        data["percentageOfCalories"] = this.percentageOfCalories;
+        data["unit"] = this.unit;
+        return data;
+    }
+}
+
+export interface INutrientGoal {
+    nutrientName?: string | undefined;
+    maxValue?: number | undefined;
+    minValue?: number | undefined;
+    percentageOfCalories?: number | undefined;
+    unit?: string | undefined;
 }
 
 export class NutrientInfo implements INutrientInfo {
@@ -1591,7 +1889,6 @@ export class ParseFoodTextResponse implements IParseFoodTextResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
-    mealItems?: MealItem[] | undefined;
     success?: boolean;
     errorMessage?: string | undefined;
 
@@ -1614,11 +1911,6 @@ export class ParseFoodTextResponse implements IParseFoodTextResponse {
             this.isSuccess = _data["isSuccess"];
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
-            if (Array.isArray(_data["mealItems"])) {
-                this.mealItems = [] as any;
-                for (let item of _data["mealItems"])
-                    this.mealItems!.push(MealItem.fromJS(item));
-            }
             this.success = _data["success"];
             this.errorMessage = _data["errorMessage"];
         }
@@ -1641,11 +1933,6 @@ export class ParseFoodTextResponse implements IParseFoodTextResponse {
         data["isSuccess"] = this.isSuccess;
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
-        if (Array.isArray(this.mealItems)) {
-            data["mealItems"] = [];
-            for (let item of this.mealItems)
-                data["mealItems"].push(item.toJSON());
-        }
         data["success"] = this.success;
         data["errorMessage"] = this.errorMessage;
         return data;
@@ -1657,7 +1944,6 @@ export interface IParseFoodTextResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
-    mealItems?: MealItem[] | undefined;
     success?: boolean;
     errorMessage?: string | undefined;
 }
@@ -1716,6 +2002,102 @@ export interface IResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
+}
+
+export class SetDailyGoalRequest implements ISetDailyGoalRequest {
+    dailyGoal?: DailyGoal;
+
+    constructor(data?: ISetDailyGoalRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.dailyGoal = _data["dailyGoal"] ? DailyGoal.fromJS(_data["dailyGoal"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SetDailyGoalRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetDailyGoalRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["dailyGoal"] = this.dailyGoal ? this.dailyGoal.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISetDailyGoalRequest {
+    dailyGoal?: DailyGoal;
+}
+
+export class SetDailyGoalResponse implements ISetDailyGoalResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    dailyGoal?: DailyGoal;
+
+    constructor(data?: ISetDailyGoalResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.dailyGoal = _data["dailyGoal"] ? DailyGoal.fromJS(_data["dailyGoal"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SetDailyGoalResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetDailyGoalResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["dailyGoal"] = this.dailyGoal ? this.dailyGoal.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISetDailyGoalResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    dailyGoal?: DailyGoal;
 }
 
 export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
