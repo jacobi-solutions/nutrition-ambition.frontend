@@ -23,30 +23,17 @@
       <ion-spinner name="dots"></ion-spinner>
     </div>
   </div>
+
+  <!-- Floating Action Button -->
+  <app-floating-action-button
+    (takePhoto)="handleTakePhoto()"
+    (scanBarcode)="handleScanBarcode()"
+    (quickAdd)="handleQuickAdd()">
+  </app-floating-action-button>
 </ion-content>
 
 <ion-footer>
   <!-- Chat input component -->
   <app-chat-input (newMessage)="handleNewMessage($event)"></app-chat-input>
 </ion-footer>
-
-<!-- Nutrition Details Modal -->
-<ion-modal [isOpen]="isModalOpen" (didDismiss)="closeNutritionModal()">
-  <ng-template>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Nutrition Details</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="closeNutritionModal()">Close</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <app-nutrition-visualization 
-        *ngIf="selectedNutritionData" 
-        [nutritionData]="selectedNutritionData">
-      </app-nutrition-visualization>
-    </ion-content>
-  </ng-template>
-</ion-modal>
 

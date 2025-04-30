@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { LoginPage } from './pages/auth/login/login.page';
 import { RegisterPage } from './pages/auth/register/register.page';
 import { AuthGuard } from './guards/auth.guard';
+import { FoodDetailPage } from './pages/food-detail/food-detail.page';
+import { FoodGroupDetailPage } from './pages/food-group-detail/food-group-detail.page';
 
 export const routes: Routes = [
   {
@@ -14,9 +16,19 @@ export const routes: Routes = [
     // Note: AuthGuard might need adjustment if registration is public
   },
   {
-    path: 'landing-transparent',
-    loadComponent: () => import('./pages/landing-transparent/landing-transparent.page').then( m => m.LandingTransparentPage)
+    path: 'food-detail',
+    component: FoodDetailPage,
+    canActivate: [AuthGuard]
   },
+  {
+    path: 'food-group-detail',
+    component: FoodGroupDetailPage,
+    canActivate: [AuthGuard]
+  },
+  // {
+  //   path: 'landing-transparent',
+  //   loadComponent: () => import('./pages/landing-transparent/landing-transparent.page').then( m => m.LandingTransparentPage)
+  // },
   {
     path: 'app', // Parent route for tabs
     canActivate: [AuthGuard],

@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
-import { NutritionAmbitionApiService, GetFoodEntriesRequest, GetFoodEntriesResponse, FoodEntry, FoodGroup, FoodItem } from 'src/app/services/nutrition-ambition-api.service';
-import { AuthService } from 'src/app/services/auth.service';
+import { Router } from '@angular/router';
+import { FoodEntry, FoodGroup, FoodItem } from 'src/app/services/nutrition-ambition-api.service';
 import { finalize } from 'rxjs/operators';
 
-// 🟢 Import the new FoodGroupDetailModalComponent
-import { FoodGroupDetailModalComponent } from '../../modals/food-group-detail/food-group-detail.modal';
+// Import NutritionLogService
+import { NutritionLogService } from 'src/app/services/nutrition-log.service';
 import { AppHeaderComponent } from '../../components/app-header/app-header.component';
 
 @Component({
@@ -19,8 +19,6 @@ import { AppHeaderComponent } from '../../components/app-header/app-header.compo
     CommonModule,
     IonicModule,
     FormsModule,
-    // 🟢 Import the modal component here so it can be used
-    // FoodGroupDetailModalComponent 
     AppHeaderComponent
   ]
 })
@@ -33,9 +31,8 @@ export class NutritionLogPage implements OnInit {
   dailySummary: any = null;
 
   constructor(
-    private nutritionApiService: NutritionAmbitionApiService,
-    private authService: AuthService,
-    private modalCtrl: ModalController
+    private nutritionLogService: NutritionLogService,
+    private router: Router
   ) { }
 
   ngOnInit() {
@@ -53,60 +50,29 @@ export class NutritionLogPage implements OnInit {
     this.foodEntries = [];
     this.dailySummary = null;
 
-    const request = new GetFoodEntriesRequest({
-      loggedDateUtc: new Date(this.selectedDate)
-    });
-
-    this.nutritionApiService.getFoodEntries(request)
+    this.nutritionLogService.getLogByDate(this.selectedDate)
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
-        next: (response: GetFoodEntriesResponse) => {
-          if (response && response.isSuccess) {
-            this.foodEntries = response.foodEntries || [];
-            this.dailySummary = {
-              totalCalories: response.totalCalories,
-              totalProtein: response.totalProtein,
-              totalCarbs: response.totalCarbs,
-              totalFat: response.totalFat
-            };
-          } else {
-            if (response?.errors && Array.isArray(response.errors)) {
-              this.errorMessage = response.errors.map(err => err.errorMessage).join(', ');
-            } else {
-              this.errorMessage = 'Failed to load log data.';
-            }
-          }
+        next: (response) => {
+          this.foodEntries = response.foodEntries || [];
+          this.dailySummary = this.nutritionLogService.formatSummary(response);
         },
         error: (err) => {
-          console.error('Error loading nutrition log:', err);
-          let msg = 'An unknown error occurred while loading the log.';
-          if (typeof err === 'string') {
-            msg = err;
-          } else if (err?.message && typeof err.message === 'string') {
-            msg = err.message;
-          } else if (err?.error) {
-            if (typeof err.error === 'string') {
-              msg = err.error;
-            } else if (err.error?.message && typeof err.error.message === 'string') {
-              msg = err.error.message;
-            }
-          }
-          this.errorMessage = msg;
+          console.error('Error loading log:', err);
+          this.errorMessage = err?.message || 'Failed to load log data.';
         }
       });
   }
 
-  // 🟢 Updated to use FoodGroupDetailModalComponent
-  async viewGroupDetails(entry: FoodEntry, group: FoodGroup) {
-    const modal = await this.modalCtrl.create({
-      component: FoodGroupDetailModalComponent, // Use the new modal
-      componentProps: {
+  // Updated to navigate to the FoodGroupDetailPage
+  viewGroupDetails(entry: FoodEntry, group: FoodGroup) {
+    this.router.navigate(['/food-group-detail'], {
+      state: {
         groupName: group.groupName,
         items: group.items,
         entryTime: entry.loggedDateUtc
       }
     });
-    await modal.present();
   }
 
   previousDay() {

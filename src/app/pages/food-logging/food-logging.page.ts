@@ -1,16 +1,19 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, IonContent, ModalController } from '@ionic/angular'; // Import ModalController
+import { IonicModule, IonContent } from '@ionic/angular';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { NutritionAmbitionApiService, ParseFoodTextRequest, NutritionApiResponse } from 'src/app/services/nutrition-ambition-api.service';
+
+// Import FoodLoggingService instead of direct API service
+import { FoodLoggingService } from 'src/app/services/food-logging.service';
 
 // Import new components
 import { ChatMessage, ChatMessageComponent } from './chat-message/chat-message.component';
 import { ChatInputComponent } from './chat-input/chat-input.component';
 import { NutritionVisualizationComponent } from './nutrition-visualization/nutrition-visualization.component';
+import { FloatingActionButtonComponent } from '../../components/floating-action-button/floating-action-button.component';
 
 @Component({
   selector: 'app-food-logging',
@@ -22,7 +25,7 @@ import { NutritionVisualizationComponent } from './nutrition-visualization/nutri
     IonicModule,
     ChatMessageComponent, // Add ChatMessageComponent
     ChatInputComponent,   // Add ChatInputComponent
-    NutritionVisualizationComponent // Keep for modal
+    FloatingActionButtonComponent // Add Floating Action Button
   ]
 })
 export class FoodLoggingPage implements OnInit, OnDestroy {
@@ -34,15 +37,10 @@ export class FoodLoggingPage implements OnInit, OnDestroy {
   userEmail: string | null = null;
   private userEmailSubscription: Subscription;
 
-  // Modal related properties
-  isModalOpen = false;
-  selectedNutritionData: any = null;
-
   constructor(
     private authService: AuthService,
     private router: Router,
-    private nutritionApiService: NutritionAmbitionApiService,
-    private modalController: ModalController // Inject ModalController
+    private foodLoggingService: FoodLoggingService
   ) {
     this.userEmailSubscription = this.authService.userEmail$.subscribe(email => {
       this.userEmail = email;
@@ -65,54 +63,34 @@ export class FoodLoggingPage implements OnInit, OnDestroy {
   }
 
   handleNewMessage(text: string) {
-    // Add user message to chat
     const userMessage: ChatMessage = {
       sender: 'user',
-      text: text,
+      text,
       timestamp: new Date()
     };
     this.messages.push(userMessage);
     this.scrollToBottom();
 
-    // Prepare for AI response
     this.isLoading = true;
     this.errorMessage = '';
 
-    const request = new ParseFoodTextRequest({ foodDescription: text });
-
-    // Call the API
-    this.nutritionApiService.processFoodTextAndGetNutrition(request)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.scrollToBottom();
-        })
-      )
+    this.foodLoggingService.processUserInput(text)
+      .pipe(finalize(() => {
+        this.isLoading = false;
+        this.scrollToBottom();
+      }))
       .subscribe({
-        next: (response: NutritionApiResponse) => {
-          if (response && response.isSuccess) {
-            // Add AI response to chat
-            const aiMessage: ChatMessage = {
-              sender: 'ai',
-              text: response.aiCoachResponse || 'Logged!', // Use AI coach response
-              timestamp: new Date(),
-              nutritionData: response.foods && response.foods.length > 0 ? response : null // Store full response if foods exist
-            };
-            this.messages.push(aiMessage);
-          } else {
-            // Add error message as AI response
-            const errorText = response?.errors?.join(' ') || 'Sorry, I couldn\'t process that.';
-            this.messages.push({
-              sender: 'ai',
-              text: errorText,
-              timestamp: new Date()
-            });
-            this.errorMessage = errorText; // Optionally show error elsewhere too
-          }
+        next: (response) => {
+          const aiMessage: ChatMessage = {
+            sender: 'ai',
+            text: response.aiCoachResponse || 'Logged!',
+            timestamp: new Date(),
+            nutritionData: response.foods && response.foods.length > 0 ? response : null
+          };
+          this.messages.push(aiMessage);
         },
-        error: (error) => {
-          console.error('Error processing food text:', error);
-          const errorText = 'Sorry, an error occurred while contacting the server.';
+        error: (err) => {
+          const errorText = err?.message || 'Sorry, an error occurred while contacting the server.';
           this.messages.push({
             sender: 'ai',
             text: errorText,
@@ -123,17 +101,24 @@ export class FoodLoggingPage implements OnInit, OnDestroy {
       });
   }
 
-  // Method to open the nutrition details modal
-  async showNutritionDetails(nutritionData: any) {
-    this.selectedNutritionData = nutritionData;
-    this.isModalOpen = true;
-    // Note: Modal presentation is handled in the template using *ngIf="isModalOpen"
+  // Updated to navigate to food-detail page
+  showNutritionDetails(nutritionData: any) {
+    this.router.navigate(['/food-detail'], {
+      state: { nutritionData }
+    });
   }
 
-  // Method to close the modal (called from the modal itself or template)
-  closeNutritionModal() {
-    this.isModalOpen = false;
-    this.selectedNutritionData = null;
+  // Floating Action Button handlers
+  handleTakePhoto() {
+    console.log('Take Photo tapped');
+  }
+
+  handleScanBarcode() {
+    console.log('Scan Barcode tapped');
+  }
+
+  handleQuickAdd() {
+    console.log('Quick Add tapped');
   }
 
   scrollToBottom() {

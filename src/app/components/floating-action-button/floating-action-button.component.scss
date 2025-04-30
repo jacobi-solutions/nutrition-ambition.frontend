@@ -1,0 +1,18 @@
+ion-fab {
+  margin-bottom: 16px;
+  margin-right: 16px;
+
+  ion-fab-button {
+    --background: var(--ion-color-primary);
+    --background-activated: var(--ion-color-primary-shade);
+    --background-hover: var(--ion-color-primary-tint);
+  }
+
+  ion-fab-list {
+    ion-fab-button {
+      --background: var(--ion-color-light);
+      --color: var(--ion-color-primary);
+      margin-bottom: 8px;
+    }
+  }
+} 
