@@ -30,6 +30,16 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    getCoachMessages(body: GetCoachMessagesRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    clearCoachMessages(body: ClearCoachMessagesRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     get(body: GetDailyGoalRequest | undefined): Observable<GetDailyGoalResponse>;
     /**
      * @param body (optional) 
@@ -184,6 +194,110 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processLog(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getCoachMessages(body: GetCoachMessagesRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/CoachMessage/GetCoachMessages";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetCoachMessages(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetCoachMessages(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processGetCoachMessages(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    clearCoachMessages(body: ClearCoachMessagesRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/CoachMessage/ClearCoachMessages";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processClearCoachMessages(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processClearCoachMessages(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processClearCoachMessages(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -857,6 +971,50 @@ export interface IAccountRequest {
     isAnonymousUser?: boolean;
     username?: string | undefined;
     email?: string | undefined;
+}
+
+export class ClearCoachMessagesRequest implements IClearCoachMessagesRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    loggedDateUtc?: Date | undefined;
+
+    constructor(data?: IClearCoachMessagesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): ClearCoachMessagesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ClearCoachMessagesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IClearCoachMessagesRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    loggedDateUtc?: Date | undefined;
 }
 
 export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
@@ -1557,6 +1715,50 @@ export interface IFoodNutrition {
     calories?: number;
     macronutrients?: Macronutrients;
     micronutrients?: { [key: string]: Micronutrient; } | undefined;
+}
+
+export class GetCoachMessagesRequest implements IGetCoachMessagesRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    loggedDateUtc!: Date;
+
+    constructor(data?: IGetCoachMessagesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): GetCoachMessagesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetCoachMessagesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IGetCoachMessagesRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    loggedDateUtc: Date;
 }
 
 export class GetDailyGoalRequest implements IGetDailyGoalRequest {
