@@ -3,9 +3,9 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  production: false,
-  backendApiUrl: 'https://backend-496562523884.us-central1.run.app',
-  // backendApiUrl: 'http://localhost:5165',
+  production: true,
+  // backendApiUrl: 'https://backend-496562523884.us-central1.run.app',
+  backendApiUrl: 'http://localhost:5165',
 
   firebase: {
     "projectId": "nutrition-ambition",

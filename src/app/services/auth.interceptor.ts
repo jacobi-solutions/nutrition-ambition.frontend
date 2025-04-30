@@ -4,10 +4,11 @@ import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent } from '@angul
 import { Observable, from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { environment } from 'src/environments/environment';
 
 export const AuthInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn): Observable<HttpEvent<any>> => {
   const authService = inject(AuthService);
-  const backendUrl = 'http://localhost:5165/api'; // ✅ Change to match your backend URL
+  const backendUrl = environment.backendApiUrl; // ✅ Change to match your backend URL
 
   // ✅ Only add token if request is to the backend
   if (!req.url.startsWith(backendUrl)) {
