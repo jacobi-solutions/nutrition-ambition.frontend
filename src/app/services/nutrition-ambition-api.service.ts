@@ -35,6 +35,16 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    info(body: ExampleRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    protected(body: ExampleRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     createFoodEntry(body: CreateFoodEntryRequest | undefined): Observable<CreateFoodEntryResponse>;
     /**
      * @param body (optional) 
@@ -245,6 +255,110 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<SetDailyGoalResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    info(body: ExampleRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/example/info";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processInfo(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processInfo(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processInfo(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    protected(body: ExampleRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/example/protected";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processProtected(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processProtected(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processProtected(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
     }
 
     /**
@@ -641,6 +755,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
 }
 
 export class AccountRequest implements IAccountRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     username?: string | undefined;
     email?: string | undefined;
 
@@ -655,6 +771,8 @@ export class AccountRequest implements IAccountRequest {
 
     init(_data?: any) {
         if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
             this.username = _data["username"];
             this.email = _data["email"];
         }
@@ -669,6 +787,8 @@ export class AccountRequest implements IAccountRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
         data["username"] = this.username;
         data["email"] = this.email;
         return data;
@@ -676,11 +796,15 @@ export class AccountRequest implements IAccountRequest {
 }
 
 export interface IAccountRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     username?: string | undefined;
     email?: string | undefined;
 }
 
 export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     description?: string | undefined;
     meal?: MealType;
     loggedDateUtc?: Date;
@@ -697,6 +821,8 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
 
     init(_data?: any) {
         if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
             this.description = _data["description"];
             this.meal = _data["meal"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
@@ -717,6 +843,8 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
         data["description"] = this.description;
         data["meal"] = this.meal;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
@@ -730,6 +858,8 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
 }
 
 export interface ICreateFoodEntryRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     description?: string | undefined;
     meal?: MealType;
     loggedDateUtc?: Date;
@@ -865,6 +995,8 @@ export interface IDailyGoal {
 }
 
 export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     foodEntryId?: string | undefined;
 
     constructor(data?: IDeleteFoodEntryRequest) {
@@ -878,6 +1010,8 @@ export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
 
     init(_data?: any) {
         if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
             this.foodEntryId = _data["foodEntryId"];
         }
     }
@@ -891,12 +1025,16 @@ export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
         data["foodEntryId"] = this.foodEntryId;
         return data;
     }
 }
 
 export interface IDeleteFoodEntryRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     foodEntryId?: string | undefined;
 }
 
@@ -994,6 +1132,50 @@ export class ErrorDto implements IErrorDto {
 export interface IErrorDto {
     errorMessage?: string | undefined;
     errorCode?: string | undefined;
+}
+
+export class ExampleRequest implements IExampleRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    additionalData?: string | undefined;
+
+    constructor(data?: IExampleRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
+            this.additionalData = _data["additionalData"];
+        }
+    }
+
+    static fromJS(data: any): ExampleRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ExampleRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
+        data["additionalData"] = this.additionalData;
+        return data;
+    }
+}
+
+export interface IExampleRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    additionalData?: string | undefined;
 }
 
 export class FoodEntry implements IFoodEntry {
@@ -1417,6 +1599,8 @@ export interface IGetDailyGoalResponse {
 }
 
 export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     loggedDateUtc?: Date | undefined;
     meal?: MealType;
 
@@ -1431,6 +1615,8 @@ export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
 
     init(_data?: any) {
         if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             this.meal = _data["meal"];
         }
@@ -1445,6 +1631,8 @@ export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         data["meal"] = this.meal;
         return data;
@@ -1452,6 +1640,8 @@ export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
 }
 
 export interface IGetFoodEntriesRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     loggedDateUtc?: Date | undefined;
     meal?: MealType;
 }
@@ -1849,6 +2039,8 @@ export interface INutritionApiResponse {
 }
 
 export class ParseFoodTextRequest implements IParseFoodTextRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     foodDescription!: string;
 
     constructor(data?: IParseFoodTextRequest) {
@@ -1862,6 +2054,8 @@ export class ParseFoodTextRequest implements IParseFoodTextRequest {
 
     init(_data?: any) {
         if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
             this.foodDescription = _data["foodDescription"];
         }
     }
@@ -1875,12 +2069,16 @@ export class ParseFoodTextRequest implements IParseFoodTextRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
         data["foodDescription"] = this.foodDescription;
         return data;
     }
 }
 
 export interface IParseFoodTextRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     foodDescription: string;
 }
 
@@ -2101,6 +2299,8 @@ export interface ISetDailyGoalResponse {
 }
 
 export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     foodEntryId?: string | undefined;
     description?: string | undefined;
     meal?: MealType;
@@ -2118,6 +2318,8 @@ export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
 
     init(_data?: any) {
         if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
             this.foodEntryId = _data["foodEntryId"];
             this.description = _data["description"];
             this.meal = _data["meal"];
@@ -2139,6 +2341,8 @@ export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
         data["foodEntryId"] = this.foodEntryId;
         data["description"] = this.description;
         data["meal"] = this.meal;
@@ -2153,6 +2357,8 @@ export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
 }
 
 export interface IUpdateFoodEntryRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
     foodEntryId?: string | undefined;
     description?: string | undefined;
     meal?: MealType;
