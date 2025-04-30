@@ -4,8 +4,8 @@
 
 export const environment = {
   production: false,
-  // backendApiUrl: 'https://backend-496562523884.us-central1.run.app',
-  backendApiUrl: 'http://localhost:5165',
+  backendApiUrl: 'https://backend-496562523884.us-central1.run.app',
+  // backendApiUrl: 'http://localhost:5165',
 
   firebase: {
     "projectId": "nutrition-ambition",

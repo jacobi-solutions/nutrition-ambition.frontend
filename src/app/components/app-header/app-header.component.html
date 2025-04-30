@@ -1,0 +1,15 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Nutrition Ambition</ion-title>
+    
+    <ion-buttons slot="end">
+      <ion-chip *ngIf="userEmail">
+        <ion-label>{{ userEmail }}</ion-label>
+        <ion-icon name="person-circle"></ion-icon>
+      </ion-chip>
+      <ion-button (click)="logout()">
+        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header> 

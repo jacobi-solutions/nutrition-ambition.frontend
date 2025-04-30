@@ -1,0 +1,10 @@
+ion-chip {
+  margin-right: 8px;
+  max-width: 200px; // Limit width for long email addresses
+  
+  ion-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+} 

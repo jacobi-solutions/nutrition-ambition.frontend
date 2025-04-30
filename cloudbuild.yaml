@@ -17,7 +17,7 @@ steps:
     args:
       - '-c'
       - |
-        npm run build -- --configuration=production
+        npm run build
 
   # 3️⃣ Deploy to Firebase Hosting (install firebase-tools here)
   - name: 'node:20'

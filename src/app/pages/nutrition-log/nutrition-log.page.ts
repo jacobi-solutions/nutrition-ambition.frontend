@@ -8,6 +8,7 @@ import { finalize } from 'rxjs/operators';
 
 // 🟢 Import the new FoodGroupDetailModalComponent
 import { FoodGroupDetailModalComponent } from '../../modals/food-group-detail/food-group-detail.modal';
+import { AppHeaderComponent } from '../../components/app-header/app-header.component';
 
 @Component({
   selector: 'app-nutrition-log',
@@ -20,6 +21,7 @@ import { FoodGroupDetailModalComponent } from '../../modals/food-group-detail/fo
     FormsModule,
     // 🟢 Import the modal component here so it can be used
     // FoodGroupDetailModalComponent 
+    AppHeaderComponent
   ]
 })
 export class NutritionLogPage implements OnInit {
