@@ -32,4 +32,25 @@ export class FoodLoggingService {
         })
       );
   }
+
+  /**
+   * Uses Smart Nutrition Lookup to get nutrition data for a food description
+   * Handles both anonymous and authenticated users
+   * 
+   * @param text The user input text describing foods
+   * @returns An Observable of NutritionApiResponse containing nutrition data from Smart Lookup
+   */
+  getSmartNutritionData(foodDescription: string): Observable<NutritionApiResponse> {
+    const request = new ParseFoodTextRequest({
+      foodDescription: foodDescription
+    });
+
+    return this.nutritionApiService.getSmartNutritionData(request)
+      .pipe(
+        catchError(error => {
+          console.error('Error getting smart nutrition data:', error);
+          return throwError(() => new Error('Failed to get smart nutrition data'));
+        })
+      );
+  }
 } 

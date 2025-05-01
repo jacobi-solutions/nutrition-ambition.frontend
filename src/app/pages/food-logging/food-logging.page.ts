@@ -74,20 +74,44 @@ export class FoodLoggingPage implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.foodLoggingService.processUserInput(text)
+    // Use Smart Nutrition Lookup instead of standard processing
+    this.foodLoggingService.getSmartNutritionData(text)
       .pipe(finalize(() => {
         this.isLoading = false;
         this.scrollToBottom();
       }))
       .subscribe({
         next: (response) => {
-          const aiMessage: ChatMessage = {
-            sender: 'ai',
-            text: response.aiCoachResponse || 'Logged!',
-            timestamp: new Date(),
-            nutritionData: response.foods && response.foods.length > 0 ? response : null
-          };
-          this.messages.push(aiMessage);
+          if (response.isSuccess) {
+            // Determine match quality based on source field
+            let matchQuality: string | undefined = undefined;
+            if (response.source === 'branded') {
+              matchQuality = 'Best Match Found';
+            } else if (response.source === 'fallback') {
+              matchQuality = 'Estimated Match';
+            }
+
+            const aiMessage: ChatMessage = {
+              sender: 'ai',
+              text: response.aiCoachResponse || 'Logged!',
+              timestamp: new Date(),
+              nutritionData: response.foods && response.foods.length > 0 ? response : null,
+              matchQuality: matchQuality
+            };
+            this.messages.push(aiMessage);
+          } else {
+            // Handle unsuccessful response but with no thrown error
+            const errorText = response.errors && response.errors.length > 0
+              ? response.errors[0].errorMessage || 'Sorry, I couldn\'t find nutrition data for that food.'
+              : 'Sorry, I couldn\'t find nutrition data for that food.';
+            
+            this.messages.push({
+              sender: 'ai',
+              text: errorText,
+              timestamp: new Date()
+            });
+            this.errorMessage = errorText;
+          }
         },
         error: (err) => {
           const errorText = err?.message || 'Sorry, an error occurred while contacting the server.';

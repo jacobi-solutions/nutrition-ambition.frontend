@@ -50,16 +50,6 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    info(body: ExampleRequest | undefined): Observable<void>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    protected(body: ExampleRequest | undefined): Observable<void>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     createFoodEntry(body: CreateFoodEntryRequest | undefined): Observable<CreateFoodEntryResponse>;
     /**
      * @param body (optional) 
@@ -91,6 +81,11 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     processFoodTextAndGetNutrition(body: ParseFoodTextRequest | undefined): Observable<NutritionApiResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getSmartNutritionData(body: ParseFoodTextRequest | undefined): Observable<NutritionApiResponse>;
 }
 
 @Injectable()
@@ -426,110 +421,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<SetDailyGoalResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    info(body: ExampleRequest | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/example/info";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processInfo(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processInfo(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processInfo(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return _observableOf<void>(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<void>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    protected(body: ExampleRequest | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/example/protected";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processProtected(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processProtected(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<void>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<void>;
-        }));
-    }
-
-    protected processProtected(response: HttpResponseBase): Observable<void> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return _observableOf<void>(null as any);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<void>(null as any);
     }
 
     /**
@@ -903,6 +794,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processProcessFoodTextAndGetNutrition(response: HttpResponseBase): Observable<NutritionApiResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = NutritionApiResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<NutritionApiResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getSmartNutritionData(body: ParseFoodTextRequest | undefined): Observable<NutritionApiResponse> {
+        let url_ = this.baseUrl + "/api/Nutrition/GetSmartNutritionData";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetSmartNutritionData(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetSmartNutritionData(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<NutritionApiResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<NutritionApiResponse>;
+        }));
+    }
+
+    protected processGetSmartNutritionData(response: HttpResponseBase): Observable<NutritionApiResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1347,50 +1294,6 @@ export class ErrorDto implements IErrorDto {
 export interface IErrorDto {
     errorMessage?: string | undefined;
     errorCode?: string | undefined;
-}
-
-export class ExampleRequest implements IExampleRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
-    additionalData?: string | undefined;
-
-    constructor(data?: IExampleRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
-            this.additionalData = _data["additionalData"];
-        }
-    }
-
-    static fromJS(data: any): ExampleRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new ExampleRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
-        data["additionalData"] = this.additionalData;
-        return data;
-    }
-}
-
-export interface IExampleRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
-    additionalData?: string | undefined;
 }
 
 export class FoodEntry implements IFoodEntry {
@@ -2284,6 +2187,7 @@ export class NutritionApiResponse implements INutritionApiResponse {
     stackTrace?: string | undefined;
     foods?: FoodNutrition[] | undefined;
     aiCoachResponse?: string | undefined;
+    source?: string | undefined;
 
     constructor(data?: INutritionApiResponse) {
         if (data) {
@@ -2310,6 +2214,7 @@ export class NutritionApiResponse implements INutritionApiResponse {
                     this.foods!.push(FoodNutrition.fromJS(item));
             }
             this.aiCoachResponse = _data["aiCoachResponse"];
+            this.source = _data["source"];
         }
     }
 
@@ -2336,6 +2241,7 @@ export class NutritionApiResponse implements INutritionApiResponse {
                 data["foods"].push(item.toJSON());
         }
         data["aiCoachResponse"] = this.aiCoachResponse;
+        data["source"] = this.source;
         return data;
     }
 }
@@ -2347,6 +2253,7 @@ export interface INutritionApiResponse {
     stackTrace?: string | undefined;
     foods?: FoodNutrition[] | undefined;
     aiCoachResponse?: string | undefined;
+    source?: string | undefined;
 }
 
 export class ParseFoodTextRequest implements IParseFoodTextRequest {

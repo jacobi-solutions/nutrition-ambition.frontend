@@ -7,6 +7,7 @@ export interface ChatMessage {
   text: string;
   timestamp?: Date;
   nutritionData?: any; // To know if details are available
+  matchQuality?: string; // Added to show the quality of match (Best Match Found/Estimated Match)
 }
 
 @Component({

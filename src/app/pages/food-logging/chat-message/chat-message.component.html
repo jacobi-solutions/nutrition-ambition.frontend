@@ -4,13 +4,17 @@
 }">
   <div class="message-bubble">
     <p>{{ message.text }}</p>
-    <ion-button 
-      *ngIf="message.sender === 'ai' && message.nutritionData"
-      fill="clear"
-      size="small"
-      (click)="onViewDetailsClick()">
-      View Details
-    </ion-button>
+    <div *ngIf="message.sender === 'ai' && message.nutritionData">
+      <div *ngIf="message.matchQuality" class="match-quality-badge">
+        {{ message.matchQuality }}
+      </div>
+      <ion-button 
+        fill="clear"
+        size="small"
+        (click)="onViewDetailsClick()">
+        View Details
+      </ion-button>
+    </div>
   </div>
   <!-- Optional: Add timestamp display here -->
   <!-- <span class="timestamp">{{ message.timestamp | date:'shortTime' }}</span> -->
