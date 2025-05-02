@@ -7,7 +7,7 @@
     </ion-list-header>
     <ion-item *ngFor="let item of items" button (click)="viewItemNutrition(item)">
       <ion-label>
-        <h2>{{ item.name }}</h2>
+        <h2>{{ getDisplayName(item) }}</h2>
         <p>{{ item.quantity }} {{ item.unit }} - {{ item.calories | number:".0-0" }} kcal | P: {{ item.protein | number:".0-1" }}g | C: {{ item.carbohydrates | number:".0-1" }}g | F: {{ item.fat | number:".0-1" }}g</p>
       </ion-label>
     </ion-item>

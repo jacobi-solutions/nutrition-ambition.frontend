@@ -36,4 +36,9 @@ export class FoodGroupDetailPage implements OnInit {
       state: { nutritionData: { foods: [item] } }
     });
   }
+  
+  // Helper method to display food name with brand name if available
+  getDisplayName(item: FoodItem): string {
+    return item.brandName ? `${item.brandName} ${item.name}` : item.name || '';
+  }
 } 

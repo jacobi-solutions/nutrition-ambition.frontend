@@ -1418,12 +1418,18 @@ export interface IFoodGroup {
 
 export class FoodItem implements IFoodItem {
     name?: string | undefined;
+    brandName?: string | undefined;
     quantity?: number;
     unit?: string | undefined;
     calories?: number;
     protein?: number;
     carbohydrates?: number;
     fat?: number;
+    fiber?: number;
+    sugar?: number;
+    saturatedFat?: number;
+    unsaturatedFat?: number;
+    transFat?: number;
     micronutrients?: { [key: string]: number; } | undefined;
 
     constructor(data?: IFoodItem) {
@@ -1438,12 +1444,18 @@ export class FoodItem implements IFoodItem {
     init(_data?: any) {
         if (_data) {
             this.name = _data["name"];
+            this.brandName = _data["brandName"];
             this.quantity = _data["quantity"];
             this.unit = _data["unit"];
             this.calories = _data["calories"];
             this.protein = _data["protein"];
             this.carbohydrates = _data["carbohydrates"];
             this.fat = _data["fat"];
+            this.fiber = _data["fiber"];
+            this.sugar = _data["sugar"];
+            this.saturatedFat = _data["saturatedFat"];
+            this.unsaturatedFat = _data["unsaturatedFat"];
+            this.transFat = _data["transFat"];
             if (_data["micronutrients"]) {
                 this.micronutrients = {} as any;
                 for (let key in _data["micronutrients"]) {
@@ -1464,12 +1476,18 @@ export class FoodItem implements IFoodItem {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
+        data["brandName"] = this.brandName;
         data["quantity"] = this.quantity;
         data["unit"] = this.unit;
         data["calories"] = this.calories;
         data["protein"] = this.protein;
         data["carbohydrates"] = this.carbohydrates;
         data["fat"] = this.fat;
+        data["fiber"] = this.fiber;
+        data["sugar"] = this.sugar;
+        data["saturatedFat"] = this.saturatedFat;
+        data["unsaturatedFat"] = this.unsaturatedFat;
+        data["transFat"] = this.transFat;
         if (this.micronutrients) {
             data["micronutrients"] = {};
             for (let key in this.micronutrients) {
@@ -1483,12 +1501,18 @@ export class FoodItem implements IFoodItem {
 
 export interface IFoodItem {
     name?: string | undefined;
+    brandName?: string | undefined;
     quantity?: number;
     unit?: string | undefined;
     calories?: number;
     protein?: number;
     carbohydrates?: number;
     fat?: number;
+    fiber?: number;
+    sugar?: number;
+    saturatedFat?: number;
+    unsaturatedFat?: number;
+    transFat?: number;
     micronutrients?: { [key: string]: number; } | undefined;
 }
 
@@ -1534,6 +1558,7 @@ export class FoodNutrition implements IFoodNutrition {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     name?: string | undefined;
+    brandName?: string | undefined;
     quantity?: string | undefined;
     unit?: string | undefined;
     calories?: number;
@@ -1560,6 +1585,7 @@ export class FoodNutrition implements IFoodNutrition {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.name = _data["name"];
+            this.brandName = _data["brandName"];
             this.quantity = _data["quantity"];
             this.unit = _data["unit"];
             this.calories = _data["calories"];
@@ -1592,6 +1618,7 @@ export class FoodNutrition implements IFoodNutrition {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["name"] = this.name;
+        data["brandName"] = this.brandName;
         data["quantity"] = this.quantity;
         data["unit"] = this.unit;
         data["calories"] = this.calories;
@@ -1613,6 +1640,7 @@ export interface IFoodNutrition {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     name?: string | undefined;
+    brandName?: string | undefined;
     quantity?: string | undefined;
     unit?: string | undefined;
     calories?: number;
