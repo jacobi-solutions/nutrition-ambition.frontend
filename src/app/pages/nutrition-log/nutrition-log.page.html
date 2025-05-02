@@ -23,16 +23,23 @@
       <ion-card-subtitle>{{ selectedDate | date:"fullDate" }}</ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
-      <ion-grid>
-        <ion-row>
-          <ion-col>Calories: {{ dailySummary.totalCalories | number:".0-0" }}</ion-col>
-          <ion-col>Protein: {{ dailySummary.totalProtein | number:".0-1" }}g</ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col>Carbs: {{ dailySummary.totalCarbs | number:".0-1" }}g</ion-col>
-          <ion-col>Fat: {{ dailySummary.totalFat | number:".0-1" }}g</ion-col>
-        </ion-row>
-      </ion-grid>
+      <!-- Nutrients Grid -->
+      <div class="nutrients-grid">
+        <!-- Clickable nutrient items -->
+        <ion-button 
+          *ngFor="let nutrient of nutrients" 
+          (click)="viewFoodsForNutrient(nutrient.name)"
+          expand="block"
+          fill="clear"
+          color="medium"
+          class="nutrient-button"
+        >
+          <div class="nutrient-content">
+            <span class="nutrient-value">{{ nutrient.value | number:'1.0-1' }}{{ nutrient.unit }}</span>
+            <span class="nutrient-label">{{ nutrient.name }}</span>
+          </div>
+        </ion-button>
+      </div>
     </ion-card-content>
   </ion-card>
 

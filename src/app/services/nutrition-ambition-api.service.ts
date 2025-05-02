@@ -2305,8 +2305,7 @@ export class ParseFoodTextResponse implements IParseFoodTextResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
-    success?: boolean;
-    errorMessage?: string | undefined;
+    foods?: ParsedFoodItem[] | undefined;
 
     constructor(data?: IParseFoodTextResponse) {
         if (data) {
@@ -2327,8 +2326,11 @@ export class ParseFoodTextResponse implements IParseFoodTextResponse {
             this.isSuccess = _data["isSuccess"];
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
-            this.success = _data["success"];
-            this.errorMessage = _data["errorMessage"];
+            if (Array.isArray(_data["foods"])) {
+                this.foods = [] as any;
+                for (let item of _data["foods"])
+                    this.foods!.push(ParsedFoodItem.fromJS(item));
+            }
         }
     }
 
@@ -2349,8 +2351,11 @@ export class ParseFoodTextResponse implements IParseFoodTextResponse {
         data["isSuccess"] = this.isSuccess;
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
-        data["success"] = this.success;
-        data["errorMessage"] = this.errorMessage;
+        if (Array.isArray(this.foods)) {
+            data["foods"] = [];
+            for (let item of this.foods)
+                data["foods"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -2360,8 +2365,55 @@ export interface IParseFoodTextResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
-    success?: boolean;
-    errorMessage?: string | undefined;
+    foods?: ParsedFoodItem[] | undefined;
+}
+
+export class ParsedFoodItem implements IParsedFoodItem {
+    name?: string | undefined;
+    quantity?: number;
+    unit?: string | undefined;
+    isBranded?: boolean;
+
+    constructor(data?: IParsedFoodItem) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.quantity = _data["quantity"];
+            this.unit = _data["unit"];
+            this.isBranded = _data["isBranded"];
+        }
+    }
+
+    static fromJS(data: any): ParsedFoodItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new ParsedFoodItem();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["quantity"] = this.quantity;
+        data["unit"] = this.unit;
+        data["isBranded"] = this.isBranded;
+        return data;
+    }
+}
+
+export interface IParsedFoodItem {
+    name?: string | undefined;
+    quantity?: number;
+    unit?: string | undefined;
+    isBranded?: boolean;
 }
 
 export class Response implements IResponse {

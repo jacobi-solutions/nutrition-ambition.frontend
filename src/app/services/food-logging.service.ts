@@ -4,7 +4,9 @@ import { catchError } from 'rxjs/operators';
 import { 
   NutritionAmbitionApiService, 
   ParseFoodTextRequest,
-  NutritionApiResponse
+  NutritionApiResponse,
+  GetFoodEntriesRequest,
+  GetFoodEntriesResponse
 } from './nutrition-ambition-api.service';
 
 @Injectable({
@@ -50,6 +52,28 @@ export class FoodLoggingService {
         catchError(error => {
           console.error('Error getting smart nutrition data:', error);
           return throwError(() => new Error('Failed to get smart nutrition data'));
+        })
+      );
+  }
+  
+  /**
+   * Gets food entries logged for today
+   * 
+   * @returns An Observable of GetFoodEntriesResponse containing today's food entries
+   */
+  getFoodEntriesForToday(): Observable<GetFoodEntriesResponse> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of the day
+    
+    const request = new GetFoodEntriesRequest({
+      loggedDateUtc: today
+    });
+    
+    return this.nutritionApiService.getFoodEntries(request)
+      .pipe(
+        catchError(error => {
+          console.error('Error getting food entries:', error);
+          return throwError(() => new Error('Failed to get food entries'));
         })
       );
   }

@@ -6,13 +6,12 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-// Import FoodLoggingService instead of direct API service
+// Import FoodLoggingService
 import { FoodLoggingService } from 'src/app/services/food-logging.service';
 
 // Import new components
 import { ChatMessage, ChatMessageComponent } from './chat-message/chat-message.component';
 import { ChatInputComponent } from './chat-input/chat-input.component';
-import { NutritionVisualizationComponent } from './nutrition-visualization/nutrition-visualization.component';
 import { FloatingActionButtonComponent } from '../../components/floating-action-button/floating-action-button.component';
 
 @Component({
@@ -23,9 +22,9 @@ import { FloatingActionButtonComponent } from '../../components/floating-action-
   imports: [
     CommonModule,
     IonicModule,
-    ChatMessageComponent, // Add ChatMessageComponent
-    ChatInputComponent,   // Add ChatInputComponent
-    FloatingActionButtonComponent // Add Floating Action Button
+    ChatMessageComponent,
+    ChatInputComponent,
+    FloatingActionButtonComponent
   ]
 })
 export class FoodLoggingPage implements OnInit, OnDestroy {
@@ -54,6 +53,10 @@ export class FoodLoggingPage implements OnInit, OnDestroy {
       text: 'Hello! What did you eat today?',
       timestamp: new Date()
     });
+  }
+  
+  ionViewWillEnter() {
+    // Empty method - no longer loading food entries
   }
 
   ngOnDestroy() {

@@ -34,4 +34,42 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+//  @import '@ionic/angular/css/palettes/dark.system.css';
+
+/* Add global styles for nutrient alert */
+.nutrient-alert {
+  .alert-wrapper {
+    max-width: 90%;
+    width: 350px !important;
+  }
+  
+  .alert-message {
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .nutrient-breakdown {
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--ion-color-light-shade);
+      
+      &:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+      }
+      
+      .item-name {
+        flex: 1;
+        margin-right: 8px;
+      }
+      
+      .item-amount {
+        font-weight: 500;
+        white-space: nowrap;
+      }
+    }
+  }
+}
