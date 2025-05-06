@@ -111,3 +111,19 @@ ion-fab-list[side="top"] {
   top: auto !important;
   bottom: 100% !important;
 }
+
+/* Force hide loading indicator after 10 seconds */
+.loading-indicator {
+  animation: fadeOutAfterDelay 10s forwards;
+}
+
+@keyframes fadeOutAfterDelay {
+  0%, 90% {
+    opacity: 1;
+    display: flex;
+  }
+  100% {
+    opacity: 0;
+    display: none;
+  }
+}

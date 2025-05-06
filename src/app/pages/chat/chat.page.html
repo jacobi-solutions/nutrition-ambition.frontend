@@ -1,0 +1,40 @@
+<app-header [title]="'Chat'" [showBackButton]="false"></app-header>
+
+<ion-content class="ion-padding">
+  <div class="chat-container">
+    <!-- Messages -->
+    <div class="messages">
+      <div *ngFor="let message of messages" 
+           [ngClass]="{'user-message': message.isUser, 'bot-message': !message.isUser}"
+           class="message">
+        <div class="message-content">{{ message.text }}</div>
+        <div class="message-time">{{ message.timestamp | date:'shortTime' }}</div>
+      </div>
+    </div>
+  </div>
+</ion-content>
+
+<!-- Chat input -->
+<ion-footer>
+  <ion-toolbar>
+    <div class="chat-input-container">
+      <ion-input 
+        placeholder="Type your message..." 
+        [(ngModel)]="userMessage"
+        (keyup.enter)="sendMessage()"
+        [disabled]="isLoading">
+      </ion-input>
+      <ion-button 
+        [disabled]="isLoading || !userMessage.trim()" 
+        (click)="sendMessage()">
+        <ion-icon name="paper-plane-outline"></ion-icon>
+      </ion-button>
+    </div>
+    
+    <div *ngIf="isLoading" class="typing-indicator">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </ion-toolbar>
+</ion-footer> 

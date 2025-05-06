@@ -3,7 +3,7 @@
     <!-- Left Side -->
     <ion-buttons slot="start">
       <ng-container *ngIf="showBackButton; else dateNav">
-        <ion-back-button defaultHref="/nutrition-log"></ion-back-button>
+        <ion-back-button defaultHref="/app"></ion-back-button>
       </ng-container>
       <ng-template #dateNav>
         <ion-button (click)="previousDay.emit()">

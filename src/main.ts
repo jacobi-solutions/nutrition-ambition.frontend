@@ -1,4 +1,4 @@
-import { enableProdMode } from '@angular/core';
+import { enableProdMode, ErrorHandler, Injectable } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
 import { RouteReuseStrategy } from '@angular/router';
@@ -57,9 +57,32 @@ export function getAPIBaseUrl(): string {
   return environment.backendApiUrl;
 }
 
+// Custom Error Handler to gracefully handle unexpected errors
+@Injectable()
+export class GlobalErrorHandler implements ErrorHandler {
+  handleError(error: any): void {
+    // Log the error
+    console.error('Global error handler caught:', error);
+    
+    // Check if it's a network-related error
+    if (error?.status === 0 || error?.name === 'HttpErrorResponse') {
+      console.warn('Network error detected in global handler');
+      
+      // Clear any loading indicators that might be stuck
+      const loadingSpinners = document.querySelectorAll('.loading-indicator');
+      loadingSpinners.forEach(spinner => {
+        spinner.classList.add('hidden');
+      });
+      
+      // You could also show a global connection error toast/alert here
+    }
+  }
+}
+
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideIonicAngular(),
     provideRouter(routes, withPreloading(PreloadAllModules)),
 

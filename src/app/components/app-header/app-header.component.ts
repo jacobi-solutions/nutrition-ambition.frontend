@@ -1,15 +1,45 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule } from '@ionic/angular';
+import { 
+  IonHeader, 
+  IonToolbar, 
+  IonButtons, 
+  IonBackButton, 
+  IonButton, 
+  IonIcon, 
+  IonTitle, 
+  IonDatetimeButton,
+  IonModal,
+  IonDatetime,
+  IonChip,
+  IonLabel
+} from '@ionic/angular/standalone';
 import { AuthService } from 'src/app/services/auth.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { addIcons } from 'ionicons';
+import { chevronBackOutline, logOutOutline, personCircle } from 'ionicons/icons';
 
 @Component({
   selector: 'app-header',
   templateUrl: './app-header.component.html',
   styleUrls: ['./app-header.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule]
+  imports: [
+    CommonModule, 
+    RouterModule,
+    IonHeader, 
+    IonToolbar, 
+    IonButtons, 
+    IonBackButton, 
+    IonButton, 
+    IonIcon, 
+    IonTitle, 
+    IonDatetimeButton,
+    IonModal,
+    IonDatetime,
+    IonChip,
+    IonLabel
+  ]
 })
 export class AppHeaderComponent implements OnInit {
   userEmail: string | null = null;
@@ -20,7 +50,10 @@ export class AppHeaderComponent implements OnInit {
   @Output() dateChanged = new EventEmitter<CustomEvent>();
   private lastDateChange = 0;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) {
+    // Add the icons explicitly to the library
+    addIcons({ chevronBackOutline, logOutOutline, personCircle });
+  }
 
   ngOnInit() {
     this.authService.userEmail$.subscribe(email => {
