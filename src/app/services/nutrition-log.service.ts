@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError, of, TimeoutError } from 'rxjs';
+import { catchError, timeout, retry, tap } from 'rxjs/operators';
 import { 
   NutritionAmbitionApiService, 
   GetFoodEntriesRequest, 
@@ -11,6 +11,8 @@ import {
   providedIn: 'root'
 })
 export class NutritionLogService {
+  apiCallCount = 0;
+  
   constructor(private nutritionApiService: NutritionAmbitionApiService) {}
 
   /**
@@ -19,15 +21,38 @@ export class NutritionLogService {
    * @returns An Observable of GetFoodEntriesResponse containing the log data
    */
   getLogByDate(date: string): Observable<GetFoodEntriesResponse> {
+    console.log(`[NutritionLogService] getLogByDate called for date: ${date}. Call #${++this.apiCallCount}`);
+    
     const request = new GetFoodEntriesRequest({
       loggedDateUtc: new Date(date)
     });
 
     return this.nutritionApiService.getFoodEntries(request)
       .pipe(
+        tap(() => console.log(`[NutritionLogService] API call completed. Total calls: ${this.apiCallCount}`)),
+        timeout(10000), // Add a 10 second timeout
+        retry(1), // Retry once if it fails
         catchError(error => {
-          console.error('Error loading nutrition log:', error);
-          return throwError(() => new Error('Failed to load log'));
+          if (error instanceof TimeoutError) {
+            console.error('[NutritionLogService] Request timed out:', error);
+            return throwError(() => new Error('Request timed out. Please try again.'));
+          }
+          
+          console.error('[NutritionLogService] Error loading nutrition log:', error);
+          
+          // Return an empty response on error to prevent UI from freezing
+          const emptyResponse = new GetFoodEntriesResponse({
+            foodEntries: [],
+            totalCalories: 0,
+            totalProtein: 0,
+            totalCarbs: 0,
+            totalFat: 0,
+            isSuccess: false
+          });
+          
+          // Only throw if we really want to show an error to the user
+          // otherwise return the empty response to allow the UI to function
+          return of(emptyResponse);
         })
       );
   }

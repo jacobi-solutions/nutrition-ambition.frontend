@@ -1,14 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule, AlertController } from '@ionic/angular';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { FoodEntry, FoodGroup, FoodItem } from 'src/app/services/nutrition-ambition-api.service';
-import { finalize } from 'rxjs/operators';
+import { FoodEntry, FoodGroup, FoodItem, DailySummaryResponse } from 'src/app/services/nutrition-ambition-api.service';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 // Import NutritionLogService
 import { NutritionLogService } from 'src/app/services/nutrition-log.service';
 import { AppHeaderComponent } from '../../components/app-header/app-header.component';
+import { DailySummaryCardComponent } from '../../components/daily-summary-card/daily-summary-card.component';
 
 // Define a type for nutrient property for type safety
 type NutrientProperty = 'calories' | 'protein' | 'carbohydrates' | 'fat' | 'Fiber' | 'Sugar';
@@ -31,16 +33,33 @@ interface NutrientContribution {
     CommonModule,
     IonicModule,
     FormsModule,
-    AppHeaderComponent
+    AppHeaderComponent,
+    DailySummaryCardComponent
   ]
 })
-export class NutritionLogPage implements OnInit {
-
+export class NutritionLogPage implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private hasLoadedData = false;
+  
   selectedDate: string = new Date().toISOString();
   isLoading: boolean = false;
   errorMessage: string = '';
   foodEntries: FoodEntry[] = [];
-  dailySummary: any = null;
+  dailySummary: DailySummaryResponse | null = null;
+  
+  // Properties for daily-summary-card
+  get dateObject(): Date | null {
+    return this.selectedDate ? new Date(this.selectedDate) : null;
+  }
+  
+  get isSelectedDateToday(): boolean {
+    if (!this.selectedDate) return false;
+    const today = new Date();
+    const selected = new Date(this.selectedDate);
+    return today.getFullYear() === selected.getFullYear() &&
+           today.getMonth() === selected.getMonth() &&
+           today.getDate() === selected.getDate();
+  }
   
   // Nutrient tracking properties
   totalCalories: number = 0;
@@ -71,34 +90,72 @@ export class NutritionLogPage implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.loadLogData();
+    // Don't load data in ngOnInit - will be loaded in ionViewWillEnter
+    console.log('[DEBUG] ngOnInit called');
+  }
+  
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    console.log('[DEBUG] ngOnDestroy called');
   }
   
   ionViewWillEnter() {
-    // Load today's data when the page is about to become active
-    this.loadLogData();
+    // Load data only if not already loading and not already loaded
+    console.log('[DEBUG] ionViewWillEnter called, hasLoadedData:', this.hasLoadedData, 'isLoading:', this.isLoading);
+    if (!this.isLoading && !this.hasLoadedData) {
+      this.loadLogData();
+    }
   }
 
   dateChanged(event: any) {
+    console.log('[DEBUG] dateChanged event:', event);
     this.selectedDate = event.detail.value;
     this.loadLogData();
   }
 
   loadLogData() {
+    console.log('[DEBUG] loadLogData starting for date:', this.selectedDate);
+    
+    if (this.isLoading) {
+      console.log('[DEBUG] Already loading data, skipping request');
+      return;
+    }
+    
     this.isLoading = true;
     this.errorMessage = '';
     this.foodEntries = [];
     this.dailySummary = null;
+    this.hasLoadedData = false;
     
     // Reset nutrients
     this.nutrients.forEach(nutrient => nutrient.value = 0);
 
     this.nutritionLogService.getLogByDate(this.selectedDate)
-      .pipe(finalize(() => this.isLoading = false))
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          console.log('[DEBUG] API call completed, setting isLoading = false');
+          this.isLoading = false;
+          this.hasLoadedData = true;
+        })
+      )
       .subscribe({
         next: (response) => {
+          console.log('[DEBUG] Received response data:', response);
+          
           this.foodEntries = response.foodEntries || [];
-          this.dailySummary = this.nutritionLogService.formatSummary(response);
+          
+          // Create DailySummaryResponse object using fromJS
+          this.dailySummary = DailySummaryResponse.fromJS({
+            totalCalories: response.totalCalories || 0,
+            totalProtein: response.totalProtein || 0,
+            totalCarbohydrates: response.totalCarbs || 0,
+            totalFat: response.totalFat || 0,
+            totalSaturatedFat: 0, // Will calculate in additional nutrients
+            totalMicronutrients: {},
+            isSuccess: true
+          });
           
           // Update totals from response
           this.totalCalories = response.totalCalories || 0;
@@ -112,11 +169,13 @@ export class NutritionLogPage implements OnInit {
           this.nutrients[2].value = this.totalCarbs;
           this.nutrients[3].value = this.totalFat;
           
-          // Calculate additional nutrients
-          this.calculateAdditionalNutrients();
+          // Calculate additional nutrients - do this in a non-blocking way
+          setTimeout(() => this.calculateAdditionalNutrients(), 0);
+          
+          console.log('[DEBUG] Data processing complete');
         },
         error: (err) => {
-          console.error('Error loading log:', err);
+          console.error('[DEBUG] Error loading log:', err);
           this.errorMessage = err?.message || 'Failed to load log data.';
         }
       });
@@ -124,31 +183,58 @@ export class NutritionLogPage implements OnInit {
   
   /**
    * Calculate additional nutrients (fiber, sugar, etc.) from food items
+   * Optimized to reduce performance impact
    */
   calculateAdditionalNutrients() {
+    console.log('[DEBUG] Starting additional nutrient calculations');
+    
+    // Early return if no food entries to avoid unnecessary processing
+    if (!this.foodEntries || this.foodEntries.length === 0) {
+      console.log('[DEBUG] No food entries to process, skipping calculations');
+      return;
+    }
+    
     let totalFiber = 0;
     let totalSugar = 0;
+    let totalSaturatedFat = 0;
+    const micronutrients: Record<string, number> = {};
     
-    // Loop through all food entries and their items
-    this.foodEntries.forEach(entry => {
+    // Loop through all food entries and their items - use a more performant approach
+    for (const entry of this.foodEntries) {
       if (entry.groupedItems) {
-        entry.groupedItems.forEach(group => {
+        for (const group of entry.groupedItems) {
           if (group.items) {
-            group.items.forEach(item => {
+            for (const item of group.items) {
+              const quantity = item.quantity || 1;
+              
+              // Add saturated fat
+              if (item.saturatedFat) {
+                totalSaturatedFat += item.saturatedFat * quantity;
+              }
+              
               // Add fiber and sugar if available in the micronutrients
               if (item.micronutrients) {
                 if (item.micronutrients['Fiber']) {
-                  totalFiber += item.micronutrients['Fiber'];
+                  totalFiber += item.micronutrients['Fiber'] * quantity;
                 }
                 if (item.micronutrients['Sugar']) {
-                  totalSugar += item.micronutrients['Sugar'];
+                  totalSugar += item.micronutrients['Sugar'] * quantity;
+                }
+                
+                // Only process specific micronutrients we need
+                for (const key of Object.keys(item.micronutrients)) {
+                  if (micronutrients[key]) {
+                    micronutrients[key] += item.micronutrients[key] * quantity;
+                  } else {
+                    micronutrients[key] = item.micronutrients[key] * quantity;
+                  }
                 }
               }
-            });
+            }
           }
-        });
+        }
       }
-    });
+    }
     
     this.totalFiber = totalFiber;
     this.totalSugar = totalSugar;
@@ -156,6 +242,26 @@ export class NutritionLogPage implements OnInit {
     // Update the nutrients array
     this.nutrients[4].value = totalFiber;
     this.nutrients[5].value = totalSugar;
+    
+    // Update the dailySummary object
+    if (this.dailySummary) {
+      this.dailySummary.totalSaturatedFat = totalSaturatedFat;
+      this.dailySummary.totalMicronutrients = micronutrients;
+    }
+    
+    console.log('[DEBUG] Completed additional nutrient calculations');
+  }
+  
+  /**
+   * Handles navigating to log view (same page, different presentation)
+   */
+  goToLog() {
+    // We're already on the log page, so no navigation needed
+    // Could scroll to entry section if desired
+    const entrySection = document.querySelector('.logged-entries');
+    if (entrySection) {
+      entrySection.scrollIntoView({ behavior: 'smooth' });
+    }
   }
   
   /**
@@ -196,12 +302,12 @@ export class NutritionLogPage implements OnInit {
       return;
     }
     
-    // Calculate contributions for each food item
-    this.foodEntries.forEach(entry => {
+    // Calculate contributions - optimize by pre-filtering and reducing array operations
+    for (const entry of this.foodEntries) {
       if (entry.groupedItems) {
-        entry.groupedItems.forEach(group => {
+        for (const group of entry.groupedItems) {
           if (group.items) {
-            group.items.forEach(item => {
+            for (const item of group.items) {
               let amount = 0;
               let unit = property === 'calories' ? 'kcal' : 'g';
               
@@ -209,11 +315,11 @@ export class NutritionLogPage implements OnInit {
               if (['Fiber', 'Sugar'].includes(property)) {
                 // These are in the micronutrients object
                 if (item.micronutrients && property in item.micronutrients) {
-                  amount = Number(item.micronutrients[property as string]);
+                  amount = Number(item.micronutrients[property as string]) * (item.quantity || 1);
                 }
               } else {
                 // These are direct properties
-                amount = Number((item as any)[property]) || 0;
+                amount = Number((item as any)[property]) * (item.quantity || 1) || 0;
               }
               
               if (amount > 0) {
@@ -227,24 +333,33 @@ export class NutritionLogPage implements OnInit {
                   percentage
                 });
               }
-            });
+            }
           }
-        });
+        }
       }
-    });
+    }
     
     // Sort by contribution amount (descending)
     this.nutrientContributions.sort((a, b) => b.amount - a.amount);
     
+    // Limit to top 20 contributors to improve performance
+    const topContributions = this.nutrientContributions.slice(0, 20);
+    
     // Create a message with the contributions
     let message = '<div class="nutrient-breakdown">';
     
-    this.nutrientContributions.forEach(contribution => {
+    topContributions.forEach(contribution => {
       message += `<div class="breakdown-item">
         <div class="item-name">${contribution.foodName}</div>
         <div class="item-amount">${contribution.amount.toFixed(1)}${contribution.unit} (${contribution.percentage.toFixed(1)}%)</div>
       </div>`;
     });
+    
+    if (this.nutrientContributions.length > 20) {
+      message += `<div class="breakdown-item">
+        <div class="item-name">... and ${this.nutrientContributions.length - 20} more items</div>
+      </div>`;
+    }
     
     message += '</div>';
     
@@ -259,71 +374,56 @@ export class NutritionLogPage implements OnInit {
     await alert.present();
   }
 
-  // Updated to navigate to the FoodGroupDetailPage
-  viewGroupDetails(entry: FoodEntry, group: FoodGroup) {
-    this.router.navigate(['/food-group-detail'], {
+  /**
+   * View details of a specific food group
+   * @param entry The food entry containing the group
+   * @param group The food group to view
+   */
+  async viewGroupDetails(entry: FoodEntry, group: FoodGroup) {
+    // Navigate to food group detail page
+    await this.router.navigate(['/food-group-detail'], {
       state: {
-        groupName: group.groupName,
-        items: group.items,
-        entryTime: entry.loggedDateUtc
+        entry: entry,
+        group: group
       }
     });
   }
 
   previousDay() {
-    const currentDate = new Date(this.selectedDate);
-    currentDate.setDate(currentDate.getDate() - 1);
-    this.selectedDate = currentDate.toISOString();
+    const date = new Date(this.selectedDate);
+    date.setDate(date.getDate() - 1);
+    this.selectedDate = date.toISOString();
+    this.hasLoadedData = false;
     this.loadLogData();
   }
 
   nextDay() {
-    const currentDate = new Date(this.selectedDate);
-    currentDate.setDate(currentDate.getDate() + 1);
-    this.selectedDate = currentDate.toISOString();
+    const date = new Date(this.selectedDate);
+    date.setDate(date.getDate() + 1);
+    this.selectedDate = date.toISOString();
+    this.hasLoadedData = false;
     this.loadLogData();
   }
 
-  // Helper function to calculate total calories for a single FoodEntry using GroupedItems
+  // Helper methods to calculate nutritional data for display
   calculateEntryCalories(entry: FoodEntry): number {
-    if (!entry || !entry.groupedItems) {
-      return 0;
-    }
-    return entry.groupedItems.reduce((groupSum, group) => 
-      groupSum + (group.items?.reduce((itemSum, item) => itemSum + (item.calories || 0), 0) || 0),
-      0);
+    return entry.groupedItems?.reduce((sum, group) => sum + this.calculateGroupCalories(group), 0) || 0;
   }
 
-  // Calculate total protein for a group
   calculateGroupProtein(group: FoodGroup): number {
-    if (!group || !group.items) {
-      return 0;
-    }
-    return group.items.reduce((sum, item) => sum + (item.protein || 0), 0);
+    return group.items?.reduce((sum, item) => sum + (item.protein || 0) * (item.quantity || 1), 0) || 0;
   }
 
-  // Calculate total carbs for a group
   calculateGroupCarbs(group: FoodGroup): number {
-    if (!group || !group.items) {
-      return 0;
-    }
-    return group.items.reduce((sum, item) => sum + (item.carbohydrates || 0), 0);
+    return group.items?.reduce((sum, item) => sum + (item.carbohydrates || 0) * (item.quantity || 1), 0) || 0;
   }
 
-  // Calculate total fat for a group
   calculateGroupFat(group: FoodGroup): number {
-    if (!group || !group.items) {
-      return 0;
-    }
-    return group.items.reduce((sum, item) => sum + (item.fat || 0), 0);
+    return group.items?.reduce((sum, item) => sum + (item.fat || 0) * (item.quantity || 1), 0) || 0;
   }
 
-  // Calculate total calories for a group
   calculateGroupCalories(group: FoodGroup): number {
-    if (!group || !group.items) {
-      return 0;
-    }
-    return group.items.reduce((sum, item) => sum + (item.calories || 0), 0);
+    return group.items?.reduce((sum, item) => sum + (item.calories || 0) * (item.quantity || 1), 0) || 0;
   }
 }
 

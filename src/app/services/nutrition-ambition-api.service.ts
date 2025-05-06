@@ -47,6 +47,11 @@ export interface INutritionAmbitionApiService {
      */
     set(body: SetDailyGoalRequest | undefined): Observable<SetDailyGoalResponse>;
     /**
+     * @param accountId (optional) 
+     * @return Success
+     */
+    getTotals(accountId: string | undefined): Observable<DailySummaryResponse>;
+    /**
      * @param body (optional) 
      * @return Success
      */
@@ -421,6 +426,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<SetDailyGoalResponse>(null as any);
+    }
+
+    /**
+     * @param accountId (optional) 
+     * @return Success
+     */
+    getTotals(accountId: string | undefined): Observable<DailySummaryResponse> {
+        let url_ = this.baseUrl + "/api/DailySummary/GetTotals?";
+        if (accountId === null)
+            throw new Error("The parameter 'accountId' cannot be null.");
+        else if (accountId !== undefined)
+            url_ += "accountId=" + encodeURIComponent("" + accountId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetTotals(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetTotals(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DailySummaryResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DailySummaryResponse>;
+        }));
+    }
+
+    protected processGetTotals(response: HttpResponseBase): Observable<DailySummaryResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DailySummaryResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<DailySummaryResponse>(null as any);
     }
 
     /**
@@ -1154,6 +1215,98 @@ export interface IDailyGoal {
     effectiveDateUtc?: Date;
     baseCalories?: number;
     nutrientGoals?: NutrientGoal[] | undefined;
+}
+
+export class DailySummaryResponse implements IDailySummaryResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    totalCalories?: number;
+    totalProtein?: number;
+    totalCarbohydrates?: number;
+    totalFat?: number;
+    totalSaturatedFat?: number;
+    totalMicronutrients?: { [key: string]: number; } | undefined;
+
+    constructor(data?: IDailySummaryResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.totalCalories = _data["totalCalories"];
+            this.totalProtein = _data["totalProtein"];
+            this.totalCarbohydrates = _data["totalCarbohydrates"];
+            this.totalFat = _data["totalFat"];
+            this.totalSaturatedFat = _data["totalSaturatedFat"];
+            if (_data["totalMicronutrients"]) {
+                this.totalMicronutrients = {} as any;
+                for (let key in _data["totalMicronutrients"]) {
+                    if (_data["totalMicronutrients"].hasOwnProperty(key))
+                        (<any>this.totalMicronutrients)![key] = _data["totalMicronutrients"][key];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): DailySummaryResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new DailySummaryResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["totalCalories"] = this.totalCalories;
+        data["totalProtein"] = this.totalProtein;
+        data["totalCarbohydrates"] = this.totalCarbohydrates;
+        data["totalFat"] = this.totalFat;
+        data["totalSaturatedFat"] = this.totalSaturatedFat;
+        if (this.totalMicronutrients) {
+            data["totalMicronutrients"] = {};
+            for (let key in this.totalMicronutrients) {
+                if (this.totalMicronutrients.hasOwnProperty(key))
+                    (<any>data["totalMicronutrients"])[key] = (<any>this.totalMicronutrients)[key];
+            }
+        }
+        return data;
+    }
+}
+
+export interface IDailySummaryResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    totalCalories?: number;
+    totalProtein?: number;
+    totalCarbohydrates?: number;
+    totalFat?: number;
+    totalSaturatedFat?: number;
+    totalMicronutrients?: { [key: string]: number; } | undefined;
 }
 
 export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
@@ -2398,6 +2551,7 @@ export interface IParseFoodTextResponse {
 
 export class ParsedFoodItem implements IParsedFoodItem {
     name?: string | undefined;
+    brand?: string | undefined;
     quantity?: number;
     unit?: string | undefined;
     isBranded?: boolean;
@@ -2414,6 +2568,7 @@ export class ParsedFoodItem implements IParsedFoodItem {
     init(_data?: any) {
         if (_data) {
             this.name = _data["name"];
+            this.brand = _data["brand"];
             this.quantity = _data["quantity"];
             this.unit = _data["unit"];
             this.isBranded = _data["isBranded"];
@@ -2430,6 +2585,7 @@ export class ParsedFoodItem implements IParsedFoodItem {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name;
+        data["brand"] = this.brand;
         data["quantity"] = this.quantity;
         data["unit"] = this.unit;
         data["isBranded"] = this.isBranded;
@@ -2439,6 +2595,7 @@ export class ParsedFoodItem implements IParsedFoodItem {
 
 export interface IParsedFoodItem {
     name?: string | undefined;
+    brand?: string | undefined;
     quantity?: number;
     unit?: string | undefined;
     isBranded?: boolean;

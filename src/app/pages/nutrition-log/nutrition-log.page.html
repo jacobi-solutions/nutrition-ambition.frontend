@@ -5,6 +5,15 @@
 </app-header>
 
 <ion-content class="ion-padding">
+  <!-- Debug info -->
+  <ion-item color="light">
+    <ion-label>
+      <p>Debug: Simplified Page</p>
+      <p>Date: {{ selectedDate | date:'short' }}</p>
+      <p>Loading: {{ isLoading }}</p>
+    </ion-label>
+  </ion-item>
+
   <!-- Loading Indicator -->
   <div *ngIf="isLoading" class="ion-text-center ion-padding">
     <ion-spinner name="crescent"></ion-spinner>
@@ -17,34 +26,18 @@
   </ion-item>
 
   <!-- Daily Summary Card -->
-  <ion-card *ngIf="!isLoading && !errorMessage && dailySummary">
-    <ion-card-header>
-      <ion-card-title>Daily Summary</ion-card-title>
-      <ion-card-subtitle>{{ selectedDate | date:"fullDate" }}</ion-card-subtitle>
-    </ion-card-header>
-    <ion-card-content>
-      <!-- Nutrients Grid -->
-      <div class="nutrients-grid">
-        <!-- Clickable nutrient items -->
-        <ion-button 
-          *ngFor="let nutrient of nutrients" 
-          (click)="viewFoodsForNutrient(nutrient.name)"
-          expand="block"
-          fill="clear"
-          color="medium"
-          class="nutrient-button"
-        >
-          <div class="nutrient-content">
-            <span class="nutrient-value">{{ nutrient.value | number:'1.0-1' }}{{ nutrient.unit }}</span>
-            <span class="nutrient-label">{{ nutrient.name }}</span>
-          </div>
-        </ion-button>
-      </div>
-    </ion-card-content>
-  </ion-card>
+  <div *ngIf="!isLoading && !errorMessage && dailySummary">
+    <app-daily-summary-card
+      [summary]="dailySummary"
+      [date]="dateObject"
+      [isToday]="isSelectedDateToday"
+      (viewLog)="goToLog()"
+      (viewByNutrient)="viewFoodsForNutrient($event)">
+    </app-daily-summary-card>
+  </div>
 
   <!-- Logged Entries List -->
-  <div *ngIf="!isLoading && !errorMessage">
+  <div *ngIf="!isLoading && !errorMessage" class="logged-entries">
     <ion-list *ngIf="foodEntries.length > 0; else noEntries">
       <ion-item-group *ngFor="let entry of foodEntries">
         <ion-item-divider>
@@ -52,7 +45,7 @@
           <ion-label>{{ entry.loggedDateUtc | date:"shortTime" }} (~{{ calculateEntryCalories(entry) | number:".0-0" }} kcal)</ion-label>
         </ion-item-divider>
         
-        <!-- 🟢 Iterate through groupedItems instead of showing description -->
+        <!-- Iterate through groupedItems instead of showing description -->
         <ion-item *ngFor="let group of entry.groupedItems" button (click)="viewGroupDetails(entry, group)"> 
           <ion-label>
             <h2>{{ group.groupName }}</h2>

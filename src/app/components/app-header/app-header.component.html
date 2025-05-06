@@ -20,8 +20,8 @@
           <ng-template>
             <ion-datetime 
               id="datePicker" 
-              [value]="selectedDate" 
-              (ionChange)="dateChanged.emit($event)" 
+              [value]="selectedDate"
+              (ionChange)="onDateChanged($event)"
               presentation="date">
             </ion-datetime>
           </ng-template>

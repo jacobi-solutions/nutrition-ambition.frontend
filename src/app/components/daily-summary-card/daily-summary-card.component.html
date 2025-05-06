@@ -1,0 +1,21 @@
+<ng-container *ngIf="!summary">
+  <div class="ion-text-center ion-padding">Loading…</div>
+</ng-container>
+<ng-container *ngIf="summary">
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>
+        {{ isToday ? "Today's Summary" : (date | date:'fullDate') }}
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-item
+        *ngFor="let nut of nutrients"
+        (click)="viewByNutrient.emit(nut.name)">
+        <ion-label>{{ nut.name }}</ion-label>
+        <ion-badge>{{ nut.value }} {{ nut.unit }}</ion-badge>
+      </ion-item>
+      <ion-button expand="block" (click)="viewLog.emit()">View Log</ion-button>
+    </ion-card-content>
+  </ion-card>
+</ng-container> 

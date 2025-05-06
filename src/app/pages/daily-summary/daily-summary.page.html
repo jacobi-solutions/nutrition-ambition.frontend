@@ -1,0 +1,15 @@
+<app-header title="Today's Summary" [showBackButton]="true"></app-header>
+
+<ion-content class="ion-padding">
+  <ng-container *ngIf="isLoading">Loading…</ng-container>
+  <ng-container *ngIf="error">{{ error }}</ng-container>
+  <ng-container *ngIf="!isLoading && !error">
+    <app-daily-summary-card
+      [summary]="summary"
+      [date]="selectedDate"
+      [isToday]="true"
+      (viewLog)="goToLog()"
+      (viewByNutrient)="viewFoodsForNutrient($event)">
+    </app-daily-summary-card>
+  </ng-container>
+</ion-content> 

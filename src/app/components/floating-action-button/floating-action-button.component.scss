@@ -1,18 +1,28 @@
 ion-fab {
   margin-bottom: 16px;
   margin-right: 16px;
+  z-index: 100 !important; /* Ensure it's on top */
 
   ion-fab-button {
     --background: var(--ion-color-primary);
     --background-activated: var(--ion-color-primary-shade);
     --background-hover: var(--ion-color-primary-tint);
+    display: flex !important;
+    visibility: visible !important;
   }
 
   ion-fab-list {
+    z-index: 99 !important;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    
     ion-fab-button {
       --background: var(--ion-color-light);
       --color: var(--ion-color-primary);
       margin-bottom: 8px;
+      display: flex !important;
+      visibility: visible !important;
     }
   }
 } 

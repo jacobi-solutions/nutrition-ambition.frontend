@@ -18,6 +18,7 @@ export class AppHeaderComponent implements OnInit {
   @Input() showBackButton: boolean = false;
   @Output() previousDay = new EventEmitter<void>();
   @Output() dateChanged = new EventEmitter<CustomEvent>();
+  private lastDateChange = 0;
 
   constructor(private authService: AuthService, private router: Router) {}
 
@@ -25,6 +26,20 @@ export class AppHeaderComponent implements OnInit {
     this.authService.userEmail$.subscribe(email => {
       this.userEmail = email;
     });
+  }
+  
+  // Debounce date changes to prevent multiple rapid emissions
+  onDateChanged(event: CustomEvent) {
+    const now = Date.now();
+    // If less than 300ms since last change, ignore
+    if (now - this.lastDateChange < 300) {
+      console.log('[AppHeader] Ignoring rapid date change');
+      return;
+    }
+    
+    this.lastDateChange = now;
+    console.log('[AppHeader] Date changed:', event);
+    this.dateChanged.emit(event);
   }
 
   async logout() {

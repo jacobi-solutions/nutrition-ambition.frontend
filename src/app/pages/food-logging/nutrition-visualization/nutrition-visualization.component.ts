@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { Chart, registerables } from 'chart.js';
@@ -13,7 +13,7 @@ Chart.register(...registerables);
   standalone: true,
   imports: [CommonModule, IonicModule, FormsModule]
 })
-export class NutritionVisualizationComponent implements OnInit {
+export class NutritionVisualizationComponent implements OnInit, OnChanges {
   @Input() nutritionData: any;
   
   activeTab: string = 'macros';

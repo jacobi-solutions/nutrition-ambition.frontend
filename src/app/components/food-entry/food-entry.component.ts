@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonInput, IonButton, IonList, IonicModule } from '@ionic/angular';
@@ -15,7 +15,7 @@ import { AuthService } from 'src/app/services/auth.service';
   templateUrl: './food-entry.component.html',
   styleUrls: ['./food-entry.component.scss']
 })
-export class FoodEntryComponent {
+export class FoodEntryComponent implements OnInit {
   description: string = '';
   entries: FoodEntry[] = [];
   errorMessage: string = '';

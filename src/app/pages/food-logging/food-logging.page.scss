@@ -18,13 +18,11 @@ ion-content {
 
 // Section titles
 .section-title {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--ion-color-dark);
-  margin-bottom: 16px;
-  padding-top: 16px;
-  border-bottom: 1px solid var(--ion-color-light-shade);
-  padding-bottom: 8px;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  color: var(--ion-color-dark) !important;
+  margin-bottom: 20px !important;
+  display: block !important;
 }
 
 // Food entries section
@@ -190,13 +188,15 @@ ion-content {
 
 // Chat messages
 .chat-messages {
-  margin-bottom: 70px; // Space for the input at the bottom
+  margin-bottom: 90px !important; // Increased space for the input at the bottom
+  padding-bottom: 20px !important;
+  display: block !important;
 }
 
 .loading-indicator {
-  display: flex;
-  justify-content: center;
-  padding: 20px;
+  display: flex !important;
+  justify-content: center !important;
+  padding: 20px !important;
 }
 
 // Floating action button container is already styled in its component

@@ -1,34 +1,43 @@
 .chat-input-container {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  background-color: #f8f8f8;
-  border-top: 1px solid #e0e0e0;
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px !important;
+  background-color: #f8f8f8 !important;
+  border-top: 1px solid #e0e0e0 !important;
+  width: 100% !important;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
 
   ion-textarea {
-    flex: 1;
-    border: 1px solid #dcdcdc;
-    border-radius: 18px;
-    padding: 8px 12px;
-    margin-right: 8px;
-    --padding-start: 12px;
-    --padding-end: 12px;
-    --padding-top: 8px;
-    --padding-bottom: 8px;
-    max-height: 100px; // Limit growth
-    overflow-y: auto;
-    background-color: white;
+    flex: 1 !important;
+    border: 1px solid #dcdcdc !important;
+    border-radius: 18px !important;
+    padding: 8px 12px !important;
+    margin-right: 8px !important;
+    --padding-start: 12px !important;
+    --padding-end: 12px !important;
+    --padding-top: 8px !important;
+    --padding-bottom: 8px !important;
+    max-height: 100px !important; // Limit growth
+    overflow-y: auto !important;
+    background-color: white !important;
+    display: block !important;
   }
 
   ion-button {
-    --padding-start: 8px;
-    --padding-end: 8px;
-    height: 36px;
-    width: 36px;
-    min-width: 36px;
+    --padding-start: 8px !important;
+    --padding-end: 8px !important;
+    height: 36px !important;
+    width: 36px !important;
+    min-width: 36px !important;
+    display: flex !important;
     
     ion-icon {
-      font-size: 20px;
+      font-size: 20px !important;
+      display: inline-block !important;
     }
   }
 }
