@@ -199,5 +199,43 @@ ion-content {
   padding: 20px !important;
 }
 
+// Direct FAB styling for production
+.fab-container {
+  position: fixed !important;
+  bottom: 70px !important;
+  right: 16px !important;
+  z-index: 9999 !important;
+  
+  ion-fab {
+    position: relative !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    
+    ion-fab-button {
+      --background: var(--ion-color-primary) !important;
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    ion-fab-list {
+      display: flex !important;
+      flex-direction: column !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      
+      ion-fab-button {
+        margin-bottom: 8px !important;
+        --background: var(--ion-color-light) !important;
+        --color: var(--ion-color-primary) !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+    }
+  }
+}
+
 // Floating action button container is already styled in its component
   
