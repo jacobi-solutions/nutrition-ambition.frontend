@@ -5,6 +5,20 @@ import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon } from 
 import { AppHeaderComponent } from '../../components/app-header/app-header.component';
 import { addIcons } from 'ionicons';
 import { paperPlaneOutline } from 'ionicons/icons';
+import { AccountsService } from '../../services/accounts.service';
+import { AuthService } from '../../services/auth.service';
+import { ChatService } from '../../services/chat.service';
+import { 
+  ChatMessage,
+  BotMessageResponse,
+  LogChatMessageResponse
+} from '../../services/nutrition-ambition-api.service';
+
+interface DisplayMessage {
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
+}
 
 @Component({
   selector: 'app-chat',
@@ -24,47 +38,112 @@ import { paperPlaneOutline } from 'ionicons/icons';
   ]
 })
 export class ChatPage implements OnInit {
-  messages: any[] = [];
+  messages: DisplayMessage[] = [];
   userMessage: string = '';
   isLoading: boolean = false;
+  hasLoggedFirstMeal: boolean = false;
 
-  constructor() {
+  constructor(
+    private chatService: ChatService,
+    private accountService: AccountsService,
+    private authService: AuthService
+  ) {
     // Add the icons explicitly to the library
     addIcons({ paperPlaneOutline });
   }
 
-  ngOnInit() {
-    // Add a welcome message
-    this.messages.push({
-      text: 'Welcome to NutritionAmbition! How can I help you with your nutrition goals today?',
-      isUser: false,
-      timestamp: new Date()
-    });
+  async ngOnInit() {
+    // Initial bot message
+    if (!this.accountService.getAccountId()) {
+      this.chatService.startConversation().subscribe((response: BotMessageResponse) => {
+        if (response.isSuccess && response.message) {
+          if (response.accountId) {
+            this.accountService.setAccountId(response.accountId);
+          }
+          this.messages.push({ 
+            text: response.message, 
+            isUser: false, 
+            timestamp: new Date() 
+          });
+        }
+      });
+    } else {
+      this.chatService.getInitialMessage().subscribe((response: BotMessageResponse) => {
+        if (response.isSuccess && response.message) {
+          this.messages.push({ 
+            text: response.message, 
+            isUser: false, 
+            timestamp: new Date() 
+          });
+        }
+      });
+    }
+
+    // Check anonymous sessions
+    const sessions = this.accountService.incrementAnonymousSessionCount();
+    if (sessions >= 3 && this.accountService.getAccountId() && !this.authService.isAuthenticated()) {
+      this.chatService.getAnonymousWarning().subscribe((response: BotMessageResponse) => {
+        if (response.isSuccess && response.message) {
+          this.messages.push({ 
+            text: response.message, 
+            isUser: false, 
+            timestamp: new Date() 
+          });
+        }
+      });
+    }
   }
 
   sendMessage() {
     if (!this.userMessage.trim()) return;
     
-    // Add user message to the chat
+    // Save message and add to chat
+    const sentMessage = this.userMessage;
     this.messages.push({
-      text: this.userMessage,
+      text: sentMessage,
       isUser: true,
       timestamp: new Date()
     });
     
     // Clear input and show loading
-    const sentMessage = this.userMessage;
     this.userMessage = '';
     this.isLoading = true;
     
-    // Simulate response (would be replaced with actual API call)
-    setTimeout(() => {
-      this.isLoading = false;
-      this.messages.push({
-        text: `I received your message: "${sentMessage}". I'll help you with that soon.`,
-        isUser: false,
-        timestamp: new Date()
-      });
-    }, 1000);
+    // Call API service
+    this.chatService.logMessage(sentMessage).subscribe({
+      next: (response: LogChatMessageResponse) => {
+        this.isLoading = false;
+        if (response.isSuccess && response.message?.content) {
+          this.messages.push({
+            text: response.message.content,
+            isUser: false,
+            timestamp: new Date()
+          });
+
+          // After the meal is saved to DB
+          if (!this.hasLoggedFirstMeal) {
+            this.hasLoggedFirstMeal = true;
+            this.chatService.getPostLogHint(true).subscribe((hintResponse: BotMessageResponse) => {
+              if (hintResponse.isSuccess && hintResponse.message) {
+                this.messages.push({ 
+                  text: hintResponse.message, 
+                  isUser: false, 
+                  timestamp: new Date() 
+                });
+              }
+            });
+          }
+        }
+      },
+      error: (error: any) => {
+        this.isLoading = false;
+        this.messages.push({
+          text: "Something went wrong. Please try again later.",
+          isUser: false,
+          timestamp: new Date()
+        });
+        console.error('Error sending message:', error);
+      }
+    });
   }
 } 

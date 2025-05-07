@@ -43,7 +43,7 @@ export class AuthService {
     });
 
     return new Promise<void>((resolve, reject) => {
-      this._apiService.register(request).subscribe((response: Response) => {
+      this._apiService.registerUser(request).subscribe((response: Response) => {
         if (response.isSuccess) {
           resolve();
         } else {
