@@ -12,8 +12,7 @@ import {
   BotMessageResponse,
   LogChatMessageResponse,
   GetChatMessagesResponse,
-  ClearChatMessagesResponse,
-  StartConversationRequest
+  ClearChatMessagesResponse
 } from './nutrition-ambition-api.service';
 
 @Injectable({
@@ -24,6 +23,10 @@ export class ChatService {
     private apiService: NutritionAmbitionApiService,
     private accountService: AccountsService
   ) {}
+
+  getFirstTimeWelcomeMessage(): string {
+    return "Hi there! I'm your nutrition assistant — here to help you track your meals, understand your nutrients, and stay on track with your goals. You can start right away by telling me what you ate today — no setup needed! We can also talk about your health goals whenever you're ready. 🍎🥦";
+  }
 
   getInitialMessage(): Observable<BotMessageResponse> {
     const request = new GetInitialMessageRequest({
@@ -74,12 +77,5 @@ export class ChatService {
       loggedDateUtc: date
     });
     return this.apiService.clearChatMessages(request);
-  }
-
-  startConversation(): Observable<BotMessageResponse> {
-    const request = new StartConversationRequest({
-      messageContent: ''
-    });
-    return this.apiService.startConversation(request);
   }
 } 

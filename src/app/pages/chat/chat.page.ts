@@ -55,17 +55,11 @@ export class ChatPage implements OnInit {
   async ngOnInit() {
     // Initial bot message
     if (!this.accountService.getAccountId()) {
-      this.chatService.startConversation().subscribe((response: BotMessageResponse) => {
-        if (response.isSuccess && response.message) {
-          if (response.accountId) {
-            this.accountService.setAccountId(response.accountId);
-          }
-          this.messages.push({ 
-            text: response.message, 
-            isUser: false, 
-            timestamp: new Date() 
-          });
-        }
+      const welcomeMessage = this.chatService.getFirstTimeWelcomeMessage();
+      this.messages.push({ 
+        text: welcomeMessage, 
+        isUser: false, 
+        timestamp: new Date() 
       });
     } else {
       this.chatService.getInitialMessage().subscribe((response: BotMessageResponse) => {
