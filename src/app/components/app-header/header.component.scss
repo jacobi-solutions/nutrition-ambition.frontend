@@ -30,9 +30,10 @@ ion-header {
     /* Auth buttons */
     ion-buttons {
       ion-button {
-        ion-label {
-          margin-left: 6px;
-        }
+        font-weight: 500;
+        text-transform: none;
+        font-size: 0.95rem;
+        padding: 0 8px;
       }
     }
   }
@@ -63,9 +64,7 @@ ion-header {
       
       ion-buttons {
         ion-button {
-          ion-label {
-            display: none; /* Hide button label on small screens */
-          }
+          font-size: 0.9rem;
         }
       }
     }

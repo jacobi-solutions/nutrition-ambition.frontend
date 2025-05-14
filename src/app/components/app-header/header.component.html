@@ -15,12 +15,10 @@
     <!-- Right: Auth buttons -->
     <ion-buttons slot="end">
       <ion-button *ngIf="userEmail" (click)="onLogout()">
-        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
-        <ion-label>Log out</ion-label>
+        Sign out
       </ion-button>
       <ion-button *ngIf="!userEmail" (click)="onLogin()">
-        <ion-icon slot="icon-only" name="log-in-outline"></ion-icon>
-        <ion-label>Log in</ion-label>
+        Sign in
       </ion-button>
     </ion-buttons>
   </ion-toolbar>

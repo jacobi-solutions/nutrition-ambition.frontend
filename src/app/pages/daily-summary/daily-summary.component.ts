@@ -30,9 +30,6 @@ import { Router } from '@angular/router';
   imports: [
     CommonModule,
     IonContent,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonCard,
     IonCardHeader,
     IonCardTitle,

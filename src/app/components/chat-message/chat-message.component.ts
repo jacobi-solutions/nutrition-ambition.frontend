@@ -10,8 +10,7 @@ import { IonText } from '@ionic/angular/standalone';
   styleUrls: ['./chat-message.component.scss'],
   standalone: true,
   imports: [
-    CommonModule,
-    IonText
+    CommonModule
   ]
 })
 export class ChatMessageComponent implements OnInit {

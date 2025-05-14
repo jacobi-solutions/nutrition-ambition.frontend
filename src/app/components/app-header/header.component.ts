@@ -46,13 +46,7 @@ import {
     IonTitle, 
     IonDatetimeButton,
     IonModal,
-    IonDatetime,
-    IonChip,
-    IonLabel,
-    IonText,
-    IonRow,
-    IonCol,
-    IonGrid
+    IonDatetime
   ]
 })
 export class AppHeaderComponent implements OnInit {
