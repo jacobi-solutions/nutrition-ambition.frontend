@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, catchError, throwError, of } from 'rxjs';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 import { AccountsService } from './accounts.service';
 import { 
@@ -12,7 +12,8 @@ import {
   BotMessageResponse,
   LogChatMessageResponse,
   GetChatMessagesResponse,
-  ClearChatMessagesResponse
+  ClearChatMessagesResponse,
+  AssistantRunMessageRequest
 } from './nutrition-ambition-api.service';
 
 @Injectable({
@@ -21,7 +22,7 @@ import {
 export class ChatService {
   constructor(
     private apiService: NutritionAmbitionApiService,
-    private accountService: AccountsService
+    private accountsService: AccountsService
   ) {}
 
   getFirstTimeWelcomeMessage(): string {
@@ -77,5 +78,41 @@ export class ChatService {
       loggedDateUtc: date
     });
     return this.apiService.clearChatMessages(request);
+  }
+
+  runAssistantMessage(message: string): Observable<BotMessageResponse> {
+    
+    const request = new AssistantRunMessageRequest({
+      message,
+    });
+    
+    return this.apiService.assistantRunMessage(request).pipe(
+      map(response => {
+        // Persist accountId if it's returned in the response
+        // Using optional chaining and type assertion to prevent TypeScript errors
+        
+        
+        // Map AssistantRunMessageResponse to BotMessageResponse
+        const botResponse = new BotMessageResponse();
+        botResponse.isSuccess = response.isSuccess;
+        botResponse.errors = response.errors;
+        botResponse.message = response.assistantMessage;
+        botResponse.correlationId = response.correlationId;
+        botResponse.stackTrace = response.stackTrace;
+
+        const accountId = (response as any).accountId;
+        if (accountId) {
+          botResponse.accountId = accountId;
+        }
+        return botResponse;
+      }),
+      catchError(error => {
+        console.error('Error in assistant conversation:', error);
+        const errorResponse = new BotMessageResponse();
+        errorResponse.isSuccess = false;
+        errorResponse.message = "Sorry, I'm having trouble processing your request right now. Please try again later.";
+        return of(errorResponse);
+      })
+    );
   }
 } 

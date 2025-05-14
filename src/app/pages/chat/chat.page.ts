@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon } from '@ionic/angular/standalone';
@@ -42,6 +42,7 @@ export class ChatPage implements OnInit {
   userMessage: string = '';
   isLoading: boolean = false;
   hasLoggedFirstMeal: boolean = false;
+  @ViewChild(IonContent, { static: false }) content: IonContent;
 
   constructor(
     private chatService: ChatService,
@@ -103,13 +104,16 @@ export class ChatPage implements OnInit {
     this.userMessage = '';
     this.isLoading = true;
     
-    // Call API service
-    this.chatService.logMessage(sentMessage).subscribe({
-      next: (response: LogChatMessageResponse) => {
+    // Scroll to the bottom
+    this.scrollToBottom();
+    
+    // Call Assistant API service
+    this.chatService.runAssistantMessage(sentMessage).subscribe({
+      next: (response: BotMessageResponse) => {
         this.isLoading = false;
-        if (response.isSuccess && response.message?.content) {
+        if (response.isSuccess && response.message) {
           this.messages.push({
-            text: response.message.content,
+            text: response.message,
             isUser: false,
             timestamp: new Date()
           });
@@ -117,27 +121,39 @@ export class ChatPage implements OnInit {
           // After the meal is saved to DB
           if (!this.hasLoggedFirstMeal) {
             this.hasLoggedFirstMeal = true;
-            this.chatService.getPostLogHint(true).subscribe((hintResponse: BotMessageResponse) => {
-              if (hintResponse.isSuccess && hintResponse.message) {
-                this.messages.push({ 
-                  text: hintResponse.message, 
-                  isUser: false, 
-                  timestamp: new Date() 
-                });
-              }
-            });
+            // this.chatService.getPostLogHint(true).subscribe((hintResponse: BotMessageResponse) => {
+            //   if (hintResponse.isSuccess && hintResponse.message) {
+            //     this.messages.push({ 
+            //       text: hintResponse.message, 
+            //       isUser: false, 
+            //       timestamp: new Date() 
+            //     });
+            //     this.scrollToBottom();
+            //   }
+            // });
           }
+          
+          this.scrollToBottom();
         }
       },
       error: (error: any) => {
         this.isLoading = false;
         this.messages.push({
-          text: "Something went wrong. Please try again later.",
+          text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
           isUser: false,
           timestamp: new Date()
         });
-        console.error('Error sending message:', error);
+        console.error('Error sending message to assistant:', error);
+        this.scrollToBottom();
       }
     });
+  }
+  
+  private scrollToBottom() {
+    setTimeout(() => {
+      if (this.content) {
+        this.content.scrollToBottom(300);
+      }
+    }, 100);
   }
 } 

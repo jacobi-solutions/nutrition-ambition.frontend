@@ -11,7 +11,7 @@ import { provideAuth, initializeAuth, browserLocalPersistence } from '@angular/f
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { AuthInterceptor } from './app/services/auth.interceptor';
+import { AuthInterceptor } from './app/http-interceptors/auth.interceptor';
 
 import { NutritionAmbitionApiService, API_BASE_URL } from './app/services/nutrition-ambition-api.service';
 import { environment } from './environments/environment';
@@ -33,6 +33,7 @@ import {
   chevronForwardCircleOutline,
   personCircle
 } from 'ionicons/icons';
+import { AccountInterceptor } from './app/http-interceptors/account.interceptor';
 
 addIcons({
   'log-out-outline': logOutOutline,
@@ -98,7 +99,10 @@ bootstrapApplication(AppComponent, {
     }),
 
     // ✅ Provide HttpClient with AuthInterceptor
-    provideHttpClient(withInterceptors([AuthInterceptor])),
+    provideHttpClient(withInterceptors([
+      AuthInterceptor,
+      AccountInterceptor
+    ])),
 
     // ✅ Provide NSwag API Service
     NutritionAmbitionApiService,
