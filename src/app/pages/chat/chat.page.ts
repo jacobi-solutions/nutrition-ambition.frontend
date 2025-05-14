@@ -1,18 +1,23 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon } from '@ionic/angular/standalone';
-import { AppHeaderComponent } from '../../components/app-header/app-header.component';
+import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText } from '@ionic/angular/standalone';
+import { AppHeaderComponent } from '../../components/app-header/header.component';
+import { ChatMessageComponent } from '../../components/chat-message/chat-message.component';
 import { addIcons } from 'ionicons';
 import { paperPlaneOutline } from 'ionicons/icons';
 import { AccountsService } from '../../services/accounts.service';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
+import { DateService } from '../../services/date.service';
 import { 
   ChatMessage,
   BotMessageResponse,
-  LogChatMessageResponse
+  LogChatMessageResponse,
+  GetChatMessagesResponse
 } from '../../services/nutrition-ambition-api.service';
+import { catchError, finalize, of, Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 interface DisplayMessage {
   text: string;
@@ -34,70 +39,183 @@ interface DisplayMessage {
     IonInput,
     IonButton,
     IonIcon,
-    AppHeaderComponent
+    IonSpinner,
+    IonText,
+    AppHeaderComponent,
+    ChatMessageComponent
   ]
 })
 export class ChatPage implements OnInit {
   messages: DisplayMessage[] = [];
   userMessage: string = '';
   isLoading: boolean = false;
-  hasLoggedFirstMeal: boolean = false;
+  isLoadingHistory: boolean = false;
+  selectedDate: string = new Date().toISOString();
+  error: string | null = null;
+  userEmail: string | null = null;
+  private dateSubscription: Subscription;
+  
   @ViewChild(IonContent, { static: false }) content: IonContent;
 
   constructor(
     private chatService: ChatService,
     private accountService: AccountsService,
-    private authService: AuthService
+    private authService: AuthService,
+    private dateService: DateService,
+    private router: Router
   ) {
     // Add the icons explicitly to the library
     addIcons({ paperPlaneOutline });
   }
 
   async ngOnInit() {
-    // Initial bot message
-    if (!this.accountService.getAccountId()) {
+    // Subscribe to date changes
+    this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
+      this.selectedDate = date;
+      this.loadChatHistory(new Date(date));
+    });
+    
+    // Get the current user email
+    this.authService.userEmail$.subscribe(email => {
+      this.userEmail = email;
+    });
+  }
+  
+  ngOnDestroy() {
+    // Clean up subscription
+    if (this.dateSubscription) {
+      this.dateSubscription.unsubscribe();
+    }
+  }
+
+  // Handle date changes from the header
+  onDateChanged(newDate: string) {
+    this.dateService.setSelectedDate(newDate);
+  }
+  
+  // Handle navigation to previous day
+  onPreviousDay() {
+    this.dateService.goToPreviousDay();
+  }
+  
+  // Handle navigation to next day
+  onNextDay() {
+    this.dateService.goToNextDay();
+  }
+  
+  // Handle login
+  onLogin() {
+    this.router.navigate(['/login']);
+  }
+  
+  // Handle logout
+  onLogout() {
+    this.authService.signOutUser().then(() => {
+      // Optional: navigate somewhere or reload
+      window.location.reload();
+    });
+  }
+
+  loadChatHistory(date: Date) {
+    // Reset current messages
+    this.messages = [];
+    this.isLoadingHistory = true;
+    this.error = null;
+    
+    console.log('[DEBUG] Loading chat history for date:', date);
+    
+    // Check if we have an account ID
+    const accountId = this.accountService.getAccountId();
+    
+    if (!accountId) {
+      // No account, show welcome message
+      this.isLoadingHistory = false;
+      console.log('[DEBUG] No account ID, showing welcome message in UI only');
       const welcomeMessage = this.chatService.getFirstTimeWelcomeMessage();
+      
+      // Add the welcome message to UI only - don't log to backend for anonymous users
+      // unless they interact with the chat
       this.messages.push({ 
         text: welcomeMessage, 
         isUser: false, 
         timestamp: new Date() 
       });
-    } else {
-      this.chatService.getInitialMessage().subscribe((response: BotMessageResponse) => {
-        if (response.isSuccess && response.message) {
-          this.messages.push({ 
-            text: response.message, 
-            isUser: false, 
-            timestamp: new Date() 
-          });
-        }
-      });
+      return;
     }
 
-    // Check anonymous sessions
-    const sessions = this.accountService.incrementAnonymousSessionCount();
-    if (sessions >= 3 && this.accountService.getAccountId() && !this.authService.isAuthenticated()) {
-      this.chatService.getAnonymousWarning().subscribe((response: BotMessageResponse) => {
+    // Get message history for the selected date
+    this.chatService.getMessageHistoryByDate(date)
+      .pipe(
+        catchError(error => {
+          console.error('Error loading chat history:', error);
+          this.error = 'Unable to load chat history. Please try again later.';
+          return of(null as GetChatMessagesResponse | null);
+        }),
+        finalize(() => {
+          this.isLoadingHistory = false;
+        })
+      )
+      .subscribe({
+        next: (response: GetChatMessagesResponse | null) => {
+          if (response && response.isSuccess && response.messages && response.messages.length > 0) {
+            // Convert API messages to display messages
+            console.log('[DEBUG] Received chat history, message count:', response.messages.length);
+            this.messages = response.messages.map(msg => ({
+              text: msg.content || '',
+              isUser: msg.role === 0, // 0 = User, 1 = Assistant
+              timestamp: msg.loggedDateUtc || new Date()
+            }));
+            this.scrollToBottom();
+          } else if (this.dateService.isToday(date)) {
+            // No messages for today, start a new conversation
+            console.log('[DEBUG] No messages for today, starting new conversation');
+            this.startConversation();
+          }
+        }
+      });
+  }
+
+  startConversation() {
+    // Only call this when there are no messages and it's today's date
+    console.log('[DEBUG] Starting conversation with initial message');
+    this.chatService.getInitialMessage().subscribe({
+      next: (response: BotMessageResponse) => {
         if (response.isSuccess && response.message) {
+          console.log('[DEBUG] Received initial message:', response.message);
+          
+          // Add message to UI display only
+          // The welcome message should already be logged by the backend
+          // during the getInitialMessage call
           this.messages.push({ 
             text: response.message, 
             isUser: false, 
             timestamp: new Date() 
           });
+          this.scrollToBottom();
+          
+          console.log('[DEBUG] Initial message response object:', response);
         }
-      });
-    }
+      },
+      error: (error) => {
+        console.error('Error getting initial message:', error);
+        this.error = 'Unable to start conversation. Please try again later.';
+      }
+    });
   }
 
   sendMessage() {
     if (!this.userMessage.trim()) return;
     
-    // Save message and add to chat
+    // Get message text before clearing the input
     const sentMessage = this.userMessage;
+    const messageDate = new Date();
+    
+    // Add user message to UI
+    console.log('[DEBUG] Adding user message to UI:', sentMessage);
     this.messages.push({
       text: sentMessage,
       isUser: true,
-      timestamp: new Date()
+      timestamp: messageDate
     });
     
     // Clear input and show loading
@@ -107,32 +225,23 @@ export class ChatPage implements OnInit {
     // Scroll to the bottom
     this.scrollToBottom();
     
-    // Call Assistant API service
-    this.chatService.runAssistantMessage(sentMessage).subscribe({
+    // Use the new sendMessage method that doesn't duplicate logs
+    // The backend will log both the user message and assistant response
+    console.log('[DEBUG] Sending message without duplicate logging:', sentMessage);
+    this.chatService.sendMessage(sentMessage).subscribe({
       next: (response: BotMessageResponse) => {
         this.isLoading = false;
         if (response.isSuccess && response.message) {
-          this.messages.push({
+          console.log('[DEBUG] Received bot response:', response.message);
+          
+          // Add the bot message to UI only (already logged on backend)
+          const botMessage = {
             text: response.message,
             isUser: false,
             timestamp: new Date()
-          });
-
-          // After the meal is saved to DB
-          if (!this.hasLoggedFirstMeal) {
-            this.hasLoggedFirstMeal = true;
-            // this.chatService.getPostLogHint(true).subscribe((hintResponse: BotMessageResponse) => {
-            //   if (hintResponse.isSuccess && hintResponse.message) {
-            //     this.messages.push({ 
-            //       text: hintResponse.message, 
-            //       isUser: false, 
-            //       timestamp: new Date() 
-            //     });
-            //     this.scrollToBottom();
-            //   }
-            // });
-          }
+          };
           
+          this.messages.push(botMessage);
           this.scrollToBottom();
         }
       },

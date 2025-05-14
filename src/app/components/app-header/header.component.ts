@@ -12,17 +12,27 @@ import {
   IonModal,
   IonDatetime,
   IonChip,
-  IonLabel
+  IonLabel,
+  IonText,
+  IonRow,
+  IonCol,
+  IonGrid
 } from '@ionic/angular/standalone';
 import { AuthService } from 'src/app/services/auth.service';
 import { Router, RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { chevronBackOutline, logOutOutline, personCircle } from 'ionicons/icons';
+import { 
+  chevronBackOutline, 
+  logOutOutline, 
+  personCircle, 
+  logInOutline, 
+  chevronForwardOutline
+} from 'ionicons/icons';
 
 @Component({
   selector: 'app-header',
-  templateUrl: './app-header.component.html',
-  styleUrls: ['./app-header.component.scss'],
+  templateUrl: './header.component.html',
+  styleUrls: ['./header.component.scss'],
   standalone: true,
   imports: [
     CommonModule, 
@@ -38,30 +48,48 @@ import { chevronBackOutline, logOutOutline, personCircle } from 'ionicons/icons'
     IonModal,
     IonDatetime,
     IonChip,
-    IonLabel
+    IonLabel,
+    IonText,
+    IonRow,
+    IonCol,
+    IonGrid
   ]
 })
 export class AppHeaderComponent implements OnInit {
-  userEmail: string | null = null;
   @Input() selectedDate: string;
-  @Input() title: string = 'Nutrition Ambition';
   @Input() showBackButton: boolean = false;
+  @Input() userEmail: string | null = null;
+  @Input() title: string = 'Nutrition Ambition';
+  
   @Output() previousDay = new EventEmitter<void>();
-  @Output() dateChanged = new EventEmitter<CustomEvent>();
+  @Output() nextDay = new EventEmitter<void>();
+  @Output() dateChanged = new EventEmitter<string>();
+  @Output() logout = new EventEmitter<void>();
+  @Output() login = new EventEmitter<void>();
+  
   private lastDateChange = 0;
 
   constructor(private authService: AuthService, private router: Router) {
     // Add the icons explicitly to the library
-    addIcons({ chevronBackOutline, logOutOutline, personCircle });
+    addIcons({ 
+      chevronBackOutline, 
+      logOutOutline, 
+      personCircle, 
+      logInOutline, 
+      chevronForwardOutline 
+    });
   }
 
   ngOnInit() {
-    this.authService.userEmail$.subscribe(email => {
-      this.userEmail = email;
-    });
+    // Only get the email from AuthService if not provided as input
+    if (!this.userEmail) {
+      this.authService.userEmail$.subscribe(email => {
+        this.userEmail = email;
+      });
+    }
   }
   
-  // Debounce date changes to prevent multiple rapid emissions
+  // Handle date change from the datetime picker
   onDateChanged(event: CustomEvent) {
     const now = Date.now();
     // If less than 300ms since last change, ignore
@@ -72,11 +100,29 @@ export class AppHeaderComponent implements OnInit {
     
     this.lastDateChange = now;
     console.log('[AppHeader] Date changed:', event);
-    this.dateChanged.emit(event);
+    
+    // Extract the new date value and emit it
+    if (event.detail && event.detail.value) {
+      this.dateChanged.emit(event.detail.value);
+    }
   }
 
-  async logout() {
-    await this.authService.signOutUser();
-    this.router.navigate(['/login']);
+  // Handle auth actions
+  onLogout() {
+    this.logout.emit();
+  }
+  
+  onLogin() {
+    this.login.emit();
+  }
+  
+  // Navigate to previous day
+  onPreviousDay() {
+    this.previousDay.emit();
+  }
+  
+  // Navigate to next day
+  onNextDay() {
+    this.nextDay.emit();
   }
 } 

@@ -1,0 +1,55 @@
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  width: 100%;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.nutrition-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.nutrition-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.label {
+  font-weight: 500;
+  color: var(--ion-color-medium);
+}
+
+.value {
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.error-message {
+  color: var(--ion-color-danger);
+  text-align: center;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: var(--ion-color-danger-tint);
+  margin: 20px 0;
+}
+
+.empty-data-message {
+  text-align: center;
+  padding: 20px;
+  margin-top: 16px;
+  font-style: italic;
+  
+  p {
+    color: var(--ion-color-medium);
+    font-size: 1rem;
+  }
+} 

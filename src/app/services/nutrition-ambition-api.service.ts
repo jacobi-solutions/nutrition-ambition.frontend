@@ -60,6 +60,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    getChatMessagesByDate(body: GetChatMessagesRequest | undefined): Observable<GetChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     clearChatMessages(body: ClearChatMessagesRequest | undefined): Observable<ClearChatMessagesResponse>;
     /**
      * @param body (optional) 
@@ -112,20 +117,20 @@ export interface INutritionAmbitionApiService {
      */
     getSmartNutritionData(body: ParseFoodTextRequest | undefined): Observable<NutritionApiResponse>;
     /**
-     * @param date (optional) 
+     * @param body (optional) 
      * @return Success
      */
-    getDailySummary(date: Date | undefined): Observable<NutritionSummaryResponse>;
+    getDailySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse>;
     /**
-     * @param startDate (optional) 
+     * @param body (optional) 
      * @return Success
      */
-    getWeeklySummary(startDate: Date | undefined): Observable<NutritionSummaryResponse>;
+    getWeeklySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse>;
     /**
-     * @param startDate (optional) 
+     * @param body (optional) 
      * @return Success
      */
-    getMonthlySummary(startDate: Date | undefined): Observable<NutritionSummaryResponse>;
+    getMonthlySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -571,6 +576,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processGetChatMessages(response: HttpResponseBase): Observable<GetChatMessagesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetChatMessagesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getChatMessagesByDate(body: GetChatMessagesRequest | undefined): Observable<GetChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/GetChatMessagesByDate";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetChatMessagesByDate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetChatMessagesByDate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetChatMessagesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetChatMessagesResponse>;
+        }));
+    }
+
+    protected processGetChatMessagesByDate(response: HttpResponseBase): Observable<GetChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1209,26 +1270,26 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     /**
-     * @param date (optional) 
+     * @param body (optional) 
      * @return Success
      */
-    getDailySummary(date: Date | undefined): Observable<NutritionSummaryResponse> {
-        let url_ = this.baseUrl + "/api/Nutrition/GetDailySummary?";
-        if (date === null)
-            throw new Error("The parameter 'date' cannot be null.");
-        else if (date !== undefined)
-            url_ += "date=" + encodeURIComponent(date ? "" + date.toISOString() : "") + "&";
+    getDailySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse> {
+        let url_ = this.baseUrl + "/api/Nutrition/GetDailySummary";
         url_ = url_.replace(/[?&]$/, "");
 
+        const content_ = JSON.stringify(body);
+
         let options_ : any = {
+            body: content_,
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Content-Type": "application/json",
                 "Accept": "text/plain"
             })
         };
 
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
             return this.processGetDailySummary(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
@@ -1265,26 +1326,26 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     /**
-     * @param startDate (optional) 
+     * @param body (optional) 
      * @return Success
      */
-    getWeeklySummary(startDate: Date | undefined): Observable<NutritionSummaryResponse> {
-        let url_ = this.baseUrl + "/api/Nutrition/GetWeeklySummary?";
-        if (startDate === null)
-            throw new Error("The parameter 'startDate' cannot be null.");
-        else if (startDate !== undefined)
-            url_ += "startDate=" + encodeURIComponent(startDate ? "" + startDate.toISOString() : "") + "&";
+    getWeeklySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse> {
+        let url_ = this.baseUrl + "/api/Nutrition/GetWeeklySummary";
         url_ = url_.replace(/[?&]$/, "");
 
+        const content_ = JSON.stringify(body);
+
         let options_ : any = {
+            body: content_,
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Content-Type": "application/json",
                 "Accept": "text/plain"
             })
         };
 
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
             return this.processGetWeeklySummary(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
@@ -1321,26 +1382,26 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     /**
-     * @param startDate (optional) 
+     * @param body (optional) 
      * @return Success
      */
-    getMonthlySummary(startDate: Date | undefined): Observable<NutritionSummaryResponse> {
-        let url_ = this.baseUrl + "/api/Nutrition/GetMonthlySummary?";
-        if (startDate === null)
-            throw new Error("The parameter 'startDate' cannot be null.");
-        else if (startDate !== undefined)
-            url_ += "startDate=" + encodeURIComponent(startDate ? "" + startDate.toISOString() : "") + "&";
+    getMonthlySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse> {
+        let url_ = this.baseUrl + "/api/Nutrition/GetMonthlySummary";
         url_ = url_.replace(/[?&]$/, "");
 
+        const content_ = JSON.stringify(body);
+
         let options_ : any = {
+            body: content_,
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Content-Type": "application/json",
                 "Accept": "text/plain"
             })
         };
 
-        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
             return this.processGetMonthlySummary(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
@@ -2075,6 +2136,42 @@ export interface IDailyGoal {
     effectiveDateUtc?: Date;
     baseCalories?: number;
     nutrientGoals?: NutrientGoal[] | undefined;
+}
+
+export class DateRequest implements IDateRequest {
+    date?: Date;
+
+    constructor(data?: IDateRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): DateRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new DateRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["date"] = this.date ? this.date.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IDateRequest {
+    date?: Date;
 }
 
 export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {

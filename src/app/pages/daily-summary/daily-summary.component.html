@@ -1,0 +1,79 @@
+<app-header 
+  [title]="'Daily Summary'" 
+  [showBackButton]="false" 
+  [selectedDate]="selectedDate"
+  [userEmail]="userEmail"
+  (dateChanged)="onDateChanged($event)"
+  (previousDay)="onPreviousDay()"
+  (nextDay)="onNextDay()"
+  (login)="onLogin()"
+  (logout)="onLogout()">
+</app-header>
+
+<ion-content class="ion-padding">
+  <div *ngIf="loading" class="loading-container">
+    <ion-spinner name="circular"></ion-spinner>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error && !summaryData" class="empty-state">
+    <ion-text color="medium">
+      <p>No nutrition data available for this date.</p>
+    </ion-text>
+  </div>
+
+  <div *ngIf="summaryData && !loading && !error">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Macronutrients</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div class="nutrition-item">
+          <span class="label">Calories:</span>
+          <span class="value">{{ summaryData.totalCalories | number:'1.0-0' }}</span>
+        </div>
+        
+        <div class="nutrition-item">
+          <span class="label">Protein:</span>
+          <span class="value">{{ summaryData.macronutrients?.protein | number:'1.0-1' }}g</span>
+        </div>
+        
+        <div class="nutrition-item">
+          <span class="label">Carbohydrates:</span>
+          <span class="value">{{ summaryData.macronutrients?.carbohydrates | number:'1.0-1' }}g</span>
+        </div>
+        
+        <div class="nutrition-item">
+          <span class="label">Fat:</span>
+          <span class="value">{{ summaryData.macronutrients?.fat | number:'1.0-1' }}g</span>
+        </div>
+        
+        <div *ngIf="summaryData.macronutrients?.fiber" class="nutrition-item">
+          <span class="label">Fiber:</span>
+          <span class="value">{{ summaryData.macronutrients?.fiber | number:'1.0-1' }}g</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card *ngIf="getMicronutrients().length > 0">
+      <ion-card-header>
+        <ion-card-title>Micronutrients</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <div *ngFor="let item of getMicronutrients()" class="nutrition-item">
+          <span class="label">{{ item.name | titlecase }}:</span>
+          <span class="value">{{ item.value | number:'1.0-1' }}</span>
+        </div>
+      </ion-card-content>
+    </ion-card>
+    
+    <div *ngIf="hasZeroValues()" class="empty-data-message">
+      <ion-text color="medium">
+        <p>Start logging meals to see your nutrition summary!</p>
+      </ion-text>
+    </div>
+  </div>
+</ion-content> 

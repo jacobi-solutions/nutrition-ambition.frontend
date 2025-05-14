@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginPage } from './pages/auth/login/login.page';
 import { RegisterPage } from './pages/auth/register/register.page';
 import { AuthGuard } from './guards/auth.guard';
+import { DailySummaryComponent } from './pages/daily-summary/daily-summary.component';
 
 export const routes: Routes = [
   {
@@ -20,6 +21,10 @@ export const routes: Routes = [
       {
         path: 'chat',
         loadComponent: () => import('./pages/chat/chat.page').then(m => m.ChatPage)
+      },
+      {
+        path: 'summary',
+        component: DailySummaryComponent
       },
       {
         path: '',

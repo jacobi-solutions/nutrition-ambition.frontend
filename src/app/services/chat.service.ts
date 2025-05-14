@@ -30,6 +30,7 @@ export class ChatService {
   }
 
   getInitialMessage(): Observable<BotMessageResponse> {
+    console.log('[DEBUG] Getting initial message from API');
     const request = new GetInitialMessageRequest({
       lastLoggedDate: undefined,
       hasLoggedFirstMeal: false
@@ -56,7 +57,18 @@ export class ChatService {
     return this.apiService.getPostLogHint(request);
   }
 
+  // This method sends a message to the assistant API without any duplicate logging
+  // The backend will log both the user message and assistant response
+  sendMessage(message: string): Observable<BotMessageResponse> {
+    console.log('[DEBUG] Sending message to assistant API (no duplicate logging):', message.substring(0, 30) + '...');
+    return this.runAssistantMessage(message);
+  }
+
+  // Original method - kept for backward compatibility
+  // This logs the message separately from the assistant call
+  // Consider deprecating this for the above method
   logMessage(message: string, role: string = 'user', foodEntryId?: string): Observable<LogChatMessageResponse> {
+    console.log(`[DEBUG] Explicitly logging message to backend - role: ${role}, message: ${message.substring(0, 30)}...`);
     const request = new LogChatMessageRequest({
       content: message,
       role,
@@ -73,6 +85,14 @@ export class ChatService {
     return this.apiService.getChatMessages(request);
   }
 
+  getMessageHistoryByDate(date: Date): Observable<GetChatMessagesResponse> {
+    console.log('[DEBUG] Getting message history for date:', date);
+    const request = new GetChatMessagesRequest({
+      loggedDateUtc: date
+    });
+    return this.apiService.getChatMessagesByDate(request);
+  }
+
   clearMessageHistory(date?: Date): Observable<ClearChatMessagesResponse> {
     const request = new ClearChatMessagesRequest({
       loggedDateUtc: date
@@ -81,7 +101,7 @@ export class ChatService {
   }
 
   runAssistantMessage(message: string): Observable<BotMessageResponse> {
-    
+    console.log('[DEBUG] Running assistant message:', message.substring(0, 30) + '...');
     const request = new AssistantRunMessageRequest({
       message,
     });
@@ -90,7 +110,7 @@ export class ChatService {
       map(response => {
         // Persist accountId if it's returned in the response
         // Using optional chaining and type assertion to prevent TypeScript errors
-        
+        console.log('[DEBUG] Assistant response received');
         
         // Map AssistantRunMessageResponse to BotMessageResponse
         const botResponse = new BotMessageResponse();
@@ -103,6 +123,7 @@ export class ChatService {
         const accountId = (response as any).accountId;
         if (accountId) {
           botResponse.accountId = accountId;
+          console.log('[DEBUG] Account ID received in response:', accountId);
         }
         return botResponse;
       }),

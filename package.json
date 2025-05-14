@@ -32,6 +32,7 @@
     "chart.js": "^4.4.9",
     "firebase": "^11.3.1",
     "ionicons": "^7.0.0",
+    "marked": "^15.0.11",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -51,6 +52,7 @@
     "@stencil/core": "^4.25.1",
     "@types/http-proxy": "^1.17.15",
     "@types/jasmine": "~5.1.0",
+    "@types/marked": "^5.0.2",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^9.16.0",

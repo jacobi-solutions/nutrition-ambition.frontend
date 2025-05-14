@@ -17,16 +17,12 @@ export const AccountInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, nex
   // Clone the request with the accountId
   let clonedRequest: HttpRequest<any>;
   
-  // Check if this is the AssistantRunMessage endpoint, which needs special handling
-  const isAssistantRunMessage = req.url.includes('/AssistantRunMessage');
-  
   if (accountId) {
     // Initialize newBody with the existing body
     let newBody = req.body;
     
-    // For the AssistantRunMessage endpoint, we need to handle the special case
-    // where the body might be a JSON string that has message as a property
-    if (isAssistantRunMessage && typeof req.body === 'string') {
+    // For string bodies (JSON strings), parse, add accountId, and stringify
+    if (typeof req.body === 'string') {
       try {
         // Parse the JSON string if possible 
         const bodyObj = JSON.parse(req.body);
@@ -38,7 +34,7 @@ export const AccountInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, nex
         });
       } catch (e) {
         // If parsing fails, use the original body
-        console.error('Failed to parse request body for AssistantRunMessage', e);
+        console.error('Failed to parse request body', e);
       }
     } 
     // For regular objects, use spread operator

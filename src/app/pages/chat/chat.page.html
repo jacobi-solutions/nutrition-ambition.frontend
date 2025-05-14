@@ -1,15 +1,39 @@
-<app-header [title]="'Chat'" [showBackButton]="false"></app-header>
+<app-header 
+  [title]="'Chat'" 
+  [showBackButton]="false" 
+  [selectedDate]="selectedDate"
+  [userEmail]="userEmail"
+  (dateChanged)="onDateChanged($event)"
+  (previousDay)="onPreviousDay()"
+  (nextDay)="onNextDay()"
+  (login)="onLogin()"
+  (logout)="onLogout()">
+</app-header>
 
 <ion-content class="ion-padding">
-  <div class="chat-container">
-    <!-- Messages -->
+  <div *ngIf="isLoadingHistory" class="loading-container">
+    <ion-spinner name="circular"></ion-spinner>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+  
+  <div *ngIf="!isLoadingHistory && !error && messages.length === 0" class="empty-state">
+    <ion-text color="medium">
+      <p>No chat history available for this date.</p>
+    </ion-text>
+  </div>
+
+  <div class="chat-container" *ngIf="!isLoadingHistory && messages.length > 0">
+    <!-- Messages with markdown support -->
     <div class="messages">
-      <div *ngFor="let message of messages" 
-           [ngClass]="{'user-message': message.isUser, 'bot-message': !message.isUser}"
-           class="message">
-        <div class="message-content">{{ message.text }}</div>
-        <div class="message-time">{{ message.timestamp | date:'shortTime' }}</div>
-      </div>
+      <app-chat-message 
+        *ngFor="let message of messages" 
+        [text]="message.text"
+        [isUser]="message.isUser"
+        [timestamp]="message.timestamp">
+      </app-chat-message>
     </div>
   </div>
 </ion-content>
