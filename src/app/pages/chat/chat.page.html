@@ -10,7 +10,7 @@
   (logout)="onLogout()">
 </app-header>
 
-<ion-content class="ion-padding">
+<ion-content #chatContent class="ion-padding">
   <div *ngIf="isLoadingHistory" class="loading-container">
     <ion-spinner name="circular"></ion-spinner>
   </div>

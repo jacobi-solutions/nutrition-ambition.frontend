@@ -85,6 +85,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    getDetailedSummary(body: GetDetailedSummaryRequest | undefined): Observable<GetDetailedSummaryResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     createFoodEntry(body: CreateFoodEntryRequest | undefined): Observable<CreateFoodEntryResponse>;
     /**
      * @param body (optional) 
@@ -875,6 +880,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<SetDailyGoalResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getDetailedSummary(body: GetDetailedSummaryRequest | undefined): Observable<GetDetailedSummaryResponse> {
+        let url_ = this.baseUrl + "/api/DetailedSummary/GetDetailedSummary";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDetailedSummary(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDetailedSummary(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetDetailedSummaryResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetDetailedSummaryResponse>;
+        }));
+    }
+
+    protected processGetDetailedSummary(response: HttpResponseBase): Observable<GetDetailedSummaryResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetDetailedSummaryResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetDetailedSummaryResponse>(null as any);
     }
 
     /**
@@ -2318,6 +2379,118 @@ export interface IErrorDto {
     errorCode?: string | undefined;
 }
 
+export class FoodBreakdown implements IFoodBreakdown {
+    name?: string | undefined;
+    brandName?: string | undefined;
+    totalAmount?: number;
+    unit?: string | undefined;
+    nutrients?: NutrientContribution[] | undefined;
+
+    constructor(data?: IFoodBreakdown) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.brandName = _data["brandName"];
+            this.totalAmount = _data["totalAmount"];
+            this.unit = _data["unit"];
+            if (Array.isArray(_data["nutrients"])) {
+                this.nutrients = [] as any;
+                for (let item of _data["nutrients"])
+                    this.nutrients!.push(NutrientContribution.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): FoodBreakdown {
+        data = typeof data === 'object' ? data : {};
+        let result = new FoodBreakdown();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["brandName"] = this.brandName;
+        data["totalAmount"] = this.totalAmount;
+        data["unit"] = this.unit;
+        if (Array.isArray(this.nutrients)) {
+            data["nutrients"] = [];
+            for (let item of this.nutrients)
+                data["nutrients"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IFoodBreakdown {
+    name?: string | undefined;
+    brandName?: string | undefined;
+    totalAmount?: number;
+    unit?: string | undefined;
+    nutrients?: NutrientContribution[] | undefined;
+}
+
+export class FoodContribution implements IFoodContribution {
+    name?: string | undefined;
+    brandName?: string | undefined;
+    amount?: number;
+    unit?: string | undefined;
+    foodUnit?: string | undefined;
+
+    constructor(data?: IFoodContribution) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.brandName = _data["brandName"];
+            this.amount = _data["amount"];
+            this.unit = _data["unit"];
+            this.foodUnit = _data["foodUnit"];
+        }
+    }
+
+    static fromJS(data: any): FoodContribution {
+        data = typeof data === 'object' ? data : {};
+        let result = new FoodContribution();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["brandName"] = this.brandName;
+        data["amount"] = this.amount;
+        data["unit"] = this.unit;
+        data["foodUnit"] = this.foodUnit;
+        return data;
+    }
+}
+
+export interface IFoodContribution {
+    name?: string | undefined;
+    brandName?: string | undefined;
+    amount?: number;
+    unit?: string | undefined;
+    foodUnit?: string | undefined;
+}
+
 export class FoodEntry implements IFoodEntry {
     id?: string | undefined;
     createdDateUtc?: Date;
@@ -2888,6 +3061,134 @@ export interface IGetDailyGoalResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     dailyGoal?: DailyGoal;
+}
+
+export class GetDetailedSummaryRequest implements IGetDetailedSummaryRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    loggedDateUtc?: Date;
+
+    constructor(data?: IGetDetailedSummaryRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): GetDetailedSummaryRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetDetailedSummaryRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IGetDetailedSummaryRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    loggedDateUtc?: Date;
+}
+
+export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    nutrients?: NutrientBreakdown[] | undefined;
+    foods?: FoodBreakdown[] | undefined;
+
+    constructor(data?: IGetDetailedSummaryResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            if (Array.isArray(_data["nutrients"])) {
+                this.nutrients = [] as any;
+                for (let item of _data["nutrients"])
+                    this.nutrients!.push(NutrientBreakdown.fromJS(item));
+            }
+            if (Array.isArray(_data["foods"])) {
+                this.foods = [] as any;
+                for (let item of _data["foods"])
+                    this.foods!.push(FoodBreakdown.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): GetDetailedSummaryResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetDetailedSummaryResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        if (Array.isArray(this.nutrients)) {
+            data["nutrients"] = [];
+            for (let item of this.nutrients)
+                data["nutrients"].push(item.toJSON());
+        }
+        if (Array.isArray(this.foods)) {
+            data["foods"] = [];
+            for (let item of this.foods)
+                data["foods"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IGetDetailedSummaryResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    nutrients?: NutrientBreakdown[] | undefined;
+    foods?: FoodBreakdown[] | undefined;
 }
 
 export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
@@ -3721,6 +4022,114 @@ export interface IMicronutrient {
     amount?: number;
     unit?: string | undefined;
     daily_value_percent?: number | undefined;
+}
+
+export class NutrientBreakdown implements INutrientBreakdown {
+    name?: string | undefined;
+    totalAmount?: number;
+    unit?: string | undefined;
+    foods?: FoodContribution[] | undefined;
+
+    constructor(data?: INutrientBreakdown) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.totalAmount = _data["totalAmount"];
+            this.unit = _data["unit"];
+            if (Array.isArray(_data["foods"])) {
+                this.foods = [] as any;
+                for (let item of _data["foods"])
+                    this.foods!.push(FoodContribution.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): NutrientBreakdown {
+        data = typeof data === 'object' ? data : {};
+        let result = new NutrientBreakdown();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["totalAmount"] = this.totalAmount;
+        data["unit"] = this.unit;
+        if (Array.isArray(this.foods)) {
+            data["foods"] = [];
+            for (let item of this.foods)
+                data["foods"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface INutrientBreakdown {
+    name?: string | undefined;
+    totalAmount?: number;
+    unit?: string | undefined;
+    foods?: FoodContribution[] | undefined;
+}
+
+export class NutrientContribution implements INutrientContribution {
+    name?: string | undefined;
+    brandName?: string | undefined;
+    amount?: number;
+    unit?: string | undefined;
+    originalUnit?: string | undefined;
+
+    constructor(data?: INutrientContribution) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.brandName = _data["brandName"];
+            this.amount = _data["amount"];
+            this.unit = _data["unit"];
+            this.originalUnit = _data["originalUnit"];
+        }
+    }
+
+    static fromJS(data: any): NutrientContribution {
+        data = typeof data === 'object' ? data : {};
+        let result = new NutrientContribution();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["brandName"] = this.brandName;
+        data["amount"] = this.amount;
+        data["unit"] = this.unit;
+        data["originalUnit"] = this.originalUnit;
+        return data;
+    }
+}
+
+export interface INutrientContribution {
+    name?: string | undefined;
+    brandName?: string | undefined;
+    amount?: number;
+    unit?: string | undefined;
+    originalUnit?: string | undefined;
 }
 
 export class NutrientGoal implements INutrientGoal {

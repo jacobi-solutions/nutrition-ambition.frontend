@@ -1,55 +1,168 @@
-.loading-container {
+.loading-container, .empty-state {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100px;
+  min-height: 100px;
   width: 100%;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
 }
 
 .nutrition-item {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.nutrition-item:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-.label {
-  font-weight: 500;
-  color: var(--ion-color-medium);
-}
-
-.value {
-  font-weight: 600;
-  color: var(--ion-color-dark);
+  margin-bottom: 12px;
+  
+  .label {
+    font-weight: 500;
+  }
+  
+  .value {
+    font-weight: 600;
+  }
 }
 
 .error-message {
   color: var(--ion-color-danger);
+  padding: 15px;
   text-align: center;
-  padding: 20px;
-  border-radius: 8px;
-  background-color: var(--ion-color-danger-tint);
-  margin: 20px 0;
 }
 
 .empty-data-message {
   text-align: center;
   padding: 20px;
-  margin-top: 16px;
   font-style: italic;
-  
-  p {
-    color: var(--ion-color-medium);
-    font-size: 1rem;
+}
+
+// Segment toggle styling
+.segment-toggle {
+  margin-bottom: 16px;
+}
+
+// Breakdown list styling
+.breakdown-container {
+  ion-list {
+    padding: 0;
+    margin-bottom: 16px;
+    
+    ion-item {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      --min-height: 50px;
+      
+      &.selected {
+        --background: var(--ion-color-light);
+        --background-hover: var(--ion-color-light-shade);
+        font-weight: 500;
+      }
+    }
   }
+}
+
+.breakdown-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  .primary-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .name {
+      font-weight: 500;
+    }
+    
+    .amount {
+      font-weight: 600;
+      color: var(--ion-color-medium);
+      margin-left: 12px;
+    }
+  }
+  
+  .toggle-icon {
+    font-size: 18px;
+    color: var(--ion-color-medium);
+    margin-left: 8px;
+    transition: transform 0.2s ease;
+  }
+}
+
+// Drilldown row styling
+.drilldown-row {
+  --padding-start: 24px;
+  --background: var(--ion-color-light-shade);
+  --min-height: unset;
+  font-size: 14px;
+  animation: fadeIn 0.2s ease-in-out;
+  
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    padding: 6px 0;
+    
+    &:not(:last-child) {
+      border-bottom: 1px solid var(--ion-color-light);
+    }
+    
+    .detail-name {
+      font-weight: 400;
+    }
+    
+    .detail-amount {
+      font-weight: 500;
+      color: var(--ion-color-medium);
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Drilldown card styling - keeping for reference but not used anymore
+.drilldown-card {
+  margin: 0 0 16px 0;
+  
+  ion-card-header {
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    
+    ion-card-title {
+      flex: 1;
+    }
+    
+    .dismiss-button {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      height: 30px;
+      margin: 0;
+    }
+  }
+  
+  ion-card-content {
+    padding-top: 0;
+  }
+  
+  ion-list {
+    padding: 0;
+  }
+}
+
+// Brand name styling
+.brand-name {
+  color: var(--ion-color-medium);
+  font-style: italic;
+  font-weight: normal;
+  font-size: 0.9em;
 } 

@@ -1,8 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText } from '@ionic/angular/standalone';
-import { AppHeaderComponent } from '../../components/app-header/header.component';
+import { AppHeaderComponent } from '../../components/header/header.component';
 import { ChatMessageComponent } from '../../components/chat-message/chat-message.component';
 import { addIcons } from 'ionicons';
 import { paperPlaneOutline } from 'ionicons/icons';
@@ -45,7 +45,7 @@ interface DisplayMessage {
     ChatMessageComponent
   ]
 })
-export class ChatPage implements OnInit {
+export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   messages: DisplayMessage[] = [];
   userMessage: string = '';
   isLoading: boolean = false;
@@ -56,6 +56,7 @@ export class ChatPage implements OnInit {
   private dateSubscription: Subscription;
   
   @ViewChild(IonContent, { static: false }) content: IonContent;
+  @ViewChild('chatContent') chatContent!: ElementRef;
 
   constructor(
     private chatService: ChatService,
@@ -88,18 +89,31 @@ export class ChatPage implements OnInit {
     }
   }
 
+  ngAfterViewInit() {
+    // Scroll to bottom when view is initialized
+    this.scrollToBottom();
+  }
+
   // Handle date changes from the header
   onDateChanged(newDate: string) {
+    console.log(`[ChatPage] Date changed to: ${newDate}`);
+    
+    // Update local value first
+    this.selectedDate = newDate;
+    
+    // Then update the service
     this.dateService.setSelectedDate(newDate);
   }
   
   // Handle navigation to previous day
   onPreviousDay() {
+    console.log(`[ChatPage] Previous day clicked, current date is: ${this.selectedDate}`);
     this.dateService.goToPreviousDay();
   }
   
   // Handle navigation to next day
   onNextDay() {
+    console.log(`[ChatPage] Next day clicked, current date is: ${this.selectedDate}`);
     this.dateService.goToNextDay();
   }
   
@@ -140,6 +154,7 @@ export class ChatPage implements OnInit {
         isUser: false, 
         timestamp: new Date() 
       });
+      this.scrollToBottom();
       return;
     }
 
@@ -260,9 +275,23 @@ export class ChatPage implements OnInit {
   
   private scrollToBottom() {
     setTimeout(() => {
+      // Try using the ElementRef first for smooth scrolling
+      if (this.chatContent?.nativeElement) {
+        try {
+          this.chatContent.nativeElement.scrollTo({ 
+            top: this.chatContent.nativeElement.scrollHeight, 
+            behavior: 'smooth' 
+          });
+        } catch (err) {
+          // Fallback if smooth scrolling not supported
+          this.chatContent.nativeElement.scrollTop = this.chatContent.nativeElement.scrollHeight;
+        }
+      }
+      
+      // Also use IonContent as a backup method
       if (this.content) {
         this.content.scrollToBottom(300);
       }
-    }, 100);
+    }, 50);
   }
 } 

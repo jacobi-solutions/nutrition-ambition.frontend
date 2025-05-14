@@ -25,55 +25,196 @@
     </ion-text>
   </div>
 
-  <div *ngIf="summaryData && !loading && !error">
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>Macronutrients</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <div class="nutrition-item">
-          <span class="label">Calories:</span>
-          <span class="value">{{ summaryData.totalCalories | number:'1.0-0' }}</span>
-        </div>
-        
-        <div class="nutrition-item">
-          <span class="label">Protein:</span>
-          <span class="value">{{ summaryData.macronutrients?.protein | number:'1.0-1' }}g</span>
-        </div>
-        
-        <div class="nutrition-item">
-          <span class="label">Carbohydrates:</span>
-          <span class="value">{{ summaryData.macronutrients?.carbohydrates | number:'1.0-1' }}g</span>
-        </div>
-        
-        <div class="nutrition-item">
-          <span class="label">Fat:</span>
-          <span class="value">{{ summaryData.macronutrients?.fat | number:'1.0-1' }}g</span>
-        </div>
-        
-        <div *ngIf="summaryData.macronutrients?.fiber" class="nutrition-item">
-          <span class="label">Fiber:</span>
-          <span class="value">{{ summaryData.macronutrients?.fiber | number:'1.0-1' }}g</span>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
-    <ion-card *ngIf="getMicronutrients().length > 0">
-      <ion-card-header>
-        <ion-card-title>Micronutrients</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <div *ngFor="let item of getMicronutrients()" class="nutrition-item">
-          <span class="label">{{ item.name | titlecase }}:</span>
-          <span class="value">{{ item.value | number:'1.0-1' }}</span>
-        </div>
-      </ion-card-content>
-    </ion-card>
-    
+  <div *ngIf="!loading && !error && summaryData">
     <div *ngIf="hasZeroValues()" class="empty-data-message">
       <ion-text color="medium">
         <p>Start logging meals to see your nutrition summary!</p>
       </ion-text>
+    </div>
+    
+    <div *ngIf="!hasZeroValues()">
+      <ion-segment [(ngModel)]="viewMode" (ionChange)="segmentChanged($event)" class="segment-toggle">
+        <ion-segment-button value="nutrients">
+          <ion-label>Nutrients</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="foods">
+          <ion-label>Foods</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+      <div *ngIf="detailedLoading" class="loading-container">
+        <ion-spinner name="circular"></ion-spinner>
+      </div>
+
+      <div *ngIf="detailedError" class="error-message">
+        {{ detailedError }}
+      </div>
+
+      <div *ngIf="!detailedData && !detailedLoading && !detailedError" class="empty-state">
+        <ion-text color="medium">
+          <p>No detailed breakdown available for this date.</p>
+        </ion-text>
+      </div>
+
+      <!-- Nutrients View -->
+      <div *ngIf="viewMode === 'nutrients' && detailedData?.nutrients && !detailedLoading" class="breakdown-container">
+        <!-- Macronutrients Card -->
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Macronutrients</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list>
+              <ng-container *ngFor="let nutrient of macronutrientList">
+                <ion-item 
+                  button 
+                  (click)="selectNutrient(nutrient)" 
+                  [class.selected]="selectedNutrient?.name === nutrient.name">
+                  <div class="breakdown-item">
+                    <div class="primary-info">
+                      <span class="name">{{ nutrient.name }}</span>
+                      <span class="amount">{{ formatAmountWithUnit(nutrient.totalAmount || 0, nutrient.unit || '') }}</span>
+                    </div>
+                  </div>
+                </ion-item>
+                
+                <!-- Inline Drilldown -->
+                <ng-container *ngIf="selectedNutrient && selectedNutrient.name === nutrient.name">
+                  <ion-item lines="none" class="drilldown-row">
+                    <ion-label>
+                      <ng-container *ngIf="selectedNutrient.foods">
+                        <ng-container *ngFor="let food of selectedNutrient.foods">
+                          <div class="detail-item">
+                            <span class="detail-name">
+                              <span *ngIf="food.brandName" class="brand-name">{{ food.brandName }} - </span>{{ food.name }}
+                            </span>
+                            <span class="detail-amount">{{ formatAmountWithFoodUnit(food) }}</span>
+                          </div>
+                        </ng-container>
+                      </ng-container>
+                    </ion-label>
+                  </ion-item>
+                </ng-container>
+              </ng-container>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Micronutrients Card -->
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Micronutrients</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list>
+              <ng-container *ngFor="let nutrient of micronutrientList">
+                <ion-item 
+                  button 
+                  (click)="selectNutrient(nutrient)" 
+                  [class.selected]="selectedNutrient?.name === nutrient.name">
+                  <div class="breakdown-item">
+                    <div class="primary-info">
+                      <span class="name">{{ nutrient.name }}</span>
+                      <span class="amount">{{ formatAmountWithUnit(nutrient.totalAmount || 0, nutrient.unit || '') }}</span>
+                    </div>
+                  </div>
+                </ion-item>
+                
+                <!-- Inline Drilldown -->
+                <ng-container *ngIf="selectedNutrient && selectedNutrient.name === nutrient.name">
+                  <ion-item lines="none" class="drilldown-row">
+                    <ion-label>
+                      <ng-container *ngIf="selectedNutrient.foods">
+                        <ng-container *ngFor="let food of selectedNutrient.foods">
+                          <div class="detail-item">
+                            <span class="detail-name">
+                              <span *ngIf="food.brandName" class="brand-name">{{ food.brandName }} - </span>{{ food.name }}
+                            </span>
+                            <span class="detail-amount">{{ formatAmountWithFoodUnit(food) }}</span>
+                          </div>
+                        </ng-container>
+                      </ng-container>
+                    </ion-label>
+                  </ion-item>
+                </ng-container>
+              </ng-container>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+      <!-- Foods View -->
+      <div *ngIf="viewMode === 'foods' && detailedData?.foods && !detailedLoading" class="breakdown-container">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>Foods</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list>
+              <ng-container *ngFor="let food of detailedData?.foods">
+                <ion-item 
+                  button 
+                  (click)="selectFood(food)" 
+                  [class.selected]="selectedFood?.name === food.name">
+                  <div class="breakdown-item">
+                    <div class="primary-info">
+                      <span class="name">
+                        <span *ngIf="food.brandName" class="brand-name">{{ food.brandName }} - </span>{{ food.name }}
+                      </span>
+                      <span class="amount">{{ food.totalAmount | number:'1.0-1' }} {{ food.unit || 'serving' }}</span>
+                    </div>
+                  </div>
+                </ion-item>
+                
+                <!-- Inline Drilldown -->
+                <ng-container *ngIf="selectedFood && selectedFood.name === food.name">
+                  <ion-item lines="none" class="drilldown-row">
+                    <ion-label>
+                      <!-- Macronutrients Section -->
+                      <div class="nutrient-section">
+                        <strong class="nutrient-category-title">Macronutrients</strong>
+                        <ng-container *ngIf="selectedFood">
+                          <ng-container *ngIf="getFoodMacronutrients(selectedFood.nutrients).length > 0">
+                            <div *ngFor="let nutrient of getFoodMacronutrients(selectedFood.nutrients)" class="detail-item">
+                              <span class="detail-name">{{ nutrient.name }}</span>
+                              <span class="detail-amount">{{ formatNutrientWithOriginalUnit(nutrient) }}</span>
+                            </div>
+                          </ng-container>
+                          <div *ngIf="getFoodMacronutrients(selectedFood.nutrients).length === 0" class="empty-detail-message">
+                            <span>No macronutrient data available</span>
+                          </div>
+                        </ng-container>
+                        <div *ngIf="!selectedFood" class="empty-detail-message">
+                          <span>No macronutrient data available</span>
+                        </div>
+                      </div>
+                      
+                      <!-- Micronutrients Section -->
+                      <div class="nutrient-section">
+                        <strong class="nutrient-category-title">Micronutrients</strong>
+                        <ng-container *ngIf="selectedFood">
+                          <ng-container *ngIf="getFoodMicronutrients(selectedFood.nutrients).length > 0">
+                            <div *ngFor="let nutrient of getFoodMicronutrients(selectedFood.nutrients)" class="detail-item">
+                              <span class="detail-name">{{ nutrient.name }}</span>
+                              <span class="detail-amount">{{ formatNutrientWithOriginalUnit(nutrient) }}</span>
+                            </div>
+                          </ng-container>
+                          <div *ngIf="getFoodMicronutrients(selectedFood.nutrients).length === 0" class="empty-detail-message">
+                            <span>No micronutrient data available</span>
+                          </div>
+                        </ng-container>
+                        <div *ngIf="!selectedFood" class="empty-detail-message">
+                          <span>No micronutrient data available</span>
+                        </div>
+                      </div>
+                    </ion-label>
+                  </ion-item>
+                </ng-container>
+              </ng-container>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+      </div>
     </div>
   </div>
 </ion-content> 

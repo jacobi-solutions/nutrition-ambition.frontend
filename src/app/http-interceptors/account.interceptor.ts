@@ -13,6 +13,8 @@ export const AccountInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, nex
   }
 
   const accountId = accountsService.getAccountId();
+  console.log(`[AccountInterceptor] Processing request to ${req.url}`);
+  console.log(`[AccountInterceptor] Current accountId: ${accountId || 'none'}`);
 
   // Clone the request with the accountId
   let clonedRequest: HttpRequest<any>;
@@ -32,20 +34,23 @@ export const AccountInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, nex
           ...bodyObj,
           accountId
         });
+        console.log(`[AccountInterceptor] Added accountId to string request body`);
       } catch (e) {
         // If parsing fails, use the original body
-        console.error('Failed to parse request body', e);
+        console.error('[AccountInterceptor] Failed to parse request body', e);
       }
     } 
     // For regular objects, use spread operator
     else if (typeof req.body === 'object' && req.body !== null && !Array.isArray(req.body)) {
       newBody = { ...req.body, accountId };
+      console.log(`[AccountInterceptor] Added accountId to object request body`);
     }
     
     clonedRequest = req.clone({
       body: newBody
     });
   } else {
+    console.log(`[AccountInterceptor] No accountId available, request will create a new anonymous account`);
     clonedRequest = req.clone();
   }
 
@@ -71,28 +76,35 @@ export const AccountInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, nex
     switchMap(event => {
       // Only process HttpResponse objects (not events like HttpProgressEvent)
       if (event instanceof HttpResponse) {
-        console.log(`Response from ${event.url}:`, event);
+        console.log(`[AccountInterceptor] Response from ${event.url}:`, event.status);
         const responseBody = event.body;
         
         // Check if the body is a Blob (which it usually is due to responseType: 'blob' in the service)
         if (responseBody instanceof Blob) {
-          console.log('Response body is a Blob, reading as JSON');
+          console.log('[AccountInterceptor] Response body is a Blob, reading as JSON');
           
           // Return a new observable that will emit the modified response
           return from(readBlobAsJson(responseBody)).pipe(
             switchMap(jsonData => {
-              console.log('Parsed JSON data:', jsonData);
+              console.log('[AccountInterceptor] Parsed JSON data');
               
               // Extract accountId from JSON if it exists
               if (jsonData && typeof jsonData === 'object') {
                 // Use type assertion to access accountId
                 const responseAccountId = (jsonData as { accountId?: string }).accountId;
-                console.log('Found accountId in JSON response:', responseAccountId);
                 
                 if (responseAccountId && typeof responseAccountId === 'string') {
-                  console.log('Setting accountId:', responseAccountId);
-                  // Save the accountId
-                  accountsService.setAccountId(responseAccountId);
+                  console.log('[AccountInterceptor] Found accountId in response:', responseAccountId);
+                  
+                  // Check if this is different from our current accountId
+                  const currentAccountId = accountsService.getAccountId();
+                  if (currentAccountId !== responseAccountId) {
+                    console.log('[AccountInterceptor] Setting new accountId:', responseAccountId);
+                    // Save the accountId
+                    accountsService.setAccountId(responseAccountId);
+                  } else {
+                    console.log('[AccountInterceptor] AccountId unchanged');
+                  }
                 }
               }
               
@@ -104,11 +116,18 @@ export const AccountInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, nex
           // If it's already an object, check for accountId
           // Use type assertion to access accountId
           const responseAccountId = (responseBody as { accountId?: string }).accountId;
-          console.log('Found accountId in object response:', responseAccountId);
           
           if (responseAccountId && typeof responseAccountId === 'string') {
-            console.log('Setting accountId:', responseAccountId);
-            accountsService.setAccountId(responseAccountId);
+            console.log('[AccountInterceptor] Found accountId in object response:', responseAccountId);
+            
+            // Check if this is different from our current accountId
+            const currentAccountId = accountsService.getAccountId();
+            if (currentAccountId !== responseAccountId) {
+              console.log('[AccountInterceptor] Setting new accountId:', responseAccountId);
+              accountsService.setAccountId(responseAccountId);
+            } else {
+              console.log('[AccountInterceptor] AccountId unchanged');
+            }
           }
         }
       }

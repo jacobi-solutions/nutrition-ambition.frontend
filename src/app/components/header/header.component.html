@@ -1,45 +1,61 @@
 <ion-header>
+  <!-- First row (top toolbar) -->
   <ion-toolbar>
-    <!-- Left Side -->
+    <!-- Left: App title -->
+    <ion-title>
+      Nutrition Ambition
+    </ion-title>
+    
+    <!-- Center: User status -->
+    <ion-title class="ion-text-center user-status">
+      <span *ngIf="userEmail">Logged in as {{ userEmail }}</span>
+      <span *ngIf="!userEmail">Anonymous</span>
+    </ion-title>
+    
+    <!-- Right: Auth buttons -->
+    <ion-buttons slot="end">
+      <ion-button *ngIf="userEmail" (click)="onLogout()">
+        Sign out
+      </ion-button>
+      <ion-button *ngIf="!userEmail" (click)="onLogin()">
+        Sign in
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+  
+  <!-- Second row (bottom toolbar) -->
+  <ion-toolbar>
+    <!-- Left: Back button or previous day -->
     <ion-buttons slot="start">
-      <ng-container *ngIf="showBackButton; else dateNav">
+      <ng-container *ngIf="showBackButton; else prevDayButton">
         <ion-back-button defaultHref="/app"></ion-back-button>
       </ng-container>
-      <ng-template #dateNav>
-        <ion-button (click)="previousDay.emit()">
+      <ng-template #prevDayButton>
+        <ion-button (click)="onPreviousDay()">
           <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
         </ion-button>
       </ng-template>
     </ion-buttons>
-
-    <!-- Center Title / Date Picker -->
-    <ion-title class="header-title">
-      <ng-container *ngIf="!showBackButton; else staticTitle">
-        <ion-datetime-button datetime="datePicker"></ion-datetime-button>
-        <ion-modal [keepContentsMounted]="true">
-          <ng-template>
-            <ion-datetime 
-              id="datePicker" 
-              [value]="selectedDate"
-              (ionChange)="onDateChanged($event)"
-              presentation="date">
-            </ion-datetime>
-          </ng-template>
-        </ion-modal>
-      </ng-container>
-      <ng-template #staticTitle>
-        {{ title }}
-      </ng-template>
+    
+    <!-- Center: Date picker -->
+    <ion-title class="ion-text-center">
+      <ion-datetime-button datetime="datePicker"></ion-datetime-button>
+      <ion-modal [keepContentsMounted]="true">
+        <ng-template>
+          <ion-datetime 
+            id="datePicker" 
+            [value]="selectedDate"
+            (ionChange)="onDateChanged($event)"
+            presentation="date">
+          </ion-datetime>
+        </ng-template>
+      </ion-modal>
     </ion-title>
-
-    <!-- Right Side -->
-    <ion-buttons slot="end">
-      <ion-chip class="user-chip" *ngIf="userEmail">
-        <ion-label>{{ userEmail }}</ion-label>
-        <ion-icon name="person-circle"></ion-icon>
-      </ion-chip>
-      <ion-button (click)="logout()">
-        <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
+    
+    <!-- Right: Next day button -->
+    <ion-buttons slot="end" *ngIf="!showBackButton">
+      <ion-button (click)="onNextDay()">
+        <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
