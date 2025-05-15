@@ -25,6 +25,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    saveProfileAndGoals(body: SaveProfileAndGoalsRequest | undefined): Observable<SaveProfileAndGoalsResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     registerUser(body: AccountRequest | undefined): Observable<Response>;
     /**
      * @param body (optional) 
@@ -140,6 +145,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    saveProfileAndGoals2(body: SaveProfileAndGoalsRequest | undefined): Observable<SaveProfileAndGoalsResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getTodayThread(body: GetTodayThreadRequest | undefined): Observable<GetTodayThreadResponse>;
 }
 
@@ -208,6 +218,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<LogMealToolResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    saveProfileAndGoals(body: SaveProfileAndGoalsRequest | undefined): Observable<SaveProfileAndGoalsResponse> {
+        let url_ = this.baseUrl + "/api/AssistantTool/SaveProfileAndGoals";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSaveProfileAndGoals(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSaveProfileAndGoals(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SaveProfileAndGoalsResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SaveProfileAndGoalsResponse>;
+        }));
+    }
+
+    protected processSaveProfileAndGoals(response: HttpResponseBase): Observable<SaveProfileAndGoalsResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SaveProfileAndGoalsResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SaveProfileAndGoalsResponse>(null as any);
     }
 
     /**
@@ -1496,6 +1562,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<NutritionSummaryResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    saveProfileAndGoals2(body: SaveProfileAndGoalsRequest | undefined): Observable<SaveProfileAndGoalsResponse> {
+        let url_ = this.baseUrl + "/api/Profile/SaveProfileAndGoals";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSaveProfileAndGoals2(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSaveProfileAndGoals2(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SaveProfileAndGoalsResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SaveProfileAndGoalsResponse>;
+        }));
+    }
+
+    protected processSaveProfileAndGoals2(response: HttpResponseBase): Observable<SaveProfileAndGoalsResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SaveProfileAndGoalsResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SaveProfileAndGoalsResponse>(null as any);
     }
 
     /**
@@ -4522,6 +4644,134 @@ export interface IResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+}
+
+export class SaveProfileAndGoalsRequest implements ISaveProfileAndGoalsRequest {
+    isAnonymousUser?: boolean;
+    accountId?: string | undefined;
+    age?: number;
+    sex?: string | undefined;
+    heightCm?: number;
+    weightKg?: number;
+    activityLevel?: string | undefined;
+
+    constructor(data?: ISaveProfileAndGoalsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.isAnonymousUser = _data["isAnonymousUser"];
+            this.accountId = _data["accountId"];
+            this.age = _data["age"];
+            this.sex = _data["sex"];
+            this.heightCm = _data["heightCm"];
+            this.weightKg = _data["weightKg"];
+            this.activityLevel = _data["activityLevel"];
+        }
+    }
+
+    static fromJS(data: any): SaveProfileAndGoalsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SaveProfileAndGoalsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["isAnonymousUser"] = this.isAnonymousUser;
+        data["accountId"] = this.accountId;
+        data["age"] = this.age;
+        data["sex"] = this.sex;
+        data["heightCm"] = this.heightCm;
+        data["weightKg"] = this.weightKg;
+        data["activityLevel"] = this.activityLevel;
+        return data;
+    }
+}
+
+export interface ISaveProfileAndGoalsRequest {
+    isAnonymousUser?: boolean;
+    accountId?: string | undefined;
+    age?: number;
+    sex?: string | undefined;
+    heightCm?: number;
+    weightKg?: number;
+    activityLevel?: string | undefined;
+}
+
+export class SaveProfileAndGoalsResponse implements ISaveProfileAndGoalsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isCreated?: boolean;
+    dailyGoal?: DailyGoal;
+
+    constructor(data?: ISaveProfileAndGoalsResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isCreated = _data["isCreated"];
+            this.dailyGoal = _data["dailyGoal"] ? DailyGoal.fromJS(_data["dailyGoal"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SaveProfileAndGoalsResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new SaveProfileAndGoalsResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isCreated"] = this.isCreated;
+        data["dailyGoal"] = this.dailyGoal ? this.dailyGoal.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISaveProfileAndGoalsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isCreated?: boolean;
+    dailyGoal?: DailyGoal;
 }
 
 export class SetDailyGoalRequest implements ISetDailyGoalRequest {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, catchError, throwError, of, Subject } from 'rxjs';
+import { Observable, map, catchError, throwError, of, Subject, switchMap } from 'rxjs';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 import { AccountsService } from './accounts.service';
 import { 
@@ -13,7 +13,9 @@ import {
   LogChatMessageResponse,
   GetChatMessagesResponse,
   ClearChatMessagesResponse,
-  AssistantRunMessageRequest
+  AssistantRunMessageRequest,
+  GetDailyGoalRequest,
+  GetDailyGoalResponse
 } from './nutrition-ambition-api.service';
 
 @Injectable({
@@ -68,14 +70,83 @@ export class ChatService {
     
     return this.apiService.getPostLogHint(request);
   }
-
-  // This method sends a message to the assistant API without any duplicate logging
-  // The backend will log both the user message and assistant response
-  sendMessage(message: string): Observable<BotMessageResponse> {
-    console.log('[DEBUG] Sending message to assistant API (no duplicate logging):', message.substring(0, 30) + '...');
-    return this.runAssistantMessage(message);
+  
+  // Check if the user has daily goals and prompt them if not
+  checkAndPromptForDailyGoal(accountId: string): Observable<BotMessageResponse> {
+    console.log('[DEBUG] Checking if user has daily goals set');
+    
+    // If no account ID, handle anonymously
+    if (!accountId) {
+      return this.handleAnonymousGoalPrompt();
+    }
+    
+    const request = new GetDailyGoalRequest({});
+    
+    return this.apiService.getDailyGoal(request).pipe(
+      map(response => {
+        if (!response.dailyGoal) {
+          console.log('[DEBUG] No daily goal found, prompting user to set one');
+          // Create a bot message response with the improved prompt
+          const botResponse = new BotMessageResponse();
+          botResponse.isSuccess = true;
+          botResponse.message = "I noticed you haven't set up your nutrition goals yet. Setting personalized goals based on your age, sex, height, and weight can help you track your nutrition more effectively. Would you like to set them up now?";
+          botResponse.accountId = accountId;
+          
+          // Log this message to the chat history
+          this.logMessage(botResponse.message || "", "assistant").subscribe();
+          
+          return botResponse;
+        } else {
+          // User already has goals, just return an empty successful response
+          console.log('[DEBUG] User already has daily goals set');
+          const emptyResponse = new BotMessageResponse();
+          emptyResponse.isSuccess = true;
+          return emptyResponse;
+        }
+      }),
+      catchError(error => {
+        console.error('Error checking daily goals:', error);
+        return of(new BotMessageResponse({
+          isSuccess: false,
+          message: 'Unable to check your nutrition goals right now.'
+        }));
+      })
+    );
   }
-
+  
+  // Handle anonymous users trying to set goals
+  private handleAnonymousGoalPrompt(): Observable<BotMessageResponse> {
+    const message = "Setting personalized nutrition goals would help you track your diet more effectively. You'll need to create an account first to save your goals. Tap here to sign up.";
+    console.log('[DEBUG] Anonymous user attempting to set goals, prompting sign up');
+    
+    // Create a response with the anonymous message
+    const response = new BotMessageResponse();
+    response.isSuccess = true;
+    response.message = message;
+    
+    return of(response);
+  }
+  
+  // Send message to the assistant
+  sendMessage(message: string): Observable<BotMessageResponse> {
+    console.log('[DEBUG] Sending message to the assistant:', message.substring(0, 30) + '...');
+    
+    // First, log the user message to the backend
+    return this.logMessage(message, 'user').pipe(
+      switchMap(logResponse => {
+        // After logging, send to the assistant for processing
+        return this.runAssistantMessage(message);
+      }),
+      catchError(error => {
+        console.error('Error in sendMessage:', error);
+        return of(new BotMessageResponse({
+          isSuccess: false,
+          message: "Sorry, I'm having trouble processing your message right now. Please try again later."
+        }));
+      })
+    );
+  }
+  
   // Original method - kept for backward compatibility
   // This logs the message separately from the assistant call
   // Consider deprecating this for the above method
