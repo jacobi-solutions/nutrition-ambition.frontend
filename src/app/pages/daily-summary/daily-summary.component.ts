@@ -357,11 +357,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
 
   // Helper to format food contributions using the original food unit if available
   formatAmountWithFoodUnit(food: FoodContribution): string {
-    if (food.foodUnit) {
-      return `${food.amount?.toFixed(1) || '0.0'} ${food.foodUnit}`;
-    } else {
-      return `${food.amount?.toFixed(1) || '0.0'} ${food.unit || ''}`;
-    }
+    return `${food.amount?.toFixed(1) || '0.0'} ${food.unit || 'g'}`;
   }
 
   // Helper methods to separate a food's nutrients into macronutrient and micronutrient categories
@@ -382,10 +378,6 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
 
   // Helper to format nutrient contributions with original unit if available
   formatNutrientWithOriginalUnit(nutrient: NutrientContribution): string {
-    if (nutrient.originalUnit) {
-      return `${nutrient.amount?.toFixed(1) || '0.0'} ${nutrient.originalUnit}`;
-    } else {
-      return `${nutrient.amount?.toFixed(1) || '0.0'} ${nutrient.unit || ''}`;
-    }
+    return `${nutrient.amount?.toFixed(1) || '0.0'} ${nutrient.unit || ''}`;
   }
 } 
