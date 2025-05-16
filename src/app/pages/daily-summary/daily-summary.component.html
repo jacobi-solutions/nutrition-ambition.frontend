@@ -16,7 +16,10 @@
   </div>
 
   <div *ngIf="error" class="error-message">
-    {{ error }}
+    <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
+    <div class="error-text">
+      {{ error || 'An error occurred loading your nutrition data. Please try again later.' }}
+    </div>
   </div>
 
   <div *ngIf="!loading && !error && !summaryData" class="empty-state">
@@ -47,7 +50,10 @@
       </div>
 
       <div *ngIf="detailedError" class="error-message">
-        {{ detailedError }}
+        <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
+        <div class="error-text">
+          {{ detailedError || 'An error occurred loading your detailed nutrition data. Please try again later.' }}
+        </div>
       </div>
 
       <div *ngIf="!detailedData && !detailedLoading && !detailedError" class="empty-state">
@@ -76,6 +82,16 @@
                       <span class="amount">{{ formatAmountWithUnit(nutrient.totalAmount || 0, nutrient.unit || '') }}</span>
                     </div>
                   </div>
+                  
+                  <!-- Action Menu Button -->
+                  <ion-button 
+                    fill="clear" 
+                    slot="end" 
+                    size="small" 
+                    class="action-btn" 
+                    (click)="openActionMenu($event, nutrient, 'nutrient')">
+                    <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+                  </ion-button>
                 </ion-item>
                 
                 <!-- Inline Drilldown -->
@@ -118,6 +134,16 @@
                       <span class="amount">{{ formatAmountWithUnit(nutrient.totalAmount || 0, nutrient.unit || '') }}</span>
                     </div>
                   </div>
+                  
+                  <!-- Action Menu Button -->
+                  <ion-button 
+                    fill="clear" 
+                    slot="end" 
+                    size="small" 
+                    class="action-btn" 
+                    (click)="openActionMenu($event, nutrient, 'nutrient')">
+                    <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+                  </ion-button>
                 </ion-item>
                 
                 <!-- Inline Drilldown -->
@@ -164,6 +190,16 @@
                       <span class="amount">{{ food.totalAmount | number:'1.0-1' }} {{ food.unit || 'serving' }}</span>
                     </div>
                   </div>
+                  
+                  <!-- Action Menu Button -->
+                  <ion-button 
+                    fill="clear" 
+                    slot="end" 
+                    size="small" 
+                    class="action-btn" 
+                    (click)="openActionMenu($event, food, 'food')">
+                    <ion-icon name="ellipsis-vertical-outline"></ion-icon>
+                  </ion-button>
                 </ion-item>
                 
                 <!-- Inline Drilldown -->
@@ -217,4 +253,14 @@
       </div>
     </div>
   </div>
+  
+  <!-- Action Menu Popover -->
+  <ion-popover #popover [isOpen]="isPopoverOpen" (didDismiss)="isPopoverOpen = false" [event]="popoverEvent">
+    <ng-template>
+      <app-entry-action-menu 
+        [entry]="selectedEntry" 
+        (actionSelected)="handleActionSelected($event)">
+      </app-entry-action-menu>
+    </ng-template>
+  </ion-popover>
 </ion-content> 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   IonContent, 
@@ -20,7 +20,8 @@ import {
   IonAccordion,
   IonAccordionGroup,
   IonNote,
-  IonButton
+  IonButton,
+  IonPopover
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -39,9 +40,16 @@ import { DateService } from 'src/app/services/date.service';
 import { MacronutrientsSummary } from '../../services/nutrition-ambition-api.service';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { chevronDownOutline, chevronForwardOutline, closeOutline } from 'ionicons/icons';
+import { 
+  chevronDownOutline, 
+  chevronForwardOutline, 
+  closeOutline, 
+  ellipsisVerticalOutline,
+  alertCircleOutline 
+} from 'ionicons/icons';
 import { ChatService } from 'src/app/services/chat.service';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
+import { EntryActionMenuComponent, ActionEvent, ActionType } from '../../components/entry-action-menu';
 
 @Component({
   selector: 'app-daily-summary',
@@ -63,10 +71,16 @@ import { AppHeaderComponent } from 'src/app/components/header/header.component';
     IonLabel,
     IonList,
     IonItem,
-    AppHeaderComponent
+    IonIcon,
+    IonButton,
+    IonPopover,
+    AppHeaderComponent,
+    EntryActionMenuComponent
   ]
 })
 export class DailySummaryComponent implements OnInit, OnDestroy {
+  @ViewChild('popover') popover: IonPopover;
+  
   summaryData: NutritionSummaryResponse | null = null;
   detailedData: GetDetailedSummaryResponse | null = null;
   viewMode: 'nutrients' | 'foods' = 'nutrients';
@@ -82,18 +96,16 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   private dateSubscription: Subscription;
   private mealLoggedSubscription: Subscription;
   
+  // Variables for popover
+  isPopoverOpen = false;
+  selectedEntry: any = null;
+  popoverEvent: any = null;
+  
   // List of recognized macronutrient names (case-insensitive)
   private readonly macronutrientNames: string[] = [
-    'calories', 'calorie',
     'protein', 'proteins',
     'carbohydrate', 'carbohydrates', 'carbs', 'carb',
-    'fat', 'fats',
-    'fiber', 'fibre',
-    'sugar', 'sugars',
-    'saturated fat', 'saturatedfat',
-    'unsaturated fat', 'unsaturatedfat',
-    'trans fat', 'transfat',
-    'cholesterol'
+    'fat', 'fats'
   ];
   
   // Use the inject function for dependency injection in standalone components
@@ -105,7 +117,13 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   private router = inject(Router);
 
   constructor() {
-    addIcons({ chevronDownOutline, chevronForwardOutline, closeOutline });
+    addIcons({ 
+      chevronDownOutline, 
+      chevronForwardOutline, 
+      closeOutline, 
+      ellipsisVerticalOutline,
+      alertCircleOutline 
+    });
   }
 
   ngOnInit() {
@@ -137,6 +155,106 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     if (this.mealLoggedSubscription) {
       this.mealLoggedSubscription.unsubscribe();
     }
+  }
+  
+  // Open the action menu popover
+  openActionMenu(event: Event, entry: any, entryType: 'nutrient' | 'food') {
+    event.stopPropagation(); // Prevent the row selection when clicking the menu button
+    this.popoverEvent = event;
+    this.selectedEntry = { ...entry, entryType };
+    this.isPopoverOpen = true;
+  }
+  
+  // Handle the action selected from the popover
+  handleActionSelected(event: ActionEvent) {
+    console.log(`Action received: ${event.action} for entry:`, event.entry);
+    
+    // Close the popover
+    this.isPopoverOpen = false;
+    
+    // Handle the action based on type
+    switch(event.action) {
+      case 'remove':
+        this.handleRemoveEntry(event.entry);
+        break;
+      case 'edit':
+        this.handleEditEntry(event.entry);
+        break;
+      case 'focusInChat':
+        this.handleFocusInChat(event.entry);
+        break;
+      case 'editGoal':
+        this.handleEditGoal(event.entry);
+        break;
+      case 'learn':
+        this.handleLearnAbout(event.entry);
+        break;
+      case 'trend':
+        this.handleShowTrend(event.entry);
+        break;
+      case 'pin':
+        this.handlePinToDashboard(event.entry);
+        break;
+      case 'ignore':
+        this.handleIgnoreForNow(event.entry);
+        break;
+      case 'suggest':
+        this.handleSuggestFoods(event.entry);
+        break;
+    }
+  }
+  
+  private handleRemoveEntry(entry: any) {
+    console.log('Would remove entry:', entry);
+    // Actual implementation would be added here
+  }
+  
+  private handleEditEntry(entry: any) {
+    console.log('Would edit entry:', entry);
+    // Actual implementation would be added here
+  }
+  
+  private handleFocusInChat(entry: any) {
+    console.log('Would focus on entry in chat:', entry);
+    
+    // Navigate to chat page with the entry details
+    // This is a stub - actual implementation would depend on how you want to handle this
+    const entryName = entry.name || 'this food';
+    this.router.navigate(['/chat'], { 
+      queryParams: { 
+        focus: entryName 
+      }
+    });
+  }
+  
+  private handleEditGoal(entry: any) {
+    console.log('Would create or modify goal for:', entry);
+    // Actual implementation would be added here
+  }
+  
+  private handleLearnAbout(entry: any) {
+    console.log('Would show learning information about:', entry);
+    // Actual implementation would be added here
+  }
+  
+  private handleShowTrend(entry: any) {
+    console.log('Would show trend for:', entry);
+    // Actual implementation would be added here
+  }
+  
+  private handlePinToDashboard(entry: any) {
+    console.log('Would pin to dashboard:', entry);
+    // Actual implementation would be added here
+  }
+  
+  private handleIgnoreForNow(entry: any) {
+    console.log('Would ignore for now:', entry);
+    // Actual implementation would be added here
+  }
+  
+  private handleSuggestFoods(entry: any) {
+    console.log('Would suggest foods related to:', entry);
+    // Actual implementation would be added here
   }
   
   // Handle date changes from the header
@@ -227,8 +345,19 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     if (!name) return false;
     
     const lowerName = name.toLowerCase();
+    
+    // List of nutrients we specifically want to exclude from macronutrients
+    // even though they contain a macro name (e.g., "fat" is in "saturated fat")
+    const excludedTerms = ['saturated fat', 'unsaturated fat', 'trans fat'];
+    if (excludedTerms.includes(lowerName)) {
+      return false;
+    }
+    
+    // Check if it's an exact match for a macronutrient 
     return this.macronutrientNames.some(macro => 
-      lowerName === macro || lowerName.includes(macro)
+      lowerName === macro || 
+      // Or check if it starts with the macro name and is followed by a non-word character or end of string
+      (lowerName.startsWith(macro) && (lowerName.length === macro.length || !lowerName[macro.length].match(/[a-z0-9]/)))
     );
   }
 

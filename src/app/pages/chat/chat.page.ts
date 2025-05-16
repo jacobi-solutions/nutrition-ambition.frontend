@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { ChatMessageComponent } from '../../components/chat-message/chat-message.component';
+import { ChatFabComponent } from '../../components/chat-fab';
 import { addIcons } from 'ionicons';
 import { paperPlaneOutline } from 'ionicons/icons';
 import { AccountsService } from '../../services/accounts.service';
@@ -42,7 +43,8 @@ interface DisplayMessage {
     IonSpinner,
     IonText,
     AppHeaderComponent,
-    ChatMessageComponent
+    ChatMessageComponent,
+    ChatFabComponent
   ]
 })
 export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
@@ -292,7 +294,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.userMessage = '';
     this.isLoading = true;
     
-    // Scroll to the bottom
+    // Scroll to the bottom immediately after adding message and showing typing indicator
     this.scrollToBottom();
     
     // Use the new sendMessage method that doesn't duplicate logs

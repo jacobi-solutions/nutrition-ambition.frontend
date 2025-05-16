@@ -34,9 +34,21 @@
         [isUser]="message.isUser"
         [timestamp]="message.timestamp">
       </app-chat-message>
+      
+      <!-- Typing indicator positioned where next message will appear -->
+      <div *ngIf="isLoading" class="typing-indicator bot-message-container">
+        <div class="typing-indicator-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
     </div>
   </div>
 </ion-content>
+
+<!-- Add the Chat FAB component -->
+<app-chat-fab></app-chat-fab>
 
 <!-- Chat input -->
 <ion-footer>
@@ -53,12 +65,6 @@
         (click)="sendMessage()">
         <ion-icon name="paper-plane-outline"></ion-icon>
       </ion-button>
-    </div>
-    
-    <div *ngIf="isLoading" class="typing-indicator">
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
     </div>
   </ion-toolbar>
 </ion-footer> 
