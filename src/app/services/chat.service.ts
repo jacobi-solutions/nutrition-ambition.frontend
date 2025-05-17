@@ -144,12 +144,9 @@ export class ChatService {
   sendMessage(message: string): Observable<BotMessageResponse> {
     console.log('[DEBUG] Sending message to the assistant:', message.substring(0, 30) + '...');
     
-    // First, log the user message to the backend
-    return this.logMessage(message, 'user').pipe(
-      switchMap(logResponse => {
-        // After logging, send to the assistant for processing
-        return this.runAssistantMessage(message);
-      }),
+    // Send to the assistant for processing
+    // No need to log the message separately - the backend handles this
+    return this.runAssistantMessage(message).pipe(
       catchError(error => {
         console.error('Error in sendMessage:', error);
         return of(new BotMessageResponse({
