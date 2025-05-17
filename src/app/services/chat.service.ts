@@ -72,8 +72,21 @@ export class ChatService {
   }
   
   // Check if the user has daily goals and prompt them if not
-  checkAndPromptForDailyGoal(accountId: string): Observable<BotMessageResponse> {
+  checkAndPromptForDailyGoal(accountId: string, requireInteraction: boolean = true): Observable<BotMessageResponse> {
     console.log('[DEBUG] Checking if user has daily goals set');
+    
+    // Get accountId directly from service to ensure we have the latest value
+    const currentAccountId = this.accountsService.getAccountId();
+    
+    // If requireInteraction is true and there's no accountId, return empty success response
+    // This prevents backend calls from being made for users who haven't interacted yet
+    if (requireInteraction && !currentAccountId) {
+      console.log('[DEBUG] Skipping daily goal check - no accountId and interaction required');
+      return of(new BotMessageResponse({
+        isSuccess: true,
+        message: undefined
+      }));
+    }
     
     // If no account ID, handle anonymously
     if (!accountId) {
