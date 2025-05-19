@@ -41,7 +41,6 @@ interface DisplayMessage {
     IonButton,
     IonIcon,
     IonSpinner,
-    IonText,
     AppHeaderComponent,
     ChatMessageComponent,
     ChatFabComponent

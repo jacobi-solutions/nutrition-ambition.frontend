@@ -9,7 +9,7 @@ import { AccountsService } from './services/accounts.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, RouterOutlet]
+  imports: [CommonModule, IonicModule]
 })
 export class AppComponent implements OnInit {
   title = 'Nutrition Ambition';

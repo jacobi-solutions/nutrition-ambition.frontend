@@ -48,9 +48,7 @@ import { Subscription } from 'rxjs';
     IonTitle, 
     IonDatetimeButton,
     IonModal,
-    IonDatetime,
-    IonChip,
-    IonLabel
+    IonDatetime
   ]
 })
 export class AppHeaderComponent implements OnInit, OnDestroy {

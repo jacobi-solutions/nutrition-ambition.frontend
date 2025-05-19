@@ -13,7 +13,7 @@ import {
   LogChatMessageResponse,
   GetChatMessagesResponse,
   ClearChatMessagesResponse,
-  AssistantRunMessageRequest,
+  RunChatRequest,
   GetDailyGoalRequest,
   GetDailyGoalResponse
 } from './nutrition-ambition-api.service';
@@ -183,7 +183,7 @@ export class ChatService {
     const request = new GetChatMessagesRequest({
       loggedDateUtc: date
     });
-    return this.apiService.getChatMessagesByDate(request);
+    return this.apiService.getChatMessages(request);
   }
 
   clearMessageHistory(date?: Date): Observable<ClearChatMessagesResponse> {
@@ -195,33 +195,21 @@ export class ChatService {
 
   runAssistantMessage(message: string): Observable<BotMessageResponse> {
     console.log('[DEBUG] Running assistant message:', message.substring(0, 30) + '...');
-    const request = new AssistantRunMessageRequest({
+    const request = new RunChatRequest({
       message,
     });
     
-    return this.apiService.assistantRunMessage(request).pipe(
+    return this.apiService.runResponsesConversation(request).pipe(
       map(response => {
         // Persist accountId if it's returned in the response
-        // Using optional chaining and type assertion to prevent TypeScript errors
         console.log('[DEBUG] Assistant response received');
         
-        // Map AssistantRunMessageResponse to BotMessageResponse
-        const botResponse = new BotMessageResponse();
-        botResponse.isSuccess = response.isSuccess;
-        botResponse.errors = response.errors;
-        botResponse.message = response.assistantMessage;
-        botResponse.correlationId = response.correlationId;
-        botResponse.stackTrace = response.stackTrace;
-
-        const accountId = (response as any).accountId;
-        if (accountId) {
-          botResponse.accountId = accountId;
-          console.log('[DEBUG] Account ID received in response:', accountId);
-        }
+        // No need to map response properties as the API now returns BotMessageResponse directly
+        const botResponse = response;
         
         // Check if a meal was logged by looking for confirmation in the response
         if (response.isSuccess && 
-            this.containsMealConfirmation(response.assistantMessage)) {
+            this.containsMealConfirmation(response.message)) {
           console.log('[DEBUG] Meal logging detected, emitting mealLogged event');
           this.mealLogged$.next();
         }

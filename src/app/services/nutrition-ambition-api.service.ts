@@ -55,17 +55,12 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    getChatMessagesByDate(body: GetChatMessagesRequest | undefined): Observable<GetChatMessagesResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     clearChatMessages(body: ClearChatMessagesRequest | undefined): Observable<ClearChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
      */
-    assistantRunMessage(body: AssistantRunMessageRequest | undefined): Observable<AssistantRunMessageResponse>;
+    runResponsesConversation(body: RunChatRequest | undefined): Observable<BotMessageResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -141,11 +136,6 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     getProfileAndGoals(body: GetProfileAndGoalsRequest | undefined): Observable<GetProfileAndGoalsResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    getTodayThread(body: GetTodayThreadRequest | undefined): Observable<GetTodayThreadResponse>;
 }
 
 @Injectable()
@@ -555,62 +545,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    getChatMessagesByDate(body: GetChatMessagesRequest | undefined): Observable<GetChatMessagesResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/GetChatMessagesByDate";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetChatMessagesByDate(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetChatMessagesByDate(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<GetChatMessagesResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<GetChatMessagesResponse>;
-        }));
-    }
-
-    protected processGetChatMessagesByDate(response: HttpResponseBase): Observable<GetChatMessagesResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = GetChatMessagesResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<GetChatMessagesResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     clearChatMessages(body: ClearChatMessagesRequest | undefined): Observable<ClearChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/Conversation/ClearChatMessages";
         url_ = url_.replace(/[?&]$/, "");
@@ -667,8 +601,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    assistantRunMessage(body: AssistantRunMessageRequest | undefined): Observable<AssistantRunMessageResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/AssistantRunMessage";
+    runResponsesConversation(body: RunChatRequest | undefined): Observable<BotMessageResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/RunResponsesConversation";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -684,20 +618,20 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processAssistantRunMessage(response_);
+            return this.processRunResponsesConversation(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processAssistantRunMessage(response_ as any);
+                    return this.processRunResponsesConversation(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<AssistantRunMessageResponse>;
+                    return _observableThrow(e) as any as Observable<BotMessageResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<AssistantRunMessageResponse>;
+                return _observableThrow(response_) as any as Observable<BotMessageResponse>;
         }));
     }
 
-    protected processAssistantRunMessage(response: HttpResponseBase): Observable<AssistantRunMessageResponse> {
+    protected processRunResponsesConversation(response: HttpResponseBase): Observable<BotMessageResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -708,7 +642,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = AssistantRunMessageResponse.fromJS(resultData200);
+            result200 = BotMessageResponse.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -716,7 +650,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<AssistantRunMessageResponse>(null as any);
+        return _observableOf<BotMessageResponse>(null as any);
     }
 
     /**
@@ -1558,62 +1492,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         }
         return _observableOf<GetProfileAndGoalsResponse>(null as any);
     }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    getTodayThread(body: GetTodayThreadRequest | undefined): Observable<GetTodayThreadResponse> {
-        let url_ = this.baseUrl + "/api/Thread/GetTodayThread";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetTodayThread(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetTodayThread(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<GetTodayThreadResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<GetTodayThreadResponse>;
-        }));
-    }
-
-    protected processGetTodayThread(response: HttpResponseBase): Observable<GetTodayThreadResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = GetTodayThreadResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<GetTodayThreadResponse>(null as any);
-    }
 }
 
 export class AccountRequest implements IAccountRequest {
@@ -1712,118 +1590,6 @@ export interface IAnonymousWarningRequest {
     hasLoggedFirstMeal?: boolean;
 }
 
-export class AssistantRunMessageRequest implements IAssistantRunMessageRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
-    message?: string | undefined;
-    timezoneOffsetMinutes?: number | undefined;
-
-    constructor(data?: IAssistantRunMessageRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
-            this.message = _data["message"];
-            this.timezoneOffsetMinutes = _data["timezoneOffsetMinutes"];
-        }
-    }
-
-    static fromJS(data: any): AssistantRunMessageRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new AssistantRunMessageRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
-        data["message"] = this.message;
-        data["timezoneOffsetMinutes"] = this.timezoneOffsetMinutes;
-        return data;
-    }
-}
-
-export interface IAssistantRunMessageRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
-    message?: string | undefined;
-    timezoneOffsetMinutes?: number | undefined;
-}
-
-export class AssistantRunMessageResponse implements IAssistantRunMessageResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    assistantMessage?: string | undefined;
-
-    constructor(data?: IAssistantRunMessageResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.assistantMessage = _data["assistantMessage"];
-        }
-    }
-
-    static fromJS(data: any): AssistantRunMessageResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new AssistantRunMessageResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["assistantMessage"] = this.assistantMessage;
-        return data;
-    }
-}
-
-export interface IAssistantRunMessageResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    assistantMessage?: string | undefined;
-}
-
 export class BotMessageResponse implements IBotMessageResponse {
     errors?: ErrorDto[] | undefined;
     isSuccess?: boolean;
@@ -1831,6 +1597,8 @@ export class BotMessageResponse implements IBotMessageResponse {
     stackTrace?: string | undefined;
     message?: string | undefined;
     accountId?: string | undefined;
+    toolCalls?: ToolCall[] | undefined;
+    responseId?: string | undefined;
 
     constructor(data?: IBotMessageResponse) {
         if (data) {
@@ -1853,6 +1621,12 @@ export class BotMessageResponse implements IBotMessageResponse {
             this.stackTrace = _data["stackTrace"];
             this.message = _data["message"];
             this.accountId = _data["accountId"];
+            if (Array.isArray(_data["toolCalls"])) {
+                this.toolCalls = [] as any;
+                for (let item of _data["toolCalls"])
+                    this.toolCalls!.push(ToolCall.fromJS(item));
+            }
+            this.responseId = _data["responseId"];
         }
     }
 
@@ -1875,6 +1649,12 @@ export class BotMessageResponse implements IBotMessageResponse {
         data["stackTrace"] = this.stackTrace;
         data["message"] = this.message;
         data["accountId"] = this.accountId;
+        if (Array.isArray(this.toolCalls)) {
+            data["toolCalls"] = [];
+            for (let item of this.toolCalls)
+                data["toolCalls"].push(item.toJSON());
+        }
+        data["responseId"] = this.responseId;
         return data;
     }
 }
@@ -1886,6 +1666,8 @@ export interface IBotMessageResponse {
     stackTrace?: string | undefined;
     message?: string | undefined;
     accountId?: string | undefined;
+    toolCalls?: ToolCall[] | undefined;
+    responseId?: string | undefined;
 }
 
 export class ChatMessage implements IChatMessage {
@@ -1898,6 +1680,7 @@ export class ChatMessage implements IChatMessage {
     loggedDateUtc?: Date;
     foodEntryId?: string | undefined;
     isRead?: boolean;
+    responseId?: string | undefined;
 
     constructor(data?: IChatMessage) {
         if (data) {
@@ -1919,6 +1702,7 @@ export class ChatMessage implements IChatMessage {
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             this.foodEntryId = _data["foodEntryId"];
             this.isRead = _data["isRead"];
+            this.responseId = _data["responseId"];
         }
     }
 
@@ -1940,6 +1724,7 @@ export class ChatMessage implements IChatMessage {
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         data["foodEntryId"] = this.foodEntryId;
         data["isRead"] = this.isRead;
+        data["responseId"] = this.responseId;
         return data;
     }
 }
@@ -1954,6 +1739,7 @@ export interface IChatMessage {
     loggedDateUtc?: Date;
     foodEntryId?: string | undefined;
     isRead?: boolean;
+    responseId?: string | undefined;
 }
 
 export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
@@ -3492,8 +3278,9 @@ export class GetProfileAndGoalsResponse implements IGetProfileAndGoalsResponse {
     accountId?: string | undefined;
     age?: number | undefined;
     sex?: string | undefined;
-    heightCm?: number | undefined;
-    weightKg?: number | undefined;
+    heightFeet?: number | undefined;
+    heightInches?: number | undefined;
+    weightLbs?: number | undefined;
     activityLevel?: string | undefined;
     baseCalories?: number | undefined;
     hasGoals?: boolean;
@@ -3520,8 +3307,9 @@ export class GetProfileAndGoalsResponse implements IGetProfileAndGoalsResponse {
             this.accountId = _data["accountId"];
             this.age = _data["age"];
             this.sex = _data["sex"];
-            this.heightCm = _data["heightCm"];
-            this.weightKg = _data["weightKg"];
+            this.heightFeet = _data["heightFeet"];
+            this.heightInches = _data["heightInches"];
+            this.weightLbs = _data["weightLbs"];
             this.activityLevel = _data["activityLevel"];
             this.baseCalories = _data["baseCalories"];
             this.hasGoals = _data["hasGoals"];
@@ -3548,8 +3336,9 @@ export class GetProfileAndGoalsResponse implements IGetProfileAndGoalsResponse {
         data["accountId"] = this.accountId;
         data["age"] = this.age;
         data["sex"] = this.sex;
-        data["heightCm"] = this.heightCm;
-        data["weightKg"] = this.weightKg;
+        data["heightFeet"] = this.heightFeet;
+        data["heightInches"] = this.heightInches;
+        data["weightLbs"] = this.weightLbs;
         data["activityLevel"] = this.activityLevel;
         data["baseCalories"] = this.baseCalories;
         data["hasGoals"] = this.hasGoals;
@@ -3565,115 +3354,12 @@ export interface IGetProfileAndGoalsResponse {
     accountId?: string | undefined;
     age?: number | undefined;
     sex?: string | undefined;
-    heightCm?: number | undefined;
-    weightKg?: number | undefined;
+    heightFeet?: number | undefined;
+    heightInches?: number | undefined;
+    weightLbs?: number | undefined;
     activityLevel?: string | undefined;
     baseCalories?: number | undefined;
     hasGoals?: boolean;
-}
-
-export class GetTodayThreadRequest implements IGetTodayThreadRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
-
-    constructor(data?: IGetTodayThreadRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
-        }
-    }
-
-    static fromJS(data: any): GetTodayThreadRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new GetTodayThreadRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
-        return data;
-    }
-}
-
-export interface IGetTodayThreadRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
-}
-
-export class GetTodayThreadResponse implements IGetTodayThreadResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    threadId?: string | undefined;
-
-    constructor(data?: IGetTodayThreadResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.threadId = _data["threadId"];
-        }
-    }
-
-    static fromJS(data: any): GetTodayThreadResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new GetTodayThreadResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["threadId"] = this.threadId;
-        return data;
-    }
-}
-
-export interface IGetTodayThreadResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    threadId?: string | undefined;
 }
 
 export class LogChatMessageRequest implements ILogChatMessageRequest {
@@ -4067,6 +3753,7 @@ export interface IMergeAnonymousAccountResponse {
 export enum MessageRoleTypes {
     _0 = 0,
     _1 = 1,
+    _2 = 2,
 }
 
 export class Micronutrient implements IMicronutrient {
@@ -4613,13 +4300,58 @@ export interface IResponse {
     accountId?: string | undefined;
 }
 
+export class RunChatRequest implements IRunChatRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    message?: string | undefined;
+
+    constructor(data?: IRunChatRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+            this.isAnonymousUser = _data["isAnonymousUser"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): RunChatRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RunChatRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["isAnonymousUser"] = this.isAnonymousUser;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface IRunChatRequest {
+    accountId?: string | undefined;
+    isAnonymousUser?: boolean;
+    message?: string | undefined;
+}
+
 export class SaveUserProfileRequest implements ISaveUserProfileRequest {
     isAnonymousUser?: boolean;
     accountId?: string | undefined;
     age?: number;
     sex?: string | undefined;
-    heightCm?: number;
-    weightKg?: number;
+    heightFeet?: number;
+    heightInches?: number;
+    weightLbs?: number;
     activityLevel?: string | undefined;
 
     constructor(data?: ISaveUserProfileRequest) {
@@ -4637,8 +4369,9 @@ export class SaveUserProfileRequest implements ISaveUserProfileRequest {
             this.accountId = _data["accountId"];
             this.age = _data["age"];
             this.sex = _data["sex"];
-            this.heightCm = _data["heightCm"];
-            this.weightKg = _data["weightKg"];
+            this.heightFeet = _data["heightFeet"];
+            this.heightInches = _data["heightInches"];
+            this.weightLbs = _data["weightLbs"];
             this.activityLevel = _data["activityLevel"];
         }
     }
@@ -4656,8 +4389,9 @@ export class SaveUserProfileRequest implements ISaveUserProfileRequest {
         data["accountId"] = this.accountId;
         data["age"] = this.age;
         data["sex"] = this.sex;
-        data["heightCm"] = this.heightCm;
-        data["weightKg"] = this.weightKg;
+        data["heightFeet"] = this.heightFeet;
+        data["heightInches"] = this.heightInches;
+        data["weightLbs"] = this.weightLbs;
         data["activityLevel"] = this.activityLevel;
         return data;
     }
@@ -4668,8 +4402,9 @@ export interface ISaveUserProfileRequest {
     accountId?: string | undefined;
     age?: number;
     sex?: string | undefined;
-    heightCm?: number;
-    weightKg?: number;
+    heightFeet?: number;
+    heightInches?: number;
+    weightLbs?: number;
     activityLevel?: string | undefined;
 }
 
@@ -4831,6 +4566,90 @@ export interface ISetDailyGoalResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     dailyGoal?: DailyGoal;
+}
+
+export class ToolCall implements IToolCall {
+    id?: string | undefined;
+    type?: string | undefined;
+    function?: ToolFunctionCall;
+
+    constructor(data?: IToolCall) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.type = _data["type"];
+            this.function = _data["function"] ? ToolFunctionCall.fromJS(_data["function"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): ToolCall {
+        data = typeof data === 'object' ? data : {};
+        let result = new ToolCall();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["type"] = this.type;
+        data["function"] = this.function ? this.function.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IToolCall {
+    id?: string | undefined;
+    type?: string | undefined;
+    function?: ToolFunctionCall;
+}
+
+export class ToolFunctionCall implements IToolFunctionCall {
+    name?: string | undefined;
+    arguments?: any;
+
+    constructor(data?: IToolFunctionCall) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.arguments = _data["arguments"];
+        }
+    }
+
+    static fromJS(data: any): ToolFunctionCall {
+        data = typeof data === 'object' ? data : {};
+        let result = new ToolFunctionCall();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["arguments"] = this.arguments;
+        return data;
+    }
+}
+
+export interface IToolFunctionCall {
+    name?: string | undefined;
+    arguments?: any;
 }
 
 export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
