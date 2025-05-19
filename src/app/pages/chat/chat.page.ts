@@ -77,6 +77,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this.selectedDate = date;
       this.loadChatHistory(new Date(date));
+
     });
     
     // Get the current user email
@@ -255,6 +256,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             
             this.hasInitialMessage = true;
             this.scrollToBottom();
+
+            console.log('[DEBUG] All roles returned from API:', response.messages.map(m => m.role));
           }
           // Don't start a conversation automatically - we'll show static message instead
         }
