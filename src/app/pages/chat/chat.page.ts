@@ -18,6 +18,7 @@ import {
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { ChatMessageComponent } from 'src/app/components/chat-message/chat-message.component';
 
 interface DisplayMessage {
   text: string;
