@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../components/header/header.component';
-import { ChatMessageComponent } from '../../components/chat-message/chat-message.component';
 import { ChatFabComponent } from '../../components/chat-fab';
 import { addIcons } from 'ionicons';
 import { paperPlaneOutline } from 'ionicons/icons';
