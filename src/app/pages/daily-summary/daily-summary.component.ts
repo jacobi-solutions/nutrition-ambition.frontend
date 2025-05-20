@@ -25,7 +25,6 @@ import {
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import { 
-  NutritionSummaryResponse, 
   GetDetailedSummaryResponse, 
   NutrientBreakdown, 
   FoodBreakdown,
@@ -45,11 +44,14 @@ import {
   chevronForwardOutline, 
   closeOutline, 
   ellipsisVerticalOutline,
-  alertCircleOutline 
+  alertCircleOutline,
+  nutritionOutline
 } from 'ionicons/icons';
 import { ChatService } from 'src/app/services/chat.service';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
 import { EntryActionMenuComponent, ActionEvent, ActionType } from '../../components/entry-action-menu';
+import { formatNutrient } from '../../utils/format-nutrient';
+import { formatMacro } from '../../utils/format-macro';
 
 @Component({
   selector: 'app-daily-summary',
@@ -81,16 +83,12 @@ import { EntryActionMenuComponent, ActionEvent, ActionType } from '../../compone
 export class DailySummaryComponent implements OnInit, OnDestroy {
   @ViewChild('popover') popover: IonPopover;
   
-  summaryData: NutritionSummaryResponse | null = null;
   detailedData: GetDetailedSummaryResponse | null = null;
   viewMode: 'nutrients' | 'foods' = 'nutrients';
   selectedNutrient: NutrientBreakdown | null = null;
   selectedFood: FoodBreakdown | null = null;
-  loading = false;
   detailedLoading = false;
-  error: string | null = null;
   detailedError: string | null = null;
-  isEmptySummary = false;
   selectedDate: string = new Date().toISOString();
   userEmail: string | null = null;
   private dateSubscription: Subscription;
@@ -105,7 +103,11 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   private readonly macronutrientNames: string[] = [
     'protein', 'proteins',
     'carbohydrate', 'carbohydrates', 'carbs', 'carb',
-    'fat', 'fats'
+    'fat', 'fats',
+    'fiber', 
+    'sugar',
+    'calories', 'calorie',
+    'saturated fat', 'unsaturated fat', 'trans fat'
   ];
   
   // Use the inject function for dependency injection in standalone components
@@ -122,7 +124,8 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
       chevronForwardOutline, 
       closeOutline, 
       ellipsisVerticalOutline,
-      alertCircleOutline 
+      alertCircleOutline,
+      nutritionOutline
     });
   }
 
@@ -130,14 +133,12 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     // Subscribe to date changes
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this.selectedDate = date;
-      this.loadSummary(new Date(date));
       this.loadDetailedSummary(new Date(date));
     });
     
     // Subscribe to meal logged events from ChatService
     this.mealLoggedSubscription = this.chatService.mealLogged$.subscribe(() => {
       console.log('[DailySummary] Meal logged event received, reloading summary data');
-      this.loadSummary(new Date(this.selectedDate));
       this.loadDetailedSummary(new Date(this.selectedDate));
     });
     
@@ -259,24 +260,16 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   
   // Handle date changes from the header
   onDateChanged(newDate: string) {
-    console.log(`[DailySummary] Date changed to: ${newDate}`);
-    
-    // Update local value first
-    this.selectedDate = newDate;
-    
-    // Then update the service
     this.dateService.setSelectedDate(newDate);
   }
   
   // Handle navigation to previous day
   onPreviousDay() {
-    console.log(`[DailySummary] Previous day clicked, current date is: ${this.selectedDate}`);
     this.dateService.goToPreviousDay();
   }
   
   // Handle navigation to next day
   onNextDay() {
-    console.log(`[DailySummary] Next day clicked, current date is: ${this.selectedDate}`);
     this.dateService.goToNextDay();
   }
   
@@ -346,13 +339,6 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     
     const lowerName = name.toLowerCase();
     
-    // List of nutrients we specifically want to exclude from macronutrients
-    // even though they contain a macro name (e.g., "fat" is in "saturated fat")
-    const excludedTerms = ['saturated fat', 'unsaturated fat', 'trans fat'];
-    if (excludedTerms.includes(lowerName)) {
-      return false;
-    }
-    
     // Check if it's an exact match for a macronutrient 
     return this.macronutrientNames.some(macro => 
       lowerName === macro || 
@@ -361,132 +347,75 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     );
   }
 
-  loadSummary(date: Date) {
-    console.log('[DailySummary] Loading summary data for date:', date);
-    
-    // Check for account ID - if missing, show empty summary
-    const accountId = this.accountsService.getAccountId();
-    if (!accountId) {
-      this.createEmptySummary();
-      return;
-    }
-    
-    this.loading = true;
-    this.error = null;
-    this.summaryData = null; // Reset summary data
-    this.isEmptySummary = false;
-
-    this.dailySummaryService.getDailySummary(date, true) // Pass true to force reload from backend
-      .pipe(
-        catchError(error => {
-          console.error('Error loading daily summary:', error);
-          this.error = 'Unable to load nutrition summary. Please try again later.';
-          return of(null as NutritionSummaryResponse | null);
-        }),
-        finalize(() => {
-          this.loading = false;
-        })
-      )
-      .subscribe({
-        next: (result: NutritionSummaryResponse | null) => {
-          if (result) {
-            this.summaryData = result;
-          } else {
-            // No data returned, create empty summary
-            this.createEmptySummary();
-          }
-        }
-      });
-  }
-
   loadDetailedSummary(date: Date) {
-    console.log('[DailySummary] Loading detailed summary data for date:', date);
-    
-    // Check for account ID - if missing, don't attempt to load detailed data
-    const accountId = this.accountsService.getAccountId();
-    if (!accountId) {
-      return;
-    }
-    
     this.detailedLoading = true;
     this.detailedError = null;
-    this.detailedData = null; // Reset detailed data
+    this.detailedData = null;
     this.selectedNutrient = null;
     this.selectedFood = null;
-
-    this.dailySummaryService.getDetailedSummary(date, true) // Pass true to force reload from backend
+    
+    this.dailySummaryService.getDetailedSummary(date)
       .pipe(
-        catchError(error => {
-          console.error('Error loading detailed summary:', error);
-          this.detailedError = 'Unable to load detailed nutrition breakdown. Please try again later.';
-          return of(null as GetDetailedSummaryResponse | null);
-        }),
         finalize(() => {
           this.detailedLoading = false;
+        }),
+        catchError(error => {
+          console.error('Error loading detailed summary:', error);
+          this.detailedError = 'Failed to load detailed nutrition data. Please try again.';
+          return of(null);
         })
       )
-      .subscribe({
-        next: (result: GetDetailedSummaryResponse | null) => {
-          if (result && result.isSuccess) {
-            this.detailedData = result;
+      .subscribe(response => {
+        if (response) {
+          // Check if the response has no entries but has a specific error message
+          if (!response.isSuccess && 
+              response.errors && 
+              response.errors.length > 0 && 
+              response.errors[0].errorMessage === "No food entries found for the specified date.") {
+            // Treat this as an empty state, not an error
+            console.log('[DailySummaryComponent] No entries found for the date');
+            
+            // Just set the properties we need rather than trying to create a new object
+            response.isSuccess = true; // Override to prevent error display
+            response.errors = []; // Clear errors
+            this.detailedData = response;
+          } else {
+            this.detailedData = response;
+            console.log('[DailySummaryComponent] Detailed summary loaded:', response);
           }
         }
       });
-  }
-  
-  // Create an empty summary with zeroed values
-  createEmptySummary() {
-    this.isEmptySummary = true;
-    const today = new Date();
-    
-    const emptyMacros = new MacronutrientsSummary({
-      protein: 0,
-      carbohydrates: 0,
-      fat: 0,
-      fiber: 0,
-      sugar: 0,
-      saturatedFat: 0
-    });
-    
-    this.summaryData = new NutritionSummaryResponse({
-      periodStart: today,
-      periodEnd: today,
-      totalCalories: 0,
-      macronutrients: emptyMacros,
-      micronutrients: {}
-    });
   }
   
   // Helper method to get micronutrients as an array for display from summary data
   getSummaryMicronutrients(): { name: string; value: number }[] {
-    if (!this.summaryData?.micronutrients) {
+    if (!this.detailedData?.nutrients) {
       return [];
     }
     
-    return Object.entries(this.summaryData.micronutrients as Record<string, number>).map(([name, value]) => ({
-      name,
-      value
-    }));
+    return this.detailedData.nutrients
+      .filter(nutrient => nutrient.name && nutrient.totalAmount !== undefined)
+      .map(nutrient => ({
+        name: nutrient.name!,
+        value: nutrient.totalAmount!
+      }));
   }
   
-  // Helper method to check if all values are zero
-  hasZeroValues(): boolean {
-    if (!this.summaryData) return true;
-    
-    return this.summaryData.totalCalories === 0 &&
-           this.summaryData.macronutrients?.protein === 0 &&
-           this.summaryData.macronutrients?.carbohydrates === 0 &&
-           this.summaryData.macronutrients?.fat === 0;
-  }
-
   // Helper to format amount with unit
-  formatAmountWithUnit(amount: number, unit: string): string {
-    return `${amount.toFixed(1)} ${unit}`;
+  formatAmountWithUnit(amount: number, unit: string, nutrientName?: string): string {
+    const name = nutrientName || unit;
+    if (this.isMacronutrient(name)) {
+      return formatMacro(name, amount);
+    }
+    return formatNutrient(amount);
   }
 
   // Helper to format food contributions using the original food unit if available
   formatAmountWithFoodUnit(food: FoodContribution): string {
-    return `${food.amount?.toFixed(1) || '0.0'} ${food.unit || 'g'}`;
+    if (this.isMacronutrient(food.name || '')) {
+      return formatMacro(food.name || '', food.amount);
+    }
+    return formatNutrient(food.amount);
   }
 
   // Helper methods to separate a food's nutrients into macronutrient and micronutrient categories
@@ -507,6 +436,9 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
 
   // Helper to format nutrient contributions with original unit if available
   formatNutrientWithOriginalUnit(nutrient: NutrientContribution): string {
-    return `${nutrient.amount?.toFixed(1) || '0.0'} ${nutrient.unit || ''}`;
+    if (nutrient?.name && this.isMacronutrient(nutrient.name)) {
+      return formatMacro(nutrient.name, nutrient.amount);
+    }
+    return formatNutrient(nutrient.amount);
   }
 } 

@@ -1,11 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError, of, shareReplay } from 'rxjs';
 import { 
-  DateRequest, 
-  NutritionAmbitionApiService, 
-  NutritionSummaryResponse,
   GetDetailedSummaryRequest,
-  GetDetailedSummaryResponse
+  GetDetailedSummaryResponse,
+  NutritionAmbitionApiService
 } from './nutrition-ambition-api.service';
 import { AccountsService } from './accounts.service';
 
@@ -13,53 +11,12 @@ import { AccountsService } from './accounts.service';
   providedIn: 'root'
 })
 export class DailySummaryService {
-  // Cache for summary data
-  private summaryCache: Map<string, Observable<NutritionSummaryResponse>> = new Map();
   private detailedSummaryCache: Map<string, Observable<GetDetailedSummaryResponse>> = new Map();
   
   constructor(
     private apiService: NutritionAmbitionApiService,
     private accountsService: AccountsService
   ) {}
-
-  /**
-   * Gets the nutrition summary for a specific date
-   * @param loggedDateUtc The date to get the summary for
-   * @param forceReload Whether to bypass the cache and force a new API request
-   * @returns An Observable of the Nutrition Summary response
-   */
-  getDailySummary(loggedDateUtc: Date = new Date(), forceReload: boolean = false): Observable<NutritionSummaryResponse> {
-    // Generate a cache key based on the date
-    const cacheKey = loggedDateUtc.toISOString().split('T')[0]; // Use date portion only
-    
-    // If we're forcing a reload or don't have cached data
-    if (forceReload || !this.summaryCache.has(cacheKey)) {
-      console.log(`[DailySummaryService] ${forceReload ? 'Force reloading' : 'Loading'} summary for ${cacheKey}`);
-      
-      // Create a DateRequest object with the date
-      const request = new DateRequest({
-        date: loggedDateUtc
-      });
-      
-      // Make the API call and cache the result
-      const apiResponse = this.apiService.getDailySummary(request)
-        .pipe(
-          shareReplay(1), // Cache the result
-          catchError(error => {
-            console.error('Error fetching daily summary:', error);
-            this.summaryCache.delete(cacheKey); // Clear failed result from cache
-            return throwError(() => new Error('Failed to load daily nutrition summary. Please try again.'));
-          })
-        );
-      
-      // Store in cache
-      this.summaryCache.set(cacheKey, apiResponse);
-    } else {
-      console.log(`[DailySummaryService] Using cached summary for ${cacheKey}`);
-    }
-    
-    return this.summaryCache.get(cacheKey)!;
-  }
 
   /**
    * Gets the detailed nutrition summary for a specific date

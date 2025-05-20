@@ -211,4 +211,38 @@ ion-item {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+// Add styles for the improved empty state
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1rem;
+  min-height: 50vh;
+  color: var(--ion-color-medium);
+
+  .empty-icon {
+    margin-bottom: 1rem;
+    
+    ion-icon {
+      font-size: 64px;
+      opacity: 0.6;
+    }
+  }
+
+  h2 {
+    margin: 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    opacity: 0.8;
+  }
 } 

@@ -114,6 +114,7 @@ export interface INutritionAmbitionApiService {
     /**
      * @param body (optional) 
      * @return Success
+     * @deprecated
      */
     getDailySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse>;
     /**
@@ -126,6 +127,10 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     getMonthlySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse>;
+    /**
+     * @return Success
+     */
+    swagger_json(): Observable<void>;
     /**
      * @param body (optional) 
      * @return Success
@@ -1216,6 +1221,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     /**
      * @param body (optional) 
      * @return Success
+     * @deprecated
      */
     getDailySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse> {
         let url_ = this.baseUrl + "/api/Nutrition/GetDailySummary";
@@ -1379,6 +1385,53 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<NutritionSummaryResponse>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    swagger_json(): Observable<void> {
+        let url_ = this.baseUrl + "/swagger/plain/v1/swagger.json";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSwagger_json(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSwagger_json(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSwagger_json(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
     }
 
     /**
@@ -2466,7 +2519,6 @@ export class FoodItem implements IFoodItem {
     name?: string | undefined;
     brandName?: string | undefined;
     quantity?: number;
-    servings?: number;
     unit?: string | undefined;
     calories?: number;
     protein?: number;
@@ -2478,6 +2530,7 @@ export class FoodItem implements IFoodItem {
     unsaturatedFat?: number;
     transFat?: number;
     micronutrients?: { [key: string]: number; } | undefined;
+    apiServingKind?: UnitKind;
 
     constructor(data?: IFoodItem) {
         if (data) {
@@ -2493,7 +2546,6 @@ export class FoodItem implements IFoodItem {
             this.name = _data["name"];
             this.brandName = _data["brandName"];
             this.quantity = _data["quantity"];
-            this.servings = _data["servings"];
             this.unit = _data["unit"];
             this.calories = _data["calories"];
             this.protein = _data["protein"];
@@ -2511,6 +2563,7 @@ export class FoodItem implements IFoodItem {
                         (<any>this.micronutrients)![key] = _data["micronutrients"][key];
                 }
             }
+            this.apiServingKind = _data["apiServingKind"];
         }
     }
 
@@ -2526,7 +2579,6 @@ export class FoodItem implements IFoodItem {
         data["name"] = this.name;
         data["brandName"] = this.brandName;
         data["quantity"] = this.quantity;
-        data["servings"] = this.servings;
         data["unit"] = this.unit;
         data["calories"] = this.calories;
         data["protein"] = this.protein;
@@ -2544,6 +2596,7 @@ export class FoodItem implements IFoodItem {
                     (<any>data["micronutrients"])[key] = (<any>this.micronutrients)[key];
             }
         }
+        data["apiServingKind"] = this.apiServingKind;
         return data;
     }
 }
@@ -2552,7 +2605,6 @@ export interface IFoodItem {
     name?: string | undefined;
     brandName?: string | undefined;
     quantity?: number;
-    servings?: number;
     unit?: string | undefined;
     calories?: number;
     protein?: number;
@@ -2564,6 +2616,7 @@ export interface IFoodItem {
     unsaturatedFat?: number;
     transFat?: number;
     micronutrients?: { [key: string]: number; } | undefined;
+    apiServingKind?: UnitKind;
 }
 
 export class FoodItemRequest implements IFoodItemRequest {
@@ -2970,6 +3023,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
     accountId?: string | undefined;
     nutrients?: NutrientBreakdown[] | undefined;
     foods?: FoodBreakdown[] | undefined;
+    summaryTotals?: SummaryTotals;
 
     constructor(data?: IGetDetailedSummaryResponse) {
         if (data) {
@@ -3001,6 +3055,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
                 for (let item of _data["foods"])
                     this.foods!.push(FoodBreakdown.fromJS(item));
             }
+            this.summaryTotals = _data["summaryTotals"] ? SummaryTotals.fromJS(_data["summaryTotals"]) : <any>undefined;
         }
     }
 
@@ -3032,6 +3087,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
             for (let item of this.foods)
                 data["foods"].push(item.toJSON());
         }
+        data["summaryTotals"] = this.summaryTotals ? this.summaryTotals.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -3044,6 +3100,7 @@ export interface IGetDetailedSummaryResponse {
     accountId?: string | undefined;
     nutrients?: NutrientBreakdown[] | undefined;
     foods?: FoodBreakdown[] | undefined;
+    summaryTotals?: SummaryTotals;
 }
 
 export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
@@ -4573,6 +4630,46 @@ export interface ISetDailyGoalResponse {
     dailyGoal?: DailyGoal;
 }
 
+export class SummaryTotals implements ISummaryTotals {
+    totalCalories?: number;
+    macronutrients?: MacronutrientsSummary;
+
+    constructor(data?: ISummaryTotals) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.totalCalories = _data["totalCalories"];
+            this.macronutrients = _data["macronutrients"] ? MacronutrientsSummary.fromJS(_data["macronutrients"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SummaryTotals {
+        data = typeof data === 'object' ? data : {};
+        let result = new SummaryTotals();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["totalCalories"] = this.totalCalories;
+        data["macronutrients"] = this.macronutrients ? this.macronutrients.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISummaryTotals {
+    totalCalories?: number;
+    macronutrients?: MacronutrientsSummary;
+}
+
 export class ToolCall implements IToolCall {
     id?: string | undefined;
     type?: string | undefined;
@@ -4655,6 +4752,12 @@ export class ToolFunctionCall implements IToolFunctionCall {
 export interface IToolFunctionCall {
     name?: string | undefined;
     arguments?: string | undefined;
+}
+
+export enum UnitKind {
+    _0 = 0,
+    _1 = 1,
+    _2 = 2,
 }
 
 export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
