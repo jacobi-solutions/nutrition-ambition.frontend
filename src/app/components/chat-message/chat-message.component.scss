@@ -26,6 +26,15 @@
     margin-right: auto;
     border-bottom-left-radius: 2px;
   }
+  
+  &.tool-message {
+    background-color: var(--ion-color-light-shade);
+    color: var(--ion-color-dark);
+    align-self: flex-start;
+    margin-right: auto;
+    border-bottom-left-radius: 2px;
+    border-left: 3px solid var(--ion-color-secondary);
+  }
 }
 
 .message-content {

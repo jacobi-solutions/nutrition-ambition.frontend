@@ -26,6 +26,7 @@
         *ngFor="let message of messages" 
         [text]="message.text"
         [isUser]="message.isUser"
+        [isTool]="message.isTool || false"
         [timestamp]="message.timestamp">
       </app-chat-message>
       

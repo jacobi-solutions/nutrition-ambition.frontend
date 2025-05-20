@@ -2466,6 +2466,7 @@ export class FoodItem implements IFoodItem {
     name?: string | undefined;
     brandName?: string | undefined;
     quantity?: number;
+    servings?: number;
     unit?: string | undefined;
     calories?: number;
     protein?: number;
@@ -2492,6 +2493,7 @@ export class FoodItem implements IFoodItem {
             this.name = _data["name"];
             this.brandName = _data["brandName"];
             this.quantity = _data["quantity"];
+            this.servings = _data["servings"];
             this.unit = _data["unit"];
             this.calories = _data["calories"];
             this.protein = _data["protein"];
@@ -2524,6 +2526,7 @@ export class FoodItem implements IFoodItem {
         data["name"] = this.name;
         data["brandName"] = this.brandName;
         data["quantity"] = this.quantity;
+        data["servings"] = this.servings;
         data["unit"] = this.unit;
         data["calories"] = this.calories;
         data["protein"] = this.protein;
@@ -2549,6 +2552,7 @@ export interface IFoodItem {
     name?: string | undefined;
     brandName?: string | undefined;
     quantity?: number;
+    servings?: number;
     unit?: string | undefined;
     calories?: number;
     protein?: number;
@@ -3754,6 +3758,7 @@ export enum MessageRoleTypes {
     _0 = 0,
     _1 = 1,
     _2 = 2,
+    _3 = 3,
 }
 
 export class Micronutrient implements IMicronutrient {
@@ -4614,7 +4619,7 @@ export interface IToolCall {
 
 export class ToolFunctionCall implements IToolFunctionCall {
     name?: string | undefined;
-    arguments?: any;
+    arguments?: string | undefined;
 
     constructor(data?: IToolFunctionCall) {
         if (data) {
@@ -4649,7 +4654,7 @@ export class ToolFunctionCall implements IToolFunctionCall {
 
 export interface IToolFunctionCall {
     name?: string | undefined;
-    arguments?: any;
+    arguments?: string | undefined;
 }
 
 export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {

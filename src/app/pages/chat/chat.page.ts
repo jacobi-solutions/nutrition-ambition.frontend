@@ -23,6 +23,7 @@ import { ChatMessageComponent } from 'src/app/components/chat-message/chat-messa
 interface DisplayMessage {
   text: string;
   isUser: boolean;
+  isTool?: boolean;  // Add property to identify tool messages
   timestamp: Date;
 }
 
@@ -116,6 +117,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           this.messages.push({
             text: response.message,
             isUser: false,
+            isTool: false,
             timestamp: new Date()
           });
           
@@ -201,6 +203,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       this.messages.push({ 
         text: welcomeMessage, 
         isUser: false, 
+        isTool: false,
         timestamp: new Date() 
       });
       this.scrollToBottom();
@@ -243,7 +246,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             console.log('[DEBUG] Received chat history, message count:', response.messages.length);
             this.messages = response.messages.map(msg => ({
               text: msg.content || '',
-              isUser: msg.role === 0, // 0 = User, 1 = Assistant
+              isUser: msg.role === 0 /* MessageRoleTypes.User */,
+              isTool: msg.role === 2 /* MessageRoleTypes.Tool */,
               timestamp: msg.loggedDateUtc || new Date()
             }));
             
@@ -273,6 +277,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.messages.push({
       text: staticMessage,
       isUser: false,
+      isTool: false,
       timestamp: new Date()
     });
     
@@ -292,6 +297,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.messages.push({
       text: sentMessage,
       isUser: true,
+      isTool: false,
       timestamp: messageDate
     });
     
@@ -314,6 +320,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           const botMessage = {
             text: response.message,
             isUser: false,
+            isTool: false,
             timestamp: new Date()
           };
           
@@ -349,6 +356,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         this.messages.push({
           text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
           isUser: false,
+          isTool: false,
           timestamp: new Date()
         });
         console.error('Error sending message to assistant:', error);

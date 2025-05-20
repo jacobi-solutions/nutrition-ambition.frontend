@@ -16,6 +16,7 @@ import { IonText } from '@ionic/angular/standalone';
 export class ChatMessageComponent implements OnInit {
   @Input() text: string = '';
   @Input() isUser: boolean = false;
+  @Input() isTool: boolean = false;
   @Input() timestamp: Date = new Date();
 
   constructor(private sanitizer: DomSanitizer) {}
@@ -29,7 +30,7 @@ export class ChatMessageComponent implements OnInit {
   get formattedContent(): SafeHtml {
     if (!this.text) return this.sanitizer.bypassSecurityTrustHtml('');
     
-    // Only apply markdown formatting to bot messages
+    // Only apply markdown formatting to bot and tool messages
     if (this.isUser) {
       return this.sanitizer.bypassSecurityTrustHtml(this.text);
     }
