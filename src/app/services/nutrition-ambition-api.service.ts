@@ -2349,6 +2349,7 @@ export class FoodContribution implements IFoodContribution {
     amount?: number;
     unit?: string | undefined;
     foodUnit?: string | undefined;
+    displayQuantity?: number;
 
     constructor(data?: IFoodContribution) {
         if (data) {
@@ -2366,6 +2367,7 @@ export class FoodContribution implements IFoodContribution {
             this.amount = _data["amount"];
             this.unit = _data["unit"];
             this.foodUnit = _data["foodUnit"];
+            this.displayQuantity = _data["displayQuantity"];
         }
     }
 
@@ -2383,6 +2385,7 @@ export class FoodContribution implements IFoodContribution {
         data["amount"] = this.amount;
         data["unit"] = this.unit;
         data["foodUnit"] = this.foodUnit;
+        data["displayQuantity"] = this.displayQuantity;
         return data;
     }
 }
@@ -2393,6 +2396,7 @@ export interface IFoodContribution {
     amount?: number;
     unit?: string | undefined;
     foodUnit?: string | undefined;
+    displayQuantity?: number;
 }
 
 export class FoodEntry implements IFoodEntry {
