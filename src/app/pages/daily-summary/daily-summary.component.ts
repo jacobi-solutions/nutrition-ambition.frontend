@@ -382,6 +382,50 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
           } else {
             this.detailedData = response;
             console.log('[DailySummaryComponent] Detailed summary loaded:', response);
+            
+            // Diagnostic logging for protein values
+            console.log('[PROTEIN_SCALE_DEBUG] Received detailed summary data');
+            
+            // Log summary totals protein value
+            if (response.summaryTotals && response.summaryTotals.macronutrients) {
+              console.log('[PROTEIN_SCALE_DEBUG] Summary protein total:', response.summaryTotals.macronutrients.protein, 'g');
+            }
+            
+            // Log all nutrients
+            if (response.nutrients) {
+              console.log('[PROTEIN_SCALE_DEBUG] All nutrients:', response.nutrients);
+              
+              // Find and log protein nutrient specifically
+              const proteinNutrient = response.nutrients.find(n => n.name === 'Protein');
+              if (proteinNutrient) {
+                console.log('[PROTEIN_SCALE_DEBUG] Protein nutrient details:', proteinNutrient);
+                console.log('[PROTEIN_SCALE_DEBUG] Protein totalAmount:', proteinNutrient.totalAmount);
+                
+                // Log each food's contribution to protein
+                if (proteinNutrient.foods && proteinNutrient.foods.length > 0) {
+                  console.log('[PROTEIN_SCALE_DEBUG] Protein contributions by food:');
+                  proteinNutrient.foods.forEach(food => {
+                    console.log(`[PROTEIN_SCALE_DEBUG] - ${food.name}: ${food.amount} ${food.unit}, foodUnit: ${food.foodUnit}`);
+                  });
+                }
+              }
+            }
+            
+            // Log all foods and their nutrients
+            if (response.foods) {
+              console.log('[PROTEIN_SCALE_DEBUG] All foods:', response.foods);
+              
+              response.foods.forEach(food => {
+                console.log(`[PROTEIN_SCALE_DEBUG] Food: ${food.name}, totalAmount: ${food.totalAmount} ${food.unit}`);
+                
+                if (food.nutrients) {
+                  const proteinEntry = food.nutrients.find(n => n.name === 'Protein');
+                  if (proteinEntry) {
+                    console.log(`[PROTEIN_SCALE_DEBUG] Food ${food.name} protein: ${proteinEntry.amount} ${proteinEntry.unit}`);
+                  }
+                }
+              });
+            }
           }
         }
       });
@@ -404,8 +448,21 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   // Helper to format amount with unit
   formatAmountWithUnit(amount: number, unit: string, nutrientName?: string): string {
     const name = nutrientName || unit;
+    
+    // Add diagnostic logging for protein formatting
+    if (name && name.toLowerCase() === 'protein') {
+      console.log(`[PROTEIN_SCALE_DEBUG] formatAmountWithUnit for Protein: amount=${amount}, unit=${unit}`);
+    }
+    
     if (this.isMacronutrient(name)) {
-      return formatMacro(name, amount);
+      const formatted = formatMacro(name, amount);
+      
+      // More diagnostic logging for protein
+      if (name && name.toLowerCase() === 'protein') {
+        console.log(`[PROTEIN_SCALE_DEBUG] formatAmountWithUnit for Protein formatted as: ${formatted}`);
+      }
+      
+      return formatted;
     }
     return formatNutrient(amount);
   }
@@ -413,9 +470,9 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   // Helper to format food contributions using the original food unit if available
   formatAmountWithFoodUnit(food: FoodContribution): string {
     if (this.isMacronutrient(food.name || '')) {
-      return formatMacro(food.name || '', food.amount);
+      return formatMacro(food.name || '', food.amount || 0);
     }
-    return formatNutrient(food.amount);
+    return formatNutrient(food.amount || 0);
   }
 
   // Helper methods to separate a food's nutrients into macronutrient and micronutrient categories
@@ -439,6 +496,6 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     if (nutrient?.name && this.isMacronutrient(nutrient.name)) {
       return formatMacro(nutrient.name, nutrient.amount);
     }
-    return formatNutrient(nutrient.amount);
+    return formatNutrient(nutrient.amount || 0);
   }
 } 
