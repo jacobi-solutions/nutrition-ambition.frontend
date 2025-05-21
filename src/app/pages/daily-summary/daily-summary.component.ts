@@ -321,7 +321,8 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
       .map(name => this.detailedData?.nutrients?.find(n => n.name?.toLowerCase() === name.toLowerCase()))
       .filter((n): n is NutrientBreakdown => !!n);
   }
-  
+
+
   // Get micronutrients list from detailed data
   get micronutrientList(): NutrientBreakdown[] {
     if (!this.detailedData?.nutrients) {
@@ -338,7 +339,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     if (!name) return false;
     
     const lowerName = name.toLowerCase();
-    const macronutrients = ['calories', 'protein', 'carbohydrates', 'fat'];
+    const macronutrients = ['calories', 'protein', 'fat','carbohydrates'];
     
     return macronutrients.some(macro => lowerName === macro || lowerName.startsWith(macro));
   }

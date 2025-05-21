@@ -114,12 +114,6 @@ export interface INutritionAmbitionApiService {
     /**
      * @param body (optional) 
      * @return Success
-     * @deprecated
-     */
-    getDailySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
      */
     getWeeklySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse>;
     /**
@@ -1216,63 +1210,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<NutritionApiResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     * @deprecated
-     */
-    getDailySummary(body: DateRequest | undefined): Observable<NutritionSummaryResponse> {
-        let url_ = this.baseUrl + "/api/Nutrition/GetDailySummary";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetDailySummary(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetDailySummary(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<NutritionSummaryResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<NutritionSummaryResponse>;
-        }));
-    }
-
-    protected processGetDailySummary(response: HttpResponseBase): Observable<NutritionSummaryResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = NutritionSummaryResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<NutritionSummaryResponse>(null as any);
     }
 
     /**
@@ -2529,7 +2466,6 @@ export class FoodItem implements IFoodItem {
     carbohydrates?: number;
     fat?: number;
     micronutrients?: { [key: string]: number; } | undefined;
-    allNutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
 
     constructor(data?: IFoodItem) {
@@ -2556,13 +2492,6 @@ export class FoodItem implements IFoodItem {
                 for (let key in _data["micronutrients"]) {
                     if (_data["micronutrients"].hasOwnProperty(key))
                         (<any>this.micronutrients)![key] = _data["micronutrients"][key];
-                }
-            }
-            if (_data["allNutrients"]) {
-                this.allNutrients = {} as any;
-                for (let key in _data["allNutrients"]) {
-                    if (_data["allNutrients"].hasOwnProperty(key))
-                        (<any>this.allNutrients)![key] = _data["allNutrients"][key];
                 }
             }
             this.apiServingKind = _data["apiServingKind"];
@@ -2593,13 +2522,6 @@ export class FoodItem implements IFoodItem {
                     (<any>data["micronutrients"])[key] = (<any>this.micronutrients)[key];
             }
         }
-        if (this.allNutrients) {
-            data["allNutrients"] = {};
-            for (let key in this.allNutrients) {
-                if (this.allNutrients.hasOwnProperty(key))
-                    (<any>data["allNutrients"])[key] = (<any>this.allNutrients)[key];
-            }
-        }
         data["apiServingKind"] = this.apiServingKind;
         return data;
     }
@@ -2615,7 +2537,6 @@ export interface IFoodItem {
     carbohydrates?: number;
     fat?: number;
     micronutrients?: { [key: string]: number; } | undefined;
-    allNutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
 }
 
@@ -3636,6 +3557,7 @@ export interface IMacronutrients {
 }
 
 export class MacronutrientsSummary implements IMacronutrientsSummary {
+    calories?: number;
     protein?: number;
     carbohydrates?: number;
     fat?: number;
@@ -3651,6 +3573,7 @@ export class MacronutrientsSummary implements IMacronutrientsSummary {
 
     init(_data?: any) {
         if (_data) {
+            this.calories = _data["calories"];
             this.protein = _data["protein"];
             this.carbohydrates = _data["carbohydrates"];
             this.fat = _data["fat"];
@@ -3666,6 +3589,7 @@ export class MacronutrientsSummary implements IMacronutrientsSummary {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["calories"] = this.calories;
         data["protein"] = this.protein;
         data["carbohydrates"] = this.carbohydrates;
         data["fat"] = this.fat;
@@ -3674,6 +3598,7 @@ export class MacronutrientsSummary implements IMacronutrientsSummary {
 }
 
 export interface IMacronutrientsSummary {
+    calories?: number;
     protein?: number;
     carbohydrates?: number;
     fat?: number;
