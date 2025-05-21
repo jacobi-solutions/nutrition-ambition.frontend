@@ -2528,12 +2528,8 @@ export class FoodItem implements IFoodItem {
     protein?: number;
     carbohydrates?: number;
     fat?: number;
-    fiber?: number;
-    sugar?: number;
-    saturatedFat?: number;
-    unsaturatedFat?: number;
-    transFat?: number;
     micronutrients?: { [key: string]: number; } | undefined;
+    allNutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
 
     constructor(data?: IFoodItem) {
@@ -2555,16 +2551,18 @@ export class FoodItem implements IFoodItem {
             this.protein = _data["protein"];
             this.carbohydrates = _data["carbohydrates"];
             this.fat = _data["fat"];
-            this.fiber = _data["fiber"];
-            this.sugar = _data["sugar"];
-            this.saturatedFat = _data["saturatedFat"];
-            this.unsaturatedFat = _data["unsaturatedFat"];
-            this.transFat = _data["transFat"];
             if (_data["micronutrients"]) {
                 this.micronutrients = {} as any;
                 for (let key in _data["micronutrients"]) {
                     if (_data["micronutrients"].hasOwnProperty(key))
                         (<any>this.micronutrients)![key] = _data["micronutrients"][key];
+                }
+            }
+            if (_data["allNutrients"]) {
+                this.allNutrients = {} as any;
+                for (let key in _data["allNutrients"]) {
+                    if (_data["allNutrients"].hasOwnProperty(key))
+                        (<any>this.allNutrients)![key] = _data["allNutrients"][key];
                 }
             }
             this.apiServingKind = _data["apiServingKind"];
@@ -2588,16 +2586,18 @@ export class FoodItem implements IFoodItem {
         data["protein"] = this.protein;
         data["carbohydrates"] = this.carbohydrates;
         data["fat"] = this.fat;
-        data["fiber"] = this.fiber;
-        data["sugar"] = this.sugar;
-        data["saturatedFat"] = this.saturatedFat;
-        data["unsaturatedFat"] = this.unsaturatedFat;
-        data["transFat"] = this.transFat;
         if (this.micronutrients) {
             data["micronutrients"] = {};
             for (let key in this.micronutrients) {
                 if (this.micronutrients.hasOwnProperty(key))
                     (<any>data["micronutrients"])[key] = (<any>this.micronutrients)[key];
+            }
+        }
+        if (this.allNutrients) {
+            data["allNutrients"] = {};
+            for (let key in this.allNutrients) {
+                if (this.allNutrients.hasOwnProperty(key))
+                    (<any>data["allNutrients"])[key] = (<any>this.allNutrients)[key];
             }
         }
         data["apiServingKind"] = this.apiServingKind;
@@ -2614,12 +2614,8 @@ export interface IFoodItem {
     protein?: number;
     carbohydrates?: number;
     fat?: number;
-    fiber?: number;
-    sugar?: number;
-    saturatedFat?: number;
-    unsaturatedFat?: number;
-    transFat?: number;
     micronutrients?: { [key: string]: number; } | undefined;
+    allNutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
 }
 
@@ -3643,9 +3639,6 @@ export class MacronutrientsSummary implements IMacronutrientsSummary {
     protein?: number;
     carbohydrates?: number;
     fat?: number;
-    fiber?: number;
-    sugar?: number;
-    saturatedFat?: number;
 
     constructor(data?: IMacronutrientsSummary) {
         if (data) {
@@ -3661,9 +3654,6 @@ export class MacronutrientsSummary implements IMacronutrientsSummary {
             this.protein = _data["protein"];
             this.carbohydrates = _data["carbohydrates"];
             this.fat = _data["fat"];
-            this.fiber = _data["fiber"];
-            this.sugar = _data["sugar"];
-            this.saturatedFat = _data["saturatedFat"];
         }
     }
 
@@ -3679,9 +3669,6 @@ export class MacronutrientsSummary implements IMacronutrientsSummary {
         data["protein"] = this.protein;
         data["carbohydrates"] = this.carbohydrates;
         data["fat"] = this.fat;
-        data["fiber"] = this.fiber;
-        data["sugar"] = this.sugar;
-        data["saturatedFat"] = this.saturatedFat;
         return data;
     }
 }
@@ -3690,9 +3677,6 @@ export interface IMacronutrientsSummary {
     protein?: number;
     carbohydrates?: number;
     fat?: number;
-    fiber?: number;
-    sugar?: number;
-    saturatedFat?: number;
 }
 
 export enum MealType {
