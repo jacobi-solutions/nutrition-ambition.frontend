@@ -100,7 +100,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   popoverEvent: any = null;
   
   // List of recognized macronutrient names (case-insensitive)
-  private readonly macronutrientNames: string[] = [
+  /* private readonly macronutrientNames: string[] = [
     'protein', 'proteins',
     'carbohydrate', 'carbohydrates', 'carbs', 'carb',
     'fat', 'fats',
@@ -108,7 +108,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     'sugar',
     'calories', 'calorie',
     'saturated fat', 'unsaturated fat', 'trans fat'
-  ];
+  ]; */
   
   // Use the inject function for dependency injection in standalone components
   private dailySummaryService = inject(DailySummaryService);
@@ -313,13 +313,13 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
 
   // Get macronutrients list from detailed data
   get macronutrientList(): NutrientBreakdown[] {
-    if (!this.detailedData?.nutrients) {
-      return [];
-    }
-    
-    return this.detailedData.nutrients.filter(nutrient => 
-      this.isMacronutrient(nutrient.name || '')
-    );
+    if (!this.detailedData?.nutrients) return [];
+
+    const targetOrder = ['Calories', 'Protein', 'Fat', 'Carbohydrates' ];
+
+    return targetOrder
+      .map(name => this.detailedData?.nutrients?.find(n => n.name?.toLowerCase() === name.toLowerCase()))
+      .filter((n): n is NutrientBreakdown => !!n);
   }
   
   // Get micronutrients list from detailed data
@@ -338,13 +338,9 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     if (!name) return false;
     
     const lowerName = name.toLowerCase();
+    const macronutrients = ['calories', 'protein', 'carbohydrates', 'fat'];
     
-    // Check if it's an exact match for a macronutrient 
-    return this.macronutrientNames.some(macro => 
-      lowerName === macro || 
-      // Or check if it starts with the macro name and is followed by a non-word character or end of string
-      (lowerName.startsWith(macro) && (lowerName.length === macro.length || !lowerName[macro.length].match(/[a-z0-9]/)))
-    );
+    return macronutrients.some(macro => lowerName === macro || lowerName.startsWith(macro));
   }
 
   loadDetailedSummary(date: Date) {

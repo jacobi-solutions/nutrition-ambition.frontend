@@ -54,6 +54,14 @@
 // Breakdown list styling
 .breakdown-container {
   margin-top: 16px;
+  max-width: 100%;
+  
+  ion-card {
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
+  }
+  
   ion-list {
     padding: 0;
     margin-bottom: 16px;
@@ -82,14 +90,21 @@
   display: flex;
   justify-content: space-between;
   width: 100%;
+  min-height: 36px;
+  align-items: center;
 }
 
 .name {
   font-weight: 500;
+  padding-right: 8px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  flex: 1;
 }
 
 .amount {
   color: var(--ion-color-medium);
+  white-space: nowrap;
 }
 
 .brand-name {
@@ -106,6 +121,12 @@
   background-color: var(--ion-color-light-shade);
   --background: var(--ion-color-light-shade);
   --padding-start: 32px;
+  --padding-end: 16px;
+  
+  ion-label {
+    white-space: normal;
+    overflow: visible;
+  }
 }
 
 .detail-item {
@@ -113,15 +134,21 @@
   justify-content: space-between;
   margin-bottom: 8px;
   font-size: 0.9em;
+  align-items: center;
+  min-height: 30px;
 }
 
 .detail-name {
   flex: 1;
   margin-right: 16px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .detail-amount {
   color: var(--ion-color-medium);
+  white-space: nowrap;
+  text-align: right;
 }
 
 .nutrient-section {
