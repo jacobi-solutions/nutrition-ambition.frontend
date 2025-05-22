@@ -208,8 +208,7 @@ export class ChatService {
         const botResponse = response;
         
         // Check if a meal was logged by looking for confirmation in the response
-        if (response.isSuccess && 
-            this.containsMealConfirmation(response.message)) {
+        if (response.isSuccess && response.loggedMeal) {
           console.log('[DEBUG] Meal logging detected, emitting mealLogged event');
           this.mealLogged$.next();
         }

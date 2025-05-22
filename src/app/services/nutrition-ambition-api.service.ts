@@ -1589,6 +1589,7 @@ export class BotMessageResponse implements IBotMessageResponse {
     accountId?: string | undefined;
     toolCalls?: ToolCall[] | undefined;
     responseId?: string | undefined;
+    loggedMeal?: boolean;
 
     constructor(data?: IBotMessageResponse) {
         if (data) {
@@ -1617,6 +1618,7 @@ export class BotMessageResponse implements IBotMessageResponse {
                     this.toolCalls!.push(ToolCall.fromJS(item));
             }
             this.responseId = _data["responseId"];
+            this.loggedMeal = _data["loggedMeal"];
         }
     }
 
@@ -1645,6 +1647,7 @@ export class BotMessageResponse implements IBotMessageResponse {
                 data["toolCalls"].push(item.toJSON());
         }
         data["responseId"] = this.responseId;
+        data["loggedMeal"] = this.loggedMeal;
         return data;
     }
 }
@@ -1658,6 +1661,7 @@ export interface IBotMessageResponse {
     accountId?: string | undefined;
     toolCalls?: ToolCall[] | undefined;
     responseId?: string | undefined;
+    loggedMeal?: boolean;
 }
 
 export class ChatMessage implements IChatMessage {
