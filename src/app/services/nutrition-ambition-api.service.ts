@@ -100,16 +100,6 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    getNutritionDataForFoodItem(body: FoodItemRequest | undefined): Observable<NutritionApiResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    processFoodTextAndGetNutrition(body: ParseFoodTextRequest | undefined): Observable<NutritionApiResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     getSmartNutritionData(body: ParseFoodTextRequest | undefined): Observable<NutritionApiResponse>;
     /**
      * @param body (optional) 
@@ -1048,118 +1038,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    getNutritionDataForFoodItem(body: FoodItemRequest | undefined): Observable<NutritionApiResponse> {
-        let url_ = this.baseUrl + "/api/Nutrition/GetNutritionDataForFoodItem";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetNutritionDataForFoodItem(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetNutritionDataForFoodItem(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<NutritionApiResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<NutritionApiResponse>;
-        }));
-    }
-
-    protected processGetNutritionDataForFoodItem(response: HttpResponseBase): Observable<NutritionApiResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = NutritionApiResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<NutritionApiResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    processFoodTextAndGetNutrition(body: ParseFoodTextRequest | undefined): Observable<NutritionApiResponse> {
-        let url_ = this.baseUrl + "/api/Nutrition/ProcessFoodTextAndGetNutrition";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processProcessFoodTextAndGetNutrition(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processProcessFoodTextAndGetNutrition(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<NutritionApiResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<NutritionApiResponse>;
-        }));
-    }
-
-    protected processProcessFoodTextAndGetNutrition(response: HttpResponseBase): Observable<NutritionApiResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = NutritionApiResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<NutritionApiResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     getSmartNutritionData(body: ParseFoodTextRequest | undefined): Observable<NutritionApiResponse> {
         let url_ = this.baseUrl + "/api/Nutrition/GetSmartNutritionData";
         url_ = url_.replace(/[?&]$/, "");
@@ -2083,7 +1961,7 @@ export interface IDateRequest {
 export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
     accountId?: string | undefined;
     isAnonymousUser?: boolean;
-    foodEntryId?: string | undefined;
+    foodItemIds?: string[] | undefined;
 
     constructor(data?: IDeleteFoodEntryRequest) {
         if (data) {
@@ -2098,7 +1976,11 @@ export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
         if (_data) {
             this.accountId = _data["accountId"];
             this.isAnonymousUser = _data["isAnonymousUser"];
-            this.foodEntryId = _data["foodEntryId"];
+            if (Array.isArray(_data["foodItemIds"])) {
+                this.foodItemIds = [] as any;
+                for (let item of _data["foodItemIds"])
+                    this.foodItemIds!.push(item);
+            }
         }
     }
 
@@ -2113,7 +1995,11 @@ export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
         data = typeof data === 'object' ? data : {};
         data["accountId"] = this.accountId;
         data["isAnonymousUser"] = this.isAnonymousUser;
-        data["foodEntryId"] = this.foodEntryId;
+        if (Array.isArray(this.foodItemIds)) {
+            data["foodItemIds"] = [];
+            for (let item of this.foodItemIds)
+                data["foodItemIds"].push(item);
+        }
         return data;
     }
 }
@@ -2121,7 +2007,7 @@ export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
 export interface IDeleteFoodEntryRequest {
     accountId?: string | undefined;
     isAnonymousUser?: boolean;
-    foodEntryId?: string | undefined;
+    foodItemIds?: string[] | undefined;
 }
 
 export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
@@ -2225,6 +2111,7 @@ export interface IErrorDto {
 }
 
 export class FoodBreakdown implements IFoodBreakdown {
+    foodItemIds?: string[] | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     totalAmount?: number;
@@ -2242,6 +2129,11 @@ export class FoodBreakdown implements IFoodBreakdown {
 
     init(_data?: any) {
         if (_data) {
+            if (Array.isArray(_data["foodItemIds"])) {
+                this.foodItemIds = [] as any;
+                for (let item of _data["foodItemIds"])
+                    this.foodItemIds!.push(item);
+            }
             this.name = _data["name"];
             this.brandName = _data["brandName"];
             this.totalAmount = _data["totalAmount"];
@@ -2263,6 +2155,11 @@ export class FoodBreakdown implements IFoodBreakdown {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.foodItemIds)) {
+            data["foodItemIds"] = [];
+            for (let item of this.foodItemIds)
+                data["foodItemIds"].push(item);
+        }
         data["name"] = this.name;
         data["brandName"] = this.brandName;
         data["totalAmount"] = this.totalAmount;
@@ -2277,6 +2174,7 @@ export class FoodBreakdown implements IFoodBreakdown {
 }
 
 export interface IFoodBreakdown {
+    foodItemIds?: string[] | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     totalAmount?: number;
@@ -2461,10 +2359,12 @@ export interface IFoodGroup {
 }
 
 export class FoodItem implements IFoodItem {
+    id?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     quantity?: number;
     unit?: string | undefined;
+    weightGramsPerUnit?: number | undefined;
     calories?: number;
     protein?: number;
     carbohydrates?: number;
@@ -2483,10 +2383,12 @@ export class FoodItem implements IFoodItem {
 
     init(_data?: any) {
         if (_data) {
+            this.id = _data["id"];
             this.name = _data["name"];
             this.brandName = _data["brandName"];
             this.quantity = _data["quantity"];
             this.unit = _data["unit"];
+            this.weightGramsPerUnit = _data["weightGramsPerUnit"];
             this.calories = _data["calories"];
             this.protein = _data["protein"];
             this.carbohydrates = _data["carbohydrates"];
@@ -2511,10 +2413,12 @@ export class FoodItem implements IFoodItem {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
         data["name"] = this.name;
         data["brandName"] = this.brandName;
         data["quantity"] = this.quantity;
         data["unit"] = this.unit;
+        data["weightGramsPerUnit"] = this.weightGramsPerUnit;
         data["calories"] = this.calories;
         data["protein"] = this.protein;
         data["carbohydrates"] = this.carbohydrates;
@@ -2532,52 +2436,18 @@ export class FoodItem implements IFoodItem {
 }
 
 export interface IFoodItem {
+    id?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     quantity?: number;
     unit?: string | undefined;
+    weightGramsPerUnit?: number | undefined;
     calories?: number;
     protein?: number;
     carbohydrates?: number;
     fat?: number;
     micronutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
-}
-
-export class FoodItemRequest implements IFoodItemRequest {
-    foodDescription?: string | undefined;
-
-    constructor(data?: IFoodItemRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.foodDescription = _data["foodDescription"];
-        }
-    }
-
-    static fromJS(data: any): FoodItemRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new FoodItemRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["foodDescription"] = this.foodDescription;
-        return data;
-    }
-}
-
-export interface IFoodItemRequest {
-    foodDescription?: string | undefined;
 }
 
 export class FoodNutrition implements IFoodNutrition {

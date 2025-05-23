@@ -49,9 +49,11 @@ import {
 } from 'ionicons/icons';
 import { ChatService } from 'src/app/services/chat.service';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
-import { EntryActionMenuComponent, ActionEvent, ActionType } from '../../components/entry-action-menu';
+import { ActionEvent, EntryActionMenuComponent } from '../../components/entry-action-menu/entry-action-menu.component';
 import { formatNutrient } from '../../utils/format-nutrient';
 import { formatMacro } from '../../utils/format-macro';
+import { ToastController } from '@ionic/angular';
+import { FoodLogService } from 'src/app/services/food-log.service';
 
 @Component({
   selector: 'app-daily-summary',
@@ -117,6 +119,8 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   private dateService = inject(DateService);
   private chatService = inject(ChatService);
   private router = inject(Router);
+  private toastController = inject(ToastController);
+  private foodLogService = inject(FoodLogService);
 
   constructor() {
     addIcons({ 
@@ -206,8 +210,75 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   }
   
   private handleRemoveEntry(entry: any) {
-    console.log('Would remove entry:', entry);
-    // Actual implementation would be added here
+    // Only handle removal for food entries
+    if (entry.entryType !== 'food') {
+      console.warn('Cannot remove entry that is not a food item:', entry);
+      return;
+    }
+    
+    console.log('Removing food entry:', entry);
+    
+    // Store a reference to the original foods list for undo
+    const originalFoods = this.detailedData?.foods ? [...this.detailedData.foods] : [];
+    
+    // Get the array of food item IDs from the entry
+    const foodItemIds = entry.foodItemIds;
+    
+    if (!foodItemIds || foodItemIds.length === 0) {
+      console.error('Cannot remove food entry without IDs:', entry);
+      return;
+    }
+    
+    // Immediately update the UI by filtering out the removed item
+    if (this.detailedData?.foods) {
+      // Remove based on name rather than ID since FoodBreakdown doesn't have ID
+      const foodName = entry.name;
+      this.detailedData.foods = this.detailedData.foods.filter(food => food.name !== foodName);
+      
+      // Also clear selection if the removed item was selected
+      if (this.selectedFood?.name === foodName) {
+        this.selectedFood = null;
+      }
+    }
+    
+    // Show a toast with an undo option
+    this.toastController.create({
+      message: `Removed "${entry.name}"`,
+      duration: 5000,
+      position: 'bottom',
+      buttons: [
+        {
+          text: 'UNDO',
+          role: 'cancel',
+          handler: () => {
+            // Restore the original foods list if user undoes the action
+            if (this.detailedData) {
+              this.detailedData.foods = originalFoods;
+            }
+          }
+        }
+      ]
+    }).then(toast => {
+      toast.present();
+      
+      // When the toast is dismissed (times out without undo), persist the deletion
+      toast.onDidDismiss().then((dismissData) => {
+        // Only persist if the user didn't click undo (role !== 'cancel')
+        if (dismissData.role !== 'cancel') {
+          // Use FoodLogService to delete the items
+          this.foodLogService.deleteFoodEntryItems(foodItemIds).subscribe({
+            next: () => console.log('Food items deletion confirmed'),
+            error: (err) => {
+              console.error('Error deleting food items:', err);
+              // Restore the data on error
+              if (this.detailedData) {
+                this.detailedData.foods = originalFoods;
+              }
+            }
+          });
+        }
+      });
+    });
   }
   
   private handleEditEntry(entry: any) {
@@ -459,5 +530,27 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
       return formatMacro(nutrient.name, nutrient.amount);
     }
     return formatNutrient(nutrient.amount || 0);
+  }
+  
+  /**
+   * Track function for ngFor directives to optimize rendering performance
+   * @param index The index of the current item
+   * @param item The item object with an id property
+   * @returns The item's id or a fallback value
+   */
+  trackById(index: number, item: any): string {
+    // Return the unique ID if it exists
+    if (item && item.id) {
+      return item.id;
+    }
+    
+    // Fallback to name for FoodBreakdown items which don't have an id
+    if (item && item.name) {
+      // Add index to prevent duplicate key issues with items of the same name
+      return `${item.name}-${index}`;
+    }
+    
+    // Last resort fallback to index
+    return index.toString();
   }
 } 
