@@ -497,7 +497,8 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
       
       return formatted;
     }
-    return formatNutrient(amount);
+    // Use the unit parameter that comes from the API
+    return `${Math.round(amount * 10) / 10} ${unit || 'mg'}`;
   }
 
   // Helper to format food contributions using the original food unit if available
@@ -505,7 +506,8 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     if (this.isMacronutrient(food.name || '')) {
       return formatMacro(food.name || '', food.amount || 0);
     }
-    return formatNutrient(food.amount || 0);
+    // Use the unit parameter that comes from the API
+    return `${Math.round((food.amount || 0) * 10) / 10} ${food.unit || 'mg'}`;
   }
 
   // Helper methods to separate a food's nutrients into macronutrient and micronutrient categories
@@ -529,7 +531,8 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     if (nutrient?.name && this.isMacronutrient(nutrient.name)) {
       return formatMacro(nutrient.name, nutrient.amount);
     }
-    return formatNutrient(nutrient.amount || 0);
+    // Use the unit parameter that comes from the API
+    return `${Math.round((nutrient.amount || 0) * 10) / 10} ${nutrient.unit || 'mg'}`;
   }
   
   /**
