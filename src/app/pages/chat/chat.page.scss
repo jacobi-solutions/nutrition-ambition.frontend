@@ -1,16 +1,47 @@
+ion-content {
+  --padding-bottom: 80px;
+}
+
+.context-note {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+  font-style: italic;
+  padding: 0.5rem 1rem 0.25rem 1rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ion-color-light-shade);
+  background-color: var(--ion-color-light-tint);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.context-note-inline {
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+  font-style: italic;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background-color: var(--ion-color-light-tint);
+  border-radius: 16px;
+  align-self: center;
+  text-align: center;
+  max-width: 90%;
+  animation: fadeIn 0.3s ease-in;
+}
+
 .chat-container {
-  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  gap: 10px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .messages {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  overflow-y: auto;
-  margin-bottom: 16px;
+  padding-bottom: 20px;
 }
 
 .message {

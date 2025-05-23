@@ -197,9 +197,6 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
       case 'trend':
         this.handleShowTrend(event.entry);
         break;
-      case 'pin':
-        this.handlePinToDashboard(event.entry);
-        break;
       case 'ignore':
         this.handleIgnoreForNow(event.entry);
         break;
@@ -286,17 +283,52 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     // Actual implementation would be added here
   }
   
-  private handleFocusInChat(entry: any) {
-    console.log('Would focus on entry in chat:', entry);
+  private handleFocusInChat(entry: FoodBreakdown | NutrientBreakdown) {
+    console.log('Focusing on entry in chat:', entry.name);
     
-    // Navigate to chat page with the entry details
-    // This is a stub - actual implementation would depend on how you want to handle this
-    const entryName = entry.name || 'this food';
-    this.router.navigate(['/chat'], { 
-      queryParams: { 
-        focus: entryName 
+    // Get the current date from the dateService
+    const loggedDate = new Date(this.selectedDate);
+    
+    // Set the context note
+    this.chatService.setContextNote('Focusing on: ' + (entry.name || 'this item'));
+    
+    // Close the popover explicitly
+    this.isPopoverOpen = false;
+    
+    // Navigate to the chat page immediately so users can see the context note
+    this.router.navigate(['/app/chat']);
+    
+    // Use the chatService to focus in chat
+    this.chatService.focusInChat(entry.name || 'this item', loggedDate).subscribe({
+      next: (response) => {
+        if (response.isSuccess) {
+          // Success! The context note will be cleared by the ChatPage when it receives the message
+          // Nothing else to do here
+        } else {
+          // Show error toast only if the operation fails
+          this.presentToast('Unable to focus on this topic. Please try again.');
+          // Clear the context note if the operation fails
+          this.chatService.clearContextNote();
+        }
+      },
+      error: (error) => {
+        console.error('Error focusing in chat:', error);
+        this.presentToast('Unable to focus on this topic. Please try again.');
+        // Clear the context note if there's an error
+        this.chatService.clearContextNote();
       }
     });
+  }
+  
+  // Helper to show toast messages
+  private async presentToast(message: string) {
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000,
+      position: 'bottom',
+      color: 'danger'
+    });
+    await toast.present();
   }
   
   private handleEditGoal(entry: any) {

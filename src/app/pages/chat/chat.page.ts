@@ -11,9 +11,7 @@ import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { DateService } from '../../services/date.service';
 import { 
-  ChatMessage,
   BotMessageResponse,
-  LogChatMessageResponse,
   GetChatMessagesResponse
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
@@ -55,12 +53,15 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   selectedDate: string = new Date().toISOString();
   error: string | null = null;
   userEmail: string | null = null;
+  contextNote: string | null = null;
   private dateSubscription: Subscription;
+  private contextNoteSubscription: Subscription;
+  private focusInChatSubscription: Subscription;
   private hasPromptedForGoal: boolean = false;
   private hasInitialMessage: boolean = false;
-  
-  @ViewChild(IonContent, { static: false }) content: IonContent;
-  @ViewChild('chatContent') chatContent!: ElementRef;
+
+  @ViewChild('content', { static: false }) content: IonContent;
+  @ViewChild('messagesContent') messagesContent: ElementRef;
 
   constructor(
     private chatService: ChatService,
@@ -78,7 +79,52 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this.selectedDate = date;
       this.loadChatHistory(new Date(date));
-
+    });
+    
+    // Subscribe to context note changes
+    this.contextNoteSubscription = this.chatService.contextNote$.subscribe(note => {
+      this.contextNote = note;
+      
+      // Show typing indicator when a context note is set
+      if (note) {
+        this.isLoading = true;
+        // Make sure we scroll to see the context note and typing indicator
+        setTimeout(() => {
+          this.scrollToBottom();
+        }, 100);
+      } else {
+        // If context note is cleared without a response appearing, stop the loading indicator
+        // This happens in error cases where the API call failed
+        if (this.isLoading && this.messages.length > 0 && 
+            !this.messages[this.messages.length - 1].isUser) {
+          // Only stop loading if the last message is from the bot (meaning we got a response)
+          this.isLoading = false;
+        }
+      }
+    });
+    
+    // Subscribe to receive the bot's response from the focusInChat method
+    this.focusInChatSubscription = this.chatService.focusInChatResponse$.subscribe(response => {
+      if (response && response.isSuccess && response.message) {
+        // Add the bot's response to the messages array
+        this.messages.push({
+          text: response.message,
+          isUser: false,
+          isTool: false,
+          timestamp: new Date()
+        });
+        
+        // Turn off loading indicator
+        this.isLoading = false;
+        
+        // Clear the context note
+        this.chatService.clearContextNote();
+        
+        // Scroll to the new message
+        setTimeout(() => {
+          this.scrollToBottom();
+        }, 100);
+      }
     });
     
     // Get the current user email
@@ -132,14 +178,38 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   }
   
   ngOnDestroy() {
-    // Clean up subscription
+    // Clean up subscriptions
     if (this.dateSubscription) {
       this.dateSubscription.unsubscribe();
+    }
+    
+    if (this.contextNoteSubscription) {
+      this.contextNoteSubscription.unsubscribe();
+    }
+    
+    if (this.focusInChatSubscription) {
+      this.focusInChatSubscription.unsubscribe();
     }
   }
 
   ngAfterViewInit() {
-    // Scroll to bottom when view is initialized
+    console.log('[DEBUG] Chat view initialized');
+    
+    // Check if content is available
+    if (!this.content) {
+      console.warn('[WARN] IonContent reference is not available in ngAfterViewInit');
+    }
+    
+    // Initial scroll to bottom
+    setTimeout(() => {
+      this.scrollToBottom();
+    }, 500);
+  }
+  
+  // This will be called when the component has been fully activated
+  ionViewDidEnter() {
+    console.log('[DEBUG] Chat view fully entered');
+    // Ensure we scroll to bottom when the view is fully active
     this.scrollToBottom();
   }
 
@@ -206,7 +276,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         isTool: false,
         timestamp: new Date() 
       });
-      this.scrollToBottom();
+      
+      // Need to wait for the next render cycle before scrolling
+      setTimeout(() => {
+        this.scrollToBottom();
+      }, 100);
+      
       this.hasInitialMessage = true;
       return;
     }
@@ -237,6 +312,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           if (this.messages.length === 0 && this.dateService.isToday(date) && !this.hasInitialMessage) {
             this.showStaticWelcomeMessage();
           }
+          
+          // Make sure to scroll to bottom after everything is loaded and rendered
+          console.log('[DEBUG] Messages loaded, scrolling to bottom after a delay');
+          setTimeout(() => {
+            this.scrollToBottom();
+          }, 300);
         })
       )
       .subscribe({
@@ -259,9 +340,13 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             );
             
             this.hasInitialMessage = true;
-            this.scrollToBottom();
-
+            
             console.log('[DEBUG] All roles returned from API:', response.messages.map(m => m.role));
+            
+            // Scroll at the end of the next event cycle
+            setTimeout(() => {
+              this.scrollToBottom();
+            }, 200);
           }
           // Don't start a conversation automatically - we'll show static message instead
         }
@@ -282,7 +367,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     });
     
     this.hasInitialMessage = true;
-    this.scrollToBottom();
+    
+    // Ensure we scroll to the welcome message
+    setTimeout(() => {
+      this.scrollToBottom();
+    }, 100);
   }
 
   sendMessage() {
@@ -305,8 +394,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.userMessage = '';
     this.isLoading = true;
     
-    // Scroll to the bottom immediately after adding message and showing typing indicator
-    this.scrollToBottom();
+    // Force scroll to bottom immediately for user's message
+    setTimeout(() => {
+      this.scrollToBottom();
+    }, 100);
     
     // Use the sendMessage method - for new users this will create an account and start conversation
     console.log('[DEBUG] Sending message to backend:', sentMessage);
@@ -325,7 +416,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           };
           
           this.messages.push(botMessage);
-          this.scrollToBottom();
+          
+          // Force scroll to bottom for bot's message response
+          setTimeout(() => {
+            this.scrollToBottom();
+          }, 100);
           
           // If this is the first message from a completely new user, the backend may have
           // created a new anonymous account - check if we got an accountId back
@@ -360,30 +455,32 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           timestamp: new Date()
         });
         console.error('Error sending message to assistant:', error);
-        this.scrollToBottom();
+        
+        // Force scroll to bottom for error message
+        setTimeout(() => {
+          this.scrollToBottom();
+        }, 100);
       }
     });
   }
   
+  // Handle scroll events
+  onScroll(event: any) {
+    // This method can be used for implementing "load more" when scrolling up
+    // For now, we just use it to enable the scroll events
+  }
+
   private scrollToBottom() {
+    console.log('[DEBUG] Attempting to scroll to bottom');
+    // Use a short timeout to ensure DOM updates are processed
     setTimeout(() => {
-      // Try using the ElementRef first for smooth scrolling
-      if (this.chatContent?.nativeElement) {
-        try {
-          this.chatContent.nativeElement.scrollTo({ 
-            top: this.chatContent.nativeElement.scrollHeight, 
-            behavior: 'smooth' 
-          });
-        } catch (err) {
-          // Fallback if smooth scrolling not supported
-          this.chatContent.nativeElement.scrollTop = this.chatContent.nativeElement.scrollHeight;
-        }
-      }
-      
-      // Also use IonContent as a backup method
       if (this.content) {
-        this.content.scrollToBottom(300);
+        console.log('[DEBUG] Using IonContent to scroll to bottom');
+        // Use Ionic's native scrollToBottom method - this is the most reliable for Ionic
+        this.content.scrollToBottom(0);
+      } else {
+        console.warn('[WARN] No IonContent available for scrolling');
       }
-    }, 50);
+    }, 100);
   }
 } 

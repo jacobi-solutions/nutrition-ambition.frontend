@@ -1,21 +1,17 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, catchError, throwError, of, Subject, switchMap } from 'rxjs';
+import { Observable, map, catchError, throwError, of, Subject, switchMap, BehaviorSubject } from 'rxjs';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 import { AccountsService } from './accounts.service';
 import { 
-  GetInitialMessageRequest,
-  PostLogHintRequest,
-  AnonymousWarningRequest,
-  LogChatMessageRequest,
   GetChatMessagesRequest,
   ClearChatMessagesRequest,
   BotMessageResponse,
-  LogChatMessageResponse,
   GetChatMessagesResponse,
   ClearChatMessagesResponse,
   RunChatRequest,
   GetDailyGoalRequest,
-  GetDailyGoalResponse
+  GetDailyGoalResponse,
+  FocusInChatRequest
 } from './nutrition-ambition-api.service';
 
 @Injectable({
@@ -24,6 +20,14 @@ import {
 export class ChatService {
   // Subject to emit when meals are logged
   mealLogged$ = new Subject<void>();
+  
+  // Add a new BehaviorSubject to manage the context note
+  private contextNoteSubject = new BehaviorSubject<string | null>(null);
+  public contextNote$ = this.contextNoteSubject.asObservable();
+  
+  // Add a subject to emit focus in chat responses
+  private focusInChatResponseSubject = new Subject<BotMessageResponse>();
+  public focusInChatResponse$ = this.focusInChatResponseSubject.asObservable();
   
   constructor(
     private apiService: NutritionAmbitionApiService,
@@ -34,43 +38,6 @@ export class ChatService {
     return "Hi there! I'm your nutrition assistant — here to help you track your meals, understand your nutrients, and stay on track with your goals. You can start right away by telling me what you ate today — no setup needed! We can also talk about your health goals whenever you're ready. 🍎🥦";
   }
 
-  getInitialMessage(): Observable<BotMessageResponse> {
-    console.log('[DEBUG] Getting initial message from API');
-    
-    // Check if we already have an account ID to avoid creating duplicates
-    const existingAccountId = this.accountsService.getAccountId();
-    if (existingAccountId) {
-      console.log('[DEBUG] Using existing account ID for initial message:', existingAccountId);
-    } else {
-      console.log('[DEBUG] No account ID found for initial message');
-    }
-    
-    const request = new GetInitialMessageRequest({
-      lastLoggedDate: undefined,
-      hasLoggedFirstMeal: false
-    });
-    
-    return this.apiService.getInitialMessage(request);
-  }
-
-  getAnonymousWarning(): Observable<BotMessageResponse> {
-    const request = new AnonymousWarningRequest({
-      lastLoggedDate: undefined,
-      hasLoggedFirstMeal: false
-    });
-    
-    return this.apiService.getAnonymousWarning(request);
-  }
-
-  getPostLogHint(hasLoggedFirstMeal: boolean): Observable<BotMessageResponse> {
-    const request = new PostLogHintRequest({
-      lastLoggedDate: new Date(),
-      hasLoggedFirstMeal
-    });
-    
-    return this.apiService.getPostLogHint(request);
-  }
-  
   // Check if the user has daily goals and prompt them if not
   checkAndPromptForDailyGoal(accountId: string, requireInteraction: boolean = true): Observable<BotMessageResponse> {
     console.log('[DEBUG] Checking if user has daily goals set');
@@ -105,8 +72,6 @@ export class ChatService {
           botResponse.message = "I noticed you haven't set up your nutrition goals yet. Setting personalized goals based on your age, sex, height, and weight can help you track your nutrition more effectively. Would you like to set them up now?";
           botResponse.accountId = accountId;
           
-          // Log this message to the chat history
-          this.logMessage(botResponse.message || "", "assistant").subscribe();
           
           return botResponse;
         } else {
@@ -139,7 +104,7 @@ export class ChatService {
     
     return of(response);
   }
-  
+
   // Send message to the assistant
   sendMessage(message: string): Observable<BotMessageResponse> {
     console.log('[DEBUG] Sending message to the assistant:', message.substring(0, 30) + '...');
@@ -157,42 +122,7 @@ export class ChatService {
     );
   }
   
-  // Original method - kept for backward compatibility
-  // This logs the message separately from the assistant call
-  // Consider deprecating this for the above method
-  logMessage(message: string, role: string = 'user', foodEntryId?: string): Observable<LogChatMessageResponse> {
-    console.log(`[DEBUG] Explicitly logging message to backend - role: ${role}, message: ${message.substring(0, 30)}...`);
-    const request = new LogChatMessageRequest({
-      content: message,
-      role,
-      foodEntryId
-    });
-    
-    return this.apiService.logChatMessage(request);
-  }
-
-  getMessageHistory(date: Date): Observable<GetChatMessagesResponse> {
-    const request = new GetChatMessagesRequest({
-      loggedDateUtc: date
-    });
-    return this.apiService.getChatMessages(request);
-  }
-
-  getMessageHistoryByDate(date: Date): Observable<GetChatMessagesResponse> {
-    console.log('[DEBUG] Getting message history for date:', date);
-    const request = new GetChatMessagesRequest({
-      loggedDateUtc: date
-    });
-    return this.apiService.getChatMessages(request);
-  }
-
-  clearMessageHistory(date?: Date): Observable<ClearChatMessagesResponse> {
-    const request = new ClearChatMessagesRequest({
-      loggedDateUtc: date
-    });
-    return this.apiService.clearChatMessages(request);
-  }
-
+  // Run assistant message
   runAssistantMessage(message: string): Observable<BotMessageResponse> {
     console.log('[DEBUG] Running assistant message:', message.substring(0, 30) + '...');
     const request = new RunChatRequest({
@@ -224,26 +154,82 @@ export class ChatService {
       })
     );
   }
+
+  getMessageHistoryByDate(date: Date): Observable<GetChatMessagesResponse> {
+    console.log('[DEBUG] Getting message history for date:', date);
+    const request = new GetChatMessagesRequest({
+      loggedDateUtc: date
+    });
+    return this.apiService.getChatMessages(request);
+  }
   
-  // Helper method to check if the response indicates a meal was logged
-  private containsMealConfirmation(message: string | undefined): boolean {
-    if (!message) return false;
+  getMessageHistory(date: Date): Observable<GetChatMessagesResponse> {
+    const request = new GetChatMessagesRequest({
+      loggedDateUtc: date
+    });
+    return this.apiService.getChatMessages(request);
+  }
+  
+  clearMessageHistory(date?: Date): Observable<ClearChatMessagesResponse> {
+    const request = new ClearChatMessagesRequest({
+      loggedDateUtc: date
+    });
+    return this.apiService.clearChatMessages(request);
+  }
+
+  // Focus on a specific topic in chat
+  focusInChat(topic: string, date: Date): Observable<BotMessageResponse> {
+    // Note: Context note is now set by the component before calling this method
     
-    // Look for common phrases in the bot response that indicate a meal was logged
-    const confirmationPhrases = [
-      "logged",
-      "added to your log",
-      "saved to your log",
-      "recorded",
-      "tracked",
-      "added the",
-      "I've added",
-      "I have added",
-      "has been added"
-    ];
+    // Create the request to the backend
+    const request = new FocusInChatRequest({
+      focusText: topic,
+      date: date
+    });
     
-    return confirmationPhrases.some(phrase => 
-      message.toLowerCase().includes(phrase.toLowerCase())
+    // Call the API and handle the response
+    return this.apiService.focusInChat(request).pipe(
+      map(response => {
+        // Note: Context note is now cleared by the component based on response
+        
+        // Emit a new message received event to indicate the response is complete
+        if (response.isSuccess && response.message) {
+          // Add the bot's response message to the chat UI
+          const botMessage: any = {
+            text: response.message,
+            isUser: false,
+            isTool: false,
+            timestamp: new Date()
+          };
+          
+          // Emit the response so the chat page can update
+          this.focusInChatResponseSubject.next(response);
+          
+          // Notify subscribers that a meal was logged if applicable
+          if (response.loggedMeal) {
+            this.mealLogged$.next();
+          }
+        }
+        
+        return response;
+      }),
+      catchError(error => {
+        // Note: Context note is now cleared by the component on error
+        console.error('Error in focus-in-chat:', error);
+        return of(new BotMessageResponse({
+          isSuccess: false,
+          message: "Sorry, I'm having trouble focusing on that topic right now. Please try again later."
+        }));
+      })
     );
+  }
+
+  // Add methods to manage context note
+  public setContextNote(note: string) {
+    this.contextNoteSubject.next(note);
+  }
+
+  public clearContextNote() {
+    this.contextNoteSubject.next(null);
   }
 } 

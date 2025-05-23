@@ -9,12 +9,11 @@ import {
   navigateOutline, 
   bookOutline,
   statsChartOutline,
-  pinOutline,
   notificationsOffOutline,
   flaskOutline
 } from 'ionicons/icons';
 
-export type ActionType = 'remove' | 'edit' | 'focusInChat' | 'editGoal' | 'learn' | 'trend' | 'pin' | 'ignore' | 'suggest';
+export type ActionType = 'remove' | 'edit' | 'focusInChat' | 'editGoal' | 'learn' | 'trend' | 'ignore' | 'suggest';
 
 export interface ActionEvent {
   action: ActionType;
@@ -46,7 +45,6 @@ export class EntryActionMenuComponent {
       navigateOutline,
       bookOutline,
       statsChartOutline,
-      pinOutline,
       notificationsOffOutline,
       flaskOutline
     });

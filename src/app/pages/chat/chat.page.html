@@ -10,32 +10,39 @@
   (logout)="onLogout()">
 </app-header>
 
-<ion-content #chatContent class="ion-padding">
-  <div *ngIf="isLoadingHistory" class="loading-container">
-    <ion-spinner name="circular"></ion-spinner>
-  </div>
+<ion-content [scrollEvents]="true" (ionScroll)="onScroll($event)" #content>
+  <div class="ion-padding">
+    <div *ngIf="isLoadingHistory" class="loading-container">
+      <ion-spinner name="circular"></ion-spinner>
+    </div>
 
-  <div *ngIf="error" class="error-message">
-    {{ error }}
-  </div>
-  
-  <div class="chat-container" *ngIf="!isLoadingHistory && !error">
-    <!-- Messages with markdown support -->
-    <div class="messages">
-      <app-chat-message 
-        *ngFor="let message of messages" 
-        [text]="message.text"
-        [isUser]="message.isUser"
-        [isTool]="message.isTool || false"
-        [timestamp]="message.timestamp">
-      </app-chat-message>
-      
-      <!-- Typing indicator positioned where next message will appear -->
-      <div *ngIf="isLoading" class="typing-indicator bot-message-container">
-        <div class="typing-indicator-dots">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+    </div>
+    
+    <div *ngIf="!isLoadingHistory && !error">
+      <!-- Messages container -->
+      <div class="chat-container">
+        <app-chat-message 
+          *ngFor="let message of messages" 
+          [text]="message.text"
+          [isUser]="message.isUser"
+          [isTool]="message.isTool || false"
+          [timestamp]="message.timestamp">
+        </app-chat-message>
+        
+        <!-- Context note displayed in the message flow -->
+        <div *ngIf="contextNote" class="context-note-inline">
+          {{ contextNote }}
+        </div>
+        
+        <!-- Typing indicator positioned where next message will appear -->
+        <div *ngIf="isLoading" class="typing-indicator bot-message-container">
+          <div class="typing-indicator-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
         </div>
       </div>
     </div>
