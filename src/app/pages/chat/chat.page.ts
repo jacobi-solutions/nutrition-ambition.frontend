@@ -90,9 +90,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       if (note) {
         this.isLoading = true;
         // Make sure we scroll to see the context note and typing indicator
-        setTimeout(() => {
-          this.scrollToBottom();
-        }, 100);
+        this.scrollToBottom();
       } else {
         // If context note is cleared without a response appearing, stop the loading indicator
         // This happens in error cases where the API call failed
@@ -121,9 +119,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         this.chatService.clearContextNote();
         
         // Scroll to the new message
-        setTimeout(() => {
-          this.scrollToBottom();
-        }, 100);
+        this.scrollToBottom();
       }
     });
     
@@ -200,9 +196,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     }
     
     // Initial scroll to bottom
-    setTimeout(() => {
-      this.scrollToBottom();
-    }, 500);
+    this.scrollToBottom();
   }
   
   // This will be called when the component has been fully activated
@@ -276,9 +270,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       });
       
       // Need to wait for the next render cycle before scrolling
-      setTimeout(() => {
-        this.scrollToBottom();
-      }, 100);
+      this.scrollToBottom();
       
       this.hasInitialMessage = true;
       return;
@@ -312,10 +304,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           }
           
           // Make sure to scroll to bottom after everything is loaded and rendered
-          console.log('[DEBUG] Messages loaded, scrolling to bottom after a delay');
-          setTimeout(() => {
-            this.scrollToBottom();
-          }, 300);
+          console.log('[DEBUG] Messages loaded, scrolling to appropriate position');
+          this.scrollToBottom();
         })
       )
       .subscribe({
@@ -373,9 +363,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             console.log('[DEBUG] Displayed message roles:', this.messages.map(m => m.isUser ? 'User' : (m.isContextNote ? 'ContextNote' : 'Assistant')));
             
             // Scroll at the end of the next event cycle
-            setTimeout(() => {
-              this.scrollToBottom();
-            }, 200);
+            this.scrollToBottom();
           }
           // Don't start a conversation automatically - we'll show static message instead
         }
@@ -397,9 +385,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.hasInitialMessage = true;
     
     // Ensure we scroll to the welcome message
-    setTimeout(() => {
-      this.scrollToBottom();
-    }, 100);
+    this.scrollToBottom();
   }
 
   sendMessage() {
@@ -421,10 +407,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.userMessage = '';
     this.isLoading = true;
     
-    // Force scroll to bottom immediately for user's message
-    setTimeout(() => {
-      this.scrollToBottom();
-    }, 100);
+    // Scroll for user's message
+    this.scrollToBottom();
     
     // Use the sendMessage method - for new users this will create an account and start conversation
     console.log('[DEBUG] Sending message to backend:', sentMessage);
@@ -443,10 +427,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           
           this.messages.push(botMessage);
           
-          // Force scroll to bottom for bot's message response
-          setTimeout(() => {
-            this.scrollToBottom();
-          }, 100);
+          // Scroll for bot's message response
+          this.scrollToBottom();
           
           // If this is the first message from a completely new user, the backend may have
           // created a new anonymous account - check if we got an accountId back
@@ -481,10 +463,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         });
         console.error('Error sending message to assistant:', error);
         
-        // Force scroll to bottom for error message
-        setTimeout(() => {
-          this.scrollToBottom();
-        }, 100);
+        // Scroll for error message
+        this.scrollToBottom();
       }
     });
   }
@@ -496,77 +476,51 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private scrollToBottom() {
-    console.log('[DEBUG] Attempting to scroll to bottom');
-    // Use a longer timeout to ensure DOM updates are processed, especially for long messages
-    setTimeout(() => {
-      if (this.content) {
-        console.log('[DEBUG] Using IonContent to scroll');
-        
-        // Try to implement smart scrolling for long messages
-        this.smartScroll();
-      } else {
+    console.log('[DEBUG] Scrolling to appropriate position');
+    
+    // Single timeout to allow DOM rendering, then handle scrolling
+    setTimeout(async () => {
+      if (!this.content) {
         console.warn('[WARN] No IonContent available for scrolling');
-      }
-    }, 200);
-  }
-
-  private async smartScroll() {
-    try {
-      // Wait a bit longer to ensure DOM is fully rendered
-      await new Promise(resolve => setTimeout(resolve, 150));
-      
-      // Get the content element
-      const contentElement = await this.content.getScrollElement();
-      const viewportHeight = contentElement.clientHeight;
-      
-      // Find the last message element - include both chat messages and typing indicator
-      const messageElements = contentElement.querySelectorAll('app-chat-message, .context-note-inline, .typing-indicator');
-      
-      if (messageElements.length === 0) {
-        // No messages, just scroll to bottom
-        this.content.scrollToBottom(0);
         return;
       }
-      
-      const lastMessageElement = messageElements[messageElements.length - 1] as HTMLElement;
-      
-      // Wait for the element to be fully rendered (especially important for markdown content)
-      let attempts = 0;
-      let messageHeight = lastMessageElement.offsetHeight;
-      
-      // Sometimes the initial height measurement is wrong, especially for markdown content
-      // Try a few times with small delays to get the accurate height
-      while (messageHeight <= 0 && attempts < 5) {
-        await new Promise(resolve => setTimeout(resolve, 50));
-        messageHeight = lastMessageElement.offsetHeight;
-        attempts++;
-      }
-      
-      console.log('[DEBUG] Viewport height:', viewportHeight, 'Last message height:', messageHeight, 'After attempts:', attempts);
-      
-      // Use a much lower threshold - if message is longer than 40% of viewport, use smart positioning
-      if (messageHeight > viewportHeight * 0.4) {
-        console.log('[DEBUG] Long message detected, using smart scroll');
+
+      try {
+        // Get viewport and last message dimensions
+        const contentElement = await this.content.getScrollElement();
+        const viewportHeight = contentElement.clientHeight;
         
-        // Position the message so its top is near the top of the screen
-        // Use a very small margin (5% of viewport height) from the top
-        const marginFromTop = viewportHeight * 0.05;
-        const messageOffsetTop = lastMessageElement.offsetTop;
-        const scrollPosition = Math.max(0, messageOffsetTop - marginFromTop);
+        // Find the last message element
+        const messageElements = contentElement.querySelectorAll('app-chat-message, .context-note-inline, .typing-indicator');
         
-        console.log('[DEBUG] Message offset top:', messageOffsetTop, 'Scroll position:', scrollPosition);
+        if (messageElements.length === 0) {
+          this.content.scrollToBottom(300);
+          return;
+        }
         
-        // Scroll to position the top of the message near the top of the screen
-        await this.content.scrollToPoint(0, scrollPosition, 300);
-      } else {
-        console.log('[DEBUG] Short message, using normal scroll to bottom');
-        // Message fits on screen, use normal scroll to bottom
+        const lastMessageElement = messageElements[messageElements.length - 1] as HTMLElement;
+        const messageHeight = lastMessageElement.offsetHeight;
+        
+        console.log('[DEBUG] Viewport:', viewportHeight, 'Message height:', messageHeight);
+        
+        // If message is taller than 40% of viewport, position it near the top
+        if (messageHeight > viewportHeight * 0.4) {
+          console.log('[DEBUG] Long message - positioning at top');
+          
+          const marginFromTop = viewportHeight * 0.05; // 5% margin from top
+          const messageOffsetTop = lastMessageElement.offsetTop;
+          const scrollPosition = Math.max(0, messageOffsetTop - marginFromTop);
+          
+          await this.content.scrollToPoint(0, scrollPosition, 300);
+        } else {
+          console.log('[DEBUG] Short message - scrolling to bottom');
+          this.content.scrollToBottom(300);
+        }
+        
+      } catch (error) {
+        console.warn('[WARN] Smart scroll failed, using fallback:', error);
         this.content.scrollToBottom(300);
       }
-    } catch (error) {
-      console.warn('[WARN] Smart scroll failed, falling back to normal scroll:', error);
-      // Fallback to normal scroll if anything goes wrong
-      this.content.scrollToBottom(0);
-    }
+    }, 250); // Single 250ms delay for DOM rendering
   }
 } 

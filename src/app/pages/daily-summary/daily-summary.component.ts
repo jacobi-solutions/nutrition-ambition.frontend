@@ -295,6 +295,11 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     // Close the popover explicitly
     this.isPopoverOpen = false;
     
+    // Explicitly dismiss the popover to ensure it's closed before navigation
+    if (this.popover) {
+      this.popover.dismiss();
+    }
+    
     // Navigate to the chat page immediately so users can see the context note
     this.router.navigate(['/app/chat']);
     
@@ -345,6 +350,11 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     
     // Close the popover explicitly
     this.isPopoverOpen = false;
+    
+    // Explicitly dismiss the popover to ensure it's closed before navigation
+    if (this.popover) {
+      this.popover.dismiss();
+    }
     
     // Navigate to the chat page immediately so users can see the context note
     this.router.navigate(['/app/chat']);
