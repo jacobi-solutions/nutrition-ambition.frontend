@@ -12,6 +12,7 @@ import {
   notificationsOffOutline,
   flaskOutline
 } from 'ionicons/icons';
+import { ToastService } from '../../services/toast.service';
 
 export type ActionType = 'remove' | 'edit' | 'focusInChat' | 'editGoal' | 'learn' | 'trend' | 'ignore' | 'suggest';
 
@@ -37,7 +38,7 @@ export class EntryActionMenuComponent {
   @Input() entry: any;
   @Output() actionSelected = new EventEmitter<ActionEvent>();
   
-  constructor() {
+  constructor(private toastService: ToastService) {
     addIcons({
       trashOutline,
       createOutline,
@@ -67,6 +68,21 @@ export class EntryActionMenuComponent {
   
   handleAction(action: ActionType) {
     console.log(`Action selected: ${action} for entry:`, this.entry);
-    this.actionSelected.emit({ action, entry: this.entry });
+    
+    // Check if the action is implemented
+    const implementedActions: ActionType[] = ['remove', 'focusInChat', 'learn'];
+    
+    if (implementedActions.includes(action)) {
+      // Emit the event for implemented actions
+      this.actionSelected.emit({ action, entry: this.entry });
+    } else {
+      // Show toast for unimplemented actions
+      this.toastService.showToast({
+        message: 'Feature not implemented yet. Check back soon!',
+        duration: 3000,
+        color: 'warning',
+        position: 'bottom'
+      });
+    }
   }
 } 
