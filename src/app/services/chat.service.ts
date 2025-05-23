@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, catchError, throwError, of, Subject, switchMap, BehaviorSubject } from 'rxjs';
+import { Observable, map, catchError, throwError, of, Subject, switchMap, BehaviorSubject, finalize } from 'rxjs';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 import { AccountsService } from './accounts.service';
 import { 
@@ -11,7 +11,8 @@ import {
   RunChatRequest,
   GetDailyGoalRequest,
   GetDailyGoalResponse,
-  FocusInChatRequest
+  FocusInChatRequest,
+  LearnMoreAboutRequest
 } from './nutrition-ambition-api.service';
 
 @Injectable({
@@ -221,6 +222,43 @@ export class ChatService {
           message: "Sorry, I'm having trouble focusing on that topic right now. Please try again later."
         }));
       })
+    );
+  }
+  
+  // Learn more about a specific topic
+  learnMoreAbout(topic: string, date: Date): Observable<BotMessageResponse> {
+    this.setContextNote(`Learning more about: ${topic}`);
+    
+    // Create the request to the backend
+    const request = new LearnMoreAboutRequest({
+      topic,
+      date
+    });
+    
+    // Call the API and handle the response
+    return this.apiService.learnMoreAbout(request).pipe(
+      map(response => {
+        // Emit a new message received event to indicate the response is complete
+        if (response.isSuccess && response.message) {
+          // Emit the response so the chat page can update
+          this.focusInChatResponseSubject.next(response);
+          
+          // Notify subscribers that a meal was logged if applicable
+          if (response.loggedMeal) {
+            this.mealLogged$.next();
+          }
+        }
+        
+        return response;
+      }),
+      catchError(error => {
+        console.error('Error in learn-more-about:', error);
+        return of(new BotMessageResponse({
+          isSuccess: false,
+          message: "Sorry, I'm having trouble providing more information about that topic right now. Please try again later."
+        }));
+      }),
+      finalize(() => this.clearContextNote())
     );
   }
 

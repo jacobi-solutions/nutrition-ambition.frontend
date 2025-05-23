@@ -12,7 +12,8 @@ import { ChatService } from '../../services/chat.service';
 import { DateService } from '../../services/date.service';
 import { 
   BotMessageResponse,
-  GetChatMessagesResponse
+  GetChatMessagesResponse,
+  ChatMessage
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -21,7 +22,7 @@ import { ChatMessageComponent } from 'src/app/components/chat-message/chat-messa
 interface DisplayMessage {
   text: string;
   isUser: boolean;
-  isTool?: boolean;  // Add property to identify tool messages
+  isContextNote?: boolean; // Property to identify context note messages
   timestamp: Date;
 }
 
@@ -110,7 +111,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         this.messages.push({
           text: response.message,
           isUser: false,
-          isTool: false,
           timestamp: new Date()
         });
         
@@ -163,7 +163,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           this.messages.push({
             text: response.message,
             isUser: false,
-            isTool: false,
             timestamp: new Date()
           });
           
@@ -273,7 +272,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       this.messages.push({ 
         text: welcomeMessage, 
         isUser: false, 
-        isTool: false,
         timestamp: new Date() 
       });
       
@@ -325,12 +323,43 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           if (response && response.isSuccess && response.messages && response.messages.length > 0) {
             // Convert API messages to display messages
             console.log('[DEBUG] Received chat history, message count:', response.messages.length);
-            this.messages = response.messages.map(msg => ({
+            
+            // Process messages and filter to only show allowed roles
+            const contextNoteMsgs: ChatMessage[] = [];
+            const regularMsgs: ChatMessage[] = [];
+            
+            // Separate messages by role - only include User (0), Assistant (1), and ContextNote (4)
+            response.messages.forEach(msg => {
+              if (msg.role === 4 /* MessageRoleTypes.ContextNote */) {
+                contextNoteMsgs.push(msg);
+              } else if (msg.role === 0 /* MessageRoleTypes.User */ || msg.role === 1 /* MessageRoleTypes.Assistant */) {
+                regularMsgs.push(msg);
+              }
+              // Skip Tool (2) and System (3) messages - they should not be displayed in chat
+            });
+            
+            // Convert regular messages (User and Assistant only) to display messages
+            this.messages = regularMsgs.map(msg => ({
               text: msg.content || '',
               isUser: msg.role === 0 /* MessageRoleTypes.User */,
-              isTool: msg.role === 2 /* MessageRoleTypes.Tool */,
               timestamp: msg.loggedDateUtc || new Date()
             }));
+            
+            // Insert context notes as display messages
+            if (contextNoteMsgs.length > 0) {
+              contextNoteMsgs.forEach(note => {
+                // Add context notes to the messages array
+                this.messages.push({
+                  text: note.content || '',
+                  isUser: false,
+                  isContextNote: true,
+                  timestamp: note.loggedDateUtc || new Date()
+                });
+              });
+              
+              // Sort all messages by timestamp to ensure correct order
+              this.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+            }
             
             // Check if any messages already contain a goal prompt
             this.hasPromptedForGoal = this.messages.some(msg => 
@@ -341,7 +370,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             
             this.hasInitialMessage = true;
             
-            console.log('[DEBUG] All roles returned from API:', response.messages.map(m => m.role));
+            console.log('[DEBUG] Displayed message roles:', this.messages.map(m => m.isUser ? 'User' : (m.isContextNote ? 'ContextNote' : 'Assistant')));
             
             // Scroll at the end of the next event cycle
             setTimeout(() => {
@@ -362,7 +391,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.messages.push({
       text: staticMessage,
       isUser: false,
-      isTool: false,
       timestamp: new Date()
     });
     
@@ -386,7 +414,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.messages.push({
       text: sentMessage,
       isUser: true,
-      isTool: false,
       timestamp: messageDate
     });
     
@@ -411,7 +438,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           const botMessage = {
             text: response.message,
             isUser: false,
-            isTool: false,
             timestamp: new Date()
           };
           
@@ -451,7 +477,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         this.messages.push({
           text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
           isUser: false,
-          isTool: false,
           timestamp: new Date()
         });
         console.error('Error sending message to assistant:', error);
@@ -472,15 +497,76 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
 
   private scrollToBottom() {
     console.log('[DEBUG] Attempting to scroll to bottom');
-    // Use a short timeout to ensure DOM updates are processed
+    // Use a longer timeout to ensure DOM updates are processed, especially for long messages
     setTimeout(() => {
       if (this.content) {
-        console.log('[DEBUG] Using IonContent to scroll to bottom');
-        // Use Ionic's native scrollToBottom method - this is the most reliable for Ionic
-        this.content.scrollToBottom(0);
+        console.log('[DEBUG] Using IonContent to scroll');
+        
+        // Try to implement smart scrolling for long messages
+        this.smartScroll();
       } else {
         console.warn('[WARN] No IonContent available for scrolling');
       }
-    }, 100);
+    }, 200);
+  }
+
+  private async smartScroll() {
+    try {
+      // Wait a bit longer to ensure DOM is fully rendered
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      // Get the content element
+      const contentElement = await this.content.getScrollElement();
+      const viewportHeight = contentElement.clientHeight;
+      
+      // Find the last message element - include both chat messages and typing indicator
+      const messageElements = contentElement.querySelectorAll('app-chat-message, .context-note-inline, .typing-indicator');
+      
+      if (messageElements.length === 0) {
+        // No messages, just scroll to bottom
+        this.content.scrollToBottom(0);
+        return;
+      }
+      
+      const lastMessageElement = messageElements[messageElements.length - 1] as HTMLElement;
+      
+      // Wait for the element to be fully rendered (especially important for markdown content)
+      let attempts = 0;
+      let messageHeight = lastMessageElement.offsetHeight;
+      
+      // Sometimes the initial height measurement is wrong, especially for markdown content
+      // Try a few times with small delays to get the accurate height
+      while (messageHeight <= 0 && attempts < 5) {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        messageHeight = lastMessageElement.offsetHeight;
+        attempts++;
+      }
+      
+      console.log('[DEBUG] Viewport height:', viewportHeight, 'Last message height:', messageHeight, 'After attempts:', attempts);
+      
+      // Use a much lower threshold - if message is longer than 40% of viewport, use smart positioning
+      if (messageHeight > viewportHeight * 0.4) {
+        console.log('[DEBUG] Long message detected, using smart scroll');
+        
+        // Position the message so its top is near the top of the screen
+        // Use a very small margin (5% of viewport height) from the top
+        const marginFromTop = viewportHeight * 0.05;
+        const messageOffsetTop = lastMessageElement.offsetTop;
+        const scrollPosition = Math.max(0, messageOffsetTop - marginFromTop);
+        
+        console.log('[DEBUG] Message offset top:', messageOffsetTop, 'Scroll position:', scrollPosition);
+        
+        // Scroll to position the top of the message near the top of the screen
+        await this.content.scrollToPoint(0, scrollPosition, 300);
+      } else {
+        console.log('[DEBUG] Short message, using normal scroll to bottom');
+        // Message fits on screen, use normal scroll to bottom
+        this.content.scrollToBottom(300);
+      }
+    } catch (error) {
+      console.warn('[WARN] Smart scroll failed, falling back to normal scroll:', error);
+      // Fallback to normal scroll if anything goes wrong
+      this.content.scrollToBottom(0);
+    }
   }
 } 

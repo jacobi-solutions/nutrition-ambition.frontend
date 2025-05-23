@@ -336,9 +336,34 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     // Actual implementation would be added here
   }
   
-  private handleLearnAbout(entry: any) {
-    console.log('Would show learning information about:', entry);
-    // Actual implementation would be added here
+  private handleLearnAbout(entry: FoodBreakdown | NutrientBreakdown) {
+    const topic = entry.name || '';
+    console.log('Learning more about:', topic);
+    
+    // Get the current date from the dateService
+    const loggedDate = new Date(this.selectedDate);
+    
+    // Close the popover explicitly
+    this.isPopoverOpen = false;
+    
+    // Navigate to the chat page immediately so users can see the context note
+    this.router.navigate(['/app/chat']);
+    
+    // Use the chatService to learn more about the topic
+    this.chatService.learnMoreAbout(topic, loggedDate)
+      .subscribe({
+        next: (response) => {
+          if (!response.isSuccess) {
+            // Show error toast only if the operation fails
+            this.presentToast('Unable to learn more about this topic. Please try again.');
+          }
+          // Note: Context note will be automatically cleared by the finalize operator in the service
+        },
+        error: (error) => {
+          console.error('Error learning more about topic:', error);
+          this.presentToast('Unable to learn more about this topic. Please try again.');
+        }
+      });
   }
   
   private handleShowTrend(entry: any) {
