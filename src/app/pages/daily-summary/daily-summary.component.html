@@ -11,6 +11,11 @@
 </app-header>
 
 <ion-content class="ion-padding">
+  <!-- Refresh functionality -->
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <div *ngIf="detailedLoading" class="loading-container">
     <ion-spinner name="circular"></ion-spinner>
   </div>

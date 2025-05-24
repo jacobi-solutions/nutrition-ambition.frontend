@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText } from '@ionic/angular/standalone';
+import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { ChatFabComponent } from '../../components/chat-fab';
 import { addIcons } from 'ionicons';
@@ -41,6 +41,8 @@ interface DisplayMessage {
     IonButton,
     IonIcon,
     IonSpinner,
+    IonRefresher,
+    IonRefresherContent,
     AppHeaderComponent,
     ChatMessageComponent,
     ChatFabComponent
@@ -237,9 +239,25 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   // Handle logout
   onLogout() {
     this.authService.signOutUser().then(() => {
-      // Optional: navigate somewhere or reload
-      window.location.reload();
+      this.router.navigate(['/auth']);
     });
+  }
+
+  // Handle refresh from header pull-down
+  onRefresh() {
+    console.log('[Chat] Refresh triggered, reloading chat history');
+    this.loadChatHistory(new Date(this.selectedDate));
+  }
+
+  // Handle refresh from ion-refresher
+  handleRefresh(event: CustomEvent) {
+    console.log('[Chat] Pull-to-refresh triggered, reloading chat history');
+    this.loadChatHistory(new Date(this.selectedDate));
+    
+    // Complete the refresh after a short delay
+    setTimeout(() => {
+      (event.target as any)?.complete();
+    }, 1000);
   }
 
   loadChatHistory(date: Date) {

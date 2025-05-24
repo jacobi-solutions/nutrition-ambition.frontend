@@ -21,7 +21,9 @@ import {
   IonAccordionGroup,
   IonNote,
   IonButton,
-  IonPopover
+  IonPopover,
+  IonRefresher,
+  IonRefresherContent
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -78,6 +80,8 @@ import { FoodLogService } from 'src/app/services/food-log.service';
     IonIcon,
     IonButton,
     IonPopover,
+    IonRefresher,
+    IonRefresherContent,
     AppHeaderComponent,
     EntryActionMenuComponent
   ]
@@ -419,9 +423,25 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
   // Handle logout
   onLogout() {
     this.authService.signOutUser().then(() => {
-      // Optional: navigate somewhere or reload
-      window.location.reload();
+      this.router.navigate(['/auth']);
     });
+  }
+
+  // Handle refresh from header pull-down
+  onRefresh() {
+    console.log('[DailySummary] Refresh triggered, reloading data');
+    this.loadDetailedSummary(new Date(this.selectedDate));
+  }
+  
+  // Handle refresh from ion-refresher
+  handleRefresh(event: CustomEvent) {
+    console.log('[DailySummary] Pull-to-refresh triggered, reloading data');
+    this.loadDetailedSummary(new Date(this.selectedDate));
+    
+    // Complete the refresh after a short delay
+    setTimeout(() => {
+      (event.target as any)?.complete();
+    }, 1000);
   }
 
   // Handle segment change
