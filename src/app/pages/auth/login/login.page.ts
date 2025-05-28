@@ -34,5 +34,7 @@ export class LoginPage {
     }
   }
 
- 
+  navigateToChat() {
+    this.router.navigate(['/app/chat']);
+  }
 }
