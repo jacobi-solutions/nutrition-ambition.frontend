@@ -25,6 +25,125 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
+/* Local Fonts */
+@font-face {
+  font-family: 'Neue Power';
+  src: url('https://storage.googleapis.com/nutritionambition.app/fonts/NeuePower/NeuePower-Ultra.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  src: url('https://storage.googleapis.com/nutritionambition.app/fonts/Poppins/Poppins-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  src: url('https://storage.googleapis.com/nutritionambition.app/fonts/Poppins/Poppins-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal; 
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  src: url('https://storage.googleapis.com/nutritionambition.app/fonts/Poppins/Poppins-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  src: url('https://storage.googleapis.com/nutritionambition.app/fonts/Poppins/Poppins-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Apply Neue Power to titles and headers */
+ion-title,
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Neue Power', sans-serif;
+}
+
+:root {
+  --font-primary: 'Poppins', sans-serif;
+  --font-secondary: 'Neue Power', sans-serif;
+
+  --color-tomato: #D64933;
+  --color-olive: #4E6E5D;
+  --color-charcoal: #2E2E2E;
+
+  --color-salmon: #FF8A5C;
+  --color-sage: #A9C8B2;
+  --color-smoke: #A3A3A3;
+  --color-bone: #F5F3EF;
+
+  --text-color: var(--color-charcoal);
+  --background-color: var(--color-bone);
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+/* ========== Design System Styling Classes ========== */
+
+/* Background & Container Styling */
+.card-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Section Headers (Macronutrients, Micronutrients) */
+.section-header {
+  font-family: var(--font-secondary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-olive);
+  margin-bottom: 1rem;
+}
+
+/* Nutrient Category Labels */
+.nutrient-label {
+  font-weight: 500;
+  color: var(--color-charcoal);
+}
+
+/* Nutrient Values */
+.nutrient-value {
+  color: var(--color-smoke);
+  font-weight: 400;
+}
+
+/* Interactive Dots/Menu Actions */
+.icon-action {
+  color: var(--color-tomato);
+}
+
+/* Tab & Date UI */
+.tab-selected {
+  background-color: var(--color-salmon);
+  color: white;
+  font-weight: 600;
+}
+
+.tab-unselected {
+  background-color: transparent;
+  color: var(--color-charcoal);
+}
+
 /**
  * Ionic Dark Mode
  * -----------------------------------------------------
@@ -34,4 +153,160 @@
 
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+//  @import '@ionic/angular/css/palettes/dark.system.css';
+
+/* Add global styles for nutrient alert */
+.nutrient-alert {
+  .alert-wrapper {
+    max-width: 90%;
+    width: 350px !important;
+  }
+  
+  .alert-message {
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .nutrient-breakdown {
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--ion-color-light-shade);
+      
+      &:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+      }
+      
+      .item-name {
+        flex: 1;
+        margin-right: 8px;
+      }
+      
+      .item-amount {
+        font-weight: 500;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+/* ========== FAB Override Styles ========== */
+// Force FAB visibility in all contexts
+ion-fab {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+  z-index: 9999 !important;
+}
+
+ion-fab-button {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+ion-fab-list {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+// Ensure FAB buttons are properly positioned
+ion-fab[vertical="bottom"] {
+  bottom: 70px !important;
+}
+
+ion-fab[horizontal="end"] {
+  right: 16px !important;
+}
+
+// Ensure FAB list items show properly
+ion-fab-list[side="top"] {
+  flex-direction: column !important;
+  align-items: center !important;
+  top: auto !important;
+  bottom: 100% !important;
+}
+
+/* ========== Auth Page Utility Classes ========== */
+/* Form input enhancements for auth pages */
+.auth-input {
+  ion-item {
+    --background: transparent;
+    --border-color: var(--color-smoke);
+    --border-width: 0 0 1px 0;
+    --inner-padding: 0;
+    --min-height: 48px;
+    
+    ion-label {
+      font-family: var(--font-primary);
+      color: var(--color-smoke);
+      font-size: 0.875rem;
+    }
+    
+    ion-input {
+      font-family: var(--font-primary);
+      color: var(--color-charcoal);
+      font-size: 1rem;
+    }
+  }
+}
+
+/* Auth button styling */
+.auth-button {
+  height: 48px;
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: 1rem;
+  --border-radius: 8px;
+  
+  &.primary {
+    --background: var(--ion-color-primary);
+    --color: white;
+  }
+  
+  &.secondary {
+    --background: transparent;
+    --color: var(--color-charcoal);
+    --border: 1px solid var(--color-smoke);
+  }
+}
+
+/* Auth link styling */
+.auth-link {
+  font-family: var(--font-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  
+  &.primary {
+    color: var(--ion-color-primary);
+  }
+  
+  &.muted {
+    color: var(--color-smoke);
+    font-size: 0.875rem;
+  }
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Force hide loading indicator after 10 seconds */
+.loading-indicator {
+  animation: fadeOutAfterDelay 10s forwards;
+}
+
+@keyframes fadeOutAfterDelay {
+  0%, 90% {
+    opacity: 1;
+    display: flex;
+  }
+  100% {
+    opacity: 0;
+    display: none;
+  }
+}

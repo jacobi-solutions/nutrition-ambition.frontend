@@ -15,10 +15,8 @@ import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, I
     RouterModule,
 
       // Required standalone components
-      IonTitle, IonContent,
-      IonGrid, IonRow, IonCol,
-      IonItem, IonLabel, IonInput, IonButton,
-      IonCard, IonCardHeader, IonCardTitle, IonCardContent
+      IonContent,
+      IonItem, IonLabel, IonInput, IonButton
   ],
 })
 export class LoginPage {
@@ -30,7 +28,7 @@ export class LoginPage {
   async onLogin() {
     try {
       await this.authService.signInWithEmail(this.email, this.password);
-      this.router.navigate(['/home']);
+      this.router.navigate(['/app/chat']);
     } catch (error) {
       console.error('Login failed:', error);
     }

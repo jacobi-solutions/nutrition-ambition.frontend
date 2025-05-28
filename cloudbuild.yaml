@@ -11,13 +11,13 @@ steps:
         npm ci
         npm install -g @angular/cli
 
-  # 2️⃣ Build Angular app
+  # 2️⃣ Build Angular app with production fixes
   - name: 'node:20'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        npm run build -- --configuration=production
+        npm run build:prod
 
   # 3️⃣ Deploy to Firebase Hosting (install firebase-tools here)
   - name: 'node:20'

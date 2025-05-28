@@ -1,38 +1,49 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, effect } from '@angular/core';
 import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged } from '@angular/fire/auth';
-import { Observable, from } from 'rxjs';
-import { AccountRequest, DigamStarterAppApiService, Response } from './nutrition-ambition-api.service';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { AccountRequest, NutritionAmbitionApiService, Response } from './nutrition-ambition-api.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  user$: Observable<any>;
-  private authInstance: Auth;
+  private authInstance = inject(Auth);
+  private _apiService = inject(NutritionAmbitionApiService);
 
-  constructor(private _apiService: DigamStarterAppApiService) {
-    this.authInstance = inject(Auth); // ✅ Ensure Auth is initialized
-    this.user$ = new Observable(observer => {
-      onAuthStateChanged(this.authInstance, user => {
-        observer.next(user);
-        observer.complete();
-      });
+  private _userEmailSubject = new BehaviorSubject<string | null>(null);
+  userEmail$: Observable<string | null> = this._userEmailSubject.asObservable();
+
+  private _authReadySubject = new BehaviorSubject<boolean>(false);
+  authReady$ = this._authReadySubject.asObservable();
+
+  constructor() {
+    this.authInstance = inject(Auth);
+
+    onAuthStateChanged(this.authInstance, user => {
+      if (user) {
+        this._userEmailSubject.next(user.email ?? null);
+      } else {
+        this._userEmailSubject.next(null);
+      }
+      this._authReadySubject.next(true); // ✅ auth system has initialized
     });
   }
 
-  async registerWithEmail(email: string, password: string): Promise<void> {
-    if (!this.authInstance) throw new Error("Firebase Auth not initialized"); // ✅ Ensure Auth is ready
+  isAuthenticated(): boolean {
+    return !!this.authInstance.currentUser;
+  }
 
+  async registerWithEmail(email: string, password: string): Promise<void> {
     const userCredential = await createUserWithEmailAndPassword(this.authInstance, email, password);
     const token = await userCredential.user.getIdToken();
 
     const request = new AccountRequest({
       username: email,
-      email: email
+      email: email,
     });
 
     return new Promise<void>((resolve, reject) => {
-      this._apiService.register(request).subscribe((response: Response) => {
+      this._apiService.registerUser(request).subscribe((response: Response) => {
         if (response.isSuccess) {
           resolve();
         } else {
@@ -43,16 +54,11 @@ export class AuthService {
   }
 
   async getIdToken(): Promise<string | null> {
-    // return this._zone.runOutsideAngular(async () => {
-      const user = await this.authInstance.currentUser;
-      return user ? await getIdToken(user) : null;
-    // });
+    const user = this.authInstance.currentUser;
+    return user ? await getIdToken(user) : null;
   }
 
-  // Sign in with Google
   async signInWithGoogle(): Promise<void> {
-    if (!this.authInstance) throw new Error("Firebase Auth not initialized"); // ✅ Ensure Auth is ready
-
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(this.authInstance, provider);
@@ -62,10 +68,7 @@ export class AuthService {
     }
   }
 
-  // Sign in with Email and Password
   async signInWithEmail(email: string, password: string): Promise<void> {
-    if (!this.authInstance) throw new Error("Firebase Auth not initialized"); // ✅ Ensure Auth is ready
-
     try {
       await signInWithEmailAndPassword(this.authInstance, email, password);
       console.log('Email sign-in successful');
@@ -74,13 +77,10 @@ export class AuthService {
     }
   }
 
-  // Sign out
   async signOutUser(): Promise<void> {
-    if (!this.authInstance) throw new Error("Firebase Auth not initialized"); // ✅ Ensure Auth is ready
-
     try {
       await signOut(this.authInstance);
-      console.log('User signed out successfully.');
+      console.log('User signed out successfully');
     } catch (error) {
       console.error('Sign out failed:', error);
     }

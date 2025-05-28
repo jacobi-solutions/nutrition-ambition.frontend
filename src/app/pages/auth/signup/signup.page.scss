@@ -1,0 +1,194 @@
+@use '../auth-shared.scss';
+
+// Signup wrapper - background container
+.signup-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 1.25rem;
+  background-image: url('https://storage.googleapis.com/nutritionambition.app/images/AdobeStock_320314361.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.33) 0%, rgba(0, 0, 0, 0.33) 100%), #4E6E5D;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+// Logo container for vertical centering
+.logo-container {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 2rem;
+  padding-bottom: 1rem;
+}
+
+// Signup logo styling
+.signup-logo {
+  width: 18rem;
+  height: 13.5rem;
+  display: block;
+}
+
+// White form card
+.signup-card {
+  width: 100%;
+  max-width: 26.25rem;
+  padding: 2rem;
+  background-color: var(--color-bone);
+  margin: 0 auto;
+  border-radius: 0.875rem;
+  border: 1px solid #FFF;
+  box-shadow: 0px 1px 24px 4px rgba(0, 0, 0, 0.10);
+}
+
+// Form title styling
+.form-title {
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--color-charcoal);
+  margin-bottom: 1.75rem;
+  margin-top: 0;
+  text-align: left;
+}
+
+// Form group styling
+.form-group {
+  margin-bottom: 1.25rem;
+  
+  &:last-of-type {
+    margin-bottom: 0.5rem;
+  }
+}
+
+.input-label {
+  font-family: var(--font-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-charcoal);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.input-box {
+  --background: #ffffff;
+  --padding-start: 1rem;
+  --padding-end: 1rem;
+  --min-height: 2.5rem;
+  --border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: var(--font-primary);
+  color: var(--color-charcoal);
+}
+
+.input-box::part(native) {
+  border-radius: 0.375rem !important;
+}
+
+// Ion-input placeholder styling
+ion-input::placeholder {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--color-smoke);
+}
+
+// Legal text styling
+.form-legal {
+  font-family: var(--font-primary);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--color-charcoal);
+  margin: 2rem 0 1.25rem 0;
+}
+
+.legal-link {
+  color: var(--color-olive);
+  text-decoration: underline;
+  
+  &:hover {
+    color: var(--color-charcoal);
+  }
+}
+
+// Signup button styling
+.signup-button {
+  height: 3.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 1.25rem;
+  --background: var(--color-salmon);
+  --color: var(--color-bone);
+  --border-radius: 30px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// Additional specificity for button text color
+.signup-button::part(native) {
+  color: var(--color-bone) !important;
+}
+
+// Footer link styling
+.form-footer {
+  text-align: center;
+  
+  .form-footer-link {
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--color-olive);
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// Copyright text styling
+.copyright-text {
+  color: #F5F3EF;
+  text-align: center;
+  font-family: var(--font-primary);
+  font-size: 0.6875rem;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-top: auto;
+}
+
+// Remove default ion-content styling
+ion-content {
+  --background: transparent;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+} 

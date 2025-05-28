@@ -1,0 +1,62 @@
+<ion-content>
+  <div class="signup-wrapper">
+    <div class="logo-container">
+      <img src="https://storage.googleapis.com/nutritionambition.app/logos/login-screen-logo.svg" alt="Nutrition Ambition Logo" class="signup-logo" />
+    </div>
+    <div class="signup-card">
+      <h1 class="form-title">Sign up</h1>
+      
+      <form (ngSubmit)="onSignup()">
+        <div class="form-group">
+          <label for="email" class="input-label">Email</label>
+          <ion-input
+            id="email"
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            class="input-box"
+            required>
+          </ion-input>
+        </div>
+        
+        <div class="form-group">
+          <label for="password" class="input-label">Password</label>
+          <ion-input
+            id="password"
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            class="input-box"
+            required>
+          </ion-input>
+        </div>
+        
+        <div class="form-group">
+          <label for="confirmPassword" class="input-label">Confirm Password</label>
+          <ion-input
+            id="confirmPassword"
+            type="password"
+            [(ngModel)]="confirmPassword"
+            name="confirmPassword"
+            class="input-box"
+            required>
+          </ion-input>
+        </div>
+        
+        <p class="form-legal">By using this app, you agree to our <a routerLink="/legal/terms-of-service" class="legal-link">Terms of Use</a> and <a routerLink="/legal/privacy-policy" class="legal-link">Privacy Policy</a>.</p>
+        
+        <ion-button expand="block" type="submit" color="tertiary" class="signup-button">
+          Sign up
+        </ion-button>
+      </form>
+      
+      <div class="form-footer">
+        <a routerLink="/login" class="form-footer-link">Already have an account? Log in!</a>
+      </div>
+    </div>
+    
+    <div class="copyright-text">
+      Copyright © 2025 Nutrition Ambition All rights reserved
+    </div>
+  </div>
+</ion-content> 

@@ -1,24 +1,54 @@
 import { Routes } from '@angular/router';
 import { LoginPage } from './pages/auth/login/login.page';
-import { RegisterPage } from './pages/auth/register/register.page';
+import { SignupPage } from './pages/auth/signup/signup.page';
+import { AuthGuard } from './guards/auth.guard';
+import { DailySummaryComponent } from './pages/daily-summary/daily-summary.component';
 
 export const routes: Routes = [
-  {
-    path: '',
-    redirectTo: 'login',
-    pathMatch: 'full',
-  },
   {
     path: 'login',
     component: LoginPage
   },
   {
-    path: 'register',
-    component: RegisterPage
+    path: 'signup',
+    component: SignupPage,
+    // Note: AuthGuard might need adjustment if registration is public
   },
   {
-    path: 'home',
-    loadComponent: () => import('./pages/home/home.page').then( m => m.HomePage)
+    path: 'legal',
+    loadComponent: () => import('./pages/legal/legal.page').then(m => m.LegalPage)
   },
-  // ...
+  {
+    path: 'legal/privacy-policy',
+    loadComponent: () => import('./pages/legal/privacy-policy/privacy-policy.page').then(m => m.PrivacyPolicyPage)
+  },
+  {
+    path: 'legal/terms-of-service',
+    loadComponent: () => import('./pages/legal/terms-of-service/terms-of-service.page').then(m => m.TermsOfServicePage)
+  },
+  {
+    path: 'app',
+    loadComponent: () => import('./pages/tabs/tabs.page').then(m => m.TabsPage),
+    children: [
+      {
+        path: 'chat',
+        loadComponent: () => import('./pages/chat/chat.page').then(m => m.ChatPage)
+      },
+      {
+        path: 'summary',
+        component: DailySummaryComponent
+      },
+      {
+        path: '',
+        redirectTo: 'chat',
+        pathMatch: 'full'
+      }
+    ]
+  },
+  {
+    path: '',
+    redirectTo: '/app/chat',
+    pathMatch: 'full'
+  }
 ];
+

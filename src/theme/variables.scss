@@ -1,2 +1,69 @@
 // For information on how to create your own theme, please see:
 // http://ionicframework.com/docs/theming/
+
+:root {
+  /* Primary - Tomato */
+  --ion-color-primary: #D64933;
+  --ion-color-primary-rgb: 214, 73, 51;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #bd3f2d;
+  --ion-color-primary-tint: #de6e57;
+
+  /* Secondary - Olive */
+  --ion-color-secondary: #4E6E5D;
+  --ion-color-secondary-rgb: 78, 110, 93;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #455f54;
+  --ion-color-secondary-tint: #617f6e;
+
+  /* Tertiary - Salmon */
+  --ion-color-tertiary: #FF8A5C;
+  --ion-color-tertiary-rgb: 255, 138, 92;
+  --ion-color-tertiary-contrast: #000000;
+  --ion-color-tertiary-contrast-rgb: 0, 0, 0;
+  --ion-color-tertiary-shade: #e67a50;
+  --ion-color-tertiary-tint: #ffa072;
+
+  /* Success - Sage */
+  --ion-color-success: #A9C8B2;
+  --ion-color-success-rgb: 169, 200, 178;
+  --ion-color-success-contrast: #000000;
+  --ion-color-success-contrast-rgb: 0, 0, 0;
+  --ion-color-success-shade: #95b39d;
+  --ion-color-success-tint: #b4d1bc;
+
+  /* Medium - Smoke */
+  --ion-color-medium: #A3A3A3;
+  --ion-color-medium-rgb: 163, 163, 163;
+  --ion-color-medium-contrast: #000000;
+  --ion-color-medium-contrast-rgb: 0, 0, 0;
+  --ion-color-medium-shade: #8f8f8f;
+  --ion-color-medium-tint: #b7b7b7;
+
+  /* Light - Bone */
+  --ion-color-light: #F5F3EF;
+  --ion-color-light-rgb: 245, 243, 239;
+  --ion-color-light-contrast: #000000;
+  --ion-color-light-contrast-rgb: 0, 0, 0;
+  --ion-color-light-shade: #d8d6d3;
+  --ion-color-light-tint: #f7f5f2;
+
+  /* Dark - Charcoal */
+  --ion-color-dark: #2E2E2E;
+  --ion-color-dark-rgb: 46, 46, 46;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-contrast-rgb: 255, 255, 255;
+  --ion-color-dark-shade: #272727;
+  --ion-color-dark-tint: #3a3a3a;
+
+  /* Global Text and Background */
+  --ion-background-color: #F5F3EF;
+  --ion-background-color-rgb: 245, 243, 239;
+  --ion-text-color: #2E2E2E;
+  --ion-text-color-rgb: 46, 46, 46;
+
+  /* Global Font */
+  --ion-font-family: 'Poppins', sans-serif;
+}

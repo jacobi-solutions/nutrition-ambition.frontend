@@ -1,0 +1,275 @@
+.loading-container, .empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  text-align: center;
+}
+
+.nutrition-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  
+  .label {
+    font-weight: 500;
+  }
+  
+  .value {
+    font-weight: 600;
+  }
+}
+
+.error-message {
+  color: var(--ion-color-danger);
+  padding: 16px;
+  border-radius: 8px;
+  background-color: var(--ion-color-danger-tint);
+  margin: 16px 0;
+  display: flex;
+  align-items: flex-start;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .error-icon {
+    font-size: 24px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .error-text {
+    flex: 1;
+  }
+}
+
+.empty-data-message {
+  text-align: center;
+  padding: 24px;
+}
+
+// Segment toggle styling
+.segment-toggle {
+  margin-bottom: 16px;
+}
+
+// Breakdown list styling
+.breakdown-container {
+  margin-top: 16px;
+  max-width: 100%;
+  
+  ion-card {
+    margin-left: 8px;
+    margin-right: 8px;
+    width: calc(100% - 16px);
+  }
+  
+  ion-list {
+    padding: 0;
+    margin-bottom: 16px;
+    
+    ion-item {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      --min-height: 50px;
+      
+      &.selected {
+        --background: var(--ion-color-light);
+        --background-hover: var(--ion-color-light-shade);
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+.breakdown-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.primary-info {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 36px;
+  align-items: center;
+}
+
+.name {
+  font-weight: 500;
+  padding-right: 8px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  flex: 1;
+}
+
+.amount {
+  color: var(--ion-color-medium);
+  white-space: nowrap;
+}
+
+.brand-name {
+  color: var(--ion-color-primary);
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.selected {
+  --background: var(--ion-color-light);
+}
+
+.drilldown-row {
+  background-color: var(--ion-color-light-shade);
+  --background: var(--ion-color-light-shade);
+  --padding-start: 32px;
+  --padding-end: 16px;
+  
+  ion-label {
+    white-space: normal;
+    overflow: visible;
+  }
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  align-items: center;
+  min-height: 30px;
+}
+
+.detail-name {
+  flex: 1;
+  margin-right: 16px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.detail-amount {
+  color: var(--ion-color-medium);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.nutrient-section {
+  margin-bottom: 16px;
+}
+
+.nutrient-category-title {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ion-color-primary);
+  font-size: 1em;
+}
+
+.empty-detail-message {
+  color: var(--ion-color-medium);
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+// Drilldown card styling - keeping for reference but not used anymore
+.drilldown-card {
+  margin: 0 0 16px 0;
+  
+  ion-card-header {
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    
+    ion-card-title {
+      flex: 1;
+    }
+    
+    .dismiss-button {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      height: 30px;
+      margin: 0;
+    }
+  }
+  
+  ion-card-content {
+    padding-top: 0;
+  }
+  
+  ion-list {
+    padding: 0;
+  }
+}
+
+// Action button styles
+.action-btn {
+  --padding-start: 4px;
+  --padding-end: 4px;
+  margin: 0;
+  height: 32px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+  
+  &:hover {
+    opacity: 1;
+  }
+  
+  ion-icon {
+    font-size: 18px;
+  }
+}
+
+// Hover styles for list items
+ion-item {
+  --padding-end: 8px;
+  
+  &:hover {
+    .action-btn {
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Add styles for the improved empty state
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1rem;
+  min-height: 50vh;
+  color: var(--ion-color-medium);
+
+  .empty-icon {
+    margin-bottom: 1rem;
+    
+    ion-icon {
+      font-size: 64px;
+      opacity: 0.6;
+    }
+  }
+
+  h2 {
+    margin: 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    opacity: 0.8;
+  }
+} 
