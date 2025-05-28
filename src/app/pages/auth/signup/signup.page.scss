@@ -138,6 +138,7 @@ ion-input::placeholder {
   --background: var(--color-salmon);
   --color: var(--color-bone);
   --border-radius: 30px;
+  text-transform: none;
   transition: background-color 0.3s ease, transform 0.2s ease;
 
   &:hover {
