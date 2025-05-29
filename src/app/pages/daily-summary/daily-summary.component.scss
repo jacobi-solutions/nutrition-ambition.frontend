@@ -46,35 +46,166 @@
   padding: 24px;
 }
 
-// Segment toggle styling
+// Header Bar Adjustments
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e6e3dd;
+  background: #f5f3ef;
+  padding: 0 16px;
+  
+  .logo {
+    flex: 0 0 auto;
+  }
+  
+  .profile-icon {
+    flex: 0 0 auto;
+    
+    ion-icon {
+      font-size: 24px;
+      color: var(--color-smoke);
+    }
+  }
+}
+
+// Segment toggle styling - pill-style design
 .segment-toggle {
-  margin-bottom: 16px;
+  background: var(--color-bone);
+  border-radius: 2rem;
+  padding: 0.25rem;
+  width: fit-content;
+  margin: 0 auto 1rem auto;
+  
+  ion-segment {
+    border-radius: 2rem !important;
+    background: transparent !important;
+    --background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    
+    ion-segment-button {
+      border-radius: 2rem !important;
+      height: 2rem !important;
+      font-weight: 500 !important;
+      font-size: 0.875rem !important;
+      transition: all 0.3s ease !important;
+      margin: 0 2px !important;
+      border: none !important;
+      --background: transparent !important;
+      --background-checked: var(--color-salmon) !important;
+      --color: var(--ion-color-medium) !important;
+      --color-checked: white !important;
+      --indicator-color: transparent !important;
+      --indicator-box-shadow: none !important;
+      --indicator-transform: none !important;
+      min-height: 2rem !important;
+      
+      &.segment-button-checked {
+        background: var(--color-salmon) !important;
+        color: white !important;
+        --background: var(--color-salmon) !important;
+        --color: white !important;
+      }
+      
+      ion-label {
+        color: inherit !important;
+        font-weight: 500 !important;
+        font-size: 0.875rem !important;
+      }
+    }
+  }
+}
+
+// Main content wrapper for responsive design
+ion-content {
+  .main-content-wrapper {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 0 8px;
+  }
+}
+
+// Main card container responsive styling
+.main-card-container {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+// Ion-Card Style Updates
+ion-card {
+  background-color: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+  margin: 8px 0;
+  width: 100%;
+  
+  ion-card-content {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0px;
+  }
+  
+  // Section Title Alignment
+  ion-card-title {
+    text-align: center;
+    color: var(--color-olive);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0;
+  }
+  
+  ion-card-header {
+    padding-bottom: 8px;
+  }
 }
 
 // Breakdown list styling
 .breakdown-container {
-  margin-top: 16px;
+  margin: 16px auto 0 auto;
   max-width: 100%;
   
   ion-card {
-    margin-left: 8px;
-    margin-right: 8px;
-    width: calc(100% - 16px);
+    background-color: #fff;
+    border-radius: 1.25rem;
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+    padding: 1rem;
   }
   
   ion-list {
     padding: 0;
     margin-bottom: 16px;
+    font-size: 0.75rem;
     
     ion-item {
-      --padding-start: 8px;
-      --padding-end: 8px;
-      --min-height: 50px;
+      --padding-start: 16px;
+      --padding-end: 0;
+      --min-height: 3.125rem;
+      --border-width: 0;
+      --inner-border-width: 0;
+      border-bottom: .5px solid var(--color-olive);
+      transition: background 0.3s ease;
+      background-color: white;
+      --background: white;
+      --background-activated: white;
+      border-radius: 0;
+      
+      &:hover {
+        background-color: rgba(78, 110, 93, 0.05);
+        --background: rgba(78, 110, 93, 0.05);
+        --background-hover: rgba(78, 110, 93, 0.05);
+      }
       
       &.selected {
-        --background: var(--ion-color-light);
-        --background-hover: var(--ion-color-light-shade);
+        background-color: white;
+        --background: white;
+        --background-hover: white;
         font-weight: 500;
+      }
+      
+      &:last-child {
+        border-bottom: none;
       }
     }
   }
@@ -94,8 +225,11 @@
   align-items: center;
 }
 
+// Typography Enhancements
 .name {
+  font-family: 'Poppins', sans-serif;
   font-weight: 500;
+  font-size: 1rem;
   padding-right: 8px;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -103,6 +237,9 @@
 }
 
 .amount {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
   color: var(--ion-color-medium);
   white-space: nowrap;
 }
@@ -118,10 +255,13 @@
 }
 
 .drilldown-row {
-  background-color: var(--ion-color-light-shade);
-  --background: var(--ion-color-light-shade);
+  background-color: rgba(78, 110, 93, 0.20) !important;
+  --background: rgba(78, 110, 93, 0.20) !important;
+  --background-hover: rgba(78, 110, 93, 0.20) !important;
+  --background-activated: rgba(78, 110, 93, 0.20) !important;
   --padding-start: 32px;
   --padding-end: 16px;
+  border-radius: 0.75rem;
   
   ion-label {
     white-space: normal;
@@ -171,6 +311,7 @@
 // Drilldown card styling - keeping for reference but not used anymore
 .drilldown-card {
   margin: 0 0 16px 0;
+  border-radius: 1.25rem;
   
   ion-card-header {
     padding-bottom: 8px;
@@ -199,12 +340,11 @@
   }
 }
 
-// Action button styles
+// Action button styles with icon styling
 .action-btn {
   --padding-start: 4px;
   --padding-end: 4px;
   margin: 0;
-  height: 32px;
   opacity: 0.8;
   transition: opacity 0.2s ease;
   z-index: 10;
@@ -214,8 +354,39 @@
   }
   
   ion-icon {
-    font-size: 18px;
+    color: var(--color-salmon);
   }
+}
+
+// Chevron button styles
+.chevron-btn {
+  --padding-start: 4px;
+  --padding-end: 0px;
+  margin: 0;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+  
+  &:hover {
+    opacity: 1;
+  }
+  
+  ion-icon {
+    
+    color: var(--color-smoke);
+  }
+}
+
+// Icon Styling
+ion-icon[name="ellipsis-vertical"],
+ion-icon[name="chevron-forward-outline"],
+ion-icon[name="chevron-down-outline"] {
+  color: var(--color-salmon);
+  font-size: 1.5rem;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 // Hover styles for list items

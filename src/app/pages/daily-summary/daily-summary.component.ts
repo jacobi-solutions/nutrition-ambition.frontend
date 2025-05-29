@@ -45,7 +45,7 @@ import {
   chevronDownOutline, 
   chevronForwardOutline, 
   closeOutline, 
-  ellipsisVerticalOutline,
+  ellipsisVertical,
   alertCircleOutline,
   nutritionOutline
 } from 'ionicons/icons';
@@ -131,7 +131,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
       chevronDownOutline, 
       chevronForwardOutline, 
       closeOutline, 
-      ellipsisVerticalOutline,
+      ellipsisVertical,
       alertCircleOutline,
       nutritionOutline
     });
