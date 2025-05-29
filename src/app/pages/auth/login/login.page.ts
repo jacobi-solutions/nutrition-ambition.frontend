@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AuthService } from '../../../services/auth.service';
 import { Router, RouterModule } from '@angular/router';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/angular/standalone';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonInputPasswordToggle } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-login',
@@ -16,7 +16,7 @@ import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, I
 
       // Required standalone components
       IonContent,
-      IonItem, IonLabel, IonInput, IonButton
+      IonItem, IonLabel, IonInput, IonButton, IonInputPasswordToggle
   ],
 })
 export class LoginPage {

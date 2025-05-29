@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AuthService } from '../../../services/auth.service';
 import { Router, RouterModule } from '@angular/router';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/angular/standalone';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonInputPasswordToggle } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-signup',
@@ -18,7 +18,7 @@ import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, I
     IonTitle, IonContent,
     IonGrid, IonRow, IonCol,
     IonItem, IonLabel, IonInput, IonButton,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonInputPasswordToggle
   ],
 })
 export class SignupPage {
