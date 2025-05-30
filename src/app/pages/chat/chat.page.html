@@ -70,23 +70,26 @@
 <ion-footer class="chat-footer">
   
   <div class="fab-and-input">
-    <!-- FAB button (retain same functionality) -->
-    <ion-fab>
-      <ion-fab-button class="main-chat-fab-button" [closeIcon]="'close-circle-outline'" (click)="toggleFab()" [color]="isOpen ? 'light' : 'medium'">
-        <ion-icon class="main-chat-fab-icon" [name]="'add-outline'" ></ion-icon>
-      </ion-fab-button>
-      <ion-fab-list side="top" [activated]="isOpen" #fabList>
-        <ion-fab-button (click)="handleAction('edit')" class="fab-action-button" title="Manual entry">
+    <!-- Custom Floating FAB -->
+    <div class="manual-fab-wrapper">
+      <button class="manual-fab-icon-button" [class.open]="isOpen" (click)="toggleFab()">
+        <ion-icon [name]="isOpen ? 'close-circle-outline' : 'add-outline'"></ion-icon>
+      </button>
+      
+
+
+      <div class="manual-fab-actions" *ngIf="isOpen">
+        <button class="fab-action" title="Manual entry" (click)="handleAction('edit')">
           <ion-icon name="create"></ion-icon>
-        </ion-fab-button>
-        <ion-fab-button (click)="handleAction('barcode')" class="fab-action-button" title="Scan barcode">
+        </button>
+        <button class="fab-action" title="Scan barcode" (click)="handleAction('barcode')">
           <ion-icon name="barcode-sharp"></ion-icon>
-        </ion-fab-button>
-        <ion-fab-button (click)="handleAction('photo')" class="fab-action-button" title="Take a photo">
+        </button>
+        <button class="fab-action" title="Take a photo" (click)="handleAction('photo')">
           <ion-icon name="camera"></ion-icon>
-        </ion-fab-button>
-      </ion-fab-list>
-    </ion-fab>
+        </button>
+      </div>
+    </div>
     <!-- Chat input container -->
     <div class="input-group">
       <textarea
