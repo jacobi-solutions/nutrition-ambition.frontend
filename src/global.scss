@@ -193,43 +193,6 @@ body {
   }
 }
 
-/* ========== FAB Override Styles ========== */
-// Force FAB visibility in all contexts
-ion-fab {
-  visibility: visible !important;
-  opacity: 1 !important;
-  display: block !important;
-  z-index: 9999 !important;
-}
-
-ion-fab-button {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-ion-fab-list {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-// Ensure FAB buttons are properly positioned
-ion-fab[vertical="bottom"] {
-  bottom: 70px !important;
-}
-
-ion-fab[horizontal="end"] {
-  right: 16px !important;
-}
-
-// Ensure FAB list items show properly
-ion-fab-list[side="top"] {
-  flex-direction: column !important;
-  align-items: center !important;
-  top: auto !important;
-  bottom: 100% !important;
-}
 
 /* ========== Auth Page Utility Classes ========== */
 /* Form input enhancements for auth pages */

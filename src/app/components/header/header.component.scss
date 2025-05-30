@@ -3,11 +3,13 @@ ion-header {
     --min-height: 48px;
     --padding-top: 0;
     --padding-bottom: 0;
+    --background: var(--color-bone);
   }
 
   /* First toolbar styles */
   ion-toolbar:first-child {
     border-bottom: 2px solid #ffffff;
+    --ion-toolbar-color: var(--color-charcoal);
     
     /* Logo container */
     .logo-container {
@@ -42,18 +44,20 @@ ion-header {
         text-transform: none;
         font-size: 0.95rem;
         padding: 0 8px;
+        color: var(--color-charcoal) !important;
+        
+        .button-native {
+          color: var(--color-charcoal) !important;
+        }
       }
     }
-  }
-
-  toolbar-background {
-    background: var(--color-bone);
   }
 
 
   /* Second toolbar styles */
   ion-toolbar:last-child {
     --border: none !important;
+    border: none !important;
     
     /* Date picker */
     ion-title {
@@ -74,8 +78,6 @@ ion-header {
         color: var(--color-charcoal);
       }
     }
-
-    
     
     /* Navigation button icons */
     ion-button ion-icon[name="chevron-back-outline"],
@@ -83,12 +85,6 @@ ion-header {
       color: var(--color-smoke);
       font-size: 1.25rem;
     }
-
-    ion-toolbar:last-child::part(native) {
-      border: none !important;
-      box-shadow: none !important;
-    }
-
     
     /* Keep user chip styles */
     .user-chip {
@@ -97,6 +93,12 @@ ion-header {
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+  }
+
+  /* Additional border removal for second toolbar */
+  ion-toolbar:last-child::part(native) {
+    border: none !important;
+    box-shadow: none !important;
   }
 }
 ion-header {
