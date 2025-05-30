@@ -1,9 +1,22 @@
 ion-header {
+  border-bottom: none !important;
+  box-shadow: none !important;
+  
+  .toolbar-background {
+    border: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+  }
+
   ion-toolbar {
     --min-height: 48px;
     --padding-top: 0;
     --padding-bottom: 0;
     --background: var(--color-bone);
+    --border: none !important;
+    --border-width: 0 !important;
+    --border-style: none !important;
+    --box-shadow: none !important;
   }
 
   /* First toolbar styles */
@@ -57,6 +70,8 @@ ion-header {
   /* Second toolbar styles */
   ion-toolbar:last-child {
     --border: none !important;
+    --border-width: 0 !important;
+    --border-style: none !important;
     border: none !important;
     
     /* Date picker */
@@ -95,16 +110,14 @@ ion-header {
     }
   }
 
-  /* Additional border removal for second toolbar */
+  /* Target shadow DOM elements */
   ion-toolbar:last-child::part(native) {
     border: none !important;
+    border-bottom: none !important;
     box-shadow: none !important;
   }
 }
-ion-header {
-  border-bottom: none !important;
-  box-shadow: none !important;
-}
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
   ion-header {
