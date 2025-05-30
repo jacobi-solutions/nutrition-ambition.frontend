@@ -400,6 +400,8 @@ ion-card {
   opacity: 0.8;
   transition: opacity 0.2s ease;
   z-index: 10;
+  --border-radius: 50%;
+  border-radius: 50%;
   
   &:hover {
     opacity: 1;
@@ -418,6 +420,8 @@ ion-card {
   opacity: 0.8;
   transition: opacity 0.2s ease;
   z-index: 10;
+  --border-radius: 50%;
+  border-radius: 50%;
   
   &:hover {
     opacity: 1;
