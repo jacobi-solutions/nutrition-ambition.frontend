@@ -21,48 +21,8 @@ import {
     IonFabList,
     IonIcon
   ],
-  template: `
-    <ion-fab slot="fixed" vertical="bottom" horizontal="end" class="mb-16 mr-4">
-      <ion-fab-button (click)="toggleFab()" [color]="isOpen ? 'light' : 'primary'" class="shadow-lg">
-        <ion-icon [name]="isOpen ? 'close-outline' : 'add-outline'"></ion-icon>
-      </ion-fab-button>
-      <ion-fab-list side="top" [activated]="isOpen" #fabList>
-        <ion-fab-button color="light" (click)="handleAction('photo')" class="my-2 shadow" title="Take a photo">
-          <ion-icon name="camera-outline"></ion-icon>
-        </ion-fab-button>
-        <ion-fab-button color="light" (click)="handleAction('barcode')" class="my-2 shadow" title="Scan barcode">
-          <ion-icon name="barcode-outline"></ion-icon>
-        </ion-fab-button>
-        <ion-fab-button color="light" (click)="handleAction('edit')" class="my-2 shadow" title="Manual entry">
-          <ion-icon name="create-outline"></ion-icon>
-        </ion-fab-button>
-      </ion-fab-list>
-    </ion-fab>
-  `,
-  styles: [`
-    ion-fab-button {
-      --box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      transition: transform 0.2s ease;
-    }
-    
-    ion-fab-button:hover {
-      transform: scale(1.05);
-    }
-    
-    ion-fab-list {
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    
-    ion-fab-list.activated {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    
-    ion-fab-list:not(.activated) {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-  `]
+  templateUrl: './chat-fab.component.html',
+  styleUrls: ['./chat-fab.component.scss']
 })
 export class ChatFabComponent {
   private animationCtrl = inject(AnimationController);
