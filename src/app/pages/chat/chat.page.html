@@ -71,9 +71,9 @@
   
   <div class="fab-and-input">
     <!-- FAB button (retain same functionality) -->
-    <ion-fab slot="fixed" horizontal="start">
-      <ion-fab-button class="main-chat-fab-button" size="small" (click)="toggleFab()" [color]="isOpen ? 'light' : 'medium'">
-        <ion-icon [name]="isOpen ? 'close-outline' : 'add-outline'"></ion-icon>
+    <ion-fab>
+      <ion-fab-button class="main-chat-fab-button" (click)="toggleFab()" [color]="isOpen ? 'light' : 'medium'">
+        <ion-icon class="main-chat-fab-icon" [name]="isOpen ? 'close-outline' : 'add-outline'"></ion-icon>
       </ion-fab-button>
       <ion-fab-list side="top" [activated]="isOpen" #fabList>
         <ion-fab-button (click)="handleAction('photo')" class="fab-action-button" title="Take a photo">
@@ -99,7 +99,7 @@
       
     </div>
     <ion-icon 
-      name="paper-plane" 
+      name="paper-plane-sharp" 
       class="send-icon-button"
       [class.disabled]="isLoading || !userMessage.trim()"
       (click)="sendMessage()"

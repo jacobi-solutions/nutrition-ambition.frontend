@@ -18,6 +18,8 @@ ion-tab-button {
 .tab-bar {
   border-top-color: white;
   border-top-width: 2px;
+  background-color: var(--color-bone);
+  height: 4rem;
 }
 // More aggressive targeting to remove selected background
 ::ng-deep ion-tab-button.tab-selected {

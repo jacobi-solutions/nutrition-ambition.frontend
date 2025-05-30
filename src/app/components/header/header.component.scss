@@ -46,6 +46,9 @@ ion-header {
     }
   }
 
+  toolbar-background {
+    background: var(--color-bone);
+  }
 
 
   /* Second toolbar styles */
@@ -85,6 +88,7 @@ ion-header {
       border: none !important;
       box-shadow: none !important;
     }
+
     
     /* Keep user chip styles */
     .user-chip {
