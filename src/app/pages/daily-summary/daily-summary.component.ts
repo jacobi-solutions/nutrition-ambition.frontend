@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   IonContent, 
@@ -89,6 +89,7 @@ import { ViewWillEnter } from '@ionic/angular';
 })
 export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   @ViewChild('popover') popover: IonPopover;
+  @ViewChild(IonContent) content: IonContent;
   
   detailedData: GetDetailedSummaryResponse | null = null;
   viewMode: 'nutrients' | 'foods' = 'nutrients';
@@ -127,7 +128,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   private toastController = inject(ToastController);
   private foodLogService = inject(FoodLogService);
 
-  constructor() {
+  constructor(private elementRef: ElementRef) {
     addIcons({ 
       chevronDownOutline, 
       chevronForwardOutline, 
@@ -651,5 +652,105 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     setTimeout(() => {
       this.loadDetailedSummary(new Date(this.selectedDate));
     }, 100);
+  }
+
+  // Navigate to nutrients tab with specific nutrient selected
+  navigateToNutrient(nutrientName: string) {
+    console.log('[DailySummary] Navigating to nutrient:', nutrientName);
+    
+    // Switch to nutrients view
+    this.viewMode = 'nutrients';
+    
+    // Clear current selections
+    this.selectedFood = null;
+    this.selectedNutrient = null;
+    
+    // Find and select the nutrient
+    setTimeout(() => {
+      const nutrient = this.detailedData?.nutrients?.find(n => 
+        n.name?.toLowerCase() === nutrientName.toLowerCase()
+      );
+      
+      if (nutrient) {
+        this.selectedNutrient = nutrient;
+        console.log('[DailySummary] Selected nutrient:', nutrient.name);
+        
+        // Scroll to position the nutrient at 75% from top
+        setTimeout(() => {
+          this.scrollToNutrient(nutrientName);
+        }, 200);
+      }
+    }, 100);
+  }
+
+  // Navigate to foods tab with specific food selected
+  navigateToFood(foodName: string) {
+    console.log('[DailySummary] Navigating to food:', foodName);
+    
+    // Switch to foods view
+    this.viewMode = 'foods';
+    
+    // Clear current selections
+    this.selectedNutrient = null;
+    this.selectedFood = null;
+    
+    // Find and select the food
+    setTimeout(() => {
+      const food = this.detailedData?.foods?.find(f => 
+        f.name?.toLowerCase() === foodName.toLowerCase()
+      );
+      
+      if (food) {
+        this.selectedFood = food;
+        console.log('[DailySummary] Selected food:', food.name);
+        
+        // Scroll to position the food at 75% from top
+        setTimeout(() => {
+          this.scrollToFood(foodName);
+        }, 200);
+      }
+    }, 100);
+  }
+
+  // Helper method to scroll to a specific nutrient
+  private scrollToNutrient(nutrientName: string) {
+    const nutrientElements = this.elementRef.nativeElement.querySelectorAll('ion-item');
+    const targetElement = Array.from(nutrientElements).find((element: any) => {
+      const nameSpan = element.querySelector('.name');
+      return nameSpan && nameSpan.textContent?.toLowerCase().includes(nutrientName.toLowerCase());
+    });
+
+    if (targetElement && this.content) {
+      this.scrollToElement(targetElement as HTMLElement);
+    }
+  }
+
+  // Helper method to scroll to a specific food
+  private scrollToFood(foodName: string) {
+    const foodElements = this.elementRef.nativeElement.querySelectorAll('ion-item');
+    const targetElement = Array.from(foodElements).find((element: any) => {
+      const nameSpan = element.querySelector('.name');
+      return nameSpan && nameSpan.textContent?.toLowerCase().includes(foodName.toLowerCase());
+    });
+
+    if (targetElement && this.content) {
+      this.scrollToElement(targetElement as HTMLElement);
+    }
+  }
+
+  // Helper method to scroll element to 75% from top
+  private scrollToElement(element: HTMLElement) {
+    if (!this.content) return;
+
+    const elementRect = element.getBoundingClientRect();
+    const contentRect = this.content.getScrollElement().then(scrollElement => {
+      const scrollElementRect = scrollElement.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      
+      // Calculate position to place element at 75% from top
+      const targetPosition = elementRect.top + scrollElement.scrollTop - (viewportHeight * 0.25);
+      
+      this.content.scrollToPoint(0, Math.max(0, targetPosition), 500);
+    });
   }
 } 

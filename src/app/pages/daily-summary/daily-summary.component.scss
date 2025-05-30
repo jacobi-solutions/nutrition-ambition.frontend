@@ -499,4 +499,22 @@ ion-item {
     line-height: 1.5;
     opacity: 0.8;
   }
+}
+
+// Clickable elements in drilldowns
+.clickable-nutrient,
+.clickable-food {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 8px;
+  border-radius: 6px;
+  margin: 4px 0;
+  
+  &:hover {
+    background-color: rgba(78, 110, 93, 0.1);
+  }
+  
+  &:active {
+    background-color: rgba(78, 110, 93, 0.15);
+  }
 } 

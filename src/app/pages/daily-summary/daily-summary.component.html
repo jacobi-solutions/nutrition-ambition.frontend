@@ -99,7 +99,7 @@
                     <div class="drilldown-content">
                       <ng-container *ngIf="selectedNutrient.foods">
                         <ng-container *ngFor="let food of selectedNutrient.foods; trackBy: trackById">
-                          <div class="detail-item">
+                          <div class="detail-item clickable-food" (click)="food.name && navigateToFood(food.name)">
                             <span class="detail-name">
                               <span *ngIf="food.brandName" class="brand-name">{{ food.brandName }} - </span>{{ food.name }}
                             </span>
@@ -163,7 +163,7 @@
                     <div class="drilldown-content">
                       <ng-container *ngIf="selectedNutrient.foods">
                         <ng-container *ngFor="let food of selectedNutrient.foods; trackBy: trackById">
-                          <div class="detail-item">
+                          <div class="detail-item clickable-food" (click)="food.name && navigateToFood(food.name)">
                             <span class="detail-name">
                               <span *ngIf="food.brandName" class="brand-name">{{ food.brandName }} - </span>{{ food.name }}
                             </span>
@@ -234,7 +234,9 @@
                         <strong class="nutrient-category-title">Macronutrients</strong>
                         <ng-container *ngIf="selectedFood">
                           <ng-container *ngIf="getFoodMacronutrients(selectedFood.nutrients).length > 0">
-                            <div *ngFor="let nutrient of getFoodMacronutrients(selectedFood.nutrients); trackBy: trackById" class="detail-item">
+                            <div *ngFor="let nutrient of getFoodMacronutrients(selectedFood.nutrients); trackBy: trackById" 
+                                 class="detail-item clickable-nutrient" 
+                                 (click)="nutrient.name && navigateToNutrient(nutrient.name)">
                               <span class="detail-name">{{ nutrient.name }}</span>
                               <span class="detail-amount">{{ formatNutrientWithOriginalUnit(nutrient) }}</span>
                             </div>
@@ -253,7 +255,9 @@
                         <strong class="nutrient-category-title">Micronutrients</strong>
                         <ng-container *ngIf="selectedFood">
                           <ng-container *ngIf="getFoodMicronutrients(selectedFood.nutrients).length > 0">
-                            <div *ngFor="let nutrient of getFoodMicronutrients(selectedFood.nutrients); trackBy: trackById" class="detail-item">
+                            <div *ngFor="let nutrient of getFoodMicronutrients(selectedFood.nutrients); trackBy: trackById" 
+                                 class="detail-item clickable-nutrient" 
+                                 (click)="nutrient.name && navigateToNutrient(nutrient.name)">
                               <span class="detail-name">{{ nutrient.name }}</span>
                               <span class="detail-amount">{{ formatNutrientWithOriginalUnit(nutrient) }}</span>
                             </div>
