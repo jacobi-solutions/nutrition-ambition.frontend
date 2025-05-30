@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
-import { addOutline, barcodeSharp, camera, closeOutline, create, paperPlaneSharp } from 'ionicons/icons';
+import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlaneSharp } from 'ionicons/icons';
 import { AccountsService } from '../../services/accounts.service';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
@@ -82,7 +82,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       create,
       barcodeSharp,
       addOutline,
-      closeOutline
+      closeCircleOutline
     });
   }
 

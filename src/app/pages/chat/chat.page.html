@@ -72,8 +72,8 @@
   <div class="fab-and-input">
     <!-- FAB button (retain same functionality) -->
     <ion-fab>
-      <ion-fab-button class="main-chat-fab-button" (click)="toggleFab()" [color]="isOpen ? 'light' : 'medium'">
-        <ion-icon class="main-chat-fab-icon" [name]="isOpen ? 'close-outline' : 'add-outline'"></ion-icon>
+      <ion-fab-button class="main-chat-fab-button" [closeIcon]="'close-circle-outline'" (click)="toggleFab()" [color]="isOpen ? 'light' : 'medium'">
+        <ion-icon class="main-chat-fab-icon" [name]="'add-outline'" ></ion-icon>
       </ion-fab-button>
       <ion-fab-list side="top" [activated]="isOpen" #fabList>
         <ion-fab-button (click)="handleAction('edit')" class="fab-action-button" title="Manual entry">

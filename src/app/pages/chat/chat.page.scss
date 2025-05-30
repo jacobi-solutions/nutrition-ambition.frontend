@@ -252,11 +252,16 @@ ion-content {
 .main-chat-fab-icon {
   color: white;
   --color: white;
+  font-size: 1.2rem;
 }
+
 .main-chat-fab-button {
   height: 1.5rem;
   width: 1.5rem;
   margin-bottom: .6rem;
+  display: flex;
+  --close-icon-font-size: 3rem;
+  
 }
 
 .fab-action-button {
@@ -274,7 +279,7 @@ ion-content {
 }
 
 ion-fab-list {
-  margin-left: -.9rem;
+  margin-left: -1rem;
 }
 
 ::deep(ion-fab-button) {
