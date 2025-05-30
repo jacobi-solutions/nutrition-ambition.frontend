@@ -4,24 +4,25 @@ ion-content {
 
 .context-note {
   font-size: 0.75rem;
-  color: var(--ion-color-medium);
+  color: var(--color-olive);
   font-style: italic;
   padding: 0.5rem 1rem 0.25rem 1rem;
   margin-bottom: 0.5rem;
   border-bottom: 1px solid var(--ion-color-light-shade);
-  background-color: var(--ion-color-light-tint);
+  background-color: rgba(78, 110, 93, 0.20);
   position: sticky;
   top: 0;
   z-index: 10;
+  
 }
 
 .context-note-inline {
   font-size: 0.85rem;
-  color: var(--ion-color-medium);
+  color: var(--color-olive);
   font-style: italic;
   padding: 8px 12px;
   margin-bottom: 8px;
-  background-color: var(--ion-color-light-tint);
+  background-color: rgba(78, 110, 93, 0.20);
   border-radius: 16px;
   align-self: center;
   text-align: center;
@@ -82,14 +83,77 @@ ion-content {
 
 .chat-input-container {
   display: flex;
-  align-items: center;
-  padding: 0 8px;
+  align-items: flex-end;
+  padding: 8px 16px;
+  gap: 12px;
+  position: relative;
   
-  ion-input {
-    --padding-start: 16px;
-    margin-right: 8px;
-    border-radius: 20px;
-    --background: var(--ion-color-light);
+  .input-fab {
+    position: relative;
+    flex-shrink: 0;
+    
+    ion-fab-button {
+      --background: var(--ion-color-medium);
+      --color: white;
+      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      width: 40px;
+      height: 40px;
+      transition: all 0.3s ease;
+      
+      &[color="light"] {
+        --background: white;
+        --color: var(--ion-color-dark);
+      }
+    }
+    
+    ion-fab-list {
+      ion-fab-button {
+        --background: white;
+        --color: var(--ion-color-dark);
+        --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        width: 40px;
+        height: 40px;
+      }
+    }
+  }
+  
+  .input-wrapper {
+    flex: 1;
+    position: relative;
+    
+    ion-input {
+      --padding-start: 16px;
+      --padding-end: 16px;
+      --padding-top: 12px;
+      --padding-bottom: 12px;
+      --border-radius: 24px;
+      --background: #f5f5f5;
+      --color: var(--ion-color-dark);
+      --placeholder-color: var(--ion-color-medium);
+      border: none;
+      box-shadow: none;
+      
+      &::part(native) {
+        border-radius: 24px;
+        border: 1px solid #e0e0e0;
+      }
+    }
+  }
+  
+  .send-button {
+    --color: var(--ion-color-primary);
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    margin: 0;
+    
+    &:disabled {
+      --color: var(--ion-color-medium);
+    }
+    
+    ion-icon {
+      font-size: 20px;
+    }
   }
 }
 
