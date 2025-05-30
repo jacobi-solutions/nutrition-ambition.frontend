@@ -33,9 +33,6 @@ ion-content {
 .chat-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 20px;
-  margin-bottom: 20px;
 }
 
 .messages {
@@ -162,16 +159,17 @@ ion-content {
 
 .chat-footer {
   --background: transparent;
-  padding: 0.75rem 1rem 1.25rem 1rem;
-  background-color: var(--color-eggshell);
-  border-top: 1px solid #e6e3dd;
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+  padding-left: 1rem;
+  padding-right: .5rem;
+  background-color: var(--color-bone);
 }
 
 .fab-and-input {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 0.75rem;
 }
 
 .input-group {
@@ -179,12 +177,13 @@ ion-content {
   align-items: center;
   background: white;
   border-radius: 2rem;
+  margin-left: 3.5rem;
   padding: 0.25rem 0.25rem 0.25rem 1.25rem;
   flex: 1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .chat-text-input {
+  height: 1rem;
   flex: 1;
   --padding-top: 0.75rem;
   --padding-bottom: 0.75rem;
@@ -199,28 +198,39 @@ ion-content {
 }
 
 .chat-text-input::part(native) {
+  
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
 }
 
-.send-button-icon {
+.send-icon-button {
+  font-size: 2rem;
+  color: var(--color-charcoal);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
   margin-left: 0.5rem;
-  height: 2.5rem;
-  width: 2.5rem;
-  border-radius: 0.75rem;
-  background-color: var(--color-salmon);
-  --background: var(--color-salmon);
-  color: white;
 
-  ion-icon {
-    font-size: 1.25rem;
+  &:hover {
+    background-color: rgba(231, 111, 81, 0.1);
+    transform: scale(1.1);
   }
 
-  &:disabled {
-    background-color: var(--color-smoke);
-    --background: var(--color-smoke);
-    color: white;
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.disabled {
+    color: var(--color-smoke);
+    cursor: not-allowed;
+    //opacity: 0.5;
+
+    &:hover {
+      background-color: transparent;
+      transform: none;
+    }
   }
 }
 
@@ -233,3 +243,4 @@ ion-content {
   margin: 0.5rem 0;
   --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 } 
+

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
-import { addOutline, barcodeOutline, cameraOutline, closeOutline, createOutline, paperPlaneOutline } from 'ionicons/icons';
+import { addOutline, barcodeOutline, cameraOutline, closeOutline, createOutline, paperPlane, paperPlaneOutline } from 'ionicons/icons';
 import { AccountsService } from '../../services/accounts.service';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
@@ -79,7 +79,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     private router: Router
   ) {
     // Add the icons explicitly to the library
-    addIcons({ paperPlaneOutline });
+    addIcons({ paperPlane });
     addIcons({
       cameraOutline,
       createOutline,

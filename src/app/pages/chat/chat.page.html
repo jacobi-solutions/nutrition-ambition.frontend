@@ -71,7 +71,7 @@
   
   <div class="fab-and-input">
     <!-- FAB button (retain same functionality) -->
-    <ion-fab slot="fixed" horizontal="start" class="chat-fab">
+    <ion-fab slot="fixed" horizontal="start">
       <ion-fab-button class="main-chat-fab-button" size="small" (click)="toggleFab()" [color]="isOpen ? 'light' : 'medium'">
         <ion-icon [name]="isOpen ? 'close-outline' : 'add-outline'"></ion-icon>
       </ion-fab-button>
@@ -98,13 +98,12 @@
       </ion-input>
       
     </div>
-    <ion-icon name="paper-plane-outline"></ion-icon>
-    <ion-button
-        
-        class="send-button-icon"
-        [disabled]="isLoading || !userMessage.trim()"
-        (click)="sendMessage()">
-        
-      </ion-button>
+    <ion-icon 
+      name="paper-plane" 
+      class="send-icon-button"
+      [class.disabled]="isLoading || !userMessage.trim()"
+      (click)="sendMessage()"
+      [style.pointer-events]="(isLoading || !userMessage.trim()) ? 'none' : 'auto'">
+    </ion-icon>
   </div>
 </ion-footer> 
