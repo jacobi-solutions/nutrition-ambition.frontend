@@ -76,14 +76,14 @@
         <ion-icon class="main-chat-fab-icon" [name]="isOpen ? 'close-outline' : 'add-outline'"></ion-icon>
       </ion-fab-button>
       <ion-fab-list side="top" [activated]="isOpen" #fabList>
+        <ion-fab-button (click)="handleAction('edit')" class="fab-action-button" title="Manual entry">
+          <ion-icon name="create"></ion-icon>
+        </ion-fab-button>
+        <ion-fab-button (click)="handleAction('barcode')" class="fab-action-button" title="Scan barcode">
+          <ion-icon name="barcode-sharp"></ion-icon>
+        </ion-fab-button>
         <ion-fab-button (click)="handleAction('photo')" class="fab-action-button" title="Take a photo">
-          <ion-icon name="camera-outline"></ion-icon>
-        </ion-fab-button>
-        <ion-fab-button color="light" (click)="handleAction('barcode')" class="fab-action-button" title="Scan barcode">
-          <ion-icon name="barcode-outline"></ion-icon>
-        </ion-fab-button>
-        <ion-fab-button color="light" (click)="handleAction('edit')" class="fab-action-button" title="Manual entry">
-          <ion-icon name="create-outline"></ion-icon>
+          <ion-icon name="camera"></ion-icon>
         </ion-fab-button>
       </ion-fab-list>
     </ion-fab>
