@@ -139,6 +139,15 @@ ion-content {
   }
 }
 
+@keyframes rotateRight {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+}
+
 .loading-container, .empty-state {
   display: flex;
   justify-content: center;
@@ -320,12 +329,13 @@ ion-fab-list {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) rotate(0deg);
     font-size: 1.5rem;
     color: inherit;
     margin: 0;
     padding: 0;
     display: block;
+    transition: transform 0.3s ease-in-out;
     
   }
   &.open {
@@ -334,6 +344,7 @@ ion-fab-list {
     
     ion-icon {
       font-size: 2rem;
+      transform: translate(-50%, -50%) rotate(90deg);
     }
   }
 }
