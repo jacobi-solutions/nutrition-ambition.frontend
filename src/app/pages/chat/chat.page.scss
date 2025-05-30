@@ -273,6 +273,10 @@ ion-content {
   }
 }
 
+ion-fab-list {
+  margin-left: -.9rem;
+}
+
 ::deep(ion-fab-button) {
   box-shadow: none;
 }
