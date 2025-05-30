@@ -64,26 +64,47 @@
       </div>
     </div>
   </div>
+  
 </ion-content>
 
-<!-- Add the Chat FAB component -->
-<app-chat-fab></app-chat-fab>
-
-<!-- Chat input -->
-<ion-footer>
-  <ion-toolbar>
-    <div class="chat-input-container">
-      <ion-input 
-        placeholder="Type your message..." 
+<ion-footer class="chat-footer">
+  
+  <div class="fab-and-input">
+    <!-- FAB button (retain same functionality) -->
+    <ion-fab slot="fixed" horizontal="start" class="chat-fab">
+      <ion-fab-button class="main-chat-fab-button" size="small" (click)="toggleFab()" [color]="isOpen ? 'light' : 'medium'">
+        <ion-icon [name]="isOpen ? 'close-outline' : 'add-outline'"></ion-icon>
+      </ion-fab-button>
+      <ion-fab-list side="top" [activated]="isOpen" #fabList>
+        <ion-fab-button (click)="handleAction('photo')" class="fab-action-button" title="Take a photo">
+          <ion-icon name="camera-outline"></ion-icon>
+        </ion-fab-button>
+        <ion-fab-button color="light" (click)="handleAction('barcode')" class="fab-action-button" title="Scan barcode">
+          <ion-icon name="barcode-outline"></ion-icon>
+        </ion-fab-button>
+        <ion-fab-button color="light" (click)="handleAction('edit')" class="fab-action-button" title="Manual entry">
+          <ion-icon name="create-outline"></ion-icon>
+        </ion-fab-button>
+      </ion-fab-list>
+    </ion-fab>
+    <!-- Chat input container -->
+    <div class="input-group">
+      <ion-input
+        class="chat-text-input"
+        placeholder="Type your message..."
         [(ngModel)]="userMessage"
         (keyup.enter)="sendMessage()"
         [disabled]="isLoading">
       </ion-input>
-      <ion-button 
-        [disabled]="isLoading || !userMessage.trim()" 
-        (click)="sendMessage()">
-        <ion-icon name="paper-plane-outline"></ion-icon>
-      </ion-button>
+      
     </div>
-  </ion-toolbar>
+    <ion-icon name="paper-plane-outline"></ion-icon>
+    <ion-button
+        
+        class="send-button-icon"
+        [disabled]="isLoading || !userMessage.trim()"
+        (click)="sendMessage()">
+        
+      </ion-button>
+  </div>
 </ion-footer> 

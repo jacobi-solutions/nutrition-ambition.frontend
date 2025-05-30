@@ -81,81 +81,6 @@ ion-content {
   border-bottom-left-radius: 4px;
 }
 
-.chat-input-container {
-  display: flex;
-  align-items: flex-end;
-  padding: 8px 16px;
-  gap: 12px;
-  position: relative;
-  
-  .input-fab {
-    position: relative;
-    flex-shrink: 0;
-    
-    ion-fab-button {
-      --background: var(--ion-color-medium);
-      --color: white;
-      --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      width: 40px;
-      height: 40px;
-      transition: all 0.3s ease;
-      
-      &[color="light"] {
-        --background: white;
-        --color: var(--ion-color-dark);
-      }
-    }
-    
-    ion-fab-list {
-      ion-fab-button {
-        --background: white;
-        --color: var(--ion-color-dark);
-        --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        width: 40px;
-        height: 40px;
-      }
-    }
-  }
-  
-  .input-wrapper {
-    flex: 1;
-    position: relative;
-    
-    ion-input {
-      --padding-start: 16px;
-      --padding-end: 16px;
-      --padding-top: 12px;
-      --padding-bottom: 12px;
-      --border-radius: 24px;
-      --background: #f5f5f5;
-      --color: var(--ion-color-dark);
-      --placeholder-color: var(--ion-color-medium);
-      border: none;
-      box-shadow: none;
-      
-      &::part(native) {
-        border-radius: 24px;
-        border: 1px solid #e0e0e0;
-      }
-    }
-  }
-  
-  .send-button {
-    --color: var(--ion-color-primary);
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-    margin: 0;
-    
-    &:disabled {
-      --color: var(--ion-color-medium);
-    }
-    
-    ion-icon {
-      font-size: 20px;
-    }
-  }
-}
 
 .typing-indicator {
   align-self: flex-start;
@@ -233,4 +158,78 @@ ion-content {
   padding: 10px;
   border: 1px solid var(--ion-color-danger);
   border-radius: 5px;
+}
+
+.chat-footer {
+  --background: transparent;
+  padding: 0.75rem 1rem 1.25rem 1rem;
+  background-color: var(--color-eggshell);
+  border-top: 1px solid #e6e3dd;
+}
+
+.fab-and-input {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 2rem;
+  padding: 0.25rem 0.25rem 0.25rem 1.25rem;
+  flex: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.chat-text-input {
+  flex: 1;
+  --padding-top: 0.75rem;
+  --padding-bottom: 0.75rem;
+  --padding-start: 0;
+  --padding-end: 0;
+  --background: transparent;
+  --border-radius: 2rem;
+  --placeholder-color: var(--color-smoke);
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  color: var(--color-charcoal);
+}
+
+.chat-text-input::part(native) {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.send-button-icon {
+  margin-left: 0.5rem;
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 0.75rem;
+  background-color: var(--color-salmon);
+  --background: var(--color-salmon);
+  color: white;
+
+  ion-icon {
+    font-size: 1.25rem;
+  }
+
+  &:disabled {
+    background-color: var(--color-smoke);
+    --background: var(--color-smoke);
+    color: white;
+  }
+}
+
+.main-chat-fab-button {
+  color: white;
+  --color: white;
+}
+
+.fab-action-button {
+  margin: 0.5rem 0;
+  --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 } 

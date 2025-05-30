@@ -1,10 +1,10 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent } from '@ionic/angular/standalone';
+import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
-import { paperPlaneOutline } from 'ionicons/icons';
+import { addOutline, barcodeOutline, cameraOutline, closeOutline, createOutline, paperPlaneOutline } from 'ionicons/icons';
 import { AccountsService } from '../../services/accounts.service';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
@@ -45,10 +45,15 @@ interface DisplayMessage {
     IonRefresherContent,
     AppHeaderComponent,
     ChatMessageComponent,
-    ChatFabComponent
+    ChatFabComponent,
+    IonFabButton,
+    IonFabList,
+    IonFab
   ]
 })
 export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
+  private animationCtrl = inject(AnimationController);
+  isOpen = false;
   messages: DisplayMessage[] = [];
   userMessage: string = '';
   isLoading: boolean = false;
@@ -75,6 +80,13 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   ) {
     // Add the icons explicitly to the library
     addIcons({ paperPlaneOutline });
+    addIcons({
+      cameraOutline,
+      createOutline,
+      barcodeOutline,
+      addOutline,
+      closeOutline
+    });
   }
 
   async ngOnInit() {
@@ -540,5 +552,31 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         this.content.scrollToBottom(300);
       }
     }, 250); // Single 250ms delay for DOM rendering
+  }
+
+  toggleFab() {
+    this.isOpen = !this.isOpen;
+  }
+
+  handleAction(action: 'photo' | 'barcode' | 'edit') {
+    console.log(`FAB action clicked: ${action}`);
+    
+    // Here we would implement the actual functionality
+    switch(action) {
+      case 'photo':
+        console.log('Opening camera...');
+        break;
+      case 'barcode':
+        console.log('Opening barcode scanner...');
+        break;
+      case 'edit':
+        console.log('Opening manual entry...');
+        break;
+    }
+    
+    // Close the FAB after action is clicked
+    setTimeout(() => {
+      this.isOpen = false;
+    }, 300);
   }
 } 
