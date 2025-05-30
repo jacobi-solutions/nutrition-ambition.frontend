@@ -95,8 +95,8 @@
                 
                 <!-- Inline Drilldown -->
                 <ng-container *ngIf="selectedNutrient && selectedNutrient.name === nutrient.name">
-                  <ion-item lines="none" class="drilldown-row">
-                    <ion-label>
+                  <ion-item lines="none" class="drilldown-row nutrient-drilldown">
+                    <div class="drilldown-content">
                       <ng-container *ngIf="selectedNutrient.foods">
                         <ng-container *ngFor="let food of selectedNutrient.foods; trackBy: trackById">
                           <div class="detail-item">
@@ -107,7 +107,7 @@
                           </div>
                         </ng-container>
                       </ng-container>
-                    </ion-label>
+                    </div>
                   </ion-item>
                 </ng-container>
               </ng-container>
@@ -159,8 +159,8 @@
                 
                 <!-- Inline Drilldown -->
                 <ng-container *ngIf="selectedNutrient && selectedNutrient.name === nutrient.name">
-                  <ion-item lines="none" class="drilldown-row">
-                    <ion-label>
+                  <ion-item lines="none" class="drilldown-row nutrient-drilldown">
+                    <div class="drilldown-content">
                       <ng-container *ngIf="selectedNutrient.foods">
                         <ng-container *ngFor="let food of selectedNutrient.foods; trackBy: trackById">
                           <div class="detail-item">
@@ -171,7 +171,7 @@
                           </div>
                         </ng-container>
                       </ng-container>
-                    </ion-label>
+                    </div>
                   </ion-item>
                 </ng-container>
               </ng-container>
@@ -187,7 +187,7 @@
             <ion-card-title>Foods</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-list>
+            <ion-list class="food-list">
               <ng-container *ngFor="let food of detailedData?.foods; trackBy: trackById">
                 <ion-item 
                   button 
@@ -227,8 +227,8 @@
                 
                 <!-- Inline Drilldown -->
                 <ng-container *ngIf="selectedFood && selectedFood.name === food.name">
-                  <ion-item lines="none" class="drilldown-row">
-                    <ion-label>
+                  <ion-item lines="none" class="drilldown-row drilldown-food">
+                    <div class="drilldown-content">
                       <!-- Macronutrients Section -->
                       <div class="nutrient-section">
                         <strong class="nutrient-category-title">Macronutrients</strong>
@@ -266,7 +266,7 @@
                           <span>No micronutrient data available</span>
                         </div>
                       </div>
-                    </ion-label>
+                    </div>
                   </ion-item>
                 </ng-container>
               </ng-container>

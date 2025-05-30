@@ -71,49 +71,53 @@
 
 // Segment toggle styling - pill-style design
 .segment-toggle {
-  background: var(--color-bone);
+  background: white;
   border-radius: 2rem;
   padding: 0.25rem;
   width: fit-content;
   margin: 0 auto 1rem auto;
+  --background: white;
+  border: none;
+  box-shadow: none;
   
-  ion-segment {
+  // Reset ionic segment default styling
+  --color: var(--color-charcoal);
+  --indicator-color: transparent;
+  --indicator-box-shadow: none;
+  
+  ion-segment-button {
     border-radius: 2rem !important;
-    background: transparent !important;
-    --background: transparent !important;
+    height: 2rem !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    transition: all 0.3s ease !important;
+    margin: 0 2px !important;
     border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
+    --background: transparent !important;
+    --background-checked: var(--color-salmon) !important;
+    --color: var(--color-charcoal) !important;
+    --color-checked: white !important;
+    --indicator-color: transparent !important;
+    --indicator-box-shadow: none !important;
+    --indicator-transform: none !important;
+    min-height: 2rem !important;
+    min-width: unset !important;
+    flex: 1;
+    text-transform: none !important;
     
-    ion-segment-button {
-      border-radius: 2rem !important;
-      height: 2rem !important;
+    &.segment-button-checked {
+      background: var(--color-salmon) !important;
+      color: white !important;
+      --background: var(--color-salmon) !important;
+      --color: white !important;
+    }
+    
+    ion-label {
+      color: inherit !important;
       font-weight: 500 !important;
       font-size: 0.875rem !important;
-      transition: all 0.3s ease !important;
-      margin: 0 2px !important;
-      border: none !important;
-      --background: transparent !important;
-      --background-checked: var(--color-salmon) !important;
-      --color: var(--ion-color-medium) !important;
-      --color-checked: white !important;
-      --indicator-color: transparent !important;
-      --indicator-box-shadow: none !important;
-      --indicator-transform: none !important;
-      min-height: 2rem !important;
-      
-      &.segment-button-checked {
-        background: var(--color-salmon) !important;
-        color: white !important;
-        --background: var(--color-salmon) !important;
-        --color: white !important;
-      }
-      
-      ion-label {
-        color: inherit !important;
-        font-weight: 500 !important;
-        font-size: 0.875rem !important;
-      }
+      margin: 0 !important;
+      text-transform: none !important;
     }
   }
 }
@@ -138,7 +142,7 @@ ion-card {
   background-color: #fff;
   border-radius: 1.25rem;
   box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
-  margin: 8px 0;
+  margin: 1rem 0;
   width: 100%;
   
   ion-card-content {
@@ -176,7 +180,7 @@ ion-card {
   ion-list {
     padding: 0;
     margin-bottom: 16px;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     
     ion-item {
       --padding-start: 16px;
@@ -229,7 +233,7 @@ ion-card {
 .name {
   font-family: 'Poppins', sans-serif;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: .875rem;
   padding-right: 8px;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -239,7 +243,7 @@ ion-card {
 .amount {
   font-family: 'Poppins', sans-serif;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   color: var(--ion-color-medium);
   white-space: nowrap;
 }
@@ -254,18 +258,62 @@ ion-card {
   --background: var(--ion-color-light);
 }
 
+.food-list {
+  background-color: white;
+}
+
 .drilldown-row {
-  background-color: rgba(78, 110, 93, 0.20) !important;
-  --background: rgba(78, 110, 93, 0.20) !important;
-  --background-hover: rgba(78, 110, 93, 0.20) !important;
-  --background-activated: rgba(78, 110, 93, 0.20) !important;
-  --padding-start: 32px;
-  --padding-end: 16px;
+  background-color: white !important;
+  --background: white !important;
+  --background-hover: white !important;
+  --background-activated: white !important;
+  --padding-start: 0px !important;
+  --padding-end: 0px !important;
+  --inner-padding-start: 0px !important;
+  --inner-padding-end: 0px !important;
   border-radius: 0.75rem;
   
-  ion-label {
-    white-space: normal;
-    overflow: visible;
+  
+  .drilldown-content {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 0;
+    margin-right: 0;
+
+    
+    
+    ion-label {
+      white-space: normal;
+      overflow: visible;
+    }
+  }
+}
+
+.drilldown-row.nutrient-drilldown .drilldown-content {
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+  padding: 1rem; 
+  background-color: rgba(78, 110, 93, 0.2);
+  border-radius: 8px;
+}
+
+
+
+.drilldown-row.drilldown-food {
+  margin-top: 1rem;
+}
+
+// Try targeting ion-item globally within this component
+::ng-deep .drilldown-row.drilldown-food {
+  .item-native {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  
+  .item-inner {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 }
 
@@ -273,7 +321,7 @@ ion-card {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
-  font-size: 0.9em;
+  font-size: 0.875em;
   align-items: center;
   min-height: 30px;
 }
@@ -286,19 +334,23 @@ ion-card {
 }
 
 .detail-amount {
-  color: var(--ion-color-medium);
+  color: var(--color-charcoal);
   white-space: nowrap;
   text-align: right;
+  font-size: 0.875rem;
 }
 
 .nutrient-section {
+  padding: 1rem; 
   margin-bottom: 16px;
+  background-color: rgba(78, 110, 93, 0.2);
+  border-radius: 8px;
 }
 
 .nutrient-category-title {
   display: block;
   margin-bottom: 8px;
-  color: var(--ion-color-primary);
+  color: var(--color-olive);
   font-size: 1em;
 }
 

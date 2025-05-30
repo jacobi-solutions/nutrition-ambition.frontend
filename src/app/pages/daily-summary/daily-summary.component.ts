@@ -56,6 +56,7 @@ import { formatNutrient } from '../../utils/format-nutrient';
 import { formatMacro } from '../../utils/format-macro';
 import { ToastController } from '@ionic/angular';
 import { FoodLogService } from 'src/app/services/food-log.service';
+import { ViewWillEnter } from '@ionic/angular';
 
 @Component({
   selector: 'app-daily-summary',
@@ -86,7 +87,7 @@ import { FoodLogService } from 'src/app/services/food-log.service';
     EntryActionMenuComponent
   ]
 })
-export class DailySummaryComponent implements OnInit, OnDestroy {
+export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   @ViewChild('popover') popover: IonPopover;
   
   detailedData: GetDetailedSummaryResponse | null = null;
@@ -642,5 +643,13 @@ export class DailySummaryComponent implements OnInit, OnDestroy {
     
     // Last resort fallback to index
     return index.toString();
+  }
+
+  ionViewWillEnter() {
+    console.log('[DailySummary] ionViewWillEnter called, reloading data for date:', this.selectedDate);
+    // Add a small delay to ensure any pending save operations complete
+    setTimeout(() => {
+      this.loadDetailedSummary(new Date(this.selectedDate));
+    }, 100);
   }
 } 

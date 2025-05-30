@@ -41,4 +41,8 @@ export class SignupPage {
       console.error('Signup failed:', error);
     }
   }
+
+  navigateToChat() {
+    this.router.navigate(['/app/chat']);
+  }
 } 
