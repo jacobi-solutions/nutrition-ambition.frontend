@@ -1,14 +1,80 @@
 ion-list {
   margin: 0;
   padding: 0;
+  background: white;
+  border-radius: 1.125rem;
+  overflow: hidden;
 }
 
 ion-item {
   --padding-start: 16px;
   --padding-end: 16px;
+  --min-height: 48px;
+  --border-color: transparent;
+  --inner-border-width: 0;
+  
+  ion-label {
+    font-size: 16px;
+    font-weight: 400;
+    color: #333;
+    text-transform: lowercase;
+  }
 }
 
 ion-icon {
-  font-size: 20px;
-  margin-right: 8px;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 12px;
+  color: var(--color-olive);
+}
+
+.custom-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: brightness(0) saturate(100%) invert(32%) sepia(20%) saturate(1000%) hue-rotate(95deg) brightness(95%) contrast(95%);
+  }
+}
+
+// Use ::ng-deep to ensure the popover container gets the border radius
+::ng-deep ion-popover {
+  --border-radius: 1.125rem;
+  
+  .popover-content {
+    border-radius: 1.125rem !important;
+    overflow: hidden;
+    background-color: var(--color-bone);
+    padding: 1rem;
+  }
+} 
+
+::ng-deep ion-popover::part(content) {
+  border-radius: 1.125rem !important;
+  overflow: hidden !important;
+  background-color: var(--color-bone) !important;
+  padding: 0.5rem !important;
+}
+
+// More aggressive global targeting with higher specificity
+::ng-deep ion-popover div.popover-content[part="content"] {
+  border-radius: 1.125rem !important;
+  overflow: hidden !important;
+  background-color: var(--color-bone) !important;
+  padding: 0.5rem !important;
+}
+
+// Even more specific targeting
+::ng-deep ion-popover div.popover-content {
+  border-radius: 1.125rem !important;
+  overflow: hidden !important;
+  background-color: var(--color-bone) !important;
+  padding: 0.5rem !important;
 } 

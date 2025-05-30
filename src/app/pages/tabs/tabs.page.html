@@ -1,13 +1,15 @@
 <ion-tabs>
   <ion-tab-bar slot="bottom">
     <ion-tab-button tab="chat" routerLink="/app/chat" routerDirection="root">
-      <ion-icon name="chatbubbles-outline"></ion-icon>
-      <ion-label>Chat</ion-label>
+      <div class="custom-tab-icon">
+        <img src="assets/icons/chat-icon.svg" alt="Chat" />
+      </div>
     </ion-tab-button>
     
     <ion-tab-button tab="summary" routerLink="/app/summary" routerDirection="root">
-      <ion-icon name="bar-chart-outline"></ion-icon>
-      <ion-label>Summary</ion-label>
+      <div class="custom-tab-icon">
+        <img src="assets/icons/chart-icon.svg" alt="Summary" />
+      </div>
     </ion-tab-button>
   </ion-tab-bar>
 </ion-tabs>

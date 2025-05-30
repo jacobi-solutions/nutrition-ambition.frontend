@@ -1,2 +1,63 @@
 // Add any specific styles for the tabs page if needed
 
+ion-tab-button {
+  // Remove default background and border changes
+  --background: transparent !important;
+  --background-focused: transparent !important;
+  --background-focused-opacity: 0 !important;
+  --color: transparent !important;
+  --color-focused: transparent !important;
+  --color-selected: transparent !important;
+  --ripple-color: transparent !important;
+  
+  // Remove default padding/margin adjustments
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+}
+
+// More aggressive targeting to remove selected background
+::ng-deep ion-tab-button.tab-selected {
+  --background: transparent !important;
+  --background-focused: transparent !important;
+  --color: transparent !important;
+  --color-selected: transparent !important;
+  background: transparent !important;
+  
+  .button-native {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+}
+
+::ng-deep ion-tab-button {
+  --background: transparent !important;
+  
+  .button-native {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+}
+
+.custom-tab-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    // Default unselected color (--color-smoke)
+    filter: brightness(0) saturate(100%) invert(60%) sepia(5%) saturate(500%) hue-rotate(180deg) brightness(95%) contrast(90%);
+    transition: filter 0.2s ease;
+  }
+}
+
+// Selected state - apply --color-olive
+ion-tab-button.tab-selected .custom-tab-icon img {
+  filter: brightness(0) saturate(100%) invert(32%) sepia(20%) saturate(1000%) hue-rotate(95deg) brightness(95%) contrast(95%);
+}
+

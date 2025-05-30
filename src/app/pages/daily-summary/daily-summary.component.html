@@ -283,7 +283,7 @@
 </ion-content>
 
 <!-- Popover for the action menu -->
-<ion-popover #popover [isOpen]="isPopoverOpen" (didDismiss)="isPopoverOpen = false" [event]="popoverEvent">
+<ion-popover #popover [isOpen]="isPopoverOpen" (didDismiss)="isPopoverOpen = false" [event]="popoverEvent" [showBackdrop]="false">
   <ng-template>
     <app-entry-action-menu 
       [entry]="selectedEntry" 

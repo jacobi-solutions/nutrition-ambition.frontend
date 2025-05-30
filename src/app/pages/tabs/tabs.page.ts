@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 // Import specific standalone components from @ionic/angular/standalone
 import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { chatbubblesOutline, barChartOutline } from 'ionicons/icons';
+import { barChartOutline } from 'ionicons/icons';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -17,7 +17,7 @@ export class TabsPage {
 
   constructor() {
     // Add the icons explicitly to the library
-    addIcons({ chatbubblesOutline, barChartOutline });
+    addIcons({ barChartOutline });
   }
 
 }

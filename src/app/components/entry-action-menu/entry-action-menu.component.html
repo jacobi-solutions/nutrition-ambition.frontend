@@ -1,41 +1,43 @@
 <ion-list>
   <ion-item *ngIf="isFoodEntry()" button (click)="handleAction('remove')" detail="false">
-    <ion-icon name="trash-outline" slot="start" color="danger"></ion-icon>
+    <ion-icon name="trash" slot="start"></ion-icon>
     <ion-label>Remove</ion-label>
   </ion-item>
   
   <ion-item *ngIf="isFoodEntry()" button (click)="handleAction('edit')" detail="false">
-    <ion-icon name="create-outline" slot="start" color="primary"></ion-icon>
+    <ion-icon name="create" slot="start"></ion-icon>
     <ion-label>Edit</ion-label>
   </ion-item>
   
   <ion-item button (click)="handleAction('focusInChat')" detail="false">
-    <ion-icon name="chatbox-outline" slot="start" color="success"></ion-icon>
-    <ion-label>Focus in Chat</ion-label>
+    <div class="custom-icon" slot="start">
+      <img src="assets/icons/chat-icon.svg" alt="Focus in chat" />
+    </div>
+    <ion-label>Focus in chat</ion-label>
   </ion-item>
   
   <ion-item button (click)="handleAction('editGoal')" detail="false">
-    <ion-icon name="navigate-outline" slot="start" color="tertiary"></ion-icon>
-    <ion-label>Create or Modify Goal</ion-label>
+    <ion-icon name="flag" slot="start"></ion-icon>
+    <ion-label>Create or modify goal</ion-label>
   </ion-item>
   
   <ion-item button (click)="handleAction('learn')" detail="false">
-    <ion-icon name="book-outline" slot="start" color="secondary"></ion-icon>
-    <ion-label>Learn About This {{ getEntryTypeName() }}</ion-label>
+    <ion-icon name="school" slot="start"></ion-icon>
+    <ion-label>Learn about this {{ getEntryTypeName() }}</ion-label>
   </ion-item>
   
   <ion-item button (click)="handleAction('trend')" detail="false">
-    <ion-icon name="stats-chart-outline" slot="start" color="primary"></ion-icon>
-    <ion-label>Show Trend</ion-label>
+    <ion-icon name="trending-up" slot="start"></ion-icon>
+    <ion-label>Show trend</ion-label>
   </ion-item>
   
   <ion-item button (click)="handleAction('ignore')" detail="false">
-    <ion-icon name="notifications-off-outline" slot="start" color="medium"></ion-icon>
-    <ion-label>Ignore for Now</ion-label>
+    <ion-icon name="eye-off" slot="start"></ion-icon>
+    <ion-label>Ignore for now</ion-label>
   </ion-item>
   
   <ion-item *ngIf="isFoodEntry()" button (click)="handleAction('suggest')" detail="false">
-    <ion-icon name="flask-outline" slot="start" color="success"></ion-icon>
-    <ion-label>Suggest Foods</ion-label>
+    <ion-icon name="bulb" slot="start"></ion-icon>
+    <ion-label>Suggest foods</ion-label>
   </ion-item>
 </ion-list> 

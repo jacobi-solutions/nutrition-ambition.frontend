@@ -3,14 +3,13 @@ import { CommonModule } from '@angular/common';
 import { IonList, IonItem, IonIcon, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { 
-  trashOutline, 
-  createOutline, 
-  chatboxOutline, 
-  navigateOutline, 
-  bookOutline,
-  statsChartOutline,
-  notificationsOffOutline,
-  flaskOutline
+  trash, 
+  create,
+  flag,
+  school,
+  trendingUp,
+  eyeOff,
+  bulb
 } from 'ionicons/icons';
 import { ToastService } from '../../services/toast.service';
 
@@ -40,14 +39,13 @@ export class EntryActionMenuComponent {
   
   constructor(private toastService: ToastService) {
     addIcons({
-      trashOutline,
-      createOutline,
-      chatboxOutline,
-      navigateOutline,
-      bookOutline,
-      statsChartOutline,
-      notificationsOffOutline,
-      flaskOutline
+      trash,
+      create,
+      flag,
+      school,
+      trendingUp,
+      eyeOff,
+      bulb
     });
   }
   
