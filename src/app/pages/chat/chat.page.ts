@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonToolbar, IonInput, IonButton, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
+import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
 import { addOutline, barcodeOutline, cameraOutline, closeOutline, createOutline, paperPlaneSharp } from 'ionicons/icons';
@@ -17,7 +17,6 @@ import {
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { ChatMessageComponent } from 'src/app/components/chat-message/chat-message.component';
-import { ChatFabComponent } from 'src/app/components/chat-fab/chat-fab.component';
 
 interface DisplayMessage {
   text: string;
@@ -36,16 +35,13 @@ interface DisplayMessage {
     FormsModule,
     IonContent,
     IonFooter,
-    IonToolbar,
-    IonInput,
-    IonButton,
     IonIcon,
     IonSpinner,
+    IonText,
     IonRefresher,
     IonRefresherContent,
     AppHeaderComponent,
     ChatMessageComponent,
-    ChatFabComponent,
     IonFabButton,
     IonFabList,
     IonFab
@@ -70,6 +66,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('content', { static: false }) content: IonContent;
   @ViewChild('messagesContent') messagesContent: ElementRef;
+  @ViewChild('messageInput', { static: false }) messageInput: ElementRef<HTMLTextAreaElement>;
 
   constructor(
     private chatService: ChatService,
@@ -437,6 +434,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.userMessage = '';
     this.isLoading = true;
     
+    // Reset textarea height
+    if (this.messageInput && this.messageInput.nativeElement) {
+      this.messageInput.nativeElement.style.height = 'auto';
+    }
+    
     // Scroll for user's message
     this.scrollToBottom();
     
@@ -497,6 +499,38 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         this.scrollToBottom();
       }
     });
+  }
+  
+  // Handle keydown events for textarea
+  onKeyDown(event: KeyboardEvent) {
+    // Send message on Enter key if Shift is not pressed
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault(); // Prevent new line
+      this.sendMessage();
+    }
+  }
+  
+  // Handle textarea input to auto-grow the height
+  onTextareaInput(event: Event) {
+    const textarea = event.target as HTMLTextAreaElement;
+    this.adjustTextareaHeight(textarea);
+  }
+  
+  // Adjust textarea height based on content
+  private adjustTextareaHeight(textarea: HTMLTextAreaElement) {
+    // Reset height to auto to get the actual scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Calculate new height based on scroll height
+    const minHeight = 16; // 1rem in pixels (approximately)
+    const lineHeight = 19.2; // 1.2 * 16px font size
+    const maxLines = 8; // Maximum of 8 lines
+    const maxHeight = minHeight + (lineHeight * (maxLines - 1));
+    
+    let newHeight = Math.max(minHeight, textarea.scrollHeight);
+    newHeight = Math.min(newHeight, maxHeight);
+    
+    textarea.style.height = newHeight + 'px';
   }
   
   // Handle scroll events

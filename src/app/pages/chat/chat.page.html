@@ -89,13 +89,16 @@
     </ion-fab>
     <!-- Chat input container -->
     <div class="input-group">
-      <ion-input
+      <textarea
+        #messageInput
         class="chat-text-input"
         placeholder="Type your message..."
         [(ngModel)]="userMessage"
-        (keyup.enter)="sendMessage()"
-        [disabled]="isLoading">
-      </ion-input>
+        (keydown)="onKeyDown($event)"
+        (input)="onTextareaInput($event)"
+        [disabled]="isLoading"
+        rows="1">
+      </textarea>
       
     </div>
     <ion-icon 
