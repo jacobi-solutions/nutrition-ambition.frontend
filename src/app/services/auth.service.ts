@@ -1,6 +1,6 @@
 import { inject, Injectable, effect } from '@angular/core';
 import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged, signInAnonymously, linkWithCredential, EmailAuthProvider } from '@angular/fire/auth';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, first } from 'rxjs';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 
 @Injectable({
@@ -29,9 +29,23 @@ export class AuthService {
     });
   }
 
-  isAuthenticated(): boolean {
+  async isAuthenticated(): Promise<boolean> {
+    // Wait for Firebase Auth initialization
+    const isReady = this._authReadySubject.value;
+    if (!isReady) {
+      await new Promise<void>(resolve => {
+        const sub = this.authReady$.subscribe(ready => {
+          if (ready) {
+            resolve();
+            sub.unsubscribe();
+          }
+        });
+      });
+    }
+  
     return !!this.authInstance.currentUser;
   }
+  
 
   async registerWithEmail(email: string, password: string): Promise<void> {
     try {

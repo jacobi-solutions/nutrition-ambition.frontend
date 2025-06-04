@@ -266,7 +266,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     }, 1000);
   }
 
-  loadChatHistory(date: Date) {
+  async loadChatHistory(date: Date) {
     // Reset current messages
     this.messages = [];
     this.isLoadingHistory = true;
@@ -277,7 +277,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     console.log('[DEBUG] Loading chat history for date:', date);
     
     // Check if user is authenticated via Firebase Auth
-    const isAuthenticated = this.authService.isAuthenticated();
+    const isAuthenticated = await this.authService.isAuthenticated();
     
     // For users who aren't authenticated yet, just show the static welcome message
     // Don't make any backend calls until they're authenticated
