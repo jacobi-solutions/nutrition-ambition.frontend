@@ -33,7 +33,6 @@ import {
   chevronForwardCircleOutline,
   personCircle
 } from 'ionicons/icons';
-import { AccountInterceptor } from './app/http-interceptors/account.interceptor';
 
 addIcons({
   'log-out-outline': logOutOutline,
@@ -87,10 +86,10 @@ bootstrapApplication(AppComponent, {
     provideIonicAngular(),
     provideRouter(routes, withPreloading(PreloadAllModules)),
 
-    // ✅ Initialize Firebase App
+    // Initialize Firebase App
     provideFirebaseApp(() => initializeApp(environment.firebase)),
 
-    // ✅ Initialize Firebase Auth with Persistence (pass app instance)
+    // Initialize Firebase Auth with Persistence (pass app instance)
     provideAuth(() => {
       const app = getApp(); // Get Firebase app instance
       return initializeAuth(app, {
@@ -98,16 +97,15 @@ bootstrapApplication(AppComponent, {
       });
     }),
 
-    // ✅ Provide HttpClient with AuthInterceptor
+    // Provide HttpClient with AuthInterceptor
     provideHttpClient(withInterceptors([
-      AuthInterceptor,
-      AccountInterceptor
+      AuthInterceptor
     ])),
 
-    // ✅ Provide NSwag API Service
+    // Provide NSwag API Service
     NutritionAmbitionApiService,
 
-    // ✅ Provide API_BASE_URL using factory function
+    // Provide API_BASE_URL using factory function
     { provide: API_BASE_URL, useFactory: getAPIBaseUrl },
   ],
 }).catch(err => console.error(err));

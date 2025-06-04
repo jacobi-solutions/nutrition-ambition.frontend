@@ -5,7 +5,6 @@ import {
   GetDetailedSummaryResponse,
   NutritionAmbitionApiService
 } from './nutrition-ambition-api.service';
-import { AccountsService } from './accounts.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,8 +13,7 @@ export class DailySummaryService {
   private detailedSummaryCache: Map<string, Observable<GetDetailedSummaryResponse>> = new Map();
   
   constructor(
-    private apiService: NutritionAmbitionApiService,
-    private accountsService: AccountsService
+    private apiService: NutritionAmbitionApiService
   ) {}
 
   /**

@@ -1,7 +1,7 @@
 import { inject, Injectable, effect } from '@angular/core';
-import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged } from '@angular/fire/auth';
+import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged, signInAnonymously, linkWithCredential, EmailAuthProvider } from '@angular/fire/auth';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { AccountRequest, NutritionAmbitionApiService, Response } from './nutrition-ambition-api.service';
+import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -34,27 +34,49 @@ export class AuthService {
   }
 
   async registerWithEmail(email: string, password: string): Promise<void> {
-    const userCredential = await createUserWithEmailAndPassword(this.authInstance, email, password);
-    const token = await userCredential.user.getIdToken();
-
-    const request = new AccountRequest({
-      username: email,
-      email: email,
-    });
-
-    return new Promise<void>((resolve, reject) => {
-      this._apiService.registerUser(request).subscribe((response: Response) => {
-        if (response.isSuccess) {
-          resolve();
-        } else {
-          reject(response.errors);
-        }
-      });
-    });
+    try {
+      const currentUser = this.authInstance.currentUser;
+      
+      // Check if we have an anonymous user to upgrade
+      if (currentUser && currentUser.isAnonymous) {
+        console.log('Upgrading anonymous user to email/password account');
+        
+        // Create EmailAuthCredential
+        const credential = EmailAuthProvider.credential(email, password);
+        
+        // Link the anonymous account with the email credential
+        await linkWithCredential(currentUser, credential);
+        console.log('Anonymous account successfully upgraded to email/password account');
+      } else {
+        // No anonymous user, create a new account
+        console.log('Creating new email/password account');
+        await createUserWithEmailAndPassword(this.authInstance, email, password);
+        console.log('Email/password account created successfully');
+      }
+      
+      // Backend registration no longer needed as it will happen automatically
+      // via the ID token in subsequent API calls
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error during email registration:', error);
+      return Promise.reject(error);
+    }
   }
 
   async getIdToken(): Promise<string | null> {
-    const user = this.authInstance.currentUser;
+    let user = this.authInstance.currentUser;
+    
+    if (!user) {
+      try {
+        const credential = await signInAnonymously(this.authInstance);
+        user = credential.user;
+      } catch (error) {
+        console.error('Anonymous sign-in failed:', error);
+        return null;
+      }
+    }
+    
     return user ? await getIdToken(user) : null;
   }
 

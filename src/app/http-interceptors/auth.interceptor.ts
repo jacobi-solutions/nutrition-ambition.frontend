@@ -8,23 +8,26 @@ import { environment } from 'src/environments/environment';
 
 export const AuthInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn): Observable<HttpEvent<any>> => {
   const authService = inject(AuthService);
-  const backendUrl = environment.backendApiUrl; // ✅ Change to match your backend URL
+  const backendUrl = environment.backendApiUrl;
 
-  // ✅ Only add token if request is to the backend
+  // Only intercept requests to our backend API
   if (!req.url.startsWith(backendUrl)) {
     return next(req);
   }
 
+  // Get ID token from Firebase Auth (will lazily sign in anonymously if needed)
   return from(authService.getIdToken()).pipe(
     switchMap(token => {
       if (token) {
-        const cloned = req.clone({
+        // Clone the request and add the Authorization header with the token
+        const authorizedRequest = req.clone({
           setHeaders: {
             Authorization: `Bearer ${token}`
           }
         });
-        return next(cloned);
+        return next(authorizedRequest);
       }
+      // If no token (should rarely happen), proceed without authorization
       return next(req);
     })
   );

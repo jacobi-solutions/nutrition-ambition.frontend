@@ -35,6 +35,7 @@ export class SignupPage {
     }
 
     try {
+      //todo: implement this
       await this.authService.registerWithEmail(this.email, this.password);
       this.router.navigate(['/home']);
     } catch (error) {

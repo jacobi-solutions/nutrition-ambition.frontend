@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, map, catchError, throwError, of, Subject, switchMap, BehaviorSubject, finalize } from 'rxjs';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
-import { AccountsService } from './accounts.service';
+import { AuthService } from './auth.service';
 import { 
   GetChatMessagesRequest,
   ClearChatMessagesRequest,
@@ -32,7 +32,7 @@ export class ChatService {
   
   constructor(
     private apiService: NutritionAmbitionApiService,
-    private accountsService: AccountsService
+    private authService: AuthService
   ) {}
 
   getFirstTimeWelcomeMessage(): string {
@@ -40,24 +40,20 @@ export class ChatService {
   }
 
   // Check if the user has daily goals and prompt them if not
-  checkAndPromptForDailyGoal(accountId: string, requireInteraction: boolean = true): Observable<BotMessageResponse> {
+  checkAndPromptForDailyGoal(requireInteraction: boolean = true): Observable<BotMessageResponse> {
     console.log('[DEBUG] Checking if user has daily goals set');
     
-    // Get accountId directly from service to ensure we have the latest value
-    const currentAccountId = this.accountsService.getAccountId();
-    
-    // If requireInteraction is true and there's no accountId, return empty success response
-    // This prevents backend calls from being made for users who haven't interacted yet
-    if (requireInteraction && !currentAccountId) {
-      console.log('[DEBUG] Skipping daily goal check - no accountId and interaction required');
+    // Check if user is authenticated
+    if (requireInteraction && !this.authService.isAuthenticated()) {
+      console.log('[DEBUG] Skipping daily goal check - not authenticated and interaction required');
       return of(new BotMessageResponse({
         isSuccess: true,
         message: undefined
       }));
     }
     
-    // If no account ID, handle anonymously
-    if (!accountId) {
+    // If not authenticated, handle anonymously
+    if (!this.authService.isAuthenticated()) {
       return this.handleAnonymousGoalPrompt();
     }
     
@@ -71,8 +67,6 @@ export class ChatService {
           const botResponse = new BotMessageResponse();
           botResponse.isSuccess = true;
           botResponse.message = "I noticed you haven't set up your nutrition goals yet. Setting personalized goals based on your age, sex, height, and weight can help you track your nutrition more effectively. Would you like to set them up now?";
-          botResponse.accountId = accountId;
-          
           
           return botResponse;
         } else {
@@ -93,12 +87,12 @@ export class ChatService {
     );
   }
   
-  // Handle anonymous users trying to set goals
+  // Handle users who need to sign in before setting goals
   private handleAnonymousGoalPrompt(): Observable<BotMessageResponse> {
     const message = "Setting personalized nutrition goals would help you track your diet more effectively. You'll need to create an account first to save your goals. Tap here to sign up.";
-    console.log('[DEBUG] Anonymous user attempting to set goals, prompting sign up');
+    console.log('[DEBUG] User needs to sign in to set goals, prompting sign up');
     
-    // Create a response with the anonymous message
+    // Create a response with the sign-up prompt message
     const response = new BotMessageResponse();
     response.isSuccess = true;
     response.message = message;
@@ -132,7 +126,6 @@ export class ChatService {
     
     return this.apiService.runResponsesConversation(request).pipe(
       map(response => {
-        // Persist accountId if it's returned in the response
         console.log('[DEBUG] Assistant response received');
         
         // No need to map response properties as the API now returns BotMessageResponse directly

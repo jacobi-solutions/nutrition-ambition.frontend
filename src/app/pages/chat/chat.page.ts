@@ -5,7 +5,6 @@ import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSp
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
 import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlaneSharp } from 'ionicons/icons';
-import { AccountsService } from '../../services/accounts.service';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { DateService } from '../../services/date.service';
@@ -70,7 +69,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private chatService: ChatService,
-    private accountService: AccountsService,
     private authService: AuthService,
     private dateService: DateService,
     private router: Router
@@ -153,14 +151,13 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       return; // Avoid duplicate prompts
     }
 
-    const accountId = this.accountService.getAccountId();
-    if (!accountId) {
-      return; // Only prompt logged in users
+    if (!this.authService.isAuthenticated()) {
+      return; // Only prompt authenticated users
     }
     
     console.log('[DEBUG] Checking if user needs daily goal prompt');
     // Pass requireInteraction=true to prevent backend calls for users who haven't interacted
-    this.chatService.checkAndPromptForDailyGoal(accountId, true).subscribe({
+    this.chatService.checkAndPromptForDailyGoal(true).subscribe({
       next: (response: BotMessageResponse) => {
         // If the response has a message, it means we should prompt the user
         if (response.isSuccess && response.message) {
@@ -279,14 +276,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     
     console.log('[DEBUG] Loading chat history for date:', date);
     
-    // Check if we have an account ID (either logged in user or anonymous user with local storage ID)
-    const accountId = this.accountService.getAccountId();
+    // Check if user is authenticated via Firebase Auth
+    const isAuthenticated = this.authService.isAuthenticated();
     
-    // For completely new users with no accountId, just show the static welcome message
-    // Don't make any backend calls until they interact
-    if (!accountId) {
+    // For users who aren't authenticated yet, just show the static welcome message
+    // Don't make any backend calls until they're authenticated
+    if (!isAuthenticated) {
       this.isLoadingHistory = false;
-      console.log('[DEBUG] No account ID, showing welcome message in UI only without backend calls');
+      console.log('[DEBUG] Not authenticated, showing welcome message in UI only without backend calls');
       const welcomeMessage = this.chatService.getFirstTimeWelcomeMessage();
       
       // Add the welcome message to UI only - don't log to backend
@@ -303,10 +300,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // If we have an accountId (either logged in or anonymous), load chat history
-    console.log('[DEBUG] Account ID found, loading chat history:', accountId);
+    // If user is authenticated, load chat history
+    console.log('[DEBUG] User is authenticated, loading chat history');
     
-    // Get message history for the selected date
+    // Get message history for the selected date - auth token is added by AuthInterceptor
     this.chatService.getMessageHistoryByDate(date)
       .pipe(
         catchError(error => {
@@ -321,7 +318,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           // (only for logged-in users with an email)
           if (this.dateService.isToday(date) && this.userEmail && !this.hasPromptedForGoal) {
             // The goal check will only proceed for users who have explicitly logged in
-            // requireInteraction=true is passed by default to prevent silent account creation
             this.promptForDailyGoalIfNeeded();
           }
           
@@ -442,7 +438,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     // Scroll for user's message
     this.scrollToBottom();
     
-    // Use the sendMessage method - for new users this will create an account and start conversation
+    // Send the message - authentication token will be added by the AuthInterceptor
     console.log('[DEBUG] Sending message to backend:', sentMessage);
     this.chatService.sendMessage(sentMessage).subscribe({
       next: (response: BotMessageResponse) => {
@@ -461,13 +457,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           
           // Scroll for bot's message response
           this.scrollToBottom();
-          
-          // If this is the first message from a completely new user, the backend may have
-          // created a new anonymous account - check if we got an accountId back
-          if (response.accountId) {
-            console.log('[DEBUG] Anonymous account created with ID:', response.accountId);
-            // The accountId will be automatically persisted by the account service
-          }
           
           // Check for profile and goals creation confirmation in the response
           if (response.message.includes("created your personalized nutrition goals") || 

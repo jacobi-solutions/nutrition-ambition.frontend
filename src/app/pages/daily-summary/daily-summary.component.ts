@@ -35,7 +35,6 @@ import {
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { DailySummaryService } from 'src/app/services/daily-summary.service';
-import { AccountsService } from 'src/app/services/accounts.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { DateService } from 'src/app/services/date.service';
 import { MacronutrientsSummary } from '../../services/nutrition-ambition-api.service';
@@ -120,7 +119,6 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   
   // Use the inject function for dependency injection in standalone components
   private dailySummaryService = inject(DailySummaryService);
-  private accountsService = inject(AccountsService);
   private authService = inject(AuthService);
   private dateService = inject(DateService);
   private chatService = inject(ChatService);

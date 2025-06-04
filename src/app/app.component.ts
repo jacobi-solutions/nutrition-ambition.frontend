@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { RouterOutlet } from '@angular/router';
-import { AccountsService } from './services/accounts.service';
 
 @Component({
   selector: 'app-root',
@@ -14,13 +13,10 @@ import { AccountsService } from './services/accounts.service';
 export class AppComponent implements OnInit {
   title = 'Nutrition Ambition';
 
-  constructor(private accountsService: AccountsService) {}
+  constructor() {}
 
   async ngOnInit() {
     console.log('[AppComponent] Initializing app');
-    
-    // Initialize anonymous account if needed
-    // This ensures we only try to create an anonymous account once per app initialization
-    await this.accountsService.initializeAnonymousAccount();
+    // Anonymous authentication is now handled lazily via the auth service when needed
   }
 }
