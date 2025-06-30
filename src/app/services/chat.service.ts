@@ -9,8 +9,6 @@ import {
   GetChatMessagesResponse,
   ClearChatMessagesResponse,
   RunChatRequest,
-  GetDailyTargetRequest,
-  GetDailyTargetResponse,
   FocusInChatRequest,
   LearnMoreAboutRequest
 } from './nutrition-ambition-api.service';
@@ -37,67 +35,6 @@ export class ChatService {
 
   getFirstTimeWelcomeMessage(): string {
     return "Hi there! I'm your nutrition assistant — here to help you track your meals, understand your nutrients, and stay on track with your goals. You can start right away by telling me what you ate today — no setup needed! We can also talk about your health goals whenever you're ready. 🍎🥦";
-  }
-
-  // Check if the user has daily goals and prompt them if not
-  checkAndPromptForDailyGoal(requireInteraction: boolean = true): Observable<BotMessageResponse> {
-    console.log('[DEBUG] Checking if user has daily goals set');
-    
-    // Check if user is authenticated
-    if (requireInteraction && !this.authService.isAuthenticated()) {
-      console.log('[DEBUG] Skipping daily goal check - not authenticated and interaction required');
-      return of(new BotMessageResponse({
-        isSuccess: true,
-        message: undefined
-      }));
-    }
-    
-    // If not authenticated, handle anonymously
-    if (!this.authService.isAuthenticated()) {
-      return this.handleAnonymousGoalPrompt();
-    }
-    
-    const request = new GetDailyTargetRequest({});
-    
-    return this.apiService.getDailyTarget(request).pipe(
-      map(response => {
-        if (!response.dailyTarget) {
-          console.log('[DEBUG] No daily goal found, prompting user to set one');
-          // Create a bot message response with the improved prompt
-          const botResponse = new BotMessageResponse();
-          botResponse.isSuccess = true;
-          botResponse.message = "I noticed you haven't set up your nutrition goals yet. Setting personalized goals based on your age, sex, height, and weight can help you track your nutrition more effectively. Would you like to set them up now?";
-          
-          return botResponse;
-        } else {
-          // User already has goals, just return an empty successful response
-          console.log('[DEBUG] User already has daily goals set');
-          const emptyResponse = new BotMessageResponse();
-          emptyResponse.isSuccess = true;
-          return emptyResponse;
-        }
-      }),
-      catchError(error => {
-        console.error('Error checking daily goals:', error);
-        return of(new BotMessageResponse({
-          isSuccess: false,
-          message: 'Unable to check your nutrition goals right now.'
-        }));
-      })
-    );
-  }
-  
-  // Handle users who need to sign in before setting goals
-  private handleAnonymousGoalPrompt(): Observable<BotMessageResponse> {
-    const message = "Setting personalized nutrition goals would help you track your diet more effectively. You'll need to create an account first to save your goals. Tap here to sign up.";
-    console.log('[DEBUG] User needs to sign in to set goals, prompting sign up');
-    
-    // Create a response with the sign-up prompt message
-    const response = new BotMessageResponse();
-    response.isSuccess = true;
-    response.message = message;
-    
-    return of(response);
   }
 
   // Send message to the assistant
@@ -199,33 +136,24 @@ export class ChatService {
           // Emit the response so the chat page can update
           this.focusInChatResponseSubject.next(response);
           
-          // Notify subscribers that a meal was logged if applicable
-          if (response.loggedMeal) {
-            this.mealLogged$.next();
-          }
+          return response;
         }
         
         return response;
       }),
       catchError(error => {
-        // Note: Context note is now cleared by the component on error
-        console.error('Error in focus-in-chat:', error);
-        return of(new BotMessageResponse({
-          isSuccess: false,
-          message: "Sorry, I'm having trouble focusing on that topic right now. Please try again later."
-        }));
+        console.error('Error focusing in chat:', error);
+        return throwError(() => error);
       })
     );
   }
   
-  // Learn more about a specific topic
+  // Learn more about a specific topic in chat
   learnMoreAbout(topic: string, date: Date): Observable<BotMessageResponse> {
-    this.setContextNote(`Learning more about: ${topic}`);
-    
     // Create the request to the backend
     const request = new LearnMoreAboutRequest({
-      topic,
-      date
+      topic: topic,
+      date: date
     });
     
     // Call the API and handle the response
@@ -233,33 +161,34 @@ export class ChatService {
       map(response => {
         // Emit a new message received event to indicate the response is complete
         if (response.isSuccess && response.message) {
+          // Add the bot's response message to the chat UI
+          const botMessage: any = {
+            text: response.message,
+            isUser: false,
+            isTool: false,
+            timestamp: new Date()
+          };
+          
           // Emit the response so the chat page can update
           this.focusInChatResponseSubject.next(response);
           
-          // Notify subscribers that a meal was logged if applicable
-          if (response.loggedMeal) {
-            this.mealLogged$.next();
-          }
+          return response;
         }
         
         return response;
       }),
       catchError(error => {
-        console.error('Error in learn-more-about:', error);
-        return of(new BotMessageResponse({
-          isSuccess: false,
-          message: "Sorry, I'm having trouble providing more information about that topic right now. Please try again later."
-        }));
-      }),
-      finalize(() => this.clearContextNote())
+        console.error('Error learning more about topic:', error);
+        return throwError(() => error);
+      })
     );
   }
-
-  // Add methods to manage context note
+  
+  // Set a context note that will be shown in the chat UI
   public setContextNote(note: string) {
     this.contextNoteSubject.next(note);
   }
-
+  
   public clearContextNote() {
     this.contextNoteSubject.next(null);
   }

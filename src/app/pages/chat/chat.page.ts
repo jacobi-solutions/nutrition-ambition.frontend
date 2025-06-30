@@ -56,7 +56,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   private dateSubscription: Subscription;
   private contextNoteSubscription: Subscription;
   private focusInChatSubscription: Subscription;
-  private hasPromptedForGoal: boolean = false;
+
   private hasInitialMessage: boolean = false;
 
   @ViewChild('content', { static: false }) content: IonContent;
@@ -132,49 +132,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.authService.userEmail$.subscribe(email => {
       this.userEmail = email;
       
-      // If a user is logged in, check if they need a daily goal prompt
-      if (email && this.dateService.isToday(new Date(this.selectedDate)) && !this.hasPromptedForGoal) {
-        // Only prompt for goals if the user is explicitly logged in (has email)
-        // This prevents silent account creation
-        this.promptForDailyGoalIfNeeded();
-      }
+
     });
   }
   
-  // Check if the user needs to set up daily goals
-  private promptForDailyGoalIfNeeded(): void {
-    if (this.hasPromptedForGoal) {
-      return; // Avoid duplicate prompts
-    }
 
-    if (!this.authService.isAuthenticated()) {
-      return; // Only prompt authenticated users
-    }
-    
-    console.log('[DEBUG] Checking if user needs daily goal prompt');
-    // Pass requireInteraction=true to prevent backend calls for users who haven't interacted
-    this.chatService.checkAndPromptForDailyGoal(true).subscribe({
-      next: (response: BotMessageResponse) => {
-        // If the response has a message, it means we should prompt the user
-        if (response.isSuccess && response.message) {
-          console.log('[DEBUG] Adding daily goal prompt to chat');
-          
-          // Add the prompt to the UI
-          this.messages.push({
-            text: response.message,
-            isUser: false,
-            timestamp: new Date()
-          });
-          
-          this.scrollToBottom();
-          this.hasPromptedForGoal = true;
-        }
-      },
-      error: (error) => {
-        console.error('Error checking for daily goals:', error);
-      }
-    });
-  }
   
   ngOnDestroy() {
     // Clean up subscriptions
@@ -267,7 +229,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.messages = [];
     this.isLoadingHistory = true;
     this.error = null;
-    this.hasPromptedForGoal = false; // Reset prompt flag when changing dates
+
     this.hasInitialMessage = false;  // Reset initial message flag
     
     console.log('[DEBUG] Loading chat history for date:', date);
@@ -309,13 +271,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         }),
         finalize(() => {
           this.isLoadingHistory = false;
-          
-          // After loading history for today, check if we need to prompt for goals
-          // (only for logged-in users with an email)
-          if (this.dateService.isToday(date) && this.userEmail && !this.hasPromptedForGoal) {
-            // The goal check will only proceed for users who have explicitly logged in
-            this.promptForDailyGoalIfNeeded();
-          }
           
           // Show the static welcome message if there are no messages and it's today's date
           if (this.messages.length === 0 && this.dateService.isToday(date) && !this.hasInitialMessage) {
@@ -370,12 +325,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
               this.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
             }
             
-            // Check if any messages already contain a goal prompt
-            this.hasPromptedForGoal = this.messages.some(msg => 
-              !msg.isUser && 
-              msg.text.includes("set up personalized nutrition goals") && 
-              msg.text.includes("age, sex, height, and weight")
-            );
+
             
             this.hasInitialMessage = true;
             
@@ -454,21 +404,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           // Scroll for bot's message response
           this.scrollToBottom();
           
-          // Check for profile and goals creation confirmation in the response
-          if (response.message.includes("created your personalized nutrition goals") || 
-              response.message.includes("Daily Calories") ||
-              response.message.includes("I've set up your profile")) {
-            console.log('[DEBUG] Profile and goals created, marking as prompted');
-            this.hasPromptedForGoal = true;
-          }
-          
-          // If this is a goals-related message, make sure we don't prompt again
-          if (response.message.includes("nutrition goals") || 
-              response.message.includes("health goals") ||
-              response.message.includes("How old are you") ||
-              response.message.includes("What is your biological sex")) {
-            this.hasPromptedForGoal = true;
-          }
+
         }
       },
       error: (error: any) => {

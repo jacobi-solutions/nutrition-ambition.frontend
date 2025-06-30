@@ -31,7 +31,9 @@ import {
   NutrientBreakdown, 
   FoodBreakdown,
   NutrientContribution,
-  FoodContribution
+  FoodContribution,
+  DailyTarget,
+  NutrientTarget
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { DailySummaryService } from 'src/app/services/daily-summary.service';
@@ -105,17 +107,6 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   isPopoverOpen = false;
   selectedEntry: any = null;
   popoverEvent: any = null;
-  
-  // List of recognized macronutrient names (case-insensitive)
-  /* private readonly macronutrientNames: string[] = [
-    'protein', 'proteins',
-    'carbohydrate', 'carbohydrates', 'carbs', 'carb',
-    'fat', 'fats',
-    'fiber', 
-    'sugar',
-    'calories', 'calorie',
-    'saturated fat', 'unsaturated fat', 'trans fat'
-  ]; */
   
   // Use the inject function for dependency injection in standalone components
   private dailySummaryService = inject(DailySummaryService);
@@ -469,27 +460,66 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedFood = null;
   }
 
-  // Get macronutrients list from detailed data
+  // Get macronutrients list from detailed data or create zero values with targets
   get macronutrientList(): NutrientBreakdown[] {
-    if (!this.detailedData?.nutrients) return [];
-
-    const targetOrder = ['Calories', 'Protein', 'Fat', 'Carbohydrates' ];
-
-    return targetOrder
-      .map(name => this.detailedData?.nutrients?.find(n => n.name?.toLowerCase() === name.toLowerCase()))
-      .filter((n): n is NutrientBreakdown => !!n);
+    const targetOrder = ['Calories', 'Protein', 'Fat', 'Carbohydrates'];
+    
+    if (this.detailedData?.nutrients && this.detailedData.nutrients.length > 0) {
+      // If we have actual nutrient data, use it
+      return targetOrder
+        .map(name => this.detailedData?.nutrients?.find(n => n.name?.toLowerCase() === name.toLowerCase()))
+        .filter((n): n is NutrientBreakdown => !!n);
+    } else {
+      // If no nutrient data, create zero values with target info
+      return this.createZeroNutrientList(targetOrder);
+    }
   }
 
-
-  // Get micronutrients list from detailed data
+  // Get micronutrients list from detailed data or create zero values with targets
   get micronutrientList(): NutrientBreakdown[] {
-    if (!this.detailedData?.nutrients) {
-      return [];
+    if (this.detailedData?.nutrients && this.detailedData.nutrients.length > 0) {
+      return this.detailedData.nutrients.filter(nutrient => 
+        !this.isMacronutrient(nutrient.name || '')
+      );
+    } else {
+      // If no nutrient data, create zero values for common micronutrients
+      const commonMicronutrients = ['Fiber', 'Sugar', 'Sodium', 'Vitamin C', 'Calcium', 'Iron'];
+      return this.createZeroNutrientList(commonMicronutrients);
+    }
+  }
+
+  // Create zero nutrient entries with target information
+  private createZeroNutrientList(nutrientNames: string[]): NutrientBreakdown[] {
+    return nutrientNames.map(name => {
+      const target = this.findNutrientTarget(name);
+      return new NutrientBreakdown({
+        name: name,
+        totalAmount: 0,
+        unit: target?.unit || this.getDefaultUnit(name),
+        foods: []
+      });
+    });
+  }
+
+  // Find nutrient target from daily target data in detailed summary
+  private findNutrientTarget(nutrientName: string): NutrientTarget | undefined {
+    if (!this.detailedData?.dailyTarget?.nutrientTargets) {
+      return undefined;
     }
     
-    return this.detailedData.nutrients.filter(nutrient => 
-      !this.isMacronutrient(nutrient.name || '')
+    return this.detailedData.dailyTarget.nutrientTargets.find(
+      target => target.nutrientName?.toLowerCase() === nutrientName.toLowerCase()
     );
+  }
+
+  // Get default unit for a nutrient
+  private getDefaultUnit(nutrientName: string): string {
+    const name = nutrientName.toLowerCase();
+    if (name === 'calories') return 'kcal';
+    if (['protein', 'fat', 'carbohydrates', 'fiber', 'sugar'].includes(name)) return 'g';
+    if (['sodium', 'potassium'].includes(name)) return 'mg';
+    if (name.includes('vitamin') || name.includes('calcium') || name.includes('iron')) return 'mg';
+    return 'mg';
   }
   
   // Helper to determine if a nutrient is a macronutrient
@@ -516,13 +546,15 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
         }),
         catchError(error => {
           console.error('Error loading detailed summary:', error);
-          this.detailedError = 'Failed to load detailed nutrition data. Please try again.';
+          this.detailedError = 'Failed to load nutrition data. Please try again.';
           return of(null);
         })
       )
       .subscribe(response => {
         if (response) {
-          // Check if the response has no entries but has a specific error message
+          this.detailedData = response;
+          
+          // Check if the summary response has no entries but has a specific error message
           if (!response.isSuccess && 
               response.errors && 
               response.errors.length > 0 && 
@@ -535,30 +567,112 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
             response.errors = []; // Clear errors
             this.detailedData = response;
           } else {
-            this.detailedData = response;
             console.log('[DailySummaryComponent] Detailed summary loaded:', response);
-            
-            // Diagnostic logging for protein values
-            
-           
-          
-            
-            // Log all foods and their nutrients
-            if (response.foods) {
-              
-              response.foods.forEach(food => {
-                
-                if (food.nutrients) {
-                  const proteinEntry = food.nutrients.find(n => n.name === 'Protein');
-                  
-                }
-              });
-            }
           }
         }
       });
   }
-  
+
+  // Format consumed amount vs target for nutrients
+  formatConsumedTarget(nutrient: NutrientBreakdown): string {
+    const name = nutrient.name || '';
+    
+    // Actual consumed amount (zero if none)
+    let consumed = 0;
+    if (nutrient.totalAmount != null) {
+      consumed = nutrient.totalAmount;
+    }
+    
+    // Get target value and unit
+    const target = this.findNutrientTarget(name);
+    let targetValue: number | null = null;
+    let targetUnit = nutrient.unit || 'g';
+    
+    if (target) {
+      targetUnit = target.unit || targetUnit;
+      
+      if (target.percentageOfCalories && this.detailedData?.dailyTarget?.baseCalories) {
+        // Percentage-based goal (usually macros)
+        const calPercent = target.percentageOfCalories;
+        const baseCals = this.detailedData.dailyTarget.baseCalories;
+        const kcalPerUnit = name.toLowerCase().includes('fat') ? 9 : 4;
+        targetValue = (baseCals * calPercent / 100) / kcalPerUnit;
+      } else if (target.maxValue != null) {
+        targetValue = target.maxValue;
+      } else if (target.minValue != null) {
+        targetValue = target.minValue;
+      }
+    }
+    
+    // Format consumed part
+    const consumedStr = name.toLowerCase() === 'calories' 
+      ? `${consumed.toFixed(0)} kcal`
+      : `${consumed.toFixed(1)} ${targetUnit}`;
+    
+    // Format target part
+    let targetStr = '--';
+    if (targetValue != null) {
+      targetStr = targetValue.toFixed(targetValue >= 10 ? 0 : 1);
+      if (targetStr.endsWith('.0')) {
+        targetStr = targetStr.slice(0, -2);
+      }
+    }
+    
+    const targetUnitStr = name.toLowerCase() === 'calories' ? 'kcal' : targetUnit;
+    return `${consumedStr} / ${targetStr} ${targetUnitStr}`;
+  }
+
+  // Format nutrient contribution with target for food drilldown
+  formatContributionWithTarget(nutrient: NutrientContribution): string {
+    const name = nutrient.name || '';
+    
+    // Amount contributed by this food
+    const amount = nutrient.amount || 0;
+    const unit = nutrient.unit || 'g';
+    
+    // Get target value
+    const target = this.findNutrientTarget(name);
+    let targetValue: number | null = null;
+    let targetUnit = unit;
+    
+    if (target) {
+      targetUnit = target.unit || targetUnit;
+      
+      if (target.percentageOfCalories && this.detailedData?.dailyTarget?.baseCalories) {
+        const calPercent = target.percentageOfCalories;
+        const baseCals = this.detailedData.dailyTarget.baseCalories;
+        const kcalPerUnit = name.toLowerCase().includes('fat') ? 9 : 4;
+        targetValue = (baseCals * calPercent / 100) / kcalPerUnit;
+      } else if (target.maxValue != null) {
+        targetValue = target.maxValue;
+      } else if (target.minValue != null) {
+        targetValue = target.minValue;
+      }
+    }
+    
+    // Format contribution part
+    const contributionStr = name.toLowerCase() === 'calories' 
+      ? `${amount.toFixed(0)} kcal`
+      : `${amount.toFixed(1)} ${targetUnit}`;
+    
+    // Format target part
+    let targetStr = '--';
+    if (targetValue != null) {
+      targetStr = targetValue.toFixed(targetValue >= 10 ? 0 : 1);
+      if (targetStr.endsWith('.0')) {
+        targetStr = targetStr.slice(0, -2);
+      }
+    }
+    
+    const targetUnitStr = name.toLowerCase() === 'calories' ? 'kcal' : targetUnit;
+    return `${contributionStr} / ${targetStr} ${targetUnitStr}`;
+  }
+
+  // Check if we have any food entries for the current date
+  get hasFoodEntries(): boolean {
+    return this.detailedData?.foods && this.detailedData.foods.length > 0 || false;
+  }
+
   // Helper method to get micronutrients as an array for display from summary data
   getSummaryMicronutrients(): { name: string; value: number }[] {
     if (!this.detailedData?.nutrients) {

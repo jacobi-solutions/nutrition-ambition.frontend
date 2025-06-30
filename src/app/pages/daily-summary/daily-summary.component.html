@@ -28,18 +28,8 @@
       </div>
     </div>
 
-    <div *ngIf="!detailedLoading && !detailedError && (!detailedData || (detailedData.summaryTotals?.totalCalories === 0))" class="empty-state">
-      <ion-text color="medium">
-        <div class="empty-icon">
-          <ion-icon name="nutrition-outline" size="large"></ion-icon>
-        </div>
-        <h2>Nothing logged yet</h2>
-        <p>No meals or foods have been logged for this date.</p>
-        <p>Head over to the Chat tab to start tracking your nutrition!</p>
-      </ion-text>
-    </div>
-
-    <div *ngIf="!detailedLoading && !detailedError && detailedData && detailedData.summaryTotals?.totalCalories !== 0">
+    <!-- Always show the segment and content when not loading and no error -->
+    <div *ngIf="!detailedLoading && !detailedError">
       <ion-segment [(ngModel)]="viewMode" (ionChange)="segmentChanged($event)" class="segment-toggle">
         <ion-segment-button value="nutrients">
           <ion-label>Nutrients</ion-label>
@@ -50,7 +40,7 @@
       </ion-segment>
 
       <!-- Nutrients View -->
-      <div *ngIf="viewMode === 'nutrients' && detailedData?.nutrients && !detailedLoading" class="breakdown-container">
+      <div *ngIf="viewMode === 'nutrients'" class="breakdown-container">
         <!-- Macronutrients Card -->
         <ion-card>
           <ion-card-header>
@@ -66,7 +56,7 @@
                   <div class="breakdown-item">
                     <div class="primary-info">
                       <span class="name">{{ nutrient.name }}</span>
-                      <span class="amount">{{ formatAmountWithUnit(nutrient.totalAmount || 0, nutrient.unit || '', nutrient.name) }}</span>
+                      <span class="amount">{{ formatConsumedTarget(nutrient) }}</span>
                     </div>
                   </div>
                   
@@ -97,7 +87,7 @@
                 <ng-container *ngIf="selectedNutrient && selectedNutrient.name === nutrient.name">
                   <ion-item lines="none" class="drilldown-row nutrient-drilldown">
                     <div class="drilldown-content">
-                      <ng-container *ngIf="selectedNutrient.foods">
+                      <ng-container *ngIf="selectedNutrient.foods && selectedNutrient.foods.length > 0">
                         <ng-container *ngFor="let food of selectedNutrient.foods; trackBy: trackById">
                           <div class="detail-item clickable-food" (click)="food.name && navigateToFood(food.name)">
                             <span class="detail-name">
@@ -107,6 +97,9 @@
                           </div>
                         </ng-container>
                       </ng-container>
+                      <div *ngIf="!selectedNutrient.foods || selectedNutrient.foods.length === 0" class="empty-detail-message">
+                        <span>No foods logged for this nutrient yet.</span>
+                      </div>
                     </div>
                   </ion-item>
                 </ng-container>
@@ -130,7 +123,7 @@
                   <div class="breakdown-item">
                     <div class="primary-info">
                       <span class="name">{{ nutrient.name }}</span>
-                      <span class="amount">{{ formatAmountWithUnit(nutrient.totalAmount || 0, nutrient.unit || '', nutrient.name) }}</span>
+                      <span class="amount">{{ formatConsumedTarget(nutrient) }}</span>
                     </div>
                   </div>
                   
@@ -161,7 +154,7 @@
                 <ng-container *ngIf="selectedNutrient && selectedNutrient.name === nutrient.name">
                   <ion-item lines="none" class="drilldown-row nutrient-drilldown">
                     <div class="drilldown-content">
-                      <ng-container *ngIf="selectedNutrient.foods">
+                      <ng-container *ngIf="selectedNutrient.foods && selectedNutrient.foods.length > 0">
                         <ng-container *ngFor="let food of selectedNutrient.foods; trackBy: trackById">
                           <div class="detail-item clickable-food" (click)="food.name && navigateToFood(food.name)">
                             <span class="detail-name">
@@ -171,6 +164,9 @@
                           </div>
                         </ng-container>
                       </ng-container>
+                      <div *ngIf="!selectedNutrient.foods || selectedNutrient.foods.length === 0" class="empty-detail-message">
+                        <span>No foods logged for this nutrient yet.</span>
+                      </div>
                     </div>
                   </ion-item>
                 </ng-container>
@@ -181,13 +177,21 @@
       </div>
 
       <!-- Foods View -->
-      <div *ngIf="viewMode === 'foods' && detailedData?.foods && !detailedLoading" class="breakdown-container">
+      <div *ngIf="viewMode === 'foods'" class="breakdown-container">
         <ion-card>
           <ion-card-header>
             <ion-card-title>Foods</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-list class="food-list">
+            <!-- Empty state message when no foods logged -->
+            <div *ngIf="!hasFoodEntries" class="empty-food-list">
+              <ion-text color="medium">
+                <p style="text-align: center; margin: 1em 0;">No foods logged yet.</p>
+              </ion-text>
+            </div>
+            
+            <!-- Food list when foods are logged -->
+            <ion-list *ngIf="hasFoodEntries" class="food-list">
               <ng-container *ngFor="let food of detailedData?.foods; trackBy: trackById">
                 <ion-item 
                   button 
@@ -238,7 +242,7 @@
                                  class="detail-item clickable-nutrient" 
                                  (click)="nutrient.name && navigateToNutrient(nutrient.name)">
                               <span class="detail-name">{{ nutrient.name }}</span>
-                              <span class="detail-amount">{{ formatNutrientWithOriginalUnit(nutrient) }}</span>
+                              <span class="detail-amount">{{ formatContributionWithTarget(nutrient) }}</span>
                             </div>
                           </ng-container>
                           <div *ngIf="getFoodMacronutrients(selectedFood.nutrients).length === 0" class="empty-detail-message">
@@ -259,7 +263,7 @@
                                  class="detail-item clickable-nutrient" 
                                  (click)="nutrient.name && navigateToNutrient(nutrient.name)">
                               <span class="detail-name">{{ nutrient.name }}</span>
-                              <span class="detail-amount">{{ formatNutrientWithOriginalUnit(nutrient) }}</span>
+                              <span class="detail-amount">{{ formatContributionWithTarget(nutrient) }}</span>
                             </div>
                           </ng-container>
                           <div *ngIf="getFoodMicronutrients(selectedFood.nutrients).length === 0" class="empty-detail-message">
