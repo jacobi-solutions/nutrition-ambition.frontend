@@ -16,7 +16,7 @@ import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, I
 
       // Required standalone components
       IonContent,
-      IonItem, IonLabel, IonInput, IonButton, IonInputPasswordToggle
+      IonInput, IonButton, IonInputPasswordToggle
   ],
 })
 export class LoginPage {

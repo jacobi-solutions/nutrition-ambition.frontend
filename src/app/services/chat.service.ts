@@ -9,8 +9,8 @@ import {
   GetChatMessagesResponse,
   ClearChatMessagesResponse,
   RunChatRequest,
-  GetDailyGoalRequest,
-  GetDailyGoalResponse,
+  GetDailyTargetRequest,
+  GetDailyTargetResponse,
   FocusInChatRequest,
   LearnMoreAboutRequest
 } from './nutrition-ambition-api.service';
@@ -57,11 +57,11 @@ export class ChatService {
       return this.handleAnonymousGoalPrompt();
     }
     
-    const request = new GetDailyGoalRequest({});
+    const request = new GetDailyTargetRequest({});
     
-    return this.apiService.getDailyGoal(request).pipe(
+    return this.apiService.getDailyTarget(request).pipe(
       map(response => {
-        if (!response.dailyGoal) {
+        if (!response.dailyTarget) {
           console.log('[DEBUG] No daily goal found, prompting user to set one');
           // Create a bot message response with the improved prompt
           const botResponse = new BotMessageResponse();

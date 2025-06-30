@@ -11,7 +11,7 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./tabs.page.scss'],
   standalone: true,
   // Import the specific standalone components needed by the template
-  imports: [IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, RouterLink]
+  imports: [IonTabs, IonTabBar, IonTabButton, RouterLink]
 })
 export class TabsPage {
 

@@ -15,10 +15,8 @@ import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, I
     RouterModule,
 
     // Required standalone components
-    IonTitle, IonContent,
-    IonGrid, IonRow, IonCol,
-    IonItem, IonLabel, IonInput, IonButton,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonInputPasswordToggle
+    IonContent,
+    IonInput, IonButton, IonInputPasswordToggle
   ],
 })
 export class SignupPage {

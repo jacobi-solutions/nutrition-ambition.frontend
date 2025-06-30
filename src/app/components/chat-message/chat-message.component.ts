@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
@@ -13,15 +13,13 @@ import { IonText } from '@ionic/angular/standalone';
     CommonModule
   ]
 })
-export class ChatMessageComponent implements OnInit {
+export class ChatMessageComponent {
   @Input() text: string = '';
   @Input() isUser: boolean = false;
   @Input() isTool: boolean = false;
   @Input() timestamp: Date = new Date();
 
   constructor(private sanitizer: DomSanitizer) {}
-
-  ngOnInit() {}
 
   /**
    * Converts the message content to Markdown and sanitizes it

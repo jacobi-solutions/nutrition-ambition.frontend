@@ -36,14 +36,10 @@ interface DisplayMessage {
     IonFooter,
     IonIcon,
     IonSpinner,
-    IonText,
     IonRefresher,
     IonRefresherContent,
     AppHeaderComponent,
-    ChatMessageComponent,
-    IonFabButton,
-    IonFabList,
-    IonFab
+    ChatMessageComponent
   ]
 })
 export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
