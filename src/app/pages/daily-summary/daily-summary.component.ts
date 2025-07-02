@@ -17,6 +17,7 @@ import { catchError, finalize, of, Subscription } from 'rxjs';
 import { DailySummaryService } from 'src/app/services/daily-summary.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { DateService } from 'src/app/services/date.service';
+import { ChatService } from 'src/app/services/chat.service';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import {
@@ -84,6 +85,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);
   private dateService = inject(DateService);
+  private chatService = inject(ChatService);
   private router = inject(Router);
   private toastController = inject(ToastController);
   private apiService = inject(NutritionAmbitionApiService);
@@ -170,7 +172,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
 
   // Sort macronutrients in desired fixed order
   get macronutrientList(): NutrientBreakdown[] {
-    const order = ['calories', 'protein', 'total_fat', 'carbohydrate'];
+    const order = ['calories', 'protein', 'fat', 'carbohydrate'];
     return order
       .map(key => this.detailedData?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
       .filter((n): n is NutrientBreakdown => !!n);
@@ -179,10 +181,29 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   // Sort micronutrients using sortOrder field (set by backend)
   get micronutrientList(): NutrientBreakdown[] {
     return this.detailedData?.nutrients
-      ?.filter(n => !['calories', 'protein', 'total_fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
+      ?.filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
       ?.sort((a, b) => {
         return (a['sortOrder'] ?? 9999) - (b['sortOrder'] ?? 9999);
       }) || [];
+  }
+
+  // Get macronutrients for the selected food
+  get selectedFoodMacronutrients(): any[] {
+    if (!this.selectedFood?.nutrients) return [];
+    const order = ['calories', 'protein', 'fat', 'carbohydrate'];
+    return order
+      .map(key => this.selectedFood?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
+      .filter((n): n is any => !!n);
+  }
+
+  // Get micronutrients for the selected food
+  get selectedFoodMicronutrients(): any[] {
+    if (!this.selectedFood?.nutrients) return [];
+    return this.selectedFood.nutrients
+      .filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
+      .sort((a, b) => {
+        return ((a as any)['sortOrder'] ?? 9999) - ((b as any)['sortOrder'] ?? 9999);
+      });
   }
 
   formatConsumedTarget(nutrient: NutrientBreakdown): string {
@@ -232,6 +253,93 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     this.popoverEvent = event;
     this.selectedEntry = { ...entry, entryType: type };
     this.isPopoverOpen = true;
+  }
+
+  handleActionSelected(event: ActionEvent) {
+    console.log('🔥 handleActionSelected called with:', event);
+    this.isPopoverOpen = false;
+    
+    switch (event.action) {
+      case 'remove':
+        console.log('🗑️ Handling remove action');
+        this.handleRemoveEntry(event.entry);
+        break;
+      case 'focusInChat':
+        console.log('💬 Handling focusInChat action');
+        this.handleFocusInChat(event.entry);
+        break;
+      case 'learn':
+        console.log('📚 Handling learn action');
+        this.handleLearnMore(event.entry);
+        break;
+      default:
+        console.log('Action not implemented:', event.action);
+    }
+  }
+
+  private handleRemoveEntry(entry: any) {
+    // TODO: Implement remove functionality
+    console.log('Remove entry:', entry);
+  }
+
+  private handleFocusInChat(entry: any) {
+    const topic = this.getEntryTopicName(entry);
+    const date = new Date(this.selectedDate);
+    
+    this.chatService.focusInChat(topic, date).subscribe({
+      next: (response) => {
+        if (response.isSuccess) {
+          // Navigate to chat page
+          this.router.navigate(['/app/chat']);
+        } else {
+          this.showErrorToast('Failed to focus in chat. Please try again.');
+        }
+      },
+      error: (error) => {
+        console.error('Error focusing in chat:', error);
+        this.showErrorToast('An error occurred while focusing in chat.');
+      }
+    });
+  }
+
+  private handleLearnMore(entry: any) {
+    const topic = this.getEntryTopicName(entry);
+    const date = new Date(this.selectedDate);
+    
+    this.chatService.learnMoreAbout(topic, date).subscribe({
+      next: (response) => {
+        if (response.isSuccess) {
+          // Navigate to chat page
+          this.router.navigate(['/app/chat']);
+        } else {
+          this.showErrorToast('Failed to get information. Please try again.');
+        }
+      },
+      error: (error) => {
+        console.error('Error learning more about topic:', error);
+        this.showErrorToast('An error occurred while getting information.');
+      }
+    });
+  }
+
+  private getEntryTopicName(entry: any): string {
+    // For foods, use the name
+    if (entry.entryType === 'food') {
+      return entry.name || 'Unknown Food';
+    }
+    
+    // For nutrients, use nutrientName or fallback to nutrientKey
+    return entry.nutrientName || entry.nutrientKey || 'Unknown Nutrient';
+  }
+
+  private async showErrorToast(message: string) {
+    const toast = await this.toastController.create({
+      message,
+      duration: 3000,
+      color: 'danger',
+      position: 'bottom'
+    });
+    await toast.present();
   }
 
   trackById(index: number, item: any): string {

@@ -386,10 +386,20 @@ ion-card {
 }
 
 .nutrient-section {
-  padding: 1rem; 
   margin-bottom: 16px;
-  background-color: rgba(78, 110, 93, 0.2);
-  border-radius: 8px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.nutrient-section-title {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--color-olive);
+  font-size: 1em;
+  font-weight: 600;
+  text-align: center;
 }
 
 .nutrient-category-title {

@@ -227,12 +227,27 @@
                   <ion-item lines="none" class="drilldown-row food-drilldown">
                     <div class="drilldown-content">
                       <ng-container *ngIf="selectedFood && selectedFood.nutrients?.length">
-                        <ng-container *ngFor="let nutrient of selectedFood.nutrients; trackBy: trackById">
-                          <div class="detail-item">
-                            <span class="detail-name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
-                            <span class="detail-amount">{{ nutrient.amount?.toFixed(1) }} {{ nutrient.unit }}</span>
-                          </div>
-                        </ng-container>
+                        <!-- Macronutrients Section -->
+                        <div *ngIf="selectedFoodMacronutrients.length" class="nutrient-section">
+                          <h4 class="nutrient-section-title">Macronutrients</h4>
+                          <ng-container *ngFor="let nutrient of selectedFoodMacronutrients; trackBy: trackById">
+                            <div class="detail-item">
+                              <span class="detail-name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
+                              <span class="detail-amount">{{ nutrient.amount?.toFixed(1) }} {{ nutrient.unit }}</span>
+                            </div>
+                          </ng-container>
+                        </div>
+
+                        <!-- Micronutrients Section -->
+                        <div *ngIf="selectedFoodMicronutrients.length" class="nutrient-section">
+                          <h4 class="nutrient-section-title">Micronutrients</h4>
+                          <ng-container *ngFor="let nutrient of selectedFoodMicronutrients; trackBy: trackById">
+                            <div class="detail-item">
+                              <span class="detail-name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
+                              <span class="detail-amount">{{ nutrient.amount?.toFixed(1) }} {{ nutrient.unit }}</span>
+                            </div>
+                          </ng-container>
+                        </div>
                       </ng-container>
                       <div *ngIf="selectedFood && !selectedFood.nutrients?.length" class="empty-detail-message">
                         <span>No nutrient data available for this food.</span>
@@ -248,3 +263,18 @@
     </div>
   </div>
 </ion-content>
+
+<!-- Entry Action Menu Popover -->
+<ion-popover
+  #popover
+  [isOpen]="isPopoverOpen"
+  [event]="popoverEvent"
+  (didDismiss)="isPopoverOpen = false"
+  showBackdrop="true">
+  <ng-template>
+    <app-entry-action-menu
+      [entry]="selectedEntry"
+      (actionSelected)="handleActionSelected($event)">
+    </app-entry-action-menu>
+  </ng-template>
+</ion-popover>
