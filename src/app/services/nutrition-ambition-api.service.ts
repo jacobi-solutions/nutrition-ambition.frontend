@@ -1328,9 +1328,16 @@ export enum MessageRoleTypes {
 }
 
 export class NutrientBreakdown implements INutrientBreakdown {
-    name?: string | undefined;
-    totalAmount?: number;
+    nutrientKey?: string | undefined;
+    nutrientName?: string | undefined;
     unit?: string | undefined;
+    totalAmount?: number;
+    minTarget?: number | undefined;
+    maxTarget?: number | undefined;
+    valueType?: string | undefined;
+    source?: string | undefined;
+    sortOrder?: number;
+    readonly percentOfTarget?: number | undefined;
     foods?: FoodContribution[] | undefined;
 
     constructor(data?: INutrientBreakdown) {
@@ -1344,9 +1351,16 @@ export class NutrientBreakdown implements INutrientBreakdown {
 
     init(_data?: any) {
         if (_data) {
-            this.name = _data["name"];
-            this.totalAmount = _data["totalAmount"];
+            this.nutrientKey = _data["nutrientKey"];
+            this.nutrientName = _data["nutrientName"];
             this.unit = _data["unit"];
+            this.totalAmount = _data["totalAmount"];
+            this.minTarget = _data["minTarget"];
+            this.maxTarget = _data["maxTarget"];
+            this.valueType = _data["valueType"];
+            this.source = _data["source"];
+            this.sortOrder = _data["sortOrder"];
+            (<any>this).percentOfTarget = _data["percentOfTarget"];
             if (Array.isArray(_data["foods"])) {
                 this.foods = [] as any;
                 for (let item of _data["foods"])
@@ -1364,9 +1378,16 @@ export class NutrientBreakdown implements INutrientBreakdown {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["name"] = this.name;
-        data["totalAmount"] = this.totalAmount;
+        data["nutrientKey"] = this.nutrientKey;
+        data["nutrientName"] = this.nutrientName;
         data["unit"] = this.unit;
+        data["totalAmount"] = this.totalAmount;
+        data["minTarget"] = this.minTarget;
+        data["maxTarget"] = this.maxTarget;
+        data["valueType"] = this.valueType;
+        data["source"] = this.source;
+        data["sortOrder"] = this.sortOrder;
+        data["percentOfTarget"] = this.percentOfTarget;
         if (Array.isArray(this.foods)) {
             data["foods"] = [];
             for (let item of this.foods)
@@ -1377,13 +1398,22 @@ export class NutrientBreakdown implements INutrientBreakdown {
 }
 
 export interface INutrientBreakdown {
-    name?: string | undefined;
-    totalAmount?: number;
+    nutrientKey?: string | undefined;
+    nutrientName?: string | undefined;
     unit?: string | undefined;
+    totalAmount?: number;
+    minTarget?: number | undefined;
+    maxTarget?: number | undefined;
+    valueType?: string | undefined;
+    source?: string | undefined;
+    sortOrder?: number;
+    percentOfTarget?: number | undefined;
     foods?: FoodContribution[] | undefined;
 }
 
 export class NutrientContribution implements INutrientContribution {
+    nutrientKey?: string | undefined;
+    nutrientName?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     amount?: number;
@@ -1401,6 +1431,8 @@ export class NutrientContribution implements INutrientContribution {
 
     init(_data?: any) {
         if (_data) {
+            this.nutrientKey = _data["nutrientKey"];
+            this.nutrientName = _data["nutrientName"];
             this.name = _data["name"];
             this.brandName = _data["brandName"];
             this.amount = _data["amount"];
@@ -1418,6 +1450,8 @@ export class NutrientContribution implements INutrientContribution {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["nutrientKey"] = this.nutrientKey;
+        data["nutrientName"] = this.nutrientName;
         data["name"] = this.name;
         data["brandName"] = this.brandName;
         data["amount"] = this.amount;
@@ -1428,6 +1462,8 @@ export class NutrientContribution implements INutrientContribution {
 }
 
 export interface INutrientContribution {
+    nutrientKey?: string | undefined;
+    nutrientName?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     amount?: number;
@@ -1436,11 +1472,12 @@ export interface INutrientContribution {
 }
 
 export class NutrientTarget implements INutrientTarget {
-    nutrientName?: string | undefined;
+    nutrientKey?: string | undefined;
     maxValue?: number | undefined;
     minValue?: number | undefined;
-    percentageOfCalories?: number | undefined;
     unit?: string | undefined;
+    valueType?: string | undefined;
+    source?: string | undefined;
 
     constructor(data?: INutrientTarget) {
         if (data) {
@@ -1453,11 +1490,12 @@ export class NutrientTarget implements INutrientTarget {
 
     init(_data?: any) {
         if (_data) {
-            this.nutrientName = _data["nutrientName"];
+            this.nutrientKey = _data["nutrientKey"];
             this.maxValue = _data["maxValue"];
             this.minValue = _data["minValue"];
-            this.percentageOfCalories = _data["percentageOfCalories"];
             this.unit = _data["unit"];
+            this.valueType = _data["valueType"];
+            this.source = _data["source"];
         }
     }
 
@@ -1470,21 +1508,23 @@ export class NutrientTarget implements INutrientTarget {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["nutrientName"] = this.nutrientName;
+        data["nutrientKey"] = this.nutrientKey;
         data["maxValue"] = this.maxValue;
         data["minValue"] = this.minValue;
-        data["percentageOfCalories"] = this.percentageOfCalories;
         data["unit"] = this.unit;
+        data["valueType"] = this.valueType;
+        data["source"] = this.source;
         return data;
     }
 }
 
 export interface INutrientTarget {
-    nutrientName?: string | undefined;
+    nutrientKey?: string | undefined;
     maxValue?: number | undefined;
     minValue?: number | undefined;
-    percentageOfCalories?: number | undefined;
     unit?: string | undefined;
+    valueType?: string | undefined;
+    source?: string | undefined;
 }
 
 export class RunChatRequest implements IRunChatRequest {

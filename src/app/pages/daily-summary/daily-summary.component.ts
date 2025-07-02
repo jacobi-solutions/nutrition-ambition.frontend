@@ -1,62 +1,35 @@
 import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { 
-  IonContent, 
-  IonHeader, 
-  IonToolbar, 
-  IonTitle,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-  IonSpinner,
-  IonText,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
-  IonList,
-  IonItem,
-  IonIcon,
-  IonAccordion,
-  IonAccordionGroup,
-  IonNote,
-  IonButton,
-  IonPopover,
-  IonRefresher,
-  IonRefresherContent
+import {
+  IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
+  IonSpinner, IonText, IonSegment, IonSegmentButton, IonLabel, IonList,
+  IonItem, IonIcon, IonButton, IonPopover, IonRefresher, IonRefresherContent
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
-import { 
-  GetDetailedSummaryResponse, 
-  NutrientBreakdown, 
+import {
+  GetDetailedSummaryResponse,
+  NutrientBreakdown,
   FoodBreakdown,
-  NutrientContribution,
   FoodContribution,
-  DailyTarget,
-  NutrientTarget
+  NutritionAmbitionApiService
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { DailySummaryService } from 'src/app/services/daily-summary.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { DateService } from 'src/app/services/date.service';
-import { MacronutrientsSummary } from '../../services/nutrition-ambition-api.service';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { 
-  chevronDownOutline, 
-  chevronForwardOutline, 
-  closeOutline, 
+import {
+  chevronDownOutline,
+  chevronForwardOutline,
+  closeOutline,
   ellipsisVertical,
   alertCircleOutline,
   nutritionOutline
 } from 'ionicons/icons';
-import { ChatService } from 'src/app/services/chat.service';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
-import { ActionEvent, EntryActionMenuComponent } from '../../components/entry-action-menu/entry-action-menu.component';
-import { formatNutrient } from '../../utils/format-nutrient';
-import { formatMacro } from '../../utils/format-macro';
+import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-action-menu/entry-action-menu.component';
 import { ToastController } from '@ionic/angular';
-import { FoodLogService } from 'src/app/services/food-log.service';
 import { ViewWillEnter } from '@ionic/angular';
 
 @Component({
@@ -91,7 +64,7 @@ import { ViewWillEnter } from '@ionic/angular';
 export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   @ViewChild('popover') popover: IonPopover;
   @ViewChild(IonContent) content: IonContent;
-  
+
   detailedData: GetDetailedSummaryResponse | null = null;
   viewMode: 'nutrients' | 'foods' = 'nutrients';
   selectedNutrient: NutrientBreakdown | null = null;
@@ -100,28 +73,26 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   detailedError: string | null = null;
   selectedDate: string = new Date().toISOString();
   userEmail: string | null = null;
+
   private dateSubscription: Subscription;
   private mealLoggedSubscription: Subscription;
-  
-  // Variables for popover
+
   isPopoverOpen = false;
   selectedEntry: any = null;
   popoverEvent: any = null;
-  
-  // Use the inject function for dependency injection in standalone components
+
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);
   private dateService = inject(DateService);
-  private chatService = inject(ChatService);
   private router = inject(Router);
   private toastController = inject(ToastController);
-  private foodLogService = inject(FoodLogService);
+  private apiService = inject(NutritionAmbitionApiService);
 
   constructor(private elementRef: ElementRef) {
-    addIcons({ 
-      chevronDownOutline, 
-      chevronForwardOutline, 
-      closeOutline, 
+    addIcons({
+      chevronDownOutline,
+      chevronForwardOutline,
+      closeOutline,
       ellipsisVertical,
       alertCircleOutline,
       nutritionOutline
@@ -129,407 +100,49 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   ngOnInit() {
-    // Subscribe to date changes
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this.selectedDate = date;
       this.loadDetailedSummary(new Date(date));
     });
-    
-    // Subscribe to meal logged events from ChatService
-    this.mealLoggedSubscription = this.chatService.mealLogged$.subscribe(() => {
-      console.log('[DailySummary] Meal logged event received, reloading summary data');
-      this.loadDetailedSummary(new Date(this.selectedDate));
-    });
-    
-    // Get the current user email
+
     this.authService.userEmail$.subscribe(email => {
       this.userEmail = email;
     });
   }
-  
+
   ngOnDestroy() {
-    // Clean up subscriptions
-    if (this.dateSubscription) {
-      this.dateSubscription.unsubscribe();
-    }
-    if (this.mealLoggedSubscription) {
-      this.mealLoggedSubscription.unsubscribe();
-    }
+    this.dateSubscription?.unsubscribe();
   }
-  
-  // Open the action menu popover
-  openActionMenu(event: Event, entry: any, entryType: 'nutrient' | 'food') {
-    event.stopPropagation(); // Prevent the row selection when clicking the menu button
-    this.popoverEvent = event;
-    this.selectedEntry = { ...entry, entryType };
-    this.isPopoverOpen = true;
+
+  ionViewWillEnter() {
+    this.loadDetailedSummary(new Date(this.selectedDate));
   }
-  
-  // Handle the action selected from the popover
-  handleActionSelected(event: ActionEvent) {
-    console.log(`Action received: ${event.action} for entry:`, event.entry);
-    
-    // Close the popover
-    this.isPopoverOpen = false;
-    
-    // Handle the action based on type
-    switch(event.action) {
-      case 'remove':
-        this.handleRemoveEntry(event.entry);
-        break;
-      case 'edit':
-        this.handleEditEntry(event.entry);
-        break;
-      case 'focusInChat':
-        this.handleFocusInChat(event.entry);
-        break;
-      case 'editGoal':
-        this.handleEditGoal(event.entry);
-        break;
-      case 'learn':
-        this.handleLearnAbout(event.entry);
-        break;
-      case 'trend':
-        this.handleShowTrend(event.entry);
-        break;
-      case 'ignore':
-        this.handleIgnoreForNow(event.entry);
-        break;
-      case 'suggest':
-        this.handleSuggestFoods(event.entry);
-        break;
-    }
-  }
-  
-  private handleRemoveEntry(entry: any) {
-    // Only handle removal for food entries
-    if (entry.entryType !== 'food') {
-      console.warn('Cannot remove entry that is not a food item:', entry);
-      return;
-    }
-    
-    console.log('Removing food entry:', entry);
-    
-    // Store a reference to the original foods list for undo
-    const originalFoods = this.detailedData?.foods ? [...this.detailedData.foods] : [];
-    
-    // Get the array of food item IDs from the entry
-    const foodItemIds = entry.foodItemIds;
-    
-    if (!foodItemIds || foodItemIds.length === 0) {
-      console.error('Cannot remove food entry without IDs:', entry);
-      return;
-    }
-    
-    // Immediately update the UI by filtering out the removed item
-    if (this.detailedData?.foods) {
-      // Remove based on name rather than ID since FoodBreakdown doesn't have ID
-      const foodName = entry.name;
-      this.detailedData.foods = this.detailedData.foods.filter(food => food.name !== foodName);
-      
-      // Also clear selection if the removed item was selected
-      if (this.selectedFood?.name === foodName) {
-        this.selectedFood = null;
-      }
-    }
-    
-    // Show a toast with an undo option
-    this.toastController.create({
-      message: `Removed "${entry.name}"`,
-      duration: 5000,
-      position: 'bottom',
-      buttons: [
-        {
-          text: 'UNDO',
-          role: 'cancel',
-          handler: () => {
-            // Restore the original foods list if user undoes the action
-            if (this.detailedData) {
-              this.detailedData.foods = originalFoods;
-            }
-          }
-        }
-      ]
-    }).then(toast => {
-      toast.present();
-      
-      // When the toast is dismissed (times out without undo), persist the deletion
-      toast.onDidDismiss().then((dismissData) => {
-        // Only persist if the user didn't click undo (role !== 'cancel')
-        if (dismissData.role !== 'cancel') {
-          // Use FoodLogService to delete the items
-          this.foodLogService.deleteFoodEntryItems(foodItemIds).subscribe({
-            next: () => console.log('Food items deletion confirmed'),
-            error: (err) => {
-              console.error('Error deleting food items:', err);
-              // Restore the data on error
-              if (this.detailedData) {
-                this.detailedData.foods = originalFoods;
-              }
-            }
-          });
-        }
-      });
-    });
-  }
-  
-  private handleEditEntry(entry: any) {
-    console.log('Would edit entry:', entry);
-    // Actual implementation would be added here
-  }
-  
-  private handleFocusInChat(entry: FoodBreakdown | NutrientBreakdown) {
-    console.log('Focusing on entry in chat:', entry.name);
-    
-    // Get the current date from the dateService
-    const loggedDate = new Date(this.selectedDate);
-    
-    // Set the context note
-    this.chatService.setContextNote('Focusing on: ' + (entry.name || 'this item'));
-    
-    // Close the popover explicitly
-    this.isPopoverOpen = false;
-    
-    // Explicitly dismiss the popover to ensure it's closed before navigation
-    if (this.popover) {
-      this.popover.dismiss();
-    }
-    
-    // Navigate to the chat page immediately so users can see the context note
-    this.router.navigate(['/app/chat']);
-    
-    // Use the chatService to focus in chat
-    this.chatService.focusInChat(entry.name || 'this item', loggedDate).subscribe({
-      next: (response) => {
-        if (response.isSuccess) {
-          // Success! The context note will be cleared by the ChatPage when it receives the message
-          // Nothing else to do here
-        } else {
-          // Show error toast only if the operation fails
-          this.presentToast('Unable to focus on this topic. Please try again.');
-          // Clear the context note if the operation fails
-          this.chatService.clearContextNote();
-        }
-      },
-      error: (error) => {
-        console.error('Error focusing in chat:', error);
-        this.presentToast('Unable to focus on this topic. Please try again.');
-        // Clear the context note if there's an error
-        this.chatService.clearContextNote();
-      }
-    });
-  }
-  
-  // Helper to show toast messages
-  private async presentToast(message: string) {
-    const toast = await this.toastController.create({
-      message,
-      duration: 3000,
-      position: 'bottom',
-      color: 'danger'
-    });
-    await toast.present();
-  }
-  
-  private handleEditGoal(entry: any) {
-    console.log('Would create or modify goal for:', entry);
-    // Actual implementation would be added here
-  }
-  
-  private handleLearnAbout(entry: FoodBreakdown | NutrientBreakdown) {
-    const topic = entry.name || '';
-    console.log('Learning more about:', topic);
-    
-    // Get the current date from the dateService
-    const loggedDate = new Date(this.selectedDate);
-    
-    // Close the popover explicitly
-    this.isPopoverOpen = false;
-    
-    // Explicitly dismiss the popover to ensure it's closed before navigation
-    if (this.popover) {
-      this.popover.dismiss();
-    }
-    
-    // Navigate to the chat page immediately so users can see the context note
-    this.router.navigate(['/app/chat']);
-    
-    // Use the chatService to learn more about the topic
-    this.chatService.learnMoreAbout(topic, loggedDate)
-      .subscribe({
-        next: (response) => {
-          if (!response.isSuccess) {
-            // Show error toast only if the operation fails
-            this.presentToast('Unable to learn more about this topic. Please try again.');
-          }
-          // Note: Context note will be automatically cleared by the finalize operator in the service
-        },
-        error: (error) => {
-          console.error('Error learning more about topic:', error);
-          this.presentToast('Unable to learn more about this topic. Please try again.');
-        }
-      });
-  }
-  
-  private handleShowTrend(entry: any) {
-    console.log('Would show trend for:', entry);
-    // Actual implementation would be added here
-  }
-  
-  private handlePinToDashboard(entry: any) {
-    console.log('Would pin to dashboard:', entry);
-    // Actual implementation would be added here
-  }
-  
-  private handleIgnoreForNow(entry: any) {
-    console.log('Would ignore for now:', entry);
-    // Actual implementation would be added here
-  }
-  
-  private handleSuggestFoods(entry: any) {
-    console.log('Would suggest foods related to:', entry);
-    // Actual implementation would be added here
-  }
-  
-  // Handle date changes from the header
+
   onDateChanged(newDate: string) {
     this.dateService.setSelectedDate(newDate);
   }
-  
-  // Handle navigation to previous day
+
   onPreviousDay() {
     this.dateService.goToPreviousDay();
   }
-  
-  // Handle navigation to next day
+
   onNextDay() {
     this.dateService.goToNextDay();
   }
-  
-  // Handle login
+
   onLogin() {
     this.router.navigate(['/login']);
   }
-  
-  // Handle logout
+
   onLogout() {
     this.authService.signOutUser().then(() => {
       this.router.navigate(['/auth']);
     });
   }
 
-  // Handle refresh from header pull-down
-  onRefresh() {
-    console.log('[DailySummary] Refresh triggered, reloading data');
-    this.loadDetailedSummary(new Date(this.selectedDate));
-  }
-  
-  // Handle refresh from ion-refresher
   handleRefresh(event: CustomEvent) {
-    console.log('[DailySummary] Pull-to-refresh triggered, reloading data');
     this.loadDetailedSummary(new Date(this.selectedDate));
-    
-    // Complete the refresh after a short delay
-    setTimeout(() => {
-      (event.target as any)?.complete();
-    }, 1000);
-  }
-
-  // Handle segment change
-  segmentChanged(event: any) {
-    this.viewMode = event.detail.value;
-    // Reset selected items when changing view
-    this.clearSelection();
-  }
-
-  // Handle nutrient selection
-  selectNutrient(nutrient: NutrientBreakdown) {
-    this.selectedNutrient = this.selectedNutrient?.name === nutrient.name ? null : nutrient;
-    this.selectedFood = null;
-  }
-
-  // Handle food selection
-  selectFood(food: FoodBreakdown) {
-    this.selectedFood = this.selectedFood?.name === food.name ? null : food;
-    this.selectedNutrient = null;
-  }
-  
-  // Clear all selections
-  clearSelection() {
-    this.selectedNutrient = null;
-    this.selectedFood = null;
-  }
-
-  // Get macronutrients list from detailed data or create zero values with targets
-  get macronutrientList(): NutrientBreakdown[] {
-    const targetOrder = ['Calories', 'Protein', 'Fat', 'Carbohydrates'];
-    
-    if (this.detailedData?.nutrients && this.detailedData.nutrients.length > 0) {
-      // If we have actual nutrient data, use it
-      return targetOrder
-        .map(name => this.detailedData?.nutrients?.find(n => n.name?.toLowerCase() === name.toLowerCase()))
-        .filter((n): n is NutrientBreakdown => !!n);
-    } else {
-      // If no nutrient data, create zero values with target info
-      return this.createZeroNutrientList(targetOrder);
-    }
-  }
-
-  // Get micronutrients list from detailed data or create zero values with targets
-  get micronutrientList(): NutrientBreakdown[] {
-    if (this.detailedData?.nutrients && this.detailedData.nutrients.length > 0) {
-      return this.detailedData.nutrients.filter(nutrient => 
-        !this.isMacronutrient(nutrient.name || '')
-      );
-    } else {
-      // If no nutrient data, create zero values for common micronutrients
-      const commonMicronutrients = ['Fiber', 'Sugar', 'Sodium', 'Vitamin C', 'Calcium', 'Iron'];
-      return this.createZeroNutrientList(commonMicronutrients);
-    }
-  }
-
-  // Create zero nutrient entries with target information
-  private createZeroNutrientList(nutrientNames: string[]): NutrientBreakdown[] {
-    return nutrientNames.map(name => {
-      const target = this.findNutrientTarget(name);
-      return new NutrientBreakdown({
-        name: name,
-        totalAmount: 0,
-        unit: target?.unit || this.getDefaultUnit(name),
-        foods: []
-      });
-    });
-  }
-
-  // Find nutrient target from daily target data in detailed summary
-  private findNutrientTarget(nutrientName: string): NutrientTarget | undefined {
-    if (!this.detailedData?.dailyTarget?.nutrientTargets) {
-      return undefined;
-    }
-    
-    return this.detailedData.dailyTarget.nutrientTargets.find(
-      target => target.nutrientName?.toLowerCase() === nutrientName.toLowerCase()
-    );
-  }
-
-  // Get default unit for a nutrient
-  private getDefaultUnit(nutrientName: string): string {
-    const name = nutrientName.toLowerCase();
-    if (name === 'calories') return 'kcal';
-    if (['protein', 'fat', 'carbohydrates', 'fiber', 'sugar'].includes(name)) return 'g';
-    if (['sodium', 'potassium'].includes(name)) return 'mg';
-    if (name.includes('vitamin') || name.includes('calcium') || name.includes('iron')) return 'mg';
-    return 'mg';
-  }
-  
-  // Helper to determine if a nutrient is a macronutrient
-  private isMacronutrient(name: string): boolean {
-    if (!name) return false;
-    
-    const lowerName = name.toLowerCase();
-    const macronutrients = ['calories', 'protein', 'fat','carbohydrates'];
-    
-    return macronutrients.some(macro => lowerName === macro || lowerName.startsWith(macro));
+    setTimeout(() => (event.target as any)?.complete(), 1000);
   }
 
   loadDetailedSummary(date: Date) {
@@ -538,331 +151,100 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     this.detailedData = null;
     this.selectedNutrient = null;
     this.selectedFood = null;
-    
+
     this.dailySummaryService.getDetailedSummary(date)
       .pipe(
-        finalize(() => {
-          this.detailedLoading = false;
-        }),
-        catchError(error => {
-          console.error('Error loading detailed summary:', error);
-          this.detailedError = 'Failed to load nutrition data. Please try again.';
+        finalize(() => this.detailedLoading = false),
+        catchError(err => {
+          console.error(err);
+          this.detailedError = 'Failed to load nutrition data.';
           return of(null);
         })
       )
       .subscribe(response => {
         if (response) {
           this.detailedData = response;
-          
-          // Check if the summary response has no entries but has a specific error message
-          if (!response.isSuccess && 
-              response.errors && 
-              response.errors.length > 0 && 
-              response.errors[0].errorMessage === "No food entries found for the specified date.") {
-            // Treat this as an empty state, not an error
-            console.log('[DailySummaryComponent] No entries found for the date');
-            
-            // Just set the properties we need rather than trying to create a new object
-            response.isSuccess = true; // Override to prevent error display
-            response.errors = []; // Clear errors
-            this.detailedData = response;
-          } else {
-            console.log('[DailySummaryComponent] Detailed summary loaded:', response);
-          }
         }
       });
   }
 
-  // Format consumed amount vs target for nutrients
+  // Sort macronutrients in desired fixed order
+  get macronutrientList(): NutrientBreakdown[] {
+    const order = ['calories', 'protein', 'total_fat', 'carbohydrate'];
+    return order
+      .map(key => this.detailedData?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
+      .filter((n): n is NutrientBreakdown => !!n);
+  }
+
+  // Sort micronutrients using sortOrder field (set by backend)
+  get micronutrientList(): NutrientBreakdown[] {
+    return this.detailedData?.nutrients
+      ?.filter(n => !['calories', 'protein', 'total_fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
+      ?.sort((a, b) => {
+        return (a['sortOrder'] ?? 9999) - (b['sortOrder'] ?? 9999);
+      }) || [];
+  }
+
   formatConsumedTarget(nutrient: NutrientBreakdown): string {
-    const name = nutrient.name || '';
-    
-    // Actual consumed amount (zero if none)
-    let consumed = 0;
-    if (nutrient.totalAmount != null) {
-      consumed = nutrient.totalAmount;
+    const amount = nutrient.totalAmount || 0;
+    const unit = nutrient.unit || 'mg';
+    const formattedAmount = `${amount.toFixed(unit === 'kcal' ? 0 : 1)} ${unit}`;
+    const min = nutrient.minTarget;
+    const max = nutrient.maxTarget;
+
+    const formatValue = (v: number) => v >= 10 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, '');
+
+    if (min != null && max != null) {
+      if (min === max) return `${formattedAmount} / ≤ ${formatValue(max)} ${unit}`;
+      return `${formattedAmount} / (${formatValue(min)} - ${formatValue(max)} ${unit})`;
+    } else if (max != null) {
+      return `${formattedAmount} / ≤ ${formatValue(max)} ${unit}`;
+    } else if (min != null) {
+      return `${formattedAmount} / ≥ ${formatValue(min)} ${unit}`;
     }
-    
-    // Get target value and unit
-    const target = this.findNutrientTarget(name);
-    let targetValue: number | null = null;
-    let targetUnit = nutrient.unit || 'g';
-    
-    if (target) {
-      targetUnit = target.unit || targetUnit;
-      
-      if (target.percentageOfCalories && this.detailedData?.dailyTarget?.baseCalories) {
-        // Percentage-based goal (usually macros)
-        const calPercent = target.percentageOfCalories;
-        const baseCals = this.detailedData.dailyTarget.baseCalories;
-        const kcalPerUnit = name.toLowerCase().includes('fat') ? 9 : 4;
-        targetValue = (baseCals * calPercent / 100) / kcalPerUnit;
-      } else if (target.maxValue != null) {
-        targetValue = target.maxValue;
-      } else if (target.minValue != null) {
-        targetValue = target.minValue;
-      }
-    }
-    
-    // Format consumed part
-    const consumedStr = name.toLowerCase() === 'calories' 
-      ? `${consumed.toFixed(0)} kcal`
-      : `${consumed.toFixed(1)} ${targetUnit}`;
-    
-    // Format target part
-    let targetStr = '--';
-    if (targetValue != null) {
-      targetStr = targetValue.toFixed(targetValue >= 10 ? 0 : 1);
-      if (targetStr.endsWith('.0')) {
-        targetStr = targetStr.slice(0, -2);
-      }
-    }
-    
-    const targetUnitStr = name.toLowerCase() === 'calories' ? 'kcal' : targetUnit;
-    return `${consumedStr} / ${targetStr} ${targetUnitStr}`;
+
+    return formattedAmount;
   }
 
-  // Format nutrient contribution with target for food drilldown
-  formatContributionWithTarget(nutrient: NutrientContribution): string {
-    const name = nutrient.name || '';
-    
-    // Amount contributed by this food
-    const amount = nutrient.amount || 0;
-    const unit = nutrient.unit || 'g';
-    
-    // Get target value
-    const target = this.findNutrientTarget(name);
-    let targetValue: number | null = null;
-    let targetUnit = unit;
-    
-    if (target) {
-      targetUnit = target.unit || targetUnit;
-      
-      if (target.percentageOfCalories && this.detailedData?.dailyTarget?.baseCalories) {
-        const calPercent = target.percentageOfCalories;
-        const baseCals = this.detailedData.dailyTarget.baseCalories;
-        const kcalPerUnit = name.toLowerCase().includes('fat') ? 9 : 4;
-        targetValue = (baseCals * calPercent / 100) / kcalPerUnit;
-      } else if (target.maxValue != null) {
-        targetValue = target.maxValue;
-      } else if (target.minValue != null) {
-        targetValue = target.minValue;
-      }
-    }
-    
-    // Format contribution part
-    const contributionStr = name.toLowerCase() === 'calories' 
-      ? `${amount.toFixed(0)} kcal`
-      : `${amount.toFixed(1)} ${targetUnit}`;
-    
-    // Format target part
-    let targetStr = '--';
-    if (targetValue != null) {
-      targetStr = targetValue.toFixed(targetValue >= 10 ? 0 : 1);
-      if (targetStr.endsWith('.0')) {
-        targetStr = targetStr.slice(0, -2);
-      }
-    }
-    
-    const targetUnitStr = name.toLowerCase() === 'calories' ? 'kcal' : targetUnit;
-    return `${contributionStr} / ${targetStr} ${targetUnitStr}`;
-  }
-
-  // Check if we have any food entries for the current date
-  get hasFoodEntries(): boolean {
-    return this.detailedData?.foods && this.detailedData.foods.length > 0 || false;
-  }
-
-  // Helper method to get micronutrients as an array for display from summary data
-  getSummaryMicronutrients(): { name: string; value: number }[] {
-    if (!this.detailedData?.nutrients) {
-      return [];
-    }
-    
-    return this.detailedData.nutrients
-      .filter(nutrient => nutrient.name && nutrient.totalAmount !== undefined)
-      .map(nutrient => ({
-        name: nutrient.name!,
-        value: nutrient.totalAmount!
-      }));
-  }
-  
-  // Helper to format amount with unit
-  formatAmountWithUnit(amount: number, unit: string, nutrientName?: string): string {
-    const name = nutrientName || unit;
-    
-    
-    if (this.isMacronutrient(name)) {
-      const formatted = formatMacro(name, amount);
-      
-      
-      return formatted;
-    }
-    // Use the unit parameter that comes from the API
-    return `${Math.round(amount * 10) / 10} ${unit || 'mg'}`;
-  }
-
-  // Helper to format food contributions using the original food unit if available
   formatAmountWithFoodUnit(food: FoodContribution): string {
-    if (this.isMacronutrient(food.name || '')) {
-      return formatMacro(food.name || '', food.amount || 0);
-    }
-    // Use the unit parameter that comes from the API
-    return `${Math.round((food.amount || 0) * 10) / 10} ${food.unit || 'mg'}`;
+    const amount = food.amount || 0;
+    const unit = food.unit || 'mg';
+    return `${Math.round(amount * 10) / 10} ${unit}`;
   }
 
-  // Helper methods to separate a food's nutrients into macronutrient and micronutrient categories
-  getFoodMacronutrients(nutrients: NutrientContribution[] | undefined | null): NutrientContribution[] {
-    if (!nutrients) return [];
-    return nutrients.filter(n => this.isMacronutrient(n.name || ''));
-  }
-  
-  getFoodMicronutrients(nutrients: NutrientContribution[] | undefined | null): NutrientContribution[] {
-    if (!nutrients) return [];
-    return nutrients.filter(n => !this.isMacronutrient(n.name || ''));
-  }
-
-  // Safe helper method to access nutrients from a food
-  getSafeNutrients(food: FoodBreakdown | null): NutrientContribution[] {
-    return food?.nutrients || [];
-  }
-
-  // Helper to format nutrient contributions with original unit if available
-  formatNutrientWithOriginalUnit(nutrient: NutrientContribution): string {
-    if (nutrient?.name && this.isMacronutrient(nutrient.name)) {
-      return formatMacro(nutrient.name, nutrient.amount);
-    }
-    // Use the unit parameter that comes from the API
-    return `${Math.round((nutrient.amount || 0) * 10) / 10} ${nutrient.unit || 'mg'}`;
-  }
-  
-  /**
-   * Track function for ngFor directives to optimize rendering performance
-   * @param index The index of the current item
-   * @param item The item object with an id property
-   * @returns The item's id or a fallback value
-   */
-  trackById(index: number, item: any): string {
-    // Return the unique ID if it exists
-    if (item && item.id) {
-      return item.id;
-    }
-    
-    // Fallback to name for FoodBreakdown items which don't have an id
-    if (item && item.name) {
-      // Add index to prevent duplicate key issues with items of the same name
-      return `${item.name}-${index}`;
-    }
-    
-    // Last resort fallback to index
-    return index.toString();
-  }
-
-  ionViewWillEnter() {
-    console.log('[DailySummary] ionViewWillEnter called, reloading data for date:', this.selectedDate);
-    // Add a small delay to ensure any pending save operations complete
-    setTimeout(() => {
-      this.loadDetailedSummary(new Date(this.selectedDate));
-    }, 100);
-  }
-
-  // Navigate to nutrients tab with specific nutrient selected
-  navigateToNutrient(nutrientName: string) {
-    console.log('[DailySummary] Navigating to nutrient:', nutrientName);
-    
-    // Switch to nutrients view
-    this.viewMode = 'nutrients';
-    
-    // Clear current selections
+  selectNutrient(nutrient: NutrientBreakdown) {
+    this.selectedNutrient = this.selectedNutrient?.nutrientKey === nutrient.nutrientKey ? null : nutrient;
     this.selectedFood = null;
-    this.selectedNutrient = null;
-    
-    // Find and select the nutrient
-    setTimeout(() => {
-      const nutrient = this.detailedData?.nutrients?.find(n => 
-        n.name?.toLowerCase() === nutrientName.toLowerCase()
-      );
-      
-      if (nutrient) {
-        this.selectedNutrient = nutrient;
-        console.log('[DailySummary] Selected nutrient:', nutrient.name);
-        
-        // Scroll to position the nutrient at 75% from top
-        setTimeout(() => {
-          this.scrollToNutrient(nutrientName);
-        }, 200);
-      }
-    }, 100);
   }
 
-  // Navigate to foods tab with specific food selected
+  selectFood(food: FoodBreakdown) {
+    this.selectedFood = this.selectedFood?.name === food.name ? null : food;
+    this.selectedNutrient = null;
+  }
+
   navigateToFood(foodName: string) {
-    console.log('[DailySummary] Navigating to food:', foodName);
-    
-    // Switch to foods view
     this.viewMode = 'foods';
-    
-    // Clear current selections
+    this.selectedFood = this.detailedData?.foods?.find(f => f.name?.toLowerCase() === foodName.toLowerCase()) || null;
+  }
+
+  openActionMenu(event: Event, entry: any, type: 'food' | 'nutrient') {
+    event.stopPropagation();
+    this.popoverEvent = event;
+    this.selectedEntry = { ...entry, entryType: type };
+    this.isPopoverOpen = true;
+  }
+
+  trackById(index: number, item: any): string {
+    return item?.id || item?.nutrientKey || item?.name || index.toString();
+  }
+
+  segmentChanged(event: any) {
+    this.viewMode = event.detail.value;
     this.selectedNutrient = null;
     this.selectedFood = null;
-    
-    // Find and select the food
-    setTimeout(() => {
-      const food = this.detailedData?.foods?.find(f => 
-        f.name?.toLowerCase() === foodName.toLowerCase()
-      );
-      
-      if (food) {
-        this.selectedFood = food;
-        console.log('[DailySummary] Selected food:', food.name);
-        
-        // Scroll to position the food at 75% from top
-        setTimeout(() => {
-          this.scrollToFood(foodName);
-        }, 200);
-      }
-    }, 100);
   }
 
-  // Helper method to scroll to a specific nutrient
-  private scrollToNutrient(nutrientName: string) {
-    const nutrientElements = this.elementRef.nativeElement.querySelectorAll('ion-item');
-    const targetElement = Array.from(nutrientElements).find((element: any) => {
-      const nameSpan = element.querySelector('.name');
-      return nameSpan && nameSpan.textContent?.toLowerCase().includes(nutrientName.toLowerCase());
-    });
-
-    if (targetElement && this.content) {
-      this.scrollToElement(targetElement as HTMLElement);
-    }
+  get hasFoodEntries(): boolean {
+    return !!this.detailedData?.foods?.length;
   }
-
-  // Helper method to scroll to a specific food
-  private scrollToFood(foodName: string) {
-    const foodElements = this.elementRef.nativeElement.querySelectorAll('ion-item');
-    const targetElement = Array.from(foodElements).find((element: any) => {
-      const nameSpan = element.querySelector('.name');
-      return nameSpan && nameSpan.textContent?.toLowerCase().includes(foodName.toLowerCase());
-    });
-
-    if (targetElement && this.content) {
-      this.scrollToElement(targetElement as HTMLElement);
-    }
-  }
-
-  // Helper method to scroll element to 75% from top
-  private scrollToElement(element: HTMLElement) {
-    if (!this.content) return;
-
-    const elementRect = element.getBoundingClientRect();
-    const contentRect = this.content.getScrollElement().then(scrollElement => {
-      const scrollElementRect = scrollElement.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      
-      // Calculate position to place element at 75% from top
-      const targetPosition = elementRect.top + scrollElement.scrollTop - (viewportHeight * 0.25);
-      
-      this.content.scrollToPoint(0, Math.max(0, targetPosition), 500);
-    });
-  }
-} 
+}
