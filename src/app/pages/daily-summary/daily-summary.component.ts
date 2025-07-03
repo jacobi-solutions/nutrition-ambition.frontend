@@ -48,7 +48,6 @@ import { ViewWillEnter } from '@ionic/angular';
     IonCardTitle,
     IonCardContent,
     IonSpinner,
-    IonText,
     IonSegment,
     IonSegmentButton,
     IonLabel,

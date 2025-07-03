@@ -168,6 +168,9 @@ ion-content {
 
 .chat-footer {
   --background: transparent;
+  --box-shadow: none;
+  box-shadow: none !important;
+  border-top: none;
   padding-top: .5rem;
   padding-bottom: .5rem;
   padding-left: 1rem;
