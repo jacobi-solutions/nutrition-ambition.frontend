@@ -126,6 +126,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         
         // Scroll to the new message
         this.scrollToBottom();
+        
+        // Focus the input after response is posted
+        this.focusInput();
       }
     });
     
@@ -418,7 +421,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           // Scroll for bot's message response
           this.scrollToBottom();
           
-
+          // Focus the input after response is posted
+          this.focusInput();
         }
       },
       error: (error: any) => {
@@ -432,6 +436,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         
         // Scroll for error message
         this.scrollToBottom();
+        
+        // Focus the input after error message is posted
+        this.focusInput();
       }
     });
   }
@@ -547,5 +554,15 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.isOpen = false;
     }, 300);
+  }
+
+  // Focus the input element
+  private focusInput() {
+    // Use setTimeout to ensure the DOM has updated after scrolling
+    setTimeout(() => {
+      if (this.messageInput && this.messageInput.nativeElement) {
+        this.messageInput.nativeElement.focus();
+      }
+    }, 350); // Slightly longer than scroll animation (300ms)
   }
 } 
