@@ -54,4 +54,19 @@ export class DailySummaryService {
     
     return this.detailedSummaryCache.get(cacheKey)!;
   }
+
+  /**
+   * Clears the cache for a specific date or all cached data
+   * @param loggedDateUtc Optional date to clear specific cache entry
+   */
+  clearCache(loggedDateUtc?: Date): void {
+    if (loggedDateUtc) {
+      const cacheKey = loggedDateUtc.toISOString().split('T')[0];
+      this.detailedSummaryCache.delete(cacheKey);
+      console.log(`[DailySummaryService] Cleared cache for ${cacheKey}`);
+    } else {
+      this.detailedSummaryCache.clear();
+      console.log(`[DailySummaryService] Cleared all cache`);
+    }
+  }
 } 

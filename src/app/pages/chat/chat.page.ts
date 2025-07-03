@@ -91,19 +91,23 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.contextNoteSubscription = this.chatService.contextNote$.subscribe(note => {
       this.contextNote = note;
       
-      // Show typing indicator when a context note is set
       if (note) {
+        // Remove any existing context note from messages
+        this.messages = this.messages.filter(msg => !msg.isContextNote);
+        
+        // Add the new context note to the messages array with current timestamp
+        this.messages.push({
+          text: note,
+          isUser: false,
+          isContextNote: true,
+          timestamp: new Date()
+        });
+        
+        // Show typing indicator when a context note is set
         this.isLoading = true;
-        // Make sure we scroll to see the context note and typing indicator
+        
+        // Scroll to see the context note and typing indicator
         this.scrollToBottom();
-      } else {
-        // If context note is cleared without a response appearing, stop the loading indicator
-        // This happens in error cases where the API call failed
-        if (this.isLoading && this.messages.length > 0 && 
-            !this.messages[this.messages.length - 1].isUser) {
-          // Only stop loading if the last message is from the bot (meaning we got a response)
-          this.isLoading = false;
-        }
       }
     });
     
@@ -119,9 +123,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         
         // Turn off loading indicator
         this.isLoading = false;
-        
-        // Clear the context note
-        this.chatService.clearContextNote();
         
         // Scroll to the new message
         this.scrollToBottom();
@@ -225,6 +226,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async loadChatHistory(date: Date) {
+    // Preserve any existing context note
+    const existingContextNote = this.messages.find(msg => msg.isContextNote);
+    
     // Reset current messages
     this.messages = [];
     this.isLoadingHistory = true;
@@ -271,6 +275,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         }),
         finalize(() => {
           this.isLoadingHistory = false;
+          
+          // Restore existing context note if it existed and no messages were loaded
+          if (this.messages.length === 0 && existingContextNote) {
+            this.messages.push(existingContextNote);
+          }
           
           // Show the static welcome message if there are no messages and it's today's date
           if (this.messages.length === 0 && this.dateService.isToday(date) && !this.hasInitialMessage) {
@@ -320,10 +329,15 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
                   timestamp: note.loggedDateUtc || new Date()
                 });
               });
-              
-              // Sort all messages by timestamp to ensure correct order
-              this.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
             }
+            
+            // Restore existing context note if it existed (for current real-time context)
+            if (existingContextNote) {
+              this.messages.push(existingContextNote);
+            }
+            
+            // Sort all messages by timestamp to ensure correct order
+            this.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
             
 
             

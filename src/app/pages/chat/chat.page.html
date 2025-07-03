@@ -42,16 +42,11 @@
             [timestamp]="message.timestamp">
           </app-chat-message>
           
-          <!-- Context note message from database -->
+          <!-- Context note message (both from database and real-time) -->
           <div *ngIf="message.isContextNote" class="context-note-inline">
             {{ message.text }}
           </div>
         </ng-container>
-        
-        <!-- Context note displayed in the message flow (real-time, not from DB) -->
-        <div *ngIf="contextNote" class="context-note-inline">
-          {{ contextNote }}
-        </div>
         
         <!-- Typing indicator positioned where next message will appear -->
         <div *ngIf="isLoading" class="typing-indicator bot-message-container">

@@ -18,6 +18,7 @@ import { DailySummaryService } from 'src/app/services/daily-summary.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { DateService } from 'src/app/services/date.service';
 import { ChatService } from 'src/app/services/chat.service';
+import { FoodEntryService } from 'src/app/services/food-entry.service';
 import { Router } from '@angular/router';
 import { addIcons } from 'ionicons';
 import {
@@ -81,11 +82,16 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   isPopoverOpen = false;
   selectedEntry: any = null;
   popoverEvent: any = null;
+  
+  // Track temporarily removed foods for undo functionality
+  private removedFoods: Map<string, any> = new Map();
+  private undoTimeouts: Map<string, any> = new Map();
 
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);
   private dateService = inject(DateService);
   private chatService = inject(ChatService);
+  private foodEntryService = inject(FoodEntryService);
   private router = inject(Router);
   private toastController = inject(ToastController);
   private apiService = inject(NutritionAmbitionApiService);
@@ -110,14 +116,30 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     this.authService.userEmail$.subscribe(email => {
       this.userEmail = email;
     });
+
+    // Listen for meal logging events from chat service to refresh data
+    this.mealLoggedSubscription = this.chatService.mealLogged$.subscribe(() => {
+      console.log('🍽️ Meal logged event received, refreshing summary');
+      this.loadDetailedSummary(new Date(this.selectedDate), true);
+    });
   }
 
   ngOnDestroy() {
     this.dateSubscription?.unsubscribe();
+    this.mealLoggedSubscription?.unsubscribe();
+    
+    // Clean up any pending removal timeouts
+    this.undoTimeouts.forEach((timeoutId) => {
+      clearTimeout(timeoutId);
+    });
+    this.undoTimeouts.clear();
+    this.removedFoods.clear();
   }
 
   ionViewWillEnter() {
-    this.loadDetailedSummary(new Date(this.selectedDate));
+    console.log('📊 Summary tab entered, refreshing data for date:', this.selectedDate);
+    // Force reload when entering the tab since user might have added food from chat
+    this.loadDetailedSummary(new Date(this.selectedDate), true);
   }
 
   onDateChanged(newDate: string) {
@@ -143,18 +165,19 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   handleRefresh(event: CustomEvent) {
-    this.loadDetailedSummary(new Date(this.selectedDate));
+    this.loadDetailedSummary(new Date(this.selectedDate), true);
     setTimeout(() => (event.target as any)?.complete(), 1000);
   }
 
-  loadDetailedSummary(date: Date) {
+  loadDetailedSummary(date: Date, forceReload: boolean = false) {
+    console.log('🔄 Loading detailed summary for date:', date, forceReload ? '(forced reload)' : '(cached allowed)');
     this.detailedLoading = true;
     this.detailedError = null;
     this.detailedData = null;
     this.selectedNutrient = null;
     this.selectedFood = null;
 
-    this.dailySummaryService.getDetailedSummary(date)
+    this.dailySummaryService.getDetailedSummary(date, forceReload)
       .pipe(
         finalize(() => this.detailedLoading = false),
         catchError(err => {
@@ -165,6 +188,10 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
       )
       .subscribe(response => {
         if (response) {
+          console.log('✅ Detailed summary loaded successfully:', {
+            foodsCount: response.foods?.length || 0,
+            nutrientsCount: response.nutrients?.length || 0
+          });
           this.detailedData = response;
         }
       });
@@ -256,20 +283,18 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   handleActionSelected(event: ActionEvent) {
-    console.log('🔥 handleActionSelected called with:', event);
     this.isPopoverOpen = false;
-    
+    if (this.popover) {
+      this.popover.dismiss();
+    }
     switch (event.action) {
       case 'remove':
-        console.log('🗑️ Handling remove action');
         this.handleRemoveEntry(event.entry);
         break;
       case 'focusInChat':
-        console.log('💬 Handling focusInChat action');
         this.handleFocusInChat(event.entry);
         break;
       case 'learn':
-        console.log('📚 Handling learn action');
         this.handleLearnMore(event.entry);
         break;
       default:
@@ -277,21 +302,145 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
-  private handleRemoveEntry(entry: any) {
-    // TODO: Implement remove functionality
-    console.log('Remove entry:', entry);
+  private async handleRemoveEntry(entry: any) {
+    
+    this.isPopoverOpen = false;
+    // Only allow removal of food entries, not nutrients
+    if (entry.entryType !== 'food') {
+      const toast = await this.toastController.create({
+        message: 'Only food items can be removed.',
+        duration: 3000,
+        color: 'warning',
+        position: 'bottom'
+      });
+      await toast.present();
+      return;
+    }
+
+    if (!entry.foodItemIds || entry.foodItemIds.length === 0) {
+      console.error('No food item IDs found for removal');
+      return;
+    }
+
+    const foodName = this.getFoodDisplayName(entry);
+    const foodKey = entry.foodItemIds.join(','); // Use joined IDs as unique key
+
+    // Store the original entry for potential restoration
+    this.removedFoods.set(foodKey, { ...entry });
+
+    // Optimistically remove from UI
+    this.removeFromUI(entry);
+
+    // Show toast with undo option
+    const toast = await this.toastController.create({
+      message: `Removing "${foodName}"`,
+      duration: 2000,
+      color: 'medium',
+      position: 'bottom',
+      buttons: [
+        {
+          text: 'Undo',
+          role: 'cancel',
+          handler: () => {
+            this.undoRemoval(foodKey);
+          }
+        }
+      ]
+    });
+
+    await toast.present();
+
+    // Set timeout to actually delete after toast duration
+    const timeoutId = setTimeout(() => {
+      this.confirmRemoval(foodKey);
+    }, 4000);
+
+    this.undoTimeouts.set(foodKey, timeoutId);
+  }
+
+  private removeFromUI(entry: any) {
+    if (!this.detailedData?.foods) return;
+
+    // Remove the food from the UI
+    this.detailedData.foods = this.detailedData.foods.filter(food => {
+      // Compare by food item IDs
+      const foodKey = food.foodItemIds?.join(',');
+      const entryKey = entry.foodItemIds?.join(',');
+      return foodKey !== entryKey;
+    });
+
+    // Clear selected food if it was the one being removed
+    if (this.selectedFood && this.selectedFood.foodItemIds?.join(',') === entry.foodItemIds?.join(',')) {
+      this.selectedFood = null;
+    }
+  }
+
+  private undoRemoval(foodKey: string) {
+    const removedFood = this.removedFoods.get(foodKey);
+    if (!removedFood) return;
+
+    // Clear the timeout
+    const timeoutId = this.undoTimeouts.get(foodKey);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      this.undoTimeouts.delete(foodKey);
+    }
+
+    // Restore the food to the UI
+    if (this.detailedData?.foods) {
+      this.detailedData.foods.push(removedFood);
+      // Re-sort foods to maintain original order (if needed)
+      // For now, just add to end
+    }
+
+    // Clean up
+    this.removedFoods.delete(foodKey);
+  }
+
+  private confirmRemoval(foodKey: string) {
+    const removedFood = this.removedFoods.get(foodKey);
+    if (!removedFood) return;
+
+    // Actually delete via API
+    this.foodEntryService.deleteFoodEntry(removedFood.foodItemIds).subscribe({
+      next: (response) => {
+        if (response.isSuccess) {
+          console.log('Food successfully deleted from backend');
+          // Refresh to get updated data (both foods and nutrients will be recalculated)
+          this.loadDetailedSummary(new Date(this.selectedDate), true);
+          
+        } else {
+          console.error('Failed to delete food:', response.errors);
+          // Restore the food since deletion failed
+          this.undoRemoval(foodKey);
+          this.showErrorToast('Failed to delete food. Please try again.');
+        }
+      },
+      error: (error) => {
+        console.error('Error deleting food:', error);
+        // Restore the food since deletion failed
+        this.undoRemoval(foodKey);
+        this.showErrorToast('An error occurred while deleting food.');
+      }
+    });
+
+    // Clean up
+    this.removedFoods.delete(foodKey);
+    this.undoTimeouts.delete(foodKey);
   }
 
   private handleFocusInChat(entry: any) {
     const topic = this.getEntryTopicName(entry);
     const date = new Date(this.selectedDate);
     
+    // Set context note and navigate to chat immediately
+    this.chatService.setContextNote(`Focusing on ${topic}`);
+    this.router.navigate(['/app/chat']);
+    
+    // Make API call in background
     this.chatService.focusInChat(topic, date).subscribe({
       next: (response) => {
-        if (response.isSuccess) {
-          // Navigate to chat page
-          this.router.navigate(['/app/chat']);
-        } else {
+        if (!response.isSuccess) {
           this.showErrorToast('Failed to focus in chat. Please try again.');
         }
       },
@@ -306,12 +455,14 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     const topic = this.getEntryTopicName(entry);
     const date = new Date(this.selectedDate);
     
+    // Set context note and navigate to chat immediately
+    this.chatService.setContextNote(`Learning more about ${topic}`);
+    this.router.navigate(['/app/chat']);
+    
+    // Make API call in background
     this.chatService.learnMoreAbout(topic, date).subscribe({
       next: (response) => {
-        if (response.isSuccess) {
-          // Navigate to chat page
-          this.router.navigate(['/app/chat']);
-        } else {
+        if (!response.isSuccess) {
           this.showErrorToast('Failed to get information. Please try again.');
         }
       },
@@ -340,6 +491,10 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
       position: 'bottom'
     });
     await toast.present();
+  }
+
+  private getFoodDisplayName(food: any): string {
+    return food.brandName ? `${food.brandName} - ${food.name}` : food.name;
   }
 
   trackById(index: number, item: any): string {

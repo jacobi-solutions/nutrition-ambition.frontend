@@ -110,8 +110,6 @@ export class ChatService {
 
   // Focus on a specific topic in chat
   focusInChat(topic: string, date: Date): Observable<BotMessageResponse> {
-    // Note: Context note is now set by the component before calling this method
-    
     // Create the request to the backend
     const request = new FocusInChatRequest({
       focusText: topic,
@@ -121,8 +119,6 @@ export class ChatService {
     // Call the API and handle the response
     return this.apiService.focusInChat(request).pipe(
       map(response => {
-        // Note: Context note is now cleared by the component based on response
-        
         // Emit a new message received event to indicate the response is complete
         if (response.isSuccess && response.message) {
           // Add the bot's response message to the chat UI
