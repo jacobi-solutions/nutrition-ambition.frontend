@@ -11,7 +11,7 @@ import { provideAuth, initializeAuth, browserLocalPersistence } from '@angular/f
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { AuthInterceptor } from './app/http-interceptors/auth.interceptor';
+import { ApiInterceptor } from './app/http-interceptors/api.interceptor';
 
 import { NutritionAmbitionApiService, API_BASE_URL } from './app/services/nutrition-ambition-api.service';
 import { environment } from './environments/environment';
@@ -97,9 +97,9 @@ bootstrapApplication(AppComponent, {
       });
     }),
 
-    // Provide HttpClient with AuthInterceptor
+    // Provide HttpClient with ApiInterceptor
     provideHttpClient(withInterceptors([
-      AuthInterceptor
+      ApiInterceptor
     ])),
 
     // Provide NSwag API Service
