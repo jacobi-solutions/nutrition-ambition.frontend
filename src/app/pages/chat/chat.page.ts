@@ -11,7 +11,8 @@ import { DateService } from '../../services/date.service';
 import { 
   BotMessageResponse,
   GetChatMessagesResponse,
-  ChatMessage
+  ChatMessage,
+  MessageRoleTypes
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -306,9 +307,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             
             // Separate messages by role - only include User (0), Assistant (1), and ContextNote (4)
             response.messages.forEach(msg => {
-              if (msg.role === 4 /* MessageRoleTypes.ContextNote */) {
+              if (msg.role ===  MessageRoleTypes.ContextNote /* MessageRoleTypes.ContextNote */) {
                 contextNoteMsgs.push(msg);
-              } else if (msg.role === 0 /* MessageRoleTypes.User */ || msg.role === 1 /* MessageRoleTypes.Assistant */) {
+              } else if (msg.role === MessageRoleTypes.User /* MessageRoleTypes.User */ || msg.role === MessageRoleTypes.Assistant /* MessageRoleTypes.Assistant */) {
                 regularMsgs.push(msg);
               }
               // Skip Tool (2) and System (3) messages - they should not be displayed in chat
@@ -317,7 +318,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             // Convert regular messages (User and Assistant only) to display messages
             this.messages = regularMsgs.map(msg => ({
               text: msg.content || '',
-              isUser: msg.role === 0 /* MessageRoleTypes.User */,
+              isUser: msg.role === MessageRoleTypes.User /* MessageRoleTypes.User */,
               timestamp: msg.loggedDateUtc || new Date()
             }));
             

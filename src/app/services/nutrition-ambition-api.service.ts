@@ -641,10 +641,10 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
 }
 
 export enum AssistantMode {
-    _0 = 0,
-    _1 = 1,
-    _2 = 2,
-    _3 = 3,
+    Default = "Default",
+    GoalSetting = "GoalSetting",
+    Onboarding = "Onboarding",
+    Coaching = "Coaching",
 }
 
 export class BotMessageResponse implements IBotMessageResponse {
@@ -820,8 +820,6 @@ export interface IChatMessage {
 }
 
 export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     loggedDateUtc?: Date | undefined;
 
     constructor(data?: IClearChatMessagesRequest) {
@@ -835,8 +833,6 @@ export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
         }
     }
@@ -850,16 +846,12 @@ export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         return data;
     }
 }
 
 export interface IClearChatMessagesRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     loggedDateUtc?: Date | undefined;
 }
 
@@ -932,8 +924,6 @@ export interface IClearChatMessagesResponse {
 }
 
 export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     description?: string | undefined;
     meal?: MealType;
     loggedDateUtc?: Date;
@@ -950,8 +940,6 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             this.description = _data["description"];
             this.meal = _data["meal"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
@@ -972,8 +960,6 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         data["description"] = this.description;
         data["meal"] = this.meal;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
@@ -987,8 +973,6 @@ export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
 }
 
 export interface ICreateFoodEntryRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     description?: string | undefined;
     meal?: MealType;
     loggedDateUtc?: Date;
@@ -1060,8 +1044,6 @@ export interface ICreateFoodEntryResponse {
 }
 
 export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     foodItemIds?: string[] | undefined;
 
     constructor(data?: IDeleteFoodEntryRequest) {
@@ -1075,8 +1057,6 @@ export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             if (Array.isArray(_data["foodItemIds"])) {
                 this.foodItemIds = [] as any;
                 for (let item of _data["foodItemIds"])
@@ -1094,8 +1074,6 @@ export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         if (Array.isArray(this.foodItemIds)) {
             data["foodItemIds"] = [];
             for (let item of this.foodItemIds)
@@ -1106,8 +1084,6 @@ export class DeleteFoodEntryRequest implements IDeleteFoodEntryRequest {
 }
 
 export interface IDeleteFoodEntryRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     foodItemIds?: string[] | undefined;
 }
 
@@ -1212,8 +1188,6 @@ export interface IErrorDto {
 }
 
 export class FocusInChatRequest implements IFocusInChatRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     focusText?: string | undefined;
     date?: Date | undefined;
 
@@ -1228,8 +1202,6 @@ export class FocusInChatRequest implements IFocusInChatRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             this.focusText = _data["focusText"];
             this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
         }
@@ -1244,8 +1216,6 @@ export class FocusInChatRequest implements IFocusInChatRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         data["focusText"] = this.focusText;
         data["date"] = this.date ? this.date.toISOString() : <any>undefined;
         return data;
@@ -1253,8 +1223,6 @@ export class FocusInChatRequest implements IFocusInChatRequest {
 }
 
 export interface IFocusInChatRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     focusText?: string | undefined;
     date?: Date | undefined;
 }
@@ -1584,8 +1552,6 @@ export interface IFoodItem {
 }
 
 export class GetChatMessagesRequest implements IGetChatMessagesRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     loggedDateUtc!: Date;
 
     constructor(data?: IGetChatMessagesRequest) {
@@ -1599,8 +1565,6 @@ export class GetChatMessagesRequest implements IGetChatMessagesRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
         }
     }
@@ -1614,16 +1578,12 @@ export class GetChatMessagesRequest implements IGetChatMessagesRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         return data;
     }
 }
 
 export interface IGetChatMessagesRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     loggedDateUtc: Date;
 }
 
@@ -1700,8 +1660,6 @@ export interface IGetChatMessagesResponse {
 }
 
 export class GetDetailedSummaryRequest implements IGetDetailedSummaryRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     loggedDateUtc?: Date;
 
     constructor(data?: IGetDetailedSummaryRequest) {
@@ -1715,8 +1673,6 @@ export class GetDetailedSummaryRequest implements IGetDetailedSummaryRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
         }
     }
@@ -1730,16 +1686,12 @@ export class GetDetailedSummaryRequest implements IGetDetailedSummaryRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         return data;
     }
 }
 
 export interface IGetDetailedSummaryRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     loggedDateUtc?: Date;
 }
 
@@ -1828,8 +1780,6 @@ export interface IGetDetailedSummaryResponse {
 }
 
 export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     loggedDateUtc?: Date | undefined;
     meal?: MealType;
 
@@ -1844,8 +1794,6 @@ export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             this.meal = _data["meal"];
         }
@@ -1860,8 +1808,6 @@ export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         data["meal"] = this.meal;
         return data;
@@ -1869,8 +1815,6 @@ export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
 }
 
 export interface IGetFoodEntriesRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     loggedDateUtc?: Date | undefined;
     meal?: MealType;
 }
@@ -1948,8 +1892,6 @@ export interface IGetFoodEntriesResponse {
 }
 
 export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     topic?: string | undefined;
     date?: Date | undefined;
 
@@ -1964,8 +1906,6 @@ export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             this.topic = _data["topic"];
             this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
         }
@@ -1980,8 +1920,6 @@ export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         data["topic"] = this.topic;
         data["date"] = this.date ? this.date.toISOString() : <any>undefined;
         return data;
@@ -1989,8 +1927,6 @@ export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
 }
 
 export interface ILearnMoreAboutRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     topic?: string | undefined;
     date?: Date | undefined;
 }
@@ -2004,11 +1940,11 @@ export enum MealType {
 }
 
 export enum MessageRoleTypes {
-    _0 = 0,
-    _1 = 1,
-    _2 = 2,
-    _3 = 3,
-    _4 = 4,
+    User = "User",
+    Assistant = "Assistant",
+    Tool = "Tool",
+    System = "System",
+    ContextNote = "ContextNote",
 }
 
 export class NutrientBreakdown implements INutrientBreakdown {
@@ -2156,8 +2092,6 @@ export interface INutrientContribution {
 }
 
 export class RunChatRequest implements IRunChatRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     message?: string | undefined;
 
     constructor(data?: IRunChatRequest) {
@@ -2171,8 +2105,6 @@ export class RunChatRequest implements IRunChatRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             this.message = _data["message"];
         }
     }
@@ -2186,16 +2118,12 @@ export class RunChatRequest implements IRunChatRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         data["message"] = this.message;
         return data;
     }
 }
 
 export interface IRunChatRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     message?: string | undefined;
 }
 
@@ -2284,14 +2212,12 @@ export interface IToolFunctionCall {
 }
 
 export enum UnitKind {
-    _0 = 0,
-    _1 = 1,
-    _2 = 2,
+    Weight = "Weight",
+    Volume = "Volume",
+    Count = "Count",
 }
 
 export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     foodEntryId?: string | undefined;
     description?: string | undefined;
     meal?: MealType;
@@ -2309,8 +2235,6 @@ export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.accountId = _data["accountId"];
-            this.isAnonymousUser = _data["isAnonymousUser"];
             this.foodEntryId = _data["foodEntryId"];
             this.description = _data["description"];
             this.meal = _data["meal"];
@@ -2332,8 +2256,6 @@ export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["accountId"] = this.accountId;
-        data["isAnonymousUser"] = this.isAnonymousUser;
         data["foodEntryId"] = this.foodEntryId;
         data["description"] = this.description;
         data["meal"] = this.meal;
@@ -2348,8 +2270,6 @@ export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
 }
 
 export interface IUpdateFoodEntryRequest {
-    accountId?: string | undefined;
-    isAnonymousUser?: boolean;
     foodEntryId?: string | undefined;
     description?: string | undefined;
     meal?: MealType;

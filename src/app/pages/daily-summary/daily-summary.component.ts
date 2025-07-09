@@ -272,6 +272,43 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   navigateToFood(foodName: string) {
     this.viewMode = 'foods';
     this.selectedFood = this.detailedData?.foods?.find(f => f.name?.toLowerCase() === foodName.toLowerCase()) || null;
+    
+    // Scroll to the selected food after DOM updates
+    setTimeout(() => {
+      this.scrollToSelectedItem('food', foodName);
+    }, 100);
+  }
+
+  navigateToNutrient(nutrientKey: string) {
+    this.viewMode = 'nutrients';
+    this.selectedNutrient = this.detailedData?.nutrients?.find(n => n.nutrientKey === nutrientKey) || null;
+    
+    // Scroll to the selected nutrient after DOM updates
+    setTimeout(() => {
+      this.scrollToSelectedItem('nutrient', nutrientKey);
+    }, 100);
+  }
+
+  private scrollToSelectedItem(type: 'food' | 'nutrient', identifier: string) {
+    if (!this.content) return;
+
+    try {
+      // Find the selected item element
+      const targetElement = this.elementRef.nativeElement.querySelector('ion-item.selected');
+      
+      if (targetElement) {
+        // Use Ionic's scrollToPoint method to scroll to the element
+        // Get the element's offset top position relative to the content area
+        const elementTop = targetElement.offsetTop;
+        
+        // Scroll to position the element nicely in view (not at very top)
+        const scrollPosition = Math.max(0, elementTop - 100);
+        
+        this.content.scrollToPoint(0, scrollPosition, 300);
+      }
+    } catch (error) {
+      console.warn('Failed to scroll to selected item:', error);
+    }
   }
 
   openActionMenu(event: Event, entry: any, type: 'food' | 'nutrient') {

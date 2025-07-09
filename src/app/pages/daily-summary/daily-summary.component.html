@@ -231,7 +231,7 @@
                         <div *ngIf="selectedFoodMacronutrients.length" class="nutrient-section">
                           <h4 class="nutrient-section-title">Macronutrients</h4>
                           <ng-container *ngFor="let nutrient of selectedFoodMacronutrients; trackBy: trackById">
-                            <div class="detail-item">
+                            <div class="detail-item clickable-nutrient" (click)="navigateToNutrient(nutrient.nutrientKey)">
                               <span class="detail-name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
                               <span class="detail-amount">{{ nutrient.amount?.toFixed(1) }} {{ nutrient.unit }}</span>
                             </div>
@@ -242,7 +242,7 @@
                         <div *ngIf="selectedFoodMicronutrients.length" class="nutrient-section">
                           <h4 class="nutrient-section-title">Micronutrients</h4>
                           <ng-container *ngFor="let nutrient of selectedFoodMicronutrients; trackBy: trackById">
-                            <div class="detail-item">
+                            <div class="detail-item clickable-nutrient" (click)="navigateToNutrient(nutrient.nutrientKey)">
                               <span class="detail-name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
                               <span class="detail-amount">{{ nutrient.amount?.toFixed(1) }} {{ nutrient.unit }}</span>
                             </div>
