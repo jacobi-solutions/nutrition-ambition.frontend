@@ -54,17 +54,20 @@ export class AuthService {
       // Check if we have an anonymous user to upgrade
       if (currentUser && currentUser.isAnonymous) {
         console.log('Upgrading anonymous user to email/password account');
+        console.log('UID before linking:', currentUser.uid); // 🔍 Log UID before linking
         
         // Create EmailAuthCredential
         const credential = EmailAuthProvider.credential(email, password);
         
         // Link the anonymous account with the email credential
-        await linkWithCredential(currentUser, credential);
+        const result = await linkWithCredential(currentUser, credential);
+        console.log('UID after linking:', result.user.uid); // 🔍 Log UID after linking
         console.log('Anonymous account successfully upgraded to email/password account');
       } else {
         // No anonymous user, create a new account
         console.log('Creating new email/password account');
-        await createUserWithEmailAndPassword(this.authInstance, email, password);
+        const result = await createUserWithEmailAndPassword(this.authInstance, email, password);
+        console.log('New account UID:', result.user.uid); // 🔍 Log new account UID
         console.log('Email/password account created successfully');
       }
       
