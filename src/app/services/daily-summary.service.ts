@@ -10,7 +10,7 @@ import {
 @Injectable({
   providedIn: 'root'
 })
-export class DailySummaryService {
+export class DailySummaryService { 
   private detailedSummaryCache: Map<string, Observable<GetDetailedSummaryResponse>> = new Map();
   
   constructor(
