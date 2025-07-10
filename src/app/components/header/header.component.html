@@ -45,6 +45,8 @@
       <ion-datetime-button datetime="datePicker"></ion-datetime-button>
       <ion-modal [keepContentsMounted]="true">
         <ng-template>
+          <!-- Local date only — uses 'yyyy-MM-dd' format -->
+          <!-- UTC conversion handled via dateService when communicating with backend -->
           <ion-datetime 
             id="datePicker" 
             [value]="selectedDate"

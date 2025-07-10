@@ -33,6 +33,7 @@ import { AppHeaderComponent } from 'src/app/components/header/header.component';
 import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-action-menu/entry-action-menu.component';
 import { ToastController } from '@ionic/angular';
 import { ViewWillEnter } from '@ionic/angular';
+import { format } from 'date-fns';
 
 @Component({
   selector: 'app-daily-summary',
@@ -72,7 +73,9 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   selectedFood: FoodBreakdown | null = null;
   detailedLoading = false;
   detailedError: string | null = null;
-  selectedDate: string = new Date().toISOString();
+  // Local date only — uses 'yyyy-MM-dd' format
+  // UTC conversion handled via dateService when communicating with backend
+  selectedDate: string = format(new Date(), 'yyyy-MM-dd');
   userEmail: string | null = null;
 
   private dateSubscription: Subscription;
@@ -109,7 +112,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   ngOnInit() {
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this.selectedDate = date;
-      this.loadDetailedSummary(new Date(date));
+      this.loadDetailedSummary(this.dateService.getSelectedDateUtc());
     });
 
     this.authService.userEmail$.subscribe(email => {
@@ -119,7 +122,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     // Listen for meal logging events from chat service to refresh data
     this.mealLoggedSubscription = this.chatService.mealLogged$.subscribe(() => {
       console.log('🍽️ Meal logged event received, refreshing summary');
-      this.loadDetailedSummary(new Date(this.selectedDate), true);
+      this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
     });
   }
 
@@ -138,7 +141,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   ionViewWillEnter() {
     console.log('📊 Summary tab entered, refreshing data for date:', this.selectedDate);
     // Force reload when entering the tab since user might have added food from chat
-    this.loadDetailedSummary(new Date(this.selectedDate), true);
+    this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
   }
 
   onDateChanged(newDate: string) {
@@ -164,7 +167,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   handleRefresh(event: CustomEvent) {
-    this.loadDetailedSummary(new Date(this.selectedDate), true);
+    this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
     setTimeout(() => (event.target as any)?.complete(), 1000);
   }
 
@@ -443,7 +446,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
         if (response.isSuccess) {
           console.log('Food successfully deleted from backend');
           // Refresh to get updated data (both foods and nutrients will be recalculated)
-          this.loadDetailedSummary(new Date(this.selectedDate), true);
+          this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
           
         } else {
           console.error('Failed to delete food:', response.errors);
@@ -467,7 +470,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
 
   private handleFocusInChat(entry: any) {
     const topic = this.getEntryTopicName(entry);
-    const date = new Date(this.selectedDate);
+    const date = this.dateService.getSelectedDateUtc();
     
     // Set context note and navigate to chat immediately
     this.chatService.setContextNote(`Focusing on ${topic}`);
@@ -489,7 +492,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
 
   private handleLearnMore(entry: any) {
     const topic = this.getEntryTopicName(entry);
-    const date = new Date(this.selectedDate);
+    const date = this.dateService.getSelectedDateUtc();
     
     // Set context note and navigate to chat immediately
     this.chatService.setContextNote(`Learning more about ${topic}`);

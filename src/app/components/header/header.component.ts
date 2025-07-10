@@ -30,6 +30,7 @@ import {
 } from 'ionicons/icons';
 import { DateService } from 'src/app/services/date.service';
 import { Subscription } from 'rxjs';
+import { format } from 'date-fns';
 
 @Component({
   selector: 'app-header',
@@ -68,7 +69,9 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     return this._selectedDate;
   }
   
-  private _selectedDate: string = new Date().toISOString();
+  // Local date only — uses 'yyyy-MM-dd' format
+  // UTC conversion handled via dateService when communicating with backend
+  private _selectedDate: string = format(new Date(), 'yyyy-MM-dd');
   
   @Output() previousDay = new EventEmitter<void>();
   @Output() nextDay = new EventEmitter<void>();
@@ -142,9 +145,8 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
       const newDate = event.detail.value;
       console.log(`[AppHeader] Emitting new date: ${newDate}`);
       
-      // Update the internal state and emit to parent
-      this._selectedDate = newDate;
-      this.dateChanged.emit(newDate);
+      // Use dateService to set the selected date (handles local format conversion)
+      this.dateService.setSelectedDate(newDate);
     }
   }
 

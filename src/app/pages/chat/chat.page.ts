@@ -17,6 +17,7 @@ import {
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { ChatMessageComponent } from 'src/app/components/chat-message/chat-message.component';
+import { format } from 'date-fns';
 
 interface DisplayMessage {
   text: string;
@@ -50,7 +51,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   userMessage: string = '';
   isLoading: boolean = false;
   isLoadingHistory: boolean = false;
-  selectedDate: string = new Date().toISOString();
+  // Local date only — uses 'yyyy-MM-dd' format
+  // UTC conversion handled via dateService when communicating with backend
+  selectedDate: string = format(new Date(), 'yyyy-MM-dd');
   error: string | null = null;
   userEmail: string | null = null;
   contextNote: string | null = null;
@@ -85,7 +88,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     // Subscribe to date changes
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this.selectedDate = date;
-      this.loadChatHistory(new Date(date));
+      this.loadChatHistory(this.dateService.getSelectedDateUtc());
     });
     
     // Subscribe to context note changes
@@ -215,13 +218,13 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   // Handle refresh from header pull-down
   onRefresh() {
     console.log('[Chat] Refresh triggered, reloading chat history');
-    this.loadChatHistory(new Date(this.selectedDate));
+    this.loadChatHistory(this.dateService.getSelectedDateUtc());
   }
 
   // Handle refresh from ion-refresher
   handleRefresh(event: CustomEvent) {
     console.log('[Chat] Pull-to-refresh triggered, reloading chat history');
-    this.loadChatHistory(new Date(this.selectedDate));
+    this.loadChatHistory(this.dateService.getSelectedDateUtc());
     
     // Complete the refresh after a short delay
     setTimeout(() => {

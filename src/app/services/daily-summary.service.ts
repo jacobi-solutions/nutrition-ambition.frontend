@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, catchError, throwError, of, shareReplay } from 'rxjs';
+import { format } from 'date-fns';
 import { 
   GetDetailedSummaryRequest,
   GetDetailedSummaryResponse,
@@ -18,13 +19,14 @@ export class DailySummaryService {
 
   /**
    * Gets the detailed nutrition summary for a specific date
-   * @param loggedDateUtc The date to get the detailed summary for
+   * @param loggedDateUtc The UTC date to get the detailed summary for (from DateService.getSelectedDateUtc())
    * @param forceReload Whether to bypass the cache and force a new API request
    * @returns An Observable of the Detailed Summary response
    */
   getDetailedSummary(loggedDateUtc: Date = new Date(), forceReload: boolean = false): Observable<GetDetailedSummaryResponse> {
-    // Generate a cache key based on the date
-    const cacheKey = loggedDateUtc.toISOString().split('T')[0]; // Use date portion only
+    // Generate a cache key based on the local date (yyyy-MM-dd format)
+    // This ensures cache is tied to local dates, not UTC boundaries
+    const cacheKey = format(loggedDateUtc, 'yyyy-MM-dd');
     
     // If we're forcing a reload or don't have cached data
     if (forceReload || !this.detailedSummaryCache.has(cacheKey)) {
@@ -57,11 +59,12 @@ export class DailySummaryService {
 
   /**
    * Clears the cache for a specific date or all cached data
-   * @param loggedDateUtc Optional date to clear specific cache entry
+   * @param loggedDateUtc Optional UTC date to clear specific cache entry
    */
   clearCache(loggedDateUtc?: Date): void {
     if (loggedDateUtc) {
-      const cacheKey = loggedDateUtc.toISOString().split('T')[0];
+      // Use local date formatting for cache key consistency
+      const cacheKey = format(loggedDateUtc, 'yyyy-MM-dd');
       this.detailedSummaryCache.delete(cacheKey);
       console.log(`[DailySummaryService] Cleared cache for ${cacheKey}`);
     } else {
