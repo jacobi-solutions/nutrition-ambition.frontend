@@ -18,7 +18,7 @@ export const ApiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: H
   return from(authService.getIdToken()).pipe(
     switchMap(token => {
       const headers: { [key: string]: string } = {
-        'X-Timezone-Offset': new Date().getTimezoneOffset().toString()
+        'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone
       };
 
       if (token) {

@@ -25,7 +25,7 @@ export class DateService {
     
     // Ensure we're working with a valid date with time set to noon to avoid timezone issues
     const newDate = new Date(isoDate);
-    newDate.setHours(12, 0, 0, 0);
+    
     const normalizedIsoDate = newDate.toISOString();
     
     console.log(`[DateService] Normalized date: ${normalizedIsoDate}`);
@@ -37,8 +37,7 @@ export class DateService {
     console.log(`[DateService] Going to previous day from: ${this.selectedDateSubject.value}`);
     const currentDate = new Date(this.selectedDateSubject.value);
     currentDate.setDate(currentDate.getDate() - 1);
-    // Set to noon to avoid timezone issues
-    currentDate.setHours(12, 0, 0, 0);
+    
     const newDate = currentDate.toISOString();
     console.log(`[DateService] New date will be: ${newDate}`);
     this.selectedDateSubject.next(newDate);
@@ -48,8 +47,7 @@ export class DateService {
     console.log(`[DateService] Going to next day from: ${this.selectedDateSubject.value}`);
     const currentDate = new Date(this.selectedDateSubject.value);
     currentDate.setDate(currentDate.getDate() + 1);
-    // Set to noon to avoid timezone issues
-    currentDate.setHours(12, 0, 0, 0);
+    
     const newDate = currentDate.toISOString();
     console.log(`[DateService] New date will be: ${newDate}`);
     this.selectedDateSubject.next(newDate);
