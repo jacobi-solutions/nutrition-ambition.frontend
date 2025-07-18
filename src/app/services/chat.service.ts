@@ -12,6 +12,7 @@ import {
   FocusInChatRequest,
   LearnMoreAboutRequest
 } from './nutrition-ambition-api.service';
+import { DateService } from './date.service';
 
 @Injectable({
   providedIn: 'root'
@@ -30,7 +31,7 @@ export class ChatService {
   
   constructor(
     private apiService: NutritionAmbitionApiService,
-    private authService: AuthService
+    private dateService: DateService,
   ) {}
 
   getFirstTimeWelcomeMessage(): string {
@@ -58,7 +59,8 @@ export class ChatService {
   runAssistantMessage(message: string): Observable<BotMessageResponse> {
     console.log('[DEBUG] Running assistant message:', message.substring(0, 30) + '...');
     const request = new RunChatRequest({
-      message,
+      message: message,
+      loggedDateUtc: this.dateService.getSelectedDateUtc()
     });
     
     return this.apiService.runResponsesConversation(request).pipe(
@@ -113,7 +115,7 @@ export class ChatService {
     // Create the request to the backend
     const request = new FocusInChatRequest({
       focusText: topic,
-      date: date
+      loggedDateUtc: date
     });
     
     // Call the API and handle the response
@@ -149,7 +151,7 @@ export class ChatService {
     // Create the request to the backend
     const request = new LearnMoreAboutRequest({
       topic: topic,
-      date: date
+      loggedDateUtc: date
     });
     
     // Call the API and handle the response

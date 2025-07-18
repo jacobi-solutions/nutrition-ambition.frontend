@@ -66,6 +66,10 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     deleteFoodEntry(body: DeleteFoodEntryRequest | undefined): Observable<DeleteFoodEntryResponse>;
+    /**
+     * @return Success
+     */
+    ip(): Observable<void>;
 }
 
 @Injectable()
@@ -638,13 +642,59 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         }
         return _observableOf<DeleteFoodEntryResponse>(null as any);
     }
+
+    /**
+     * @return Success
+     */
+    ip(): Observable<void> {
+        let url_ = this.baseUrl + "/api/Test/ip";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processIp(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processIp(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processIp(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
 }
 
 export enum AssistantMode {
     Default = "Default",
     GoalSetting = "GoalSetting",
-    Onboarding = "Onboarding",
-    Coaching = "Coaching",
+    UserFeedback = "UserFeedback",
 }
 
 export class BotMessageResponse implements IBotMessageResponse {
@@ -1189,7 +1239,7 @@ export interface IErrorDto {
 
 export class FocusInChatRequest implements IFocusInChatRequest {
     focusText?: string | undefined;
-    date?: Date | undefined;
+    loggedDateUtc?: Date | undefined;
 
     constructor(data?: IFocusInChatRequest) {
         if (data) {
@@ -1203,7 +1253,7 @@ export class FocusInChatRequest implements IFocusInChatRequest {
     init(_data?: any) {
         if (_data) {
             this.focusText = _data["focusText"];
-            this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
         }
     }
 
@@ -1217,14 +1267,14 @@ export class FocusInChatRequest implements IFocusInChatRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["focusText"] = this.focusText;
-        data["date"] = this.date ? this.date.toISOString() : <any>undefined;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         return data;
     }
 }
 
 export interface IFocusInChatRequest {
     focusText?: string | undefined;
-    date?: Date | undefined;
+    loggedDateUtc?: Date | undefined;
 }
 
 export class FoodBreakdown implements IFoodBreakdown {
@@ -1893,7 +1943,7 @@ export interface IGetFoodEntriesResponse {
 
 export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
     topic?: string | undefined;
-    date?: Date | undefined;
+    loggedDateUtc?: Date | undefined;
 
     constructor(data?: ILearnMoreAboutRequest) {
         if (data) {
@@ -1907,7 +1957,7 @@ export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
     init(_data?: any) {
         if (_data) {
             this.topic = _data["topic"];
-            this.date = _data["date"] ? new Date(_data["date"].toString()) : <any>undefined;
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
         }
     }
 
@@ -1921,14 +1971,14 @@ export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["topic"] = this.topic;
-        data["date"] = this.date ? this.date.toISOString() : <any>undefined;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         return data;
     }
 }
 
 export interface ILearnMoreAboutRequest {
     topic?: string | undefined;
-    date?: Date | undefined;
+    loggedDateUtc?: Date | undefined;
 }
 
 export enum MealType {
@@ -2093,6 +2143,7 @@ export interface INutrientContribution {
 
 export class RunChatRequest implements IRunChatRequest {
     message?: string | undefined;
+    loggedDateUtc?: Date | undefined;
 
     constructor(data?: IRunChatRequest) {
         if (data) {
@@ -2106,6 +2157,7 @@ export class RunChatRequest implements IRunChatRequest {
     init(_data?: any) {
         if (_data) {
             this.message = _data["message"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
         }
     }
 
@@ -2119,12 +2171,14 @@ export class RunChatRequest implements IRunChatRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["message"] = this.message;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         return data;
     }
 }
 
 export interface IRunChatRequest {
     message?: string | undefined;
+    loggedDateUtc?: Date | undefined;
 }
 
 export class ToolCall implements IToolCall {
