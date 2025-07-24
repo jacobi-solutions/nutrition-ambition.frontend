@@ -1,0 +1,285 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Admin Panel</ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/app/chat"></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Admin Panel</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div class="admin-content">
+    <!-- Navigation Segment -->
+    <ion-segment [(ngModel)]="currentView" (ionChange)="currentView === 'feedback' ? switchToFeedback() : switchToOverview()">
+      <ion-segment-button value="overview">
+        <ion-label>Overview</ion-label>
+        <ion-icon name="analytics-outline"></ion-icon>
+      </ion-segment-button>
+      <ion-segment-button value="feedback">
+        <ion-label>Feedback</ion-label>
+        <ion-icon name="chatbubbles-outline"></ion-icon>
+      </ion-segment-button>
+    </ion-segment>
+
+    <!-- Overview View -->
+    <div *ngIf="currentView === 'overview'">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Account Information</ion-card-title>
+        </ion-card-header>
+        
+        <ion-card-content>
+          <div *ngIf="account; else noAccount">
+            <ion-item lines="none">
+              <ion-label>
+                <h3>Name</h3>
+                <p>{{ account.name || 'Not set' }}</p>
+              </ion-label>
+            </ion-item>
+            
+            <ion-item lines="none">
+              <ion-label>
+                <h3>Email</h3>
+                <p>{{ account.email || 'Not set' }}</p>
+              </ion-label>
+            </ion-item>
+            
+            <ion-item lines="none">
+              <ion-label>
+                <h3>Account ID</h3>
+                <p>{{ account.id }}</p>
+              </ion-label>
+            </ion-item>
+            
+            <ion-item lines="none">
+              <ion-label>
+                <h3>Owner Status</h3>
+                <p>
+                  <ion-badge color="{{ account.isOwner ? 'success' : 'medium' }}">
+                    {{ account.isOwner ? 'Owner' : 'Regular User' }}
+                  </ion-badge>
+                </p>
+              </ion-label>
+            </ion-item>
+            
+            <ion-item lines="none">
+              <ion-label>
+                <h3>Time Zone</h3>
+                <p>{{ account.timeZoneId || 'Not set' }}</p>
+              </ion-label>
+            </ion-item>
+          </div>
+          
+          <ng-template #noAccount>
+            <ion-item lines="none">
+              <ion-label>
+                <p>Loading account information...</p>
+              </ion-label>
+            </ion-item>
+          </ng-template>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Feedback Statistics -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Feedback Statistics</ion-card-title>
+        </ion-card-header>
+        
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="6">
+                <div class="stat-item">
+                  <h2>{{ feedbackStats.total }}</h2>
+                  <p>Total</p>
+                </div>
+              </ion-col>
+              <ion-col size="6">
+                <div class="stat-item">
+                  <h2>{{ feedbackStats.incomplete }}</h2>
+                  <p>Pending</p>
+                </div>
+              </ion-col>
+            </ion-row>
+            <ion-row>
+              <ion-col size="6">
+                <div class="stat-item">
+                  <h2>{{ feedbackStats.completed }}</h2>
+                  <p>Completed</p>
+                </div>
+              </ion-col>
+              <ion-col size="6">
+                <div class="stat-item">
+                  <h2>{{ feedbackStats.total > 0 ? ((feedbackStats.completed / feedbackStats.total) * 100).toFixed(0) : 0 }}%</h2>
+                  <p>Completion Rate</p>
+                </div>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+
+          <!-- By Type -->
+          <div *ngIf="getStatsEntries().length > 0" class="type-stats">
+            <h3>By Type</h3>
+            <div *ngFor="let stat of getStatsEntries()" class="type-stat-item">
+              <ion-badge [color]="getTypeColor(stat.key)">
+                <ion-icon [name]="getTypeIcon(stat.key)"></ion-icon>
+                {{ stat.key | titlecase }}: {{ stat.value }}
+              </ion-badge>
+            </div>
+          </div>
+
+          <ion-button expand="block" fill="outline" (click)="switchToFeedback()" class="view-feedback-btn">
+            <ion-icon name="eye-outline" slot="start"></ion-icon>
+            View All Feedback
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- Feedback Management View -->
+    <div *ngIf="currentView === 'feedback'">
+      <!-- Filters -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Feedback Management</ion-card-title>
+          <ion-card-subtitle>Manage user feedback entries</ion-card-subtitle>
+        </ion-card-header>
+        
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col size="6">
+                <ion-select
+                  [(ngModel)]="selectedFilterType"
+                  (ionChange)="onFilterTypeChange()"
+                  placeholder="Filter by type"
+                  interface="popover">
+                  <ion-select-option value="all">All Types</ion-select-option>
+                  <ion-select-option *ngFor="let type of feedbackTypes" [value]="type">
+                    {{ type | titlecase }}
+                  </ion-select-option>
+                </ion-select>
+              </ion-col>
+              <ion-col size="6">
+                <ion-select
+                  [(ngModel)]="selectedCompletionFilter"
+                  (ionChange)="onCompletionFilterChange()"
+                  placeholder="Filter by status"
+                  interface="popover">
+                  <ion-select-option value="all">All Status</ion-select-option>
+                  <ion-select-option value="completed">Completed</ion-select-option>
+                  <ion-select-option value="incomplete">Incomplete</ion-select-option>
+                </ion-select>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+
+          <ion-button expand="block" fill="outline" (click)="loadFeedback()">
+            <ion-icon name="refresh-outline" slot="start"></ion-icon>
+            Refresh
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-container">
+        <ion-spinner color="primary"></ion-spinner>
+        <p>Loading feedback entries...</p>
+      </div>
+
+      <!-- Feedback Entries -->
+      <div *ngIf="!isLoading">
+        <div *ngIf="filteredFeedbackEntries.length === 0 && feedbackEntries.length === 0" class="empty-state">
+          <ion-icon name="chatbubbles-outline" size="large"></ion-icon>
+          <h3>No Feedback Yet</h3>
+          <p>No feedback entries have been submitted by users.</p>
+        </div>
+
+        <div *ngIf="filteredFeedbackEntries.length === 0 && feedbackEntries.length > 0" class="empty-state">
+          <ion-icon name="filter-outline" size="large"></ion-icon>
+          <h3>No Results</h3>
+          <p>No feedback entries match the current filters.</p>
+        </div>
+
+        <ion-card *ngFor="let feedback of filteredFeedbackEntries" class="feedback-card">
+          <ion-card-header>
+            <div class="feedback-header">
+              <div class="feedback-type">
+                <ion-badge [color]="getTypeColor(feedback.feedbackType!)">
+                  <ion-icon [name]="getTypeIcon(feedback.feedbackType!)"></ion-icon>
+                  {{ feedback.feedbackType | titlecase }}
+                </ion-badge>
+              </div>
+              <div class="feedback-status">
+                <ion-badge [color]="feedback.isCompleted ? 'success' : 'warning'">
+                  {{ feedback.isCompleted ? 'Completed' : 'Pending' }}
+                </ion-badge>
+              </div>
+            </div>
+          </ion-card-header>
+
+          <ion-card-content>
+            <div class="feedback-message">
+              <h3>Message:</h3>
+              <p>{{ feedback.message }}</p>
+            </div>
+
+            <div *ngIf="feedback.context" class="feedback-context">
+              <h4>Context:</h4>
+              <p>{{ feedback.context }}</p>
+            </div>
+
+            <div *ngIf="feedback.isCompleted && feedback.completionNote" class="completion-note">
+              <h4>Admin Note:</h4>
+              <p>{{ feedback.completionNote }}</p>
+            </div>
+
+            <div class="feedback-meta">
+              <p><strong>Submitted:</strong> {{ formatDate(feedback.createdDateUtc?.toString()) }}</p>
+              <p *ngIf="feedback.completedDateUtc"><strong>Completed:</strong> {{ formatDate(feedback.completedDateUtc?.toString()) }}</p>
+            </div>
+
+            <!-- Admin Actions -->
+            <div class="admin-actions">
+              <ion-button
+                *ngIf="!feedback.isCompleted"
+                size="small"
+                color="success"
+                fill="outline"
+                (click)="markAsComplete(feedback)">
+                <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+                Mark Complete
+              </ion-button>
+
+              <ion-button
+                *ngIf="feedback.isCompleted"
+                size="small"
+                color="warning"
+                fill="outline"
+                (click)="markAsIncomplete(feedback)">
+                <ion-icon name="refresh-outline" slot="start"></ion-icon>
+                Reopen
+              </ion-button>
+
+              <ion-button
+                size="small"
+                color="danger"
+                fill="outline"
+                (click)="deleteFeedback(feedback)">
+                <ion-icon name="trash-outline" slot="start"></ion-icon>
+                Delete
+              </ion-button>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    </div>
+  </div>
+</ion-content> 

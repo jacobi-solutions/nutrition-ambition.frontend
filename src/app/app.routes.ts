@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginPage } from './pages/auth/login/login.page';
 import { SignupPage } from './pages/auth/signup/signup.page';
 import { AuthGuard } from './guards/auth.guard';
+import { OwnerGuard } from './guards/owner.guard';
 import { DailySummaryComponent } from './pages/daily-summary/daily-summary.component';
 
 export const routes: Routes = [
@@ -25,6 +26,11 @@ export const routes: Routes = [
   {
     path: 'legal/terms-of-service',
     loadComponent: () => import('./pages/legal/terms-of-service/terms-of-service.page').then(m => m.TermsOfServicePage)
+  },
+  {
+    path: 'admin',
+    loadComponent: () => import('./pages/admin/admin.page').then(m => m.AdminPage),
+    canActivate: [AuthGuard, OwnerGuard]
   },
   {
     path: 'app',
