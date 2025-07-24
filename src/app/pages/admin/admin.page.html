@@ -16,7 +16,7 @@
 
   <div class="admin-content">
     <!-- Navigation Segment -->
-    <ion-segment [(ngModel)]="currentView" (ionChange)="currentView === 'feedback' ? switchToFeedback() : switchToOverview()">
+    <ion-segment [(ngModel)]="currentView" (ionChange)="onViewChange($event)">
       <ion-segment-button value="overview">
         <ion-label>Overview</ion-label>
         <ion-icon name="analytics-outline"></ion-icon>
@@ -125,9 +125,9 @@
           </ion-grid>
 
           <!-- By Type -->
-          <div *ngIf="getStatsEntries().length > 0" class="type-stats">
+          <div *ngIf="statsEntries.length > 0" class="type-stats">
             <h3>By Type</h3>
-            <div *ngFor="let stat of getStatsEntries()" class="type-stat-item">
+            <div *ngFor="let stat of statsEntries" class="type-stat-item">
               <ion-badge [color]="getTypeColor(stat.key)">
                 <ion-icon [name]="getTypeIcon(stat.key)"></ion-icon>
                 {{ stat.key | titlecase }}: {{ stat.value }}

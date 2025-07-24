@@ -11,7 +11,7 @@
   (logout)="onLogout()">
 </app-header>
 
-<ion-content class="ion-padding">
+<ion-content>
   <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
@@ -68,15 +68,7 @@
                     <ion-icon name="ellipsis-vertical"></ion-icon>
                   </ion-button>
 
-                  <ion-button 
-                    fill="clear" 
-                    slot="end" 
-                    size="small" 
-                    class="chevron-btn">
-                    <ion-icon 
-                      [name]="selectedNutrient?.nutrientKey === nutrient.nutrientKey ? 'chevron-down-outline' : 'chevron-forward-outline'">
-                    </ion-icon>
-                  </ion-button>
+                 
                 </ion-item>
 
                 <ng-container *ngIf="selectedNutrient?.nutrientKey === nutrient.nutrientKey">
@@ -133,15 +125,7 @@
                     <ion-icon name="ellipsis-vertical"></ion-icon>
                   </ion-button>
 
-                  <ion-button 
-                    fill="clear" 
-                    slot="end" 
-                    size="small" 
-                    class="chevron-btn">
-                    <ion-icon 
-                      [name]="selectedNutrient?.nutrientKey === nutrient.nutrientKey ? 'chevron-down-outline' : 'chevron-forward-outline'">
-                    </ion-icon>
-                  </ion-button>
+                 
                 </ion-item>
 
                 <ng-container *ngIf="selectedNutrient?.nutrientKey === nutrient.nutrientKey">
@@ -212,15 +196,7 @@
                     <ion-icon name="ellipsis-vertical"></ion-icon>
                   </ion-button>
 
-                  <ion-button 
-                    fill="clear" 
-                    slot="end" 
-                    size="small" 
-                    class="chevron-btn">
-                    <ion-icon 
-                      [name]="selectedFood?.name === food.name ? 'chevron-down-outline' : 'chevron-forward-outline'">
-                    </ion-icon>
-                  </ion-button>
+                 
                 </ion-item>
 
                 <ng-container *ngIf="selectedFood?.name === food.name">

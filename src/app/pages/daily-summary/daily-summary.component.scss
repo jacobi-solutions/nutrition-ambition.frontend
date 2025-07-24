@@ -1,3 +1,5 @@
+
+
 .loading-container {
   display: flex;
   justify-content: center;
@@ -166,7 +168,7 @@ ion-content {
   .main-content-wrapper {
     max-width: 420px;
     margin: 0 auto;
-    padding: 0 8px;
+    padding: 1rem;
   }
 }
 
@@ -174,6 +176,9 @@ ion-content {
 .main-card-container {
   max-width: 420px;
   margin: 0 auto;
+
+  
+  
 }
 
 // Ion-Card Style Updates
@@ -284,6 +289,7 @@ ion-card {
   color: var(--ion-color-medium);
   white-space: nowrap;
 }
+
 
 .brand-name {
   color: var(--ion-color-primary);

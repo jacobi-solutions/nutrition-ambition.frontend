@@ -6,6 +6,35 @@ import { Subject, takeUntil } from 'rxjs';
 import { AccountsService } from '../../services/accounts.service';
 import { AdminService } from '../../services/admin.service';
 import { Account, FeedbackEntry } from '../../services/nutrition-ambition-api.service';
+import { addIcons } from 'ionicons';
+import { 
+  analyticsOutline,
+  chatbubblesOutline,
+  eyeOutline,
+  refreshOutline,
+  filterOutline,
+  checkmarkOutline,
+  trashOutline,
+  bugOutline,
+  bulbOutline,
+  helpOutline,
+  documentOutline
+} from 'ionicons/icons';
+
+// Register all icons used in this component
+addIcons({
+  'analytics-outline': analyticsOutline,
+  'chatbubbles-outline': chatbubblesOutline,
+  'eye-outline': eyeOutline,
+  'refresh-outline': refreshOutline,
+  'filter-outline': filterOutline,
+  'checkmark-outline': checkmarkOutline,
+  'trash-outline': trashOutline,
+  'bug-outline': bugOutline,
+  'bulb-outline': bulbOutline,
+  'help-outline': helpOutline,
+  'document-outline': documentOutline
+});
 
 @Component({
   selector: 'app-admin',
@@ -33,6 +62,9 @@ export class AdminPage implements OnInit, OnDestroy {
     incomplete: 0,
     byType: {} as { [key: string]: number }
   };
+
+  // Cache for template methods to prevent change detection loops
+  private _cachedStatsEntries: Array<{key: string, value: number}> = [];
 
   // Available feedback types
   feedbackTypes = ['bug', 'feature', 'other'];
@@ -65,6 +97,7 @@ export class AdminPage implements OnInit, OnDestroy {
       .subscribe(entries => {
         this.feedbackEntries = entries;
         this.applyFilters();
+        this.updateStats(); // Update stats whenever entries change
         console.log('[AdminPage] Feedback entries updated:', entries.length);
       });
 
@@ -82,14 +115,33 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   // View management
-  switchToOverview() {
-    this.currentView = 'overview';
+  async onViewChange(event: any) {
+    const newView = event.detail.value;
+    console.log('[AdminPage] View changed to:', newView);
+    
+    if (newView === 'overview') {
+      await this.switchToOverview();
+    } else if (newView === 'feedback') {
+      await this.switchToFeedback();
+    }
   }
 
-  switchToFeedback() {
+  async switchToOverview() {
+    console.log('[AdminPage] Switching to overview');
+    this.currentView = 'overview';
+    // Load stats when switching to overview (if we have no data yet)
+    if (this.feedbackStats.total === 0 && this.feedbackEntries.length === 0) {
+      console.log('[AdminPage] Loading feedback stats...');
+      await this.loadFeedbackStats();
+    }
+    console.log('[AdminPage] switchToOverview completed');
+  }
+
+  async switchToFeedback() {
+    console.log('[AdminPage] Switching to feedback');
     this.currentView = 'feedback';
     if (this.feedbackEntries.length === 0) {
-      this.loadFeedback();
+      await this.loadFeedback();
     }
   }
 
@@ -97,7 +149,7 @@ export class AdminPage implements OnInit, OnDestroy {
   async loadFeedback() {
     try {
       await this.adminService.getAllFeedback();
-      await this.loadFeedbackStats();
+      // Stats will be updated automatically when entries change
     } catch (error) {
       console.error('[AdminPage] Error loading feedback:', error);
       await this.showToast('Error loading feedback entries', 'danger');
@@ -110,6 +162,15 @@ export class AdminPage implements OnInit, OnDestroy {
     } catch (error) {
       console.error('[AdminPage] Error loading feedback stats:', error);
     }
+  }
+
+  private updateStats() {
+    console.log('[AdminPage] updateStats called');
+    // Update stats from current entries without making additional API calls
+    this.feedbackStats = this.adminService.getFeedbackStatsFromCurrent();
+    // Update cached stats entries when stats change
+    this._cachedStatsEntries = Object.entries(this.feedbackStats.byType).map(([key, value]) => ({key, value}));
+    console.log('[AdminPage] Stats updated:', this.feedbackStats);
   }
 
   // Filtering
@@ -161,13 +222,12 @@ export class AdminPage implements OnInit, OnDestroy {
           text: 'Mark Complete',
           handler: async (data) => {
             try {
-              await this.adminService.completeFeedback(
-                feedbackEntry.id!, 
-                true, 
-                data.completionNote
-              );
-              await this.showToast('Feedback marked as complete', 'success');
-              await this.loadFeedbackStats();
+                             await this.adminService.completeFeedback(
+                 feedbackEntry.id!, 
+                 true, 
+                 data.completionNote
+               );
+               await this.showToast('Feedback marked as complete', 'success');
             } catch (error) {
               console.error('[AdminPage] Error marking feedback as complete:', error);
               await this.showToast('Error marking feedback as complete', 'danger');
@@ -192,10 +252,9 @@ export class AdminPage implements OnInit, OnDestroy {
         {
           text: 'Mark Incomplete',
           handler: async () => {
-            try {
-              await this.adminService.completeFeedback(feedbackEntry.id!, false);
-              await this.showToast('Feedback marked as incomplete', 'success');
-              await this.loadFeedbackStats();
+                         try {
+               await this.adminService.completeFeedback(feedbackEntry.id!, false);
+               await this.showToast('Feedback marked as incomplete', 'success');
             } catch (error) {
               console.error('[AdminPage] Error marking feedback as incomplete:', error);
               await this.showToast('Error marking feedback as incomplete', 'danger');
@@ -221,10 +280,9 @@ export class AdminPage implements OnInit, OnDestroy {
           text: 'Delete',
           role: 'destructive',
           handler: async () => {
-            try {
-              await this.adminService.deleteFeedback(feedbackEntry.id!);
-              await this.showToast('Feedback deleted successfully', 'success');
-              await this.loadFeedbackStats();
+                         try {
+               await this.adminService.deleteFeedback(feedbackEntry.id!);
+               await this.showToast('Feedback deleted successfully', 'success');
             } catch (error) {
               console.error('[AdminPage] Error deleting feedback:', error);
               await this.showToast('Error deleting feedback', 'danger');
@@ -282,6 +340,13 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   getStatsEntries(): Array<{key: string, value: number}> {
-    return Object.entries(this.feedbackStats.byType).map(([key, value]) => ({key, value}));
+    console.log('[AdminPage] getStatsEntries called - this might be causing change detection loop!');
+    // Return cached version to prevent change detection loops
+    return this._cachedStatsEntries;
+  }
+
+  // Getter property for template - more efficient than method calls
+  get statsEntries(): Array<{key: string, value: number}> {
+    return this._cachedStatsEntries;
   }
 } 

@@ -191,22 +191,21 @@ export class AdminService {
   }
 
   /**
-   * Get feedback statistics
+   * Get feedback statistics from current entries (doesn't reload data)
    */
-  async getFeedbackStats(): Promise<{
+  getFeedbackStatsFromCurrent(): {
     total: number;
     completed: number;
     incomplete: number;
     byType: { [key: string]: number };
-  }> {
+  } {
     try {
-      const response = await this.getAllFeedback();
+      const entries = this.currentFeedbackEntries;
       
-      if (!response.isSuccess || !response.feedbackEntries) {
+      if (!entries || entries.length === 0) {
         return { total: 0, completed: 0, incomplete: 0, byType: {} };
       }
 
-      const entries = response.feedbackEntries;
       const stats = {
         total: entries.length,
         completed: entries.filter(e => e.isCompleted).length,
@@ -222,6 +221,28 @@ export class AdminService {
       });
 
       return stats;
+    } catch (error) {
+      console.error('[AdminService] Error getting feedback stats:', error);
+      return { total: 0, completed: 0, incomplete: 0, byType: {} };
+    }
+  }
+
+  /**
+   * Get feedback statistics (loads data if needed)
+   */
+  async getFeedbackStats(): Promise<{
+    total: number;
+    completed: number;
+    incomplete: number;
+    byType: { [key: string]: number };
+  }> {
+    try {
+      // If we don't have any entries, load them first
+      if (this.currentFeedbackEntries.length === 0) {
+        await this.getAllFeedback();
+      }
+      
+      return this.getFeedbackStatsFromCurrent();
     } catch (error) {
       console.error('[AdminService] Error getting feedback stats:', error);
       return { total: 0, completed: 0, incomplete: 0, byType: {} };
