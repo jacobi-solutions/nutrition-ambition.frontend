@@ -44,21 +44,37 @@ ion-icon {
   }
 }
 
+// Scrollable menu container styles
+.scrollable-menu {
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-bottom: 8px; // Add some bottom padding to ensure last item is fully visible
+}
+
+.scrollable-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollable-menu::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
 // Use ::ng-deep to ensure the popover container gets the border radius
 ::ng-deep ion-popover {
   --border-radius: 1.125rem;
   
   .popover-content {
     border-radius: 1.125rem !important;
-    overflow: hidden;
+    overflow: visible;
     background-color: var(--color-bone);
-    padding: 1rem;
+    padding: 0.5rem !important;
   }
 } 
 
 ::ng-deep ion-popover::part(content) {
   border-radius: 1.125rem !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   background-color: var(--color-bone) !important;
   padding: 0.5rem !important;
 }
@@ -66,7 +82,7 @@ ion-icon {
 // More aggressive global targeting with higher specificity
 ::ng-deep ion-popover div.popover-content[part="content"] {
   border-radius: 1.125rem !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   background-color: var(--color-bone) !important;
   padding: 0.5rem !important;
 }
@@ -74,7 +90,7 @@ ion-icon {
 // Even more specific targeting
 ::ng-deep ion-popover div.popover-content {
   border-radius: 1.125rem !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   background-color: var(--color-bone) !important;
   padding: 0.5rem !important;
 } 
