@@ -330,9 +330,6 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
       case 'remove':
         this.handleRemoveEntry(event.entry);
         break;
-      case 'focusInChat':
-        this.handleFocusInChat(event.entry);
-        break;
       case 'learn':
         this.handleLearnMore(event.entry);
         break;

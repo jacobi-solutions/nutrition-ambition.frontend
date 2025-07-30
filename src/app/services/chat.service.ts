@@ -26,8 +26,8 @@ export class ChatService {
   public contextNote$ = this.contextNoteSubject.asObservable();
   
   // Add a subject to emit focus in chat responses
-  private focusInChatResponseSubject = new Subject<BotMessageResponse>();
-  public focusInChatResponse$ = this.focusInChatResponseSubject.asObservable();
+  private learnMoreAboutResponseSubject = new Subject<BotMessageResponse>();
+  public learnMoreAboutResponse$ = this.learnMoreAboutResponseSubject.asObservable();
   
   constructor(
     private apiService: NutritionAmbitionApiService,
@@ -132,7 +132,7 @@ export class ChatService {
           };
           
           // Emit the response so the chat page can update
-          this.focusInChatResponseSubject.next(response);
+          this.learnMoreAboutResponseSubject.next(response);
           
           return response;
         }
@@ -168,7 +168,7 @@ export class ChatService {
           };
           
           // Emit the response so the chat page can update
-          this.focusInChatResponseSubject.next(response);
+          this.learnMoreAboutResponseSubject.next(response);
           
           return response;
         }

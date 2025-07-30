@@ -59,7 +59,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   contextNote: string | null = null;
   private dateSubscription: Subscription;
   private contextNoteSubscription: Subscription;
-  private focusInChatSubscription: Subscription;
+  private learnMoreAboutSubscription: Subscription;
 
   private hasInitialMessage: boolean = false;
 
@@ -116,7 +116,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     });
     
     // Subscribe to receive the bot's response from the focusInChat method
-    this.focusInChatSubscription = this.chatService.focusInChatResponse$.subscribe(response => {
+    this.learnMoreAboutSubscription = this.chatService.learnMoreAboutResponse$.subscribe(response => {
       if (response && response.isSuccess && response.message) {
         // Add the bot's response to the messages array
         this.messages.push({
@@ -156,8 +156,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       this.contextNoteSubscription.unsubscribe();
     }
     
-    if (this.focusInChatSubscription) {
-      this.focusInChatSubscription.unsubscribe();
+    if (this.learnMoreAboutSubscription) {
+      this.learnMoreAboutSubscription.unsubscribe();
     }
   }
 
