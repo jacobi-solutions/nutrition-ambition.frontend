@@ -9,7 +9,6 @@ import {
   GetChatMessagesResponse,
   ClearChatMessagesResponse,
   RunChatRequest,
-  FocusInChatRequest,
   LearnMoreAboutRequest
 } from './nutrition-ambition-api.service';
 import { DateService } from './date.service';
@@ -110,41 +109,7 @@ export class ChatService {
     return this.apiService.clearChatMessages(request);
   }
 
-  // Focus on a specific topic in chat
-  focusInChat(topic: string, date: Date): Observable<BotMessageResponse> {
-    // Create the request to the backend
-    const request = new FocusInChatRequest({
-      focusText: topic,
-      loggedDateUtc: date
-    });
-    
-    // Call the API and handle the response
-    return this.apiService.focusInChat(request).pipe(
-      map(response => {
-        // Emit a new message received event to indicate the response is complete
-        if (response.isSuccess && response.message) {
-          // Add the bot's response message to the chat UI
-          const botMessage: any = {
-            text: response.message,
-            isUser: false,
-            isTool: false,
-            timestamp: new Date()
-          };
-          
-          // Emit the response so the chat page can update
-          this.learnMoreAboutResponseSubject.next(response);
-          
-          return response;
-        }
-        
-        return response;
-      }),
-      catchError(error => {
-        console.error('Error focusing in chat:', error);
-        return throwError(() => error);
-      })
-    );
-  }
+  
   
   // Learn more about a specific topic in chat
   learnMoreAbout(topic: string, date: Date): Observable<BotMessageResponse> {

@@ -40,11 +40,6 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    focusInChat(body: FocusInChatRequest | undefined): Observable<BotMessageResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<BotMessageResponse>;
     /**
      * @param body (optional) 
@@ -81,11 +76,6 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     completeFeedback(body: CompleteFeedbackRequest | undefined): Observable<CompleteFeedbackResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    createFoodEntry(body: CreateFoodEntryRequest | undefined): Observable<CreateFoodEntryResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -321,62 +311,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processRunResponsesConversation(response: HttpResponseBase): Observable<BotMessageResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BotMessageResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<BotMessageResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    focusInChat(body: FocusInChatRequest | undefined): Observable<BotMessageResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/FocusInChat";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processFocusInChat(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processFocusInChat(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<BotMessageResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<BotMessageResponse>;
-        }));
-    }
-
-    protected processFocusInChat(response: HttpResponseBase): Observable<BotMessageResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -850,62 +784,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    createFoodEntry(body: CreateFoodEntryRequest | undefined): Observable<CreateFoodEntryResponse> {
-        let url_ = this.baseUrl + "/api/FoodEntry/CreateFoodEntry";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processCreateFoodEntry(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processCreateFoodEntry(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<CreateFoodEntryResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<CreateFoodEntryResponse>;
-        }));
-    }
-
-    protected processCreateFoodEntry(response: HttpResponseBase): Observable<CreateFoodEntryResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = CreateFoodEntryResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<CreateFoodEntryResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     getFoodEntries(body: GetFoodEntriesRequest | undefined): Observable<GetFoodEntriesResponse> {
         let url_ = this.baseUrl + "/api/FoodEntry/GetFoodEntries";
         url_ = url_.replace(/[?&]$/, "");
@@ -1126,6 +1004,7 @@ export class Account implements IAccount {
     email?: string | undefined;
     timeZoneId?: string | undefined;
     isOwner?: boolean;
+    hasUnacknowledgedFeedbackResponses?: boolean;
 
     constructor(data?: IAccount) {
         if (data) {
@@ -1145,6 +1024,7 @@ export class Account implements IAccount {
             this.email = _data["email"];
             this.timeZoneId = _data["timeZoneId"];
             this.isOwner = _data["isOwner"];
+            this.hasUnacknowledgedFeedbackResponses = _data["hasUnacknowledgedFeedbackResponses"];
         }
     }
 
@@ -1164,6 +1044,7 @@ export class Account implements IAccount {
         data["email"] = this.email;
         data["timeZoneId"] = this.timeZoneId;
         data["isOwner"] = this.isOwner;
+        data["hasUnacknowledgedFeedbackResponses"] = this.hasUnacknowledgedFeedbackResponses;
         return data;
     }
 }
@@ -1176,6 +1057,7 @@ export interface IAccount {
     email?: string | undefined;
     timeZoneId?: string | undefined;
     isOwner?: boolean;
+    hasUnacknowledgedFeedbackResponses?: boolean;
 }
 
 export class AccountResponse implements IAccountResponse {
@@ -1242,7 +1124,7 @@ export interface IAccountResponse {
     account?: Account;
 }
 
-export enum AssistantMode {
+export enum AssistantModeTypes {
     Default = "Default",
     GoalSetting = "GoalSetting",
     UserFeedback = "UserFeedback",
@@ -1258,8 +1140,8 @@ export class BotMessageResponse implements IBotMessageResponse {
     toolCalls?: ToolCall[] | undefined;
     responseId?: string | undefined;
     loggedMeal?: boolean;
-    assistantMode?: AssistantMode;
-    goalPhase?: string | undefined;
+    assistantMode?: AssistantModeTypes;
+    assistantPhase?: string | undefined;
 
     constructor(data?: IBotMessageResponse) {
         if (data) {
@@ -1290,7 +1172,7 @@ export class BotMessageResponse implements IBotMessageResponse {
             this.responseId = _data["responseId"];
             this.loggedMeal = _data["loggedMeal"];
             this.assistantMode = _data["assistantMode"];
-            this.goalPhase = _data["goalPhase"];
+            this.assistantPhase = _data["assistantPhase"];
         }
     }
 
@@ -1321,7 +1203,7 @@ export class BotMessageResponse implements IBotMessageResponse {
         data["responseId"] = this.responseId;
         data["loggedMeal"] = this.loggedMeal;
         data["assistantMode"] = this.assistantMode;
-        data["goalPhase"] = this.goalPhase;
+        data["assistantPhase"] = this.assistantPhase;
         return data;
     }
 }
@@ -1336,8 +1218,8 @@ export interface IBotMessageResponse {
     toolCalls?: ToolCall[] | undefined;
     responseId?: string | undefined;
     loggedMeal?: boolean;
-    assistantMode?: AssistantMode;
-    goalPhase?: string | undefined;
+    assistantMode?: AssistantModeTypes;
+    assistantPhase?: string | undefined;
 }
 
 export class ChatMessage implements IChatMessage {
@@ -1351,8 +1233,8 @@ export class ChatMessage implements IChatMessage {
     foodEntryId?: string | undefined;
     isRead?: boolean;
     responseId?: string | undefined;
-    assistantMode?: AssistantMode;
-    goalPhase?: string | undefined;
+    assistantMode?: AssistantModeTypes;
+    assistantPhase?: string | undefined;
 
     constructor(data?: IChatMessage) {
         if (data) {
@@ -1376,7 +1258,7 @@ export class ChatMessage implements IChatMessage {
             this.isRead = _data["isRead"];
             this.responseId = _data["responseId"];
             this.assistantMode = _data["assistantMode"];
-            this.goalPhase = _data["goalPhase"];
+            this.assistantPhase = _data["assistantPhase"];
         }
     }
 
@@ -1400,7 +1282,7 @@ export class ChatMessage implements IChatMessage {
         data["isRead"] = this.isRead;
         data["responseId"] = this.responseId;
         data["assistantMode"] = this.assistantMode;
-        data["goalPhase"] = this.goalPhase;
+        data["assistantPhase"] = this.assistantPhase;
         return data;
     }
 }
@@ -1416,8 +1298,8 @@ export interface IChatMessage {
     foodEntryId?: string | undefined;
     isRead?: boolean;
     responseId?: string | undefined;
-    assistantMode?: AssistantMode;
-    goalPhase?: string | undefined;
+    assistantMode?: AssistantModeTypes;
+    assistantPhase?: string | undefined;
 }
 
 export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
@@ -1526,7 +1408,7 @@ export interface IClearChatMessagesResponse {
 
 export class CompleteFeedbackRequest implements ICompleteFeedbackRequest {
     feedbackId?: string | undefined;
-    completionNote?: string | undefined;
+    completionNote!: string;
     isCompleted?: boolean;
 
     constructor(data?: ICompleteFeedbackRequest) {
@@ -1564,7 +1446,7 @@ export class CompleteFeedbackRequest implements ICompleteFeedbackRequest {
 
 export interface ICompleteFeedbackRequest {
     feedbackId?: string | undefined;
-    completionNote?: string | undefined;
+    completionNote: string;
     isCompleted?: boolean;
 }
 
@@ -1630,126 +1512,6 @@ export interface ICompleteFeedbackResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     feedbackEntry?: FeedbackEntry;
-}
-
-export class CreateFoodEntryRequest implements ICreateFoodEntryRequest {
-    description?: string | undefined;
-    meal?: MealType;
-    loggedDateUtc?: Date;
-    groupedItems?: FoodGroup[] | undefined;
-
-    constructor(data?: ICreateFoodEntryRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.description = _data["description"];
-            this.meal = _data["meal"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
-            if (Array.isArray(_data["groupedItems"])) {
-                this.groupedItems = [] as any;
-                for (let item of _data["groupedItems"])
-                    this.groupedItems!.push(FoodGroup.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): CreateFoodEntryRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new CreateFoodEntryRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["description"] = this.description;
-        data["meal"] = this.meal;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
-        if (Array.isArray(this.groupedItems)) {
-            data["groupedItems"] = [];
-            for (let item of this.groupedItems)
-                data["groupedItems"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface ICreateFoodEntryRequest {
-    description?: string | undefined;
-    meal?: MealType;
-    loggedDateUtc?: Date;
-    groupedItems?: FoodGroup[] | undefined;
-}
-
-export class CreateFoodEntryResponse implements ICreateFoodEntryResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    foodEntry?: FoodEntry;
-
-    constructor(data?: ICreateFoodEntryResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.foodEntry = _data["foodEntry"] ? FoodEntry.fromJS(_data["foodEntry"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): CreateFoodEntryResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new CreateFoodEntryResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["foodEntry"] = this.foodEntry ? this.foodEntry.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface ICreateFoodEntryResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    foodEntry?: FoodEntry;
 }
 
 export class DeleteFeedbackRequest implements IDeleteFeedbackRequest {
@@ -2008,6 +1770,8 @@ export class FeedbackEntry implements IFeedbackEntry {
     completedDateUtc?: Date | undefined;
     completionNote?: string | undefined;
     completedByAccountId?: string | undefined;
+    isAssistantResponseShown?: boolean;
+    assistantResponseShownDateUtc?: Date | undefined;
 
     constructor(data?: IFeedbackEntry) {
         if (data) {
@@ -2031,6 +1795,8 @@ export class FeedbackEntry implements IFeedbackEntry {
             this.completedDateUtc = _data["completedDateUtc"] ? new Date(_data["completedDateUtc"].toString()) : <any>undefined;
             this.completionNote = _data["completionNote"];
             this.completedByAccountId = _data["completedByAccountId"];
+            this.isAssistantResponseShown = _data["isAssistantResponseShown"];
+            this.assistantResponseShownDateUtc = _data["assistantResponseShownDateUtc"] ? new Date(_data["assistantResponseShownDateUtc"].toString()) : <any>undefined;
         }
     }
 
@@ -2054,6 +1820,8 @@ export class FeedbackEntry implements IFeedbackEntry {
         data["completedDateUtc"] = this.completedDateUtc ? this.completedDateUtc.toISOString() : <any>undefined;
         data["completionNote"] = this.completionNote;
         data["completedByAccountId"] = this.completedByAccountId;
+        data["isAssistantResponseShown"] = this.isAssistantResponseShown;
+        data["assistantResponseShownDateUtc"] = this.assistantResponseShownDateUtc ? this.assistantResponseShownDateUtc.toISOString() : <any>undefined;
         return data;
     }
 }
@@ -2070,46 +1838,8 @@ export interface IFeedbackEntry {
     completedDateUtc?: Date | undefined;
     completionNote?: string | undefined;
     completedByAccountId?: string | undefined;
-}
-
-export class FocusInChatRequest implements IFocusInChatRequest {
-    focusText?: string | undefined;
-    loggedDateUtc?: Date | undefined;
-
-    constructor(data?: IFocusInChatRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.focusText = _data["focusText"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): FocusInChatRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new FocusInChatRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["focusText"] = this.focusText;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IFocusInChatRequest {
-    focusText?: string | undefined;
-    loggedDateUtc?: Date | undefined;
+    isAssistantResponseShown?: boolean;
+    assistantResponseShownDateUtc?: Date | undefined;
 }
 
 export class FoodBreakdown implements IFoodBreakdown {

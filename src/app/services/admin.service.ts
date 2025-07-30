@@ -107,7 +107,7 @@ export class AdminService {
       const request = new CompleteFeedbackRequest({
         feedbackId: feedbackId,
         isCompleted: isCompleted,
-        completionNote: completionNote
+        completionNote: completionNote ?? ""
       });
 
       const response = await firstValueFrom(this.apiService.completeFeedback(request));

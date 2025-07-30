@@ -465,27 +465,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     this.undoTimeouts.delete(foodKey);
   }
 
-  private handleFocusInChat(entry: any) {
-    const topic = this.getEntryTopicName(entry);
-    const date = this.dateService.getSelectedDateUtc();
-    
-    // Set context note and navigate to chat immediately
-    this.chatService.setContextNote(`Focusing on ${topic}`);
-    this.router.navigate(['/app/chat']);
-    
-    // Make API call in background
-    this.chatService.focusInChat(topic, date).subscribe({
-      next: (response) => {
-        if (!response.isSuccess) {
-          this.showErrorToast('Failed to focus in chat. Please try again.');
-        }
-      },
-      error: (error) => {
-        console.error('Error focusing in chat:', error);
-        this.showErrorToast('An error occurred while focusing in chat.');
-      }
-    });
-  }
+  
 
   private handleLearnMore(entry: any) {
     const topic = this.getEntryTopicName(entry);
