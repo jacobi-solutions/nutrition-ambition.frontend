@@ -56,11 +56,19 @@
             <div class="dot"></div>
           </div>
         </div>
+
+        <app-food-selection
+          *ngIf="!!activePayload"
+          [rankedFoodOptions]="activePayload"
+          (selectionConfirmed)="onFoodSelectionConfirmed($event)">
+        </app-food-selection>
       </div>
     </div>
   </div>
   
 </ion-content>
+
+
 
 <ion-footer class="chat-footer">
   

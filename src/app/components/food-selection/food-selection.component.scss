@@ -1,0 +1,251 @@
+.food-selection-container {
+  padding: 16px;
+  
+  .empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    
+    ion-card {
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+  }
+  
+  .food-options {
+    .phrase-section {
+      margin-bottom: 24px;
+      
+      ion-card {
+        margin: 0 0 16px 0;
+        
+        h2 {
+          color: var(--ion-color-primary);
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+        
+        p {
+          color: var(--ion-color-medium);
+          margin: 0;
+        }
+      }
+      
+      .selected-food-section {
+        .selected-food-item {
+          --padding-start: 16px;
+          --padding-end: 16px;
+          cursor: pointer;
+          
+          h3 {
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: var(--ion-color-dark);
+          }
+          
+          p {
+            color: var(--ion-color-medium);
+            font-style: italic;
+            margin: 0;
+          }
+          
+          ion-icon {
+            color: var(--ion-color-primary);
+          }
+        }
+        
+        .food-options-expanded {
+          background: var(--ion-color-light);
+          border-top: 1px solid var(--ion-color-medium);
+          
+          .top-match-section,
+          .other-options-section {
+            .section-header {
+              --background: var(--ion-color-primary);
+              --color: white;
+              --padding-start: 16px;
+              
+              h4 {
+                margin: 8px 0;
+                font-weight: 600;
+                font-size: 14px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+            }
+            
+            ion-item {
+              --padding-start: 24px;
+              --padding-end: 16px;
+              
+              &.selected-option {
+                --background: var(--ion-color-primary-tint);
+                --color: var(--ion-color-primary-contrast);
+              }
+              
+              h3 {
+                font-weight: 500;
+                margin-bottom: 2px;
+                color: var(--ion-color-dark);
+              }
+              
+              p {
+                color: var(--ion-color-medium);
+                font-style: italic;
+                margin: 0;
+                font-size: 12px;
+              }
+              
+              ion-icon[name="checkmark"] {
+                color: var(--ion-color-primary);
+              }
+            }
+          }
+          
+          .other-options-section {
+            margin-top: 8px;
+            
+            .section-header {
+              --background: var(--ion-color-medium);
+            }
+          }
+        }
+      }
+      
+      .serving-selection {
+        border-top: 1px solid var(--ion-color-light);
+        margin-top: 8px;
+        
+        .section-header {
+          --background: var(--ion-color-success);
+          --color: white;
+          --padding-start: 16px;
+          
+          h4 {
+            margin: 8px 0;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+        }
+        
+        .serving-options {
+          ion-item {
+            --padding-start: 24px;
+            font-size: 14px;
+            
+            ion-label {
+              margin: 12px 0;
+              
+              span {
+                color: var(--ion-color-medium);
+                font-size: 12px;
+                font-style: italic;
+              }
+            }
+            
+            ion-radio {
+              margin-right: 12px;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .confirm-section {
+    position: sticky;
+    bottom: 16px;
+    background: var(--ion-background-color);
+    padding: 16px 0;
+    margin-top: 24px;
+    border-top: 1px solid var(--ion-color-light);
+    
+    ion-button {
+      margin: 0;
+      font-weight: 600;
+      
+      &[disabled] {
+        opacity: 0.5;
+      }
+    }
+  }
+}
+
+// Dark mode adjustments
+@media (prefers-color-scheme: dark) {
+  .food-selection-container {
+    .food-options {
+      .phrase-section {
+        .selected-food-section {
+          .food-options-expanded {
+            background: var(--ion-color-dark);
+            border-top-color: var(--ion-color-medium);
+          }
+        }
+        
+        .serving-selection {
+          border-top-color: var(--ion-color-dark);
+        }
+      }
+    }
+    
+    .confirm-section {
+      border-top-color: var(--ion-color-dark);
+    }
+  }
+}
+
+// Mobile responsiveness
+@media (max-width: 768px) {
+  .food-selection-container {
+    padding: 12px;
+    
+    .food-options {
+      .phrase-section {
+        margin-bottom: 20px;
+        
+        .selected-food-section {
+          .selected-food-item {
+            --padding-start: 12px;
+            --padding-end: 12px;
+          }
+          
+          .food-options-expanded {
+            .top-match-section,
+            .other-options-section {
+              .section-header {
+                --padding-start: 12px;
+              }
+              
+              ion-item {
+                --padding-start: 16px;
+                --padding-end: 12px;
+              }
+            }
+          }
+        }
+        
+        .serving-selection {
+          .section-header {
+            --padding-start: 12px;
+          }
+          
+          .serving-options {
+            ion-item {
+              --padding-start: 16px;
+            }
+          }
+        }
+      }
+    }
+    
+    .confirm-section {
+      bottom: 8px;
+      padding: 12px 0;
+    }
+  }
+} 

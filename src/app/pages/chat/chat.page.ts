@@ -12,11 +12,13 @@ import {
   BotMessageResponse,
   GetChatMessagesResponse,
   ChatMessage,
-  MessageRoleTypes
+  MessageRoleTypes,
+  RankedFatSecretFood
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { ChatMessageComponent } from 'src/app/components/chat-message/chat-message.component';
+import { FoodSelectionComponent, UserSelectedServingRequest } from 'src/app/components/food-selection/food-selection.component';
 import { format } from 'date-fns';
 
 interface DisplayMessage {
@@ -41,7 +43,8 @@ interface DisplayMessage {
     IonRefresher,
     IonRefresherContent,
     AppHeaderComponent,
-    ChatMessageComponent
+    ChatMessageComponent,
+    FoodSelectionComponent
   ]
 })
 export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
@@ -62,6 +65,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   private learnMoreAboutSubscription: Subscription;
 
   private hasInitialMessage: boolean = false;
+
+  // Properties for handling food selection payloads
+  activePayload: Record<string, RankedFatSecretFood[]>  | null = null;
+
+
 
   @ViewChild('content', { static: false }) content: IonContent;
   @ViewChild('messagesContent') messagesContent: ElementRef;
@@ -410,6 +418,16 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.chatService.sendMessage(sentMessage).subscribe({
       next: (response: BotMessageResponse) => {
         this.isLoading = false;
+
+        if (
+          response.terminateEarlyForUserInput &&
+          response.rankedFoodOptions &&
+          Object.keys(response.rankedFoodOptions).length > 0
+        ) {
+          this.activePayload = response.rankedFoodOptions;
+          return;
+        }
+
         if (response.isSuccess && response.message) {
           console.log('[DEBUG] Received bot response:', response.message);
           
@@ -568,5 +586,20 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         this.messageInput.nativeElement.focus();
       }
     }, 350); // Slightly longer than scroll animation (300ms)
+  }
+
+  onFoodSelectionConfirmed(selections: UserSelectedServingRequest[]) {
+    console.log('[DEBUG] Selection confirmed:', selections);
+    this.chatService.submitServingSelection('TODO-message-id', selections);
+
+    this.activePayload = null;
+
+    this.messages.push({
+      text: 'Selection confirmed ✅',
+      isUser: false,
+      timestamp: new Date()
+    });
+
+    this.scrollToBottom();
   }
 } 

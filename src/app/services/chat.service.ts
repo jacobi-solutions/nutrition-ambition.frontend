@@ -12,6 +12,7 @@ import {
   LearnMoreAboutRequest
 } from './nutrition-ambition-api.service';
 import { DateService } from './date.service';
+import { UserSelectedServingRequest } from '../components/food-selection/food-selection.component';
 
 @Injectable({
   providedIn: 'root'
@@ -154,5 +155,10 @@ export class ChatService {
   
   public clearContextNote() {
     this.contextNoteSubject.next(null);
+  }
+
+  submitServingSelection(messageId: string, selections: UserSelectedServingRequest[]): void {
+    // TODO: Implement API call to submit serving selections
+    console.log('Stub: submitServingSelection', messageId, selections);
   }
 } 

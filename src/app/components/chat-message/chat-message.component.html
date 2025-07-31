@@ -1,4 +1,13 @@
 <div [ngClass]="{'user-message': isUser, 'bot-message': !isUser && !isTool, 'tool-message': isTool}" class="message">
   <div class="message-content" [innerHTML]="formattedContent"></div>
+  
+  <!-- Food selection component for LogMealToolResponse -->
+  <div *ngIf="hasFoodSelection && showFoodSelector" class="food-selection-container">
+    <app-food-selection 
+      [rankedFoodOptions]="foodSelectionPayload"
+      (selectionConfirmed)="onSelectionConfirmed($event)">
+    </app-food-selection>
+  </div>
+  
   <div class="message-time">{{ timestamp | date:'shortTime' }}</div>
 </div> 
