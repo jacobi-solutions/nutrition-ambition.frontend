@@ -5,7 +5,7 @@ import { marked } from 'marked';
 import { IonText } from '@ionic/angular/standalone';
 import { FoodSelectionComponent, UserSelectedServingRequest } from '../food-selection/food-selection.component';
 import { ChatService } from '../../services/chat.service';
-import { ChatMessage, BotMessageResponse, RankedFatSecretFood } from '../../services/nutrition-ambition-api.service';
+import { ChatMessage, BotMessageResponse, SelectableFoodMatch } from '../../services/nutrition-ambition-api.service';
 
 @Component({
   selector: 'app-chat-message',
@@ -23,14 +23,17 @@ export class ChatMessageComponent implements OnInit {
   @Input() isTool: boolean = false;
   @Input() timestamp: Date = new Date();
   @Input() message?: ChatMessage; // Message object with id
-  @Input() rankedFoodOptions?: Record<string, RankedFatSecretFood[]> | null = null;
+  @Input() foodOptions: Record<string, SelectableFoodMatch[]> | null = null;
 
   showFoodSelector = true;
-  private chatService = inject(ChatService);
 
-  constructor(private sanitizer: DomSanitizer) {}
+  constructor(
+    private sanitizer: DomSanitizer,
+    private chatService: ChatService
+  ) {}
 
   ngOnInit() {
+    console.log('🟡 ChatMessageComponent initialized with foodOptions:', this.foodOptions);
     this.showFoodSelector = true;
   }
 
@@ -54,21 +57,35 @@ export class ChatMessageComponent implements OnInit {
   /**
    * Check if message has food selection payload
    */
-  get hasFoodSelection(): boolean {
-    return Object.keys(this.rankedFoodOptions || {}).length > 0;
+  hasFoodSelection(): boolean {
+    var hasFoodSelection = !!(this.foodOptions && Object.keys(this.foodOptions).length > 0);
+
+    return hasFoodSelection;
   }
   
-  get foodSelectionPayload(): Record<string, RankedFatSecretFood[]> | undefined {
-    return this.hasFoodSelection ? this.rankedFoodOptions ?? undefined : undefined;
+  foodSelectionPayload(): Record<string, SelectableFoodMatch[]> {
+    return this.foodOptions!;
   }
 
   /**
    * Handle food selection confirmation
    */
   onSelectionConfirmed(selections: UserSelectedServingRequest[]): void {
-    if (this.message?.id) {
-      this.chatService.submitServingSelection(this.message.id, selections);
-      this.showFoodSelector = false;
-    }
+    console.log('Food selections confirmed:', selections);
+    
+    // Call the chat service to submit the selections
+    this.chatService.submitServingSelection(selections).subscribe({
+      next: (response) => {
+        console.log('Selection submission successful:', response);
+        console.log('Submitted selections:', selections);
+        
+        // Hide the food selector UI
+        this.showFoodSelector = false;
+      },
+      error: (error) => {
+        console.error('Error submitting food selections:', error);
+        // Keep the selector visible if submission failed
+      }
+    });
   }
 } 

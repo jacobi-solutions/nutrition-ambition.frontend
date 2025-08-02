@@ -16,7 +16,7 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
-import { RankedFatSecretFood } from 'src/app/services/nutrition-ambition-api.service';
+import { SelectableFoodMatch, SelectableFoodServing } from 'src/app/services/nutrition-ambition-api.service';
 
 // Interface definitions
 export interface FoodServing {
@@ -25,8 +25,6 @@ export interface FoodServing {
   unit?: string;
   amount?: number;
 }
-
-
 
 export interface UserSelectedServingRequest {
   originalText: string;
@@ -56,7 +54,7 @@ export interface UserSelectedServingRequest {
   ]
 })
 export class FoodSelectionComponent implements OnInit {
-  @Input() rankedFoodOptions?: Record<string, RankedFatSecretFood[]>  | null = null;
+  @Input() foodOptions?: Record<string, SelectableFoodMatch[]> | null = null;
   @Output() selectionConfirmed = new EventEmitter<UserSelectedServingRequest[]>();
 
   // Map to track selected food and serving: phrase -> { foodId, servingId }
@@ -70,19 +68,19 @@ export class FoodSelectionComponent implements OnInit {
   }
 
   get hasPayload(): boolean {
-    return !!this.rankedFoodOptions && Object.keys(this.rankedFoodOptions).length > 0;
+    return !!this.foodOptions && Object.keys(this.foodOptions).length > 0;
   }
 
   get payloadKeys(): string[] {
-    return this.rankedFoodOptions ? Object.keys(this.rankedFoodOptions) : [];
+    return this.foodOptions ? Object.keys(this.foodOptions) : [];
   }
 
   ngOnInit(): void {
-    if (!this.rankedFoodOptions) return;
+    if (!this.foodOptions) return;
   
-    for (const phrase of Object.keys(this.rankedFoodOptions)) {
-      const foods = this.rankedFoodOptions[phrase];
-      const foodId = foods?.[0]?.fatSecretFood?.food_id;
+    for (const phrase of Object.keys(this.foodOptions)) {
+      const foods = this.foodOptions[phrase];
+      const foodId = foods?.[0]?.fatSecretFoodId;
   
       if (foodId) {
         this.selections[phrase] = { foodId };
@@ -90,17 +88,17 @@ export class FoodSelectionComponent implements OnInit {
     }
   }
 
-  getTopRankedFood(phrase: string): RankedFatSecretFood | null {
-    const foods = this.rankedFoodOptions?.[phrase];
+  getTopRankedFood(phrase: string): SelectableFoodMatch | null {
+    const foods = this.foodOptions?.[phrase];
     return foods && foods.length > 0 ? foods[0] : null;
   }
 
-  getSelectedFood(phrase: string): RankedFatSecretFood | null {
+  getSelectedFood(phrase: string): SelectableFoodMatch | null {
     const selection = this.selections[phrase];
     if (!selection) return null;
   
-    const foods = this.rankedFoodOptions?.[phrase];
-    return foods?.find(food => food?.fatSecretFood?.food_id === selection.foodId) || null;
+    const foods = this.foodOptions?.[phrase];
+    return foods?.find(food => food?.fatSecretFoodId === selection.foodId) || null;
   }
 
   toggleExpansion(phrase: string): void {
@@ -112,15 +110,12 @@ export class FoodSelectionComponent implements OnInit {
   }
 
   onFoodSelected(phrase: string, foodId: string): void {
-    const food = this.rankedFoodOptions?.[phrase]?.find(f => f.fatSecretFood?.food_id === foodId);
-    const servingData = food?.fatSecretFood?.servings?.serving;
-  
+    const food = this.foodOptions?.[phrase]?.find(f => f.fatSecretFoodId === foodId);
+    
     let defaultServingId: string | undefined;
-  
-    if (Array.isArray(servingData)) {
-      defaultServingId = servingData[0]?.serving_id;
-    } else if (servingData) {
-      defaultServingId = servingData.serving_id;
+    
+    if (food?.servings && food.servings.length > 0) {
+      defaultServingId = food.servings[0].fatSecretServingId;
     }
   
     this.selections[phrase] = { foodId, servingId: defaultServingId };
@@ -138,9 +133,9 @@ export class FoodSelectionComponent implements OnInit {
   }
 
   isSelectionComplete(): boolean {
-    if (!this.rankedFoodOptions) return false;
+    if (!this.foodOptions) return false;
     
-    const phrases = Object.keys(this.rankedFoodOptions);
+    const phrases = Object.keys(this.foodOptions);
     return phrases.every(phrase => {
       const selection = this.selections[phrase];
       return selection?.foodId && selection?.servingId;
@@ -148,7 +143,7 @@ export class FoodSelectionComponent implements OnInit {
   }
 
   confirmSelections(): void {
-    if (!this.rankedFoodOptions) return;
+    if (!this.foodOptions) return;
 
     const selections: UserSelectedServingRequest[] = [];
     

@@ -157,8 +157,11 @@ export class ChatService {
     this.contextNoteSubject.next(null);
   }
 
-  submitServingSelection(messageId: string, selections: UserSelectedServingRequest[]): void {
-    // TODO: Implement API call to submit serving selections
-    console.log('Stub: submitServingSelection', messageId, selections);
+  submitServingSelection(selections: UserSelectedServingRequest[]): Observable<void> {
+    // Stub implementation - log selections and return Observable
+    console.log('Stub: submitServingSelection called with selections:', selections);
+    
+    // Simulate async operation and return Observable<void>
+    return of(void 0);
   }
 } 

@@ -1,130 +1,46 @@
-<ion-content>
-  <div class="food-selection-container">
-    <!-- Empty state -->
-    <div *ngIf="!hasPayload" class="empty-state">
-      <ion-card>
-        <ion-item>
-          <ion-label>
-            <h2>No food options available</h2>
-            <p>Please try searching for different food items.</p>
-          </ion-label>
-        </ion-item>
-      </ion-card>
-    </div>
+<div class="food-selection-container">
 
-    <!-- Food options -->
-    <div *ngIf="hasPayload" class="food-options">
-      <div *ngFor="let phrase of payloadKeys" class="phrase-section">
-        <ion-card>
-          <!-- Phrase header -->
-          <ion-item>
-            <ion-label>
-              <h2>{{ phrase }}</h2>
-              <p>Select a food option and serving size:</p>
-            </ion-label>
-          </ion-item>
-
-          <!-- Selected food display -->
-          <div class="selected-food-section">
-            <ion-item button (click)="toggleExpansion(phrase)" class="selected-food-item">
-              <ion-label>
-                <h3>{{ getSelectedFood(phrase)?.name || 'No food selected' }}</h3>
-                <p *ngIf="getSelectedFood(phrase)?.brandName">{{ getSelectedFood(phrase)?.brandName }}</p>
-              </ion-label>
-              <ion-icon 
-                [name]="isExpanded(phrase) ? 'chevron-up-outline' : 'create-outline'" 
-                slot="end">
-              </ion-icon>
-            </ion-item>
-
-            <!-- Expanded food options -->
-            <div *ngIf="isExpanded(phrase)" class="food-options-expanded">
-              <div class="top-match-section">
-                <ion-item class="section-header">
-                  <ion-label>
-                    <h4>Top Match</h4>
-                  </ion-label>
-                </ion-item>
-                <ion-item 
-                  button 
-                  (click)="onFoodSelected(phrase, getTopRankedFood(phrase)!.foodId)"
-                  [class.selected-option]="getSelectedFood(phrase)?.foodId === getTopRankedFood(phrase)?.foodId">
-                  <ion-label>
-                    <h3>{{ getTopRankedFood(phrase)?.name }}</h3>
-                    <p *ngIf="getTopRankedFood(phrase)?.brandName">{{ getTopRankedFood(phrase)?.brandName }}</p>
-                  </ion-label>
-                  <ion-icon 
-                    *ngIf="getSelectedFood(phrase)?.foodId === getTopRankedFood(phrase)?.foodId"
-                    name="checkmark" 
-                    slot="end" 
-                    color="primary">
-                  </ion-icon>
-                </ion-item>
-              </div>
-
-              <div *ngIf="rankedFoodOptions?.[phrase]?.length ?? 0 > 1" class="other-options-section">
-                <ion-item class="section-header">
-                  <ion-label>
-                    <h4>Other Options</h4>
-                  </ion-label>
-                </ion-item>
-                <ion-item 
-                  *ngFor="let food of rankedFoodOptions?.[phrase]?.slice(1)" 
-                  button 
-                  (click)="onFoodSelected(phrase, food.foodId)"
-                  [class.selected-option]="getSelectedFood(phrase)?.foodId === food.foodId">
-                  <ion-label>
-                    <h3>{{ food.name }}</h3>
-                    <p *ngIf="food.brandName">{{ food.brandName }}</p>
-                  </ion-label>
-                  <ion-icon 
-                    *ngIf="getSelectedFood(phrase)?.foodId === food.foodId"
-                    name="checkmark" 
-                    slot="end" 
-                    color="primary">
-                  </ion-icon>
-                </ion-item>
-              </div>
-            </div>
-          </div>
-
-          <!-- Serving selection (always visible for selected food) -->
-          <div *ngIf="getSelectedFood(phrase)" class="serving-selection">
-            <ion-item class="section-header">
-              <ion-label>
-                <h4>Select Serving Size</h4>
-              </ion-label>
-            </ion-item>
-            
-            <ion-radio-group 
-              [value]="getSelectedServingId(phrase)"
-              (ionChange)="onServingSelected(phrase, $event.detail.value)"
-              class="serving-options">
-              <ion-item *ngFor="let serving of getSelectedFood(phrase)!.servings">
-                <ion-label>
-                  {{ serving.description }}
-                  <span *ngIf="serving.amount && serving.unit"> ({{ serving.amount }} {{ serving.unit }})</span>
-                </ion-label>
-                <ion-radio 
-                  slot="start" 
-                  [value]="serving.servingId">
-                </ion-radio>
-              </ion-item>
-            </ion-radio-group>
-          </div>
-        </ion-card>
+  <!-- Food options inline layout -->
+  <div *ngIf="hasPayload" class="food-options-inline">
+    <div *ngFor="let phrase of payloadKeys" class="food-item-row">
+      
+      <!-- Food name and brand -->
+      <div class="food-name">
+        <strong>{{ phrase }}</strong>
+        <span *ngIf="getSelectedFood(phrase)?.brandName">
+          – {{ getSelectedFood(phrase)?.brandName }}
+        </span>
       </div>
 
-      <!-- Confirm button -->
-      <div class="confirm-section">
-        <ion-button 
-          expand="block" 
-          [disabled]="!isSelectionComplete()"
-          (click)="confirmSelections()"
-          color="primary">
-          Confirm Selection
-        </ion-button>
+      <!-- Inline radio buttons for serving options -->
+      <div class="serving-options-inline">
+        <ion-radio-group 
+          [value]="getSelectedServingId(phrase)"
+          (ionChange)="onServingSelected(phrase, $event.detail.value)">
+          
+          <ion-radio 
+            *ngFor="let serving of getSelectedFood(phrase)?.servings"
+            [value]="serving.fatSecretServingId">
+            {{ serving.description }}
+            <span *ngIf="serving.quantity && serving.unit">
+              ({{ serving.quantity }} {{ serving.unit }})
+            </span>
+          </ion-radio>
+        </ion-radio-group>
       </div>
+
     </div>
   </div>
-</ion-content> 
+
+  <!-- Confirm button -->
+  <div class="confirm-section">
+    <ion-button 
+      expand="block" 
+      [disabled]="!isSelectionComplete()"
+      (click)="confirmSelections()"
+      color="primary">
+      Confirm Selection
+    </ion-button>
+  </div>
+
+</div>
