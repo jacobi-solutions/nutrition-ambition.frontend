@@ -6,10 +6,19 @@
       
       <!-- Food name and brand -->
       <div class="food-name">
-        <strong>{{ phrase }}</strong>
-        <span *ngIf="getSelectedFood(phrase)?.brandName">
-          – {{ getSelectedFood(phrase)?.brandName }}
-        </span>
+        <label for="foodSelect-{{ phrase }}"><strong>{{ phrase }}</strong></label>
+        <ion-select 
+          interface="popover"
+          [value]="getSelectedFood(phrase)?.fatSecretFoodId" 
+          (ionChange)="onFoodSelected(phrase, $event.detail.value)" 
+          id="foodSelect-{{ phrase }}">
+          <ion-select-option 
+            *ngFor="let food of (foodOptions?.[phrase] || [])" 
+            [value]="food.fatSecretFoodId">
+            {{ food.displayName }}
+            <span *ngIf="food.brandName"> – {{ food.brandName }}</span>
+          </ion-select-option>
+        </ion-select>
       </div>
 
       <!-- Inline radio buttons for serving options -->

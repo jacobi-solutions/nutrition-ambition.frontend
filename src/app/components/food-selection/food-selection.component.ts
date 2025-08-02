@@ -2,17 +2,11 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
-  IonContent, 
-  IonHeader, 
-  IonToolbar, 
-  IonCard, 
-  IonItem, 
-  IonLabel, 
   IonButton, 
   IonRadioGroup, 
   IonRadio, 
-  IonList,
-  IonIcon
+  IonSelect,
+  IonSelectOption   
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
@@ -40,17 +34,11 @@ export interface UserSelectedServingRequest {
   imports: [
     CommonModule,
     FormsModule,
-    IonContent,
-    IonHeader,
-    IonToolbar,
-    IonCard,
-    IonItem,
-    IonLabel,
     IonButton,
     IonRadioGroup,
     IonRadio,
-    IonList,
-    IonIcon
+    IonSelect,
+    IonSelectOption
   ]
 })
 export class FoodSelectionComponent implements OnInit {

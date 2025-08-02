@@ -49,6 +49,22 @@ ion-content {
   border-radius: 16px;
   position: relative;
   
+  // Make messages with food options much wider
+  &.has-food-options {
+    max-width: 95%;
+    padding: 6px 8px; // Reduced padding for food selection interfaces
+    
+    @media (min-width: 768px) {
+      max-width: 92%;
+      padding: 8px 10px;
+    }
+    
+    @media (min-width: 1200px) {
+      max-width: 90%;
+      padding: 10px 12px;
+    }
+  }
+  
   .message-content {
     word-break: break-word;
     white-space: pre-wrap;

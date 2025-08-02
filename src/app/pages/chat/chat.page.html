@@ -35,18 +35,14 @@
         <!-- Loop through each message -->
         <ng-container *ngFor="let message of messages">
 
-          <!-- TEMP: Visual debug for foodOptions presence -->
-          <div *ngIf="message.foodOptions">
-            <p style="color:red;">Food options detected in message!</p>
-          </div>
-
           <!-- Regular chat message -->
           <app-chat-message 
             *ngIf="!message.isContextNote"
             [text]="message.text"
             [isUser]="message.isUser"
             [timestamp]="message.timestamp"
-            [foodOptions]="message.foodOptions || null">
+            [foodOptions]="message.foodOptions || null"
+            [role]="message.role">
           </app-chat-message>
           
           <!-- Context note message (both from database and real-time) -->

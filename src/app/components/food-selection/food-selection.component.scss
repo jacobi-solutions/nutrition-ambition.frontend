@@ -1,5 +1,8 @@
 .food-selection-container {
-  padding: 16px;
+  padding: 20px;
+  max-width: 95%;
+  width: 100%;
+  margin: 0 auto;
   
   .empty-state {
     display: flex;
@@ -13,160 +16,80 @@
       text-align: center;
     }
   }
-  
-  .food-options {
-    .phrase-section {
-      margin-bottom: 24px;
+
+  // Style for the inline food options layout
+  .food-options-inline {
+    .food-item-row {
+      margin-bottom: 32px;
+      padding: 20px;
+      background: var(--ion-color-light);
+      border-radius: 12px;
+      border: 1px solid var(--ion-color-light-shade);
       
-      ion-card {
-        margin: 0 0 16px 0;
+      .food-name {
+        margin-bottom: 16px;
         
-        h2 {
-          color: var(--ion-color-primary);
+        label {
+          display: block;
+          font-size: 18px;
           font-weight: 600;
-          margin-bottom: 4px;
+          color: var(--ion-color-dark);
+          margin-bottom: 8px;
+          line-height: 1.4;
         }
         
-        p {
-          color: var(--ion-color-medium);
-          margin: 0;
-        }
-      }
-      
-      .selected-food-section {
-        .selected-food-item {
+        ion-select {
+          --background: white;
+          --border-radius: 8px;
           --padding-start: 16px;
           --padding-end: 16px;
-          cursor: pointer;
-          
-          h3 {
-            font-weight: 600;
-            margin-bottom: 2px;
-            color: var(--ion-color-dark);
-          }
-          
-          p {
-            color: var(--ion-color-medium);
-            font-style: italic;
-            margin: 0;
-          }
-          
-          ion-icon {
-            color: var(--ion-color-primary);
-          }
-        }
-        
-        .food-options-expanded {
-          background: var(--ion-color-light);
-          border-top: 1px solid var(--ion-color-medium);
-          
-          .top-match-section,
-          .other-options-section {
-            .section-header {
-              --background: var(--ion-color-primary);
-              --color: white;
-              --padding-start: 16px;
-              
-              h4 {
-                margin: 8px 0;
-                font-weight: 600;
-                font-size: 14px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-              }
-            }
-            
-            ion-item {
-              --padding-start: 24px;
-              --padding-end: 16px;
-              
-              &.selected-option {
-                --background: var(--ion-color-primary-tint);
-                --color: var(--ion-color-primary-contrast);
-              }
-              
-              h3 {
-                font-weight: 500;
-                margin-bottom: 2px;
-                color: var(--ion-color-dark);
-              }
-              
-              p {
-                color: var(--ion-color-medium);
-                font-style: italic;
-                margin: 0;
-                font-size: 12px;
-              }
-              
-              ion-icon[name="checkmark"] {
-                color: var(--ion-color-primary);
-              }
-            }
-          }
-          
-          .other-options-section {
-            margin-top: 8px;
-            
-            .section-header {
-              --background: var(--ion-color-medium);
-            }
-          }
+          --placeholder-color: var(--ion-color-medium);
+          font-size: 16px;
+          border: 1px solid var(--ion-color-medium-tint);
+          border-radius: 8px;
+          min-height: 44px;
         }
       }
       
-      .serving-selection {
-        border-top: 1px solid var(--ion-color-light);
-        margin-top: 8px;
+      .serving-options-inline {
+        margin-top: 16px;
         
-        .section-header {
-          --background: var(--ion-color-success);
-          --color: white;
-          --padding-start: 16px;
-          
-          h4 {
-            margin: 8px 0;
-            font-weight: 600;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
+        ion-radio-group {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
         }
         
-        .serving-options {
-          ion-item {
-            --padding-start: 24px;
-            font-size: 14px;
-            
-            ion-label {
-              margin: 12px 0;
-              
-              span {
-                color: var(--ion-color-medium);
-                font-size: 12px;
-                font-style: italic;
-              }
-            }
-            
-            ion-radio {
-              margin-right: 12px;
-            }
+        ion-radio {
+          --color: var(--ion-color-primary);
+          --color-checked: var(--ion-color-primary);
+          --border-color: var(--ion-color-medium);
+          --border-color-checked: var(--ion-color-primary);
+          font-size: 15px;
+          color: var(--ion-color-dark);
+          padding: 8px 0;
+          line-height: 1.4;
+          
+          &::part(label) {
+            margin-left: 12px;
           }
         }
       }
     }
   }
+
   
   .confirm-section {
-    position: sticky;
-    bottom: 16px;
-    background: var(--ion-background-color);
-    padding: 16px 0;
+    padding: 20px 0 0 0;
     margin-top: 24px;
     border-top: 1px solid var(--ion-color-light);
     
     ion-button {
       margin: 0;
       font-weight: 600;
+      font-size: 16px;
+      height: 48px;
+      border-radius: 8px;
       
       &[disabled] {
         opacity: 0.5;
@@ -178,23 +101,22 @@
 // Dark mode adjustments
 @media (prefers-color-scheme: dark) {
   .food-selection-container {
-    .food-options {
-      .phrase-section {
-        .selected-food-section {
-          .food-options-expanded {
-            background: var(--ion-color-dark);
-            border-top-color: var(--ion-color-medium);
-          }
-        }
+    .food-options-inline {
+      .food-item-row {
+        background: var(--ion-color-step-50);
+        border-color: var(--ion-color-step-100);
         
-        .serving-selection {
-          border-top-color: var(--ion-color-dark);
+        .food-name {
+          ion-select {
+            --background: var(--ion-color-step-100);
+            border-color: var(--ion-color-step-200);
+          }
         }
       }
     }
     
     .confirm-section {
-      border-top-color: var(--ion-color-dark);
+      border-top-color: var(--ion-color-step-150);
     }
   }
 }
@@ -202,50 +124,71 @@
 // Mobile responsiveness
 @media (max-width: 768px) {
   .food-selection-container {
-    padding: 12px;
+    padding: 16px;
+    max-width: 98%;
     
-    .food-options {
-      .phrase-section {
-        margin-bottom: 20px;
+    .food-options-inline {
+      .food-item-row {
+        padding: 16px;
+        margin-bottom: 24px;
         
-        .selected-food-section {
-          .selected-food-item {
-            --padding-start: 12px;
-            --padding-end: 12px;
+        .food-name {
+          label {
+            font-size: 16px;
           }
           
-          .food-options-expanded {
-            .top-match-section,
-            .other-options-section {
-              .section-header {
-                --padding-start: 12px;
-              }
-              
-              ion-item {
-                --padding-start: 16px;
-                --padding-end: 12px;
-              }
-            }
+          ion-select {
+            font-size: 15px;
+            min-height: 40px;
           }
         }
         
-        .serving-selection {
-          .section-header {
-            --padding-start: 12px;
-          }
-          
-          .serving-options {
-            ion-item {
-              --padding-start: 16px;
-            }
+        .serving-options-inline {
+          ion-radio {
+            font-size: 14px;
           }
         }
       }
     }
     
     .confirm-section {
-      bottom: 8px;
-      padding: 12px 0;
+      padding: 16px 0 0 0;
+      
+      ion-button {
+        height: 44px;
+        font-size: 15px;
+      }
+    }
+  }
+}
+
+// Large screen optimizations
+@media (min-width: 1200px) {
+  .food-selection-container {
+    max-width: 90%;
+    padding: 32px;
+    
+    .food-options-inline {
+      .food-item-row {
+        padding: 24px;
+        
+        .food-name {
+          label {
+            font-size: 20px;
+          }
+          
+          ion-select {
+            font-size: 17px;
+            min-height: 48px;
+          }
+        }
+        
+        .serving-options-inline {
+          ion-radio {
+            font-size: 16px;
+          }
+        }
+      }
     }
   }
 } 

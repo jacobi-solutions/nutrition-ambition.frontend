@@ -1243,6 +1243,7 @@ export class ChatMessage implements IChatMessage {
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
+    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
 
     constructor(data?: IChatMessage) {
         if (data) {
@@ -1267,6 +1268,13 @@ export class ChatMessage implements IChatMessage {
             this.responseId = _data["responseId"];
             this.assistantMode = _data["assistantMode"];
             this.assistantPhase = _data["assistantPhase"];
+            if (_data["selectableFoodMatches"]) {
+                this.selectableFoodMatches = {} as any;
+                for (let key in _data["selectableFoodMatches"]) {
+                    if (_data["selectableFoodMatches"].hasOwnProperty(key))
+                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : <any>undefined;
+                }
+            }
         }
     }
 
@@ -1291,6 +1299,13 @@ export class ChatMessage implements IChatMessage {
         data["responseId"] = this.responseId;
         data["assistantMode"] = this.assistantMode;
         data["assistantPhase"] = this.assistantPhase;
+        if (this.selectableFoodMatches) {
+            data["selectableFoodMatches"] = {};
+            for (let key in this.selectableFoodMatches) {
+                if (this.selectableFoodMatches.hasOwnProperty(key))
+                    (<any>data["selectableFoodMatches"])[key] = (<any>this.selectableFoodMatches)[key];
+            }
+        }
         return data;
     }
 }
@@ -1308,6 +1323,7 @@ export interface IChatMessage {
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
+    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
 }
 
 export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
@@ -2700,6 +2716,7 @@ export enum MessageRoleTypes {
     Tool = "Tool",
     System = "System",
     ContextNote = "ContextNote",
+    PendingFoodSelection = "PendingFoodSelection",
 }
 
 export class NutrientBreakdown implements INutrientBreakdown {

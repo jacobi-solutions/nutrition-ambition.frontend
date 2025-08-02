@@ -11,6 +11,22 @@
   position: relative;
   word-wrap: break-word;
   
+  // Make messages with food options much wider
+  &.has-food-options {
+    max-width: 95%;
+    padding: 8px; // Reduced padding for food selection interfaces
+    
+    @media (min-width: 768px) {
+      max-width: 92%;
+      padding: 10px;
+    }
+    
+    @media (min-width: 1200px) {
+      max-width: 90%;
+      padding: 12px;
+    }
+  }
+  
   &.user-message {
     background-color: var(--color-olive);
     color: white;

@@ -24,6 +24,7 @@ export class ChatMessageComponent implements OnInit {
   @Input() timestamp: Date = new Date();
   @Input() message?: ChatMessage; // Message object with id
   @Input() foodOptions: Record<string, SelectableFoodMatch[]> | null = null;
+  @Input() role?: string;
 
   showFoodSelector = true;
 

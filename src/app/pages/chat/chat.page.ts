@@ -27,6 +27,7 @@ interface DisplayMessage {
   isContextNote?: boolean; // Property to identify context note messages
   timestamp: Date;
   foodOptions?: Record<string, SelectableFoodMatch[]> | null; // Add foodOptions property
+  role?: string;
 }
 
 @Component({
@@ -312,21 +313,27 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             const contextNoteMsgs: ChatMessage[] = [];
             const regularMsgs: ChatMessage[] = [];
             
-            // Separate messages by role - only include User (0), Assistant (1), and ContextNote (4)
+            // Separate messages by role - only include User (0), Assistant (1), ContextNote (4), and PendingFoodSelection (5)
             response.messages.forEach(msg => {
-              if (msg.role ===  MessageRoleTypes.ContextNote /* MessageRoleTypes.ContextNote */) {
+              if (msg.role === MessageRoleTypes.ContextNote) {
                 contextNoteMsgs.push(msg);
-              } else if (msg.role === MessageRoleTypes.User /* MessageRoleTypes.User */ || msg.role === MessageRoleTypes.Assistant /* MessageRoleTypes.Assistant */) {
+              } else if (
+                msg.role === MessageRoleTypes.User || 
+                msg.role === MessageRoleTypes.Assistant || 
+                msg.role === 'PendingFoodSelection'
+              ) {
                 regularMsgs.push(msg);
               }
               // Skip Tool (2) and System (3) messages - they should not be displayed in chat
             });
             
-            // Convert regular messages (User and Assistant only) to display messages
+            // Convert regular messages (User, Assistant, and PendingFoodSelection) to display messages
             this.messages = regularMsgs.map(msg => ({
               text: msg.content || '',
-              isUser: msg.role === MessageRoleTypes.User /* MessageRoleTypes.User */,
-              timestamp: msg.loggedDateUtc || new Date()
+              isUser: msg.role === MessageRoleTypes.User,
+              timestamp: msg.loggedDateUtc || new Date(),
+              foodOptions: msg.selectableFoodMatches || null,
+              role: msg.role
             }));
             
             // Insert context notes as display messages
