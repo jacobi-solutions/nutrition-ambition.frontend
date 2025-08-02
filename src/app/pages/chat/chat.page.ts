@@ -601,4 +601,24 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       }
     }, 350); // Slightly longer than scroll animation (300ms)
   }
+
+  // Handle food selection confirmation for standalone food selection components
+  onFoodSelectionConfirmed(selections: UserSelectedServingRequest[]): void {
+    console.log('Food selections confirmed:', selections);
+    
+    // Call the chat service to submit the selections
+    this.chatService.submitServingSelection(selections).subscribe({
+      next: (response) => {
+        console.log('Selection submission successful:', response);
+        console.log('Submitted selections:', selections);
+        
+        // Reload chat history to show updated messages
+        this.loadChatHistory(this.dateService.getSelectedDateUtc());
+      },
+      error: (error) => {
+        console.error('Error submitting food selections:', error);
+        // Could show an error message here if needed
+      }
+    });
+  }
 } 

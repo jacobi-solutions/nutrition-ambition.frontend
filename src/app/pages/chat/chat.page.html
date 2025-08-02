@@ -34,20 +34,28 @@
       <div class="chat-container">
         <!-- Loop through each message -->
         <ng-container *ngFor="let message of messages">
-
           <!-- Regular chat message -->
           <app-chat-message 
-            *ngIf="!message.isContextNote"
+            *ngIf="!message.isContextNote && message.role !== 'PendingFoodSelection'"
             [text]="message.text"
             [isUser]="message.isUser"
             [timestamp]="message.timestamp"
-            [foodOptions]="message.foodOptions || null"
             [role]="message.role">
           </app-chat-message>
           
-          <!-- Context note message (both from database and real-time) -->
+          <!-- Context note message -->
           <div *ngIf="message.isContextNote" class="context-note-inline">
             {{ message.text }}
+          </div>
+        </ng-container>
+        
+        <!-- Standalone food selection cards for pending selection messages -->
+        <ng-container *ngFor="let message of messages">
+          <div *ngIf="message.role === 'PendingFoodSelection'" class="standalone-food-selection">
+            <app-food-selection 
+              [foodOptions]="message.foodOptions || null"
+              (selectionConfirmed)="onFoodSelectionConfirmed($event)">
+            </app-food-selection>
           </div>
         </ng-container>
         

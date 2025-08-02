@@ -94,6 +94,26 @@ ion-content {
   border-bottom-left-radius: 4px;
 }
 
+.standalone-food-selection {
+  width: 100%;
+  max-width: 95%;
+  margin: 16px auto;
+  background-color: white;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  @media (min-width: 768px) {
+    max-width: 92%;
+    margin: 20px auto;
+  }
+  
+  @media (min-width: 1200px) {
+    max-width: 90%;
+    margin: 24px auto;
+  }
+}
+
 
 .typing-indicator {
   align-self: flex-start;

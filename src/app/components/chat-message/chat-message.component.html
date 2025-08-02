@@ -1,13 +1,4 @@
-<div [ngClass]="{'user-message': isUser, 'bot-message': !isUser && !isTool, 'tool-message': isTool, 'has-food-options': hasFoodSelection()}" class="message">
+<div [ngClass]="{'user-message': isUser, 'bot-message': !isUser && !isTool, 'tool-message': isTool}" class="message">
   <div class="message-content" [innerHTML]="formattedContent"></div>
-  
-  <!-- Food selection component for SelectableFoodMatch -->
-  <div *ngIf="hasFoodSelection() && showFoodSelector" class="food-selection-container">
-    <app-food-selection 
-      [foodOptions]="foodSelectionPayload()"
-      (selectionConfirmed)="onSelectionConfirmed($event)">
-    </app-food-selection>
-  </div>
-  
   <div class="message-time">{{ timestamp | date:'shortTime' }}</div>
 </div> 
