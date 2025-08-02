@@ -1137,7 +1137,7 @@ export class BotMessageResponse implements IBotMessageResponse {
     stackTrace?: string | undefined;
     message?: string | undefined;
     accountId?: string | undefined;
-    selectableFoodsByPhrase?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
     terminateEarlyForUserInput?: boolean;
     responseId?: string | undefined;
     loggedMeal?: boolean;
@@ -1165,11 +1165,11 @@ export class BotMessageResponse implements IBotMessageResponse {
             this.stackTrace = _data["stackTrace"];
             this.message = _data["message"];
             this.accountId = _data["accountId"];
-            if (_data["selectableFoodsByPhrase"]) {
-                this.selectableFoodsByPhrase = {} as any;
-                for (let key in _data["selectableFoodsByPhrase"]) {
-                    if (_data["selectableFoodsByPhrase"].hasOwnProperty(key))
-                        (<any>this.selectableFoodsByPhrase)![key] = _data["selectableFoodsByPhrase"][key] ? _data["selectableFoodsByPhrase"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : [];
+            if (_data["selectableFoodMatches"]) {
+                this.selectableFoodMatches = {} as any;
+                for (let key in _data["selectableFoodMatches"]) {
+                    if (_data["selectableFoodMatches"].hasOwnProperty(key))
+                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : [];
                 }
             }
             this.terminateEarlyForUserInput = _data["terminateEarlyForUserInput"];
@@ -1199,11 +1199,11 @@ export class BotMessageResponse implements IBotMessageResponse {
         data["stackTrace"] = this.stackTrace;
         data["message"] = this.message;
         data["accountId"] = this.accountId;
-        if (this.selectableFoodsByPhrase) {
-            data["selectableFoodsByPhrase"] = {};
-            for (let key in this.selectableFoodsByPhrase) {
-                if (this.selectableFoodsByPhrase.hasOwnProperty(key))
-                    (<any>data["selectableFoodsByPhrase"])[key] = (<any>this.selectableFoodsByPhrase)[key];
+        if (this.selectableFoodMatches) {
+            data["selectableFoodMatches"] = {};
+            for (let key in this.selectableFoodMatches) {
+                if (this.selectableFoodMatches.hasOwnProperty(key))
+                    (<any>data["selectableFoodMatches"])[key] = (<any>this.selectableFoodMatches)[key];
             }
         }
         data["terminateEarlyForUserInput"] = this.terminateEarlyForUserInput;
@@ -1222,7 +1222,7 @@ export interface IBotMessageResponse {
     stackTrace?: string | undefined;
     message?: string | undefined;
     accountId?: string | undefined;
-    selectableFoodsByPhrase?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
     terminateEarlyForUserInput?: boolean;
     responseId?: string | undefined;
     loggedMeal?: boolean;
