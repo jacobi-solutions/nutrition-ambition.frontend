@@ -1137,7 +1137,7 @@ export class BotMessageResponse implements IBotMessageResponse {
     stackTrace?: string | undefined;
     message?: string | undefined;
     accountId?: string | undefined;
-    rankedFoodOptions?: { [key: string]: RankedFatSecretFood[]; } | undefined;
+    selectableFoodsByPhrase?: { [key: string]: SelectableFoodMatch[]; } | undefined;
     terminateEarlyForUserInput?: boolean;
     responseId?: string | undefined;
     loggedMeal?: boolean;
@@ -1165,11 +1165,11 @@ export class BotMessageResponse implements IBotMessageResponse {
             this.stackTrace = _data["stackTrace"];
             this.message = _data["message"];
             this.accountId = _data["accountId"];
-            if (_data["rankedFoodOptions"]) {
-                this.rankedFoodOptions = {} as any;
-                for (let key in _data["rankedFoodOptions"]) {
-                    if (_data["rankedFoodOptions"].hasOwnProperty(key))
-                        (<any>this.rankedFoodOptions)![key] = _data["rankedFoodOptions"][key] ? _data["rankedFoodOptions"][key].map((i: any) => RankedFatSecretFood.fromJS(i)) : [];
+            if (_data["selectableFoodsByPhrase"]) {
+                this.selectableFoodsByPhrase = {} as any;
+                for (let key in _data["selectableFoodsByPhrase"]) {
+                    if (_data["selectableFoodsByPhrase"].hasOwnProperty(key))
+                        (<any>this.selectableFoodsByPhrase)![key] = _data["selectableFoodsByPhrase"][key] ? _data["selectableFoodsByPhrase"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : [];
                 }
             }
             this.terminateEarlyForUserInput = _data["terminateEarlyForUserInput"];
@@ -1199,11 +1199,11 @@ export class BotMessageResponse implements IBotMessageResponse {
         data["stackTrace"] = this.stackTrace;
         data["message"] = this.message;
         data["accountId"] = this.accountId;
-        if (this.rankedFoodOptions) {
-            data["rankedFoodOptions"] = {};
-            for (let key in this.rankedFoodOptions) {
-                if (this.rankedFoodOptions.hasOwnProperty(key))
-                    (<any>data["rankedFoodOptions"])[key] = (<any>this.rankedFoodOptions)[key];
+        if (this.selectableFoodsByPhrase) {
+            data["selectableFoodsByPhrase"] = {};
+            for (let key in this.selectableFoodsByPhrase) {
+                if (this.selectableFoodsByPhrase.hasOwnProperty(key))
+                    (<any>data["selectableFoodsByPhrase"])[key] = (<any>this.selectableFoodsByPhrase)[key];
             }
         }
         data["terminateEarlyForUserInput"] = this.terminateEarlyForUserInput;
@@ -1222,7 +1222,7 @@ export interface IBotMessageResponse {
     stackTrace?: string | undefined;
     message?: string | undefined;
     accountId?: string | undefined;
-    rankedFoodOptions?: { [key: string]: RankedFatSecretFood[]; } | undefined;
+    selectableFoodsByPhrase?: { [key: string]: SelectableFoodMatch[]; } | undefined;
     terminateEarlyForUserInput?: boolean;
     responseId?: string | undefined;
     loggedMeal?: boolean;
@@ -1764,326 +1764,6 @@ export class ErrorDto implements IErrorDto {
 export interface IErrorDto {
     errorMessage?: string | undefined;
     errorCode?: string | undefined;
-}
-
-export class FatSecretFood implements IFatSecretFood {
-    food_id?: string | undefined;
-    food_name?: string | undefined;
-    brand_name?: string | undefined;
-    food_type?: string | undefined;
-    food_url?: string | undefined;
-    servings?: FatSecretServings;
-
-    constructor(data?: IFatSecretFood) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.food_id = _data["food_id"];
-            this.food_name = _data["food_name"];
-            this.brand_name = _data["brand_name"];
-            this.food_type = _data["food_type"];
-            this.food_url = _data["food_url"];
-            this.servings = _data["servings"] ? FatSecretServings.fromJS(_data["servings"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): FatSecretFood {
-        data = typeof data === 'object' ? data : {};
-        let result = new FatSecretFood();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["food_id"] = this.food_id;
-        data["food_name"] = this.food_name;
-        data["brand_name"] = this.brand_name;
-        data["food_type"] = this.food_type;
-        data["food_url"] = this.food_url;
-        data["servings"] = this.servings ? this.servings.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IFatSecretFood {
-    food_id?: string | undefined;
-    food_name?: string | undefined;
-    brand_name?: string | undefined;
-    food_type?: string | undefined;
-    food_url?: string | undefined;
-    servings?: FatSecretServings;
-}
-
-export class FatSecretServing implements IFatSecretServing {
-    serving_id?: string | undefined;
-    serving_description?: string | undefined;
-    serving_url?: string | undefined;
-    metric_serving_amount?: string | undefined;
-    metric_serving_unit?: string | undefined;
-    number_of_units?: string | undefined;
-    measurement_description?: string | undefined;
-    calories?: string | undefined;
-    carbohydrate?: string | undefined;
-    protein?: string | undefined;
-    fat?: string | undefined;
-    saturated_fat?: string | undefined;
-    polyunsaturated_fat?: string | undefined;
-    monounsaturated_fat?: string | undefined;
-    trans_fat?: string | undefined;
-    cholesterol?: string | undefined;
-    sodium?: string | undefined;
-    potassium?: string | undefined;
-    calcium?: string | undefined;
-    iron?: string | undefined;
-    fiber?: string | undefined;
-    sugar?: string | undefined;
-    added_sugars?: string | undefined;
-    vitamin_a?: string | undefined;
-    vitamin_c?: string | undefined;
-    vitamin_d?: string | undefined;
-    vitamin_e?: string | undefined;
-    vitamin_k?: string | undefined;
-    vitamin_b6?: string | undefined;
-    vitamin_b12?: string | undefined;
-    folate?: string | undefined;
-    niacin?: string | undefined;
-    riboflavin?: string | undefined;
-    thiamin?: string | undefined;
-    pantothenic_acid?: string | undefined;
-    magnesium?: string | undefined;
-    phosphorus?: string | undefined;
-    zinc?: string | undefined;
-    copper?: string | undefined;
-    manganese?: string | undefined;
-    selenium?: string | undefined;
-    retinol?: string | undefined;
-    beta_carotene?: string | undefined;
-    ala?: string | undefined;
-    epa?: string | undefined;
-    dha?: string | undefined;
-    is_default?: string | undefined;
-
-    constructor(data?: IFatSecretServing) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.serving_id = _data["serving_id"];
-            this.serving_description = _data["serving_description"];
-            this.serving_url = _data["serving_url"];
-            this.metric_serving_amount = _data["metric_serving_amount"];
-            this.metric_serving_unit = _data["metric_serving_unit"];
-            this.number_of_units = _data["number_of_units"];
-            this.measurement_description = _data["measurement_description"];
-            this.calories = _data["calories"];
-            this.carbohydrate = _data["carbohydrate"];
-            this.protein = _data["protein"];
-            this.fat = _data["fat"];
-            this.saturated_fat = _data["saturated_fat"];
-            this.polyunsaturated_fat = _data["polyunsaturated_fat"];
-            this.monounsaturated_fat = _data["monounsaturated_fat"];
-            this.trans_fat = _data["trans_fat"];
-            this.cholesterol = _data["cholesterol"];
-            this.sodium = _data["sodium"];
-            this.potassium = _data["potassium"];
-            this.calcium = _data["calcium"];
-            this.iron = _data["iron"];
-            this.fiber = _data["fiber"];
-            this.sugar = _data["sugar"];
-            this.added_sugars = _data["added_sugars"];
-            this.vitamin_a = _data["vitamin_a"];
-            this.vitamin_c = _data["vitamin_c"];
-            this.vitamin_d = _data["vitamin_d"];
-            this.vitamin_e = _data["vitamin_e"];
-            this.vitamin_k = _data["vitamin_k"];
-            this.vitamin_b6 = _data["vitamin_b6"];
-            this.vitamin_b12 = _data["vitamin_b12"];
-            this.folate = _data["folate"];
-            this.niacin = _data["niacin"];
-            this.riboflavin = _data["riboflavin"];
-            this.thiamin = _data["thiamin"];
-            this.pantothenic_acid = _data["pantothenic_acid"];
-            this.magnesium = _data["magnesium"];
-            this.phosphorus = _data["phosphorus"];
-            this.zinc = _data["zinc"];
-            this.copper = _data["copper"];
-            this.manganese = _data["manganese"];
-            this.selenium = _data["selenium"];
-            this.retinol = _data["retinol"];
-            this.beta_carotene = _data["beta_carotene"];
-            this.ala = _data["ala"];
-            this.epa = _data["epa"];
-            this.dha = _data["dha"];
-            this.is_default = _data["is_default"];
-        }
-    }
-
-    static fromJS(data: any): FatSecretServing {
-        data = typeof data === 'object' ? data : {};
-        let result = new FatSecretServing();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["serving_id"] = this.serving_id;
-        data["serving_description"] = this.serving_description;
-        data["serving_url"] = this.serving_url;
-        data["metric_serving_amount"] = this.metric_serving_amount;
-        data["metric_serving_unit"] = this.metric_serving_unit;
-        data["number_of_units"] = this.number_of_units;
-        data["measurement_description"] = this.measurement_description;
-        data["calories"] = this.calories;
-        data["carbohydrate"] = this.carbohydrate;
-        data["protein"] = this.protein;
-        data["fat"] = this.fat;
-        data["saturated_fat"] = this.saturated_fat;
-        data["polyunsaturated_fat"] = this.polyunsaturated_fat;
-        data["monounsaturated_fat"] = this.monounsaturated_fat;
-        data["trans_fat"] = this.trans_fat;
-        data["cholesterol"] = this.cholesterol;
-        data["sodium"] = this.sodium;
-        data["potassium"] = this.potassium;
-        data["calcium"] = this.calcium;
-        data["iron"] = this.iron;
-        data["fiber"] = this.fiber;
-        data["sugar"] = this.sugar;
-        data["added_sugars"] = this.added_sugars;
-        data["vitamin_a"] = this.vitamin_a;
-        data["vitamin_c"] = this.vitamin_c;
-        data["vitamin_d"] = this.vitamin_d;
-        data["vitamin_e"] = this.vitamin_e;
-        data["vitamin_k"] = this.vitamin_k;
-        data["vitamin_b6"] = this.vitamin_b6;
-        data["vitamin_b12"] = this.vitamin_b12;
-        data["folate"] = this.folate;
-        data["niacin"] = this.niacin;
-        data["riboflavin"] = this.riboflavin;
-        data["thiamin"] = this.thiamin;
-        data["pantothenic_acid"] = this.pantothenic_acid;
-        data["magnesium"] = this.magnesium;
-        data["phosphorus"] = this.phosphorus;
-        data["zinc"] = this.zinc;
-        data["copper"] = this.copper;
-        data["manganese"] = this.manganese;
-        data["selenium"] = this.selenium;
-        data["retinol"] = this.retinol;
-        data["beta_carotene"] = this.beta_carotene;
-        data["ala"] = this.ala;
-        data["epa"] = this.epa;
-        data["dha"] = this.dha;
-        data["is_default"] = this.is_default;
-        return data;
-    }
-}
-
-export interface IFatSecretServing {
-    serving_id?: string | undefined;
-    serving_description?: string | undefined;
-    serving_url?: string | undefined;
-    metric_serving_amount?: string | undefined;
-    metric_serving_unit?: string | undefined;
-    number_of_units?: string | undefined;
-    measurement_description?: string | undefined;
-    calories?: string | undefined;
-    carbohydrate?: string | undefined;
-    protein?: string | undefined;
-    fat?: string | undefined;
-    saturated_fat?: string | undefined;
-    polyunsaturated_fat?: string | undefined;
-    monounsaturated_fat?: string | undefined;
-    trans_fat?: string | undefined;
-    cholesterol?: string | undefined;
-    sodium?: string | undefined;
-    potassium?: string | undefined;
-    calcium?: string | undefined;
-    iron?: string | undefined;
-    fiber?: string | undefined;
-    sugar?: string | undefined;
-    added_sugars?: string | undefined;
-    vitamin_a?: string | undefined;
-    vitamin_c?: string | undefined;
-    vitamin_d?: string | undefined;
-    vitamin_e?: string | undefined;
-    vitamin_k?: string | undefined;
-    vitamin_b6?: string | undefined;
-    vitamin_b12?: string | undefined;
-    folate?: string | undefined;
-    niacin?: string | undefined;
-    riboflavin?: string | undefined;
-    thiamin?: string | undefined;
-    pantothenic_acid?: string | undefined;
-    magnesium?: string | undefined;
-    phosphorus?: string | undefined;
-    zinc?: string | undefined;
-    copper?: string | undefined;
-    manganese?: string | undefined;
-    selenium?: string | undefined;
-    retinol?: string | undefined;
-    beta_carotene?: string | undefined;
-    ala?: string | undefined;
-    epa?: string | undefined;
-    dha?: string | undefined;
-    is_default?: string | undefined;
-}
-
-export class FatSecretServings implements IFatSecretServings {
-    serving?: FatSecretServing[] | undefined;
-
-    constructor(data?: IFatSecretServings) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["serving"])) {
-                this.serving = [] as any;
-                for (let item of _data["serving"])
-                    this.serving!.push(FatSecretServing.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): FatSecretServings {
-        data = typeof data === 'object' ? data : {};
-        let result = new FatSecretServings();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.serving)) {
-            data["serving"] = [];
-            for (let item of this.serving)
-                data["serving"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface IFatSecretServings {
-    serving?: FatSecretServing[] | undefined;
 }
 
 export class FeedbackEntry implements IFeedbackEntry {
@@ -3166,50 +2846,6 @@ export interface INutrientContribution {
     originalUnit?: string | undefined;
 }
 
-export class RankedFatSecretFood implements IRankedFatSecretFood {
-    fatSecretFood?: FatSecretFood;
-    rank?: number;
-    readonly isAssistantRecommendation?: boolean;
-
-    constructor(data?: IRankedFatSecretFood) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.fatSecretFood = _data["fatSecretFood"] ? FatSecretFood.fromJS(_data["fatSecretFood"]) : <any>undefined;
-            this.rank = _data["rank"];
-            (<any>this).isAssistantRecommendation = _data["isAssistantRecommendation"];
-        }
-    }
-
-    static fromJS(data: any): RankedFatSecretFood {
-        data = typeof data === 'object' ? data : {};
-        let result = new RankedFatSecretFood();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["fatSecretFood"] = this.fatSecretFood ? this.fatSecretFood.toJSON() : <any>undefined;
-        data["rank"] = this.rank;
-        data["isAssistantRecommendation"] = this.isAssistantRecommendation;
-        return data;
-    }
-}
-
-export interface IRankedFatSecretFood {
-    fatSecretFood?: FatSecretFood;
-    rank?: number;
-    isAssistantRecommendation?: boolean;
-}
-
 export class Request implements IRequest {
 
     constructor(data?: IRequest) {
@@ -3278,6 +2914,142 @@ export class RunChatRequest implements IRunChatRequest {
 export interface IRunChatRequest {
     message?: string | undefined;
     loggedDateUtc?: Date | undefined;
+}
+
+export class SelectableFoodMatch implements ISelectableFoodMatch {
+    fatSecretFoodId?: string | undefined;
+    displayName?: string | undefined;
+    brandName?: string | undefined;
+    originalText?: string | undefined;
+    rank?: number;
+    servings?: SelectableFoodServing[] | undefined;
+
+    constructor(data?: ISelectableFoodMatch) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fatSecretFoodId = _data["fatSecretFoodId"];
+            this.displayName = _data["displayName"];
+            this.brandName = _data["brandName"];
+            this.originalText = _data["originalText"];
+            this.rank = _data["rank"];
+            if (Array.isArray(_data["servings"])) {
+                this.servings = [] as any;
+                for (let item of _data["servings"])
+                    this.servings!.push(SelectableFoodServing.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SelectableFoodMatch {
+        data = typeof data === 'object' ? data : {};
+        let result = new SelectableFoodMatch();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fatSecretFoodId"] = this.fatSecretFoodId;
+        data["displayName"] = this.displayName;
+        data["brandName"] = this.brandName;
+        data["originalText"] = this.originalText;
+        data["rank"] = this.rank;
+        if (Array.isArray(this.servings)) {
+            data["servings"] = [];
+            for (let item of this.servings)
+                data["servings"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ISelectableFoodMatch {
+    fatSecretFoodId?: string | undefined;
+    displayName?: string | undefined;
+    brandName?: string | undefined;
+    originalText?: string | undefined;
+    rank?: number;
+    servings?: SelectableFoodServing[] | undefined;
+}
+
+export class SelectableFoodServing implements ISelectableFoodServing {
+    fatSecretServingId?: string | undefined;
+    description?: string | undefined;
+    quantity?: number;
+    unit?: string | undefined;
+    weightGramsPerUnit?: number | undefined;
+    nutrients?: { [key: string]: number; } | undefined;
+    apiServingKind?: UnitKind;
+
+    constructor(data?: ISelectableFoodServing) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fatSecretServingId = _data["fatSecretServingId"];
+            this.description = _data["description"];
+            this.quantity = _data["quantity"];
+            this.unit = _data["unit"];
+            this.weightGramsPerUnit = _data["weightGramsPerUnit"];
+            if (_data["nutrients"]) {
+                this.nutrients = {} as any;
+                for (let key in _data["nutrients"]) {
+                    if (_data["nutrients"].hasOwnProperty(key))
+                        (<any>this.nutrients)![key] = _data["nutrients"][key];
+                }
+            }
+            this.apiServingKind = _data["apiServingKind"];
+        }
+    }
+
+    static fromJS(data: any): SelectableFoodServing {
+        data = typeof data === 'object' ? data : {};
+        let result = new SelectableFoodServing();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fatSecretServingId"] = this.fatSecretServingId;
+        data["description"] = this.description;
+        data["quantity"] = this.quantity;
+        data["unit"] = this.unit;
+        data["weightGramsPerUnit"] = this.weightGramsPerUnit;
+        if (this.nutrients) {
+            data["nutrients"] = {};
+            for (let key in this.nutrients) {
+                if (this.nutrients.hasOwnProperty(key))
+                    (<any>data["nutrients"])[key] = (<any>this.nutrients)[key];
+            }
+        }
+        data["apiServingKind"] = this.apiServingKind;
+        return data;
+    }
+}
+
+export interface ISelectableFoodServing {
+    fatSecretServingId?: string | undefined;
+    description?: string | undefined;
+    quantity?: number;
+    unit?: string | undefined;
+    weightGramsPerUnit?: number | undefined;
+    nutrients?: { [key: string]: number; } | undefined;
+    apiServingKind?: UnitKind;
 }
 
 export class SubmitUserFeedbackRequest implements ISubmitUserFeedbackRequest {
