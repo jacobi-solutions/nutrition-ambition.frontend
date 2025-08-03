@@ -44,6 +44,9 @@
           --padding-start: 16px;
           --padding-end: 16px;
           --placeholder-color: var(--ion-color-medium);
+          --width: 100%;               // Makes the select field full width
+          --max-width: none;           // Remove any limiting max width
+          width: 100%;                 // Ensures it fills the container
           font-size: 16px;
           border: 1px solid var(--ion-color-medium-tint);
           border-radius: 8px;
@@ -96,6 +99,18 @@
       }
     }
   }
+}
+
+// Override ion-select popover width globally (since popover is outside normal DOM flow)
+::ng-deep .select-popover {
+  min-width: 320px;              // Wider default
+  max-width: 90vw;               // Limit to viewport width on mobile
+  width: auto !important;        // Ensure it adapts to content
+}
+
+// Optional tweak: increase font size slightly for readability
+.food-name ion-select-option {
+  font-size: 16px;
 }
 
 // Dark mode adjustments
