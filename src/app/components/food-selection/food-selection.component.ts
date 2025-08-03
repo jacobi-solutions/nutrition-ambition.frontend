@@ -6,7 +6,8 @@ import {
   IonRadioGroup, 
   IonRadio, 
   IonSelect,
-  IonSelectOption   
+  IonSelectOption,
+  IonIcon   
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
@@ -38,7 +39,8 @@ export interface UserSelectedServingRequest {
     IonRadioGroup,
     IonRadio,
     IonSelect,
-    IonSelectOption
+    IonSelectOption,
+    IonIcon
   ]
 })
 export class FoodSelectionComponent implements OnInit {
@@ -73,6 +75,9 @@ export class FoodSelectionComponent implements OnInit {
       if (foodId) {
         this.selections[phrase] = { foodId };
       }
+      
+      // Initialize all sections as collapsed
+      this.expandedSections[phrase] = false;
     }
   }
 
@@ -118,6 +123,17 @@ export class FoodSelectionComponent implements OnInit {
 
   getSelectedServingId(phrase: string): string | undefined {
     return this.selections[phrase]?.servingId;
+  }
+
+  getFirstFoodOption(phrase: string): SelectableFoodMatch | null {
+    const foods = this.foodOptions?.[phrase];
+    return foods && foods.length > 0 ? foods[0] : null;
+  }
+
+  getFirstServingOption(phrase: string): SelectableFoodServing | null {
+    const firstFood = this.getFirstFoodOption(phrase);
+    if (!firstFood?.servings || firstFood.servings.length === 0) return null;
+    return firstFood.servings[0];
   }
 
   isSelectionComplete(): boolean {

@@ -61,7 +61,7 @@
 .error-message {
   color: var(--ion-color-danger);
   padding: 16px;
-  border-radius: 8px;
+  border-radius: 1rem;
   background-color: var(--ion-color-danger-tint);
   margin: 16px 0;
   display: flex;
@@ -211,7 +211,7 @@ ion-card {
   
   ion-card {
     background-color: #fff;
-    border-radius: 1.25rem;
+    border-radius: 2.25rem;
     box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
     //padding: 1rem;
   }
@@ -221,6 +221,11 @@ ion-card {
     margin-bottom: 16px;
     font-size: 0.875rem;
     background-color: white;
+    
+    // Remove bottom margin when any item is expanded
+    &.expanded {
+      margin-bottom: 0;
+    }
     ion-item {
       margin-left: 1rem;
       margin-right: 1rem;
@@ -338,7 +343,7 @@ ion-card {
   margin-top: 1rem;
   padding: 1rem; 
   background-color: rgba(78, 110, 93, 0.2);
-  border-radius: 8px;
+  border-radius: 1rem;
 }
 
 .drilldown-row.food-drilldown .drilldown-content {
@@ -346,7 +351,7 @@ ion-card {
   margin-top: 1rem;
   padding: 1rem; 
   background-color: rgba(78, 110, 93, 0.2);
-  border-radius: 8px;
+  border-radius: 1rem;
 }
 
 .drilldown-row.drilldown-food {

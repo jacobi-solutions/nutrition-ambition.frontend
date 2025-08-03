@@ -3,6 +3,11 @@
   max-width: 95%;
   width: 100%;
   margin: 0 auto;
+  background: #fff;
+  border-radius: 2.25rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+  border: none;
+  outline: none;
   
   .empty-state {
     display: flex;
@@ -16,15 +21,184 @@
       text-align: center;
     }
   }
+  .food-selection-container-inner {
+    padding: 1.25rem;
+  }
+
+  // Card header styling
+  .card-header {
+    margin-bottom: 16px;
+    text-align: center;
+    
+    label {
+      display: block;
+      color: var(--color-olive);
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0;
+      
+      strong {
+        font-weight: 600;
+      }
+    }
+  }
+  
+  // Food items list styling
+  .food-items-list {
+    .food-item-row-simple {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      position: relative;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: var(--color-olive);
+        z-index: 1;
+      }
+      
+      &:last-child::after {
+        display: none;
+      }
+      
+      &:last-child {
+        padding-bottom: 0;
+      }
+      
+      .breakdown-item {
+        flex: 1;
+        
+        .primary-info {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          min-height: 36px;
+          justify-content: center;
+          
+          .name-section {
+            .name {
+              font-family: 'Poppins', sans-serif;
+              font-weight: 500;
+              font-size: 0.875rem;
+              color: var(--ion-color-dark);
+            }
+            
+            .brand-name {
+              font-family: 'Poppins', sans-serif;
+              font-weight: 500;
+              font-size: 0.875rem;
+              color: var(--ion-color-dark);
+            }
+          }
+          
+          .amount {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--ion-color-medium);
+            margin-top: 2px;
+          }
+        }
+      }
+      
+      .edit-icon {
+        color: var(--ion-color-primary);
+        font-size: 20px;
+        cursor: pointer;
+        transition: color 0.2s ease;
+        
+        &.expanded {
+          color: var(--ion-color-secondary);
+        }
+      }
+    }
+    
+    // Expanded selection section that appears inline
+    .expanded-food-selection {
+      margin-top: 12px;
+      padding: 16px;
+      background: #fff;
+      border-radius: 1.25rem;
+      box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+      border: none;
+      
+      .food-item-row {
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        margin-bottom: 0;
+        
+        .food-name {
+          margin-bottom: 12px;
+          
+          label {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--ion-color-dark);
+            margin-bottom: 6px;
+            line-height: 1.4;
+          }
+          
+          ion-select {
+            --background: white;
+            --border-radius: 6px;
+            --padding-start: 12px;
+            --padding-end: 12px;
+            --placeholder-color: var(--ion-color-medium);
+            --width: 100%;
+            --max-width: none;
+            width: 100%;
+            font-size: 15px;
+            border: 1px solid var(--ion-color-medium-tint);
+            border-radius: 6px;
+            min-height: 40px;
+          }
+        }
+        
+        .serving-options-inline {
+          margin-top: 12px;
+          
+          ion-radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          }
+          
+          ion-radio {
+            --color: var(--ion-color-primary);
+            --color-checked: var(--ion-color-primary);
+            --border-color: var(--ion-color-medium);
+            --border-color-checked: var(--ion-color-primary);
+            font-size: 14px;
+            color: var(--ion-color-dark);
+            padding: 6px 0;
+            line-height: 1.4;
+            
+            &::part(label) {
+              margin-left: 10px;
+            }
+          }
+        }
+      }
+    }
+  }
 
   // Style for the inline food options layout
   .food-options-inline {
     .food-item-row {
       margin-bottom: 32px;
       padding: 20px;
-      background: var(--ion-color-light);
-      border-radius: 12px;
-      border: 1px solid var(--ion-color-light-shade);
+      background: #fff;
+      border-radius: 1.25rem;
+      box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+      border: none;
       
       .food-name {
         margin-bottom: 16px;
@@ -87,18 +261,40 @@
     margin-top: 24px;
     border-top: 1px solid var(--ion-color-light);
     
-    ion-button {
-      margin: 0;
+    .confirm-button {
+      height: 3.25rem;
       font-weight: 600;
-      font-size: 16px;
-      height: 48px;
-      border-radius: 8px;
+      font-size: 1rem;
+      margin: 0;
+      --background: var(--color-salmon);
+      --color: var(--color-bone);
+      --border-radius: 30px;
+      text-transform: none;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+
+      &:hover {
+        transform: scale(1.02);
+      }
+
+      &:active {
+        transform: scale(0.98);
+      }
       
       &[disabled] {
         opacity: 0.5;
+        transform: none;
+        
+        &:hover {
+          transform: none;
+        }
       }
     }
   }
+}
+
+// Additional specificity for confirm button text color (matching login button)
+.confirm-button::part(native) {
+  color: var(--color-bone) !important;
 }
 
 // Override ion-select popover width globally (since popover is outside normal DOM flow)
@@ -116,10 +312,18 @@
 // Dark mode adjustments
 @media (prefers-color-scheme: dark) {
   .food-selection-container {
+    background: var(--ion-color-step-50);
+    box-shadow: 0 0.25rem 1rem rgba(255, 255, 255, 0.02);
+    
+    .expanded-food-selection {
+      background: var(--ion-color-step-50);
+      box-shadow: 0 0.25rem 1rem rgba(255, 255, 255, 0.02);
+    }
+    
     .food-options-inline {
       .food-item-row {
         background: var(--ion-color-step-50);
-        border-color: var(--ion-color-step-100);
+        box-shadow: 0 0.25rem 1rem rgba(255, 255, 255, 0.02);
         
         .food-name {
           ion-select {
@@ -141,6 +345,59 @@
   .food-selection-container {
     padding: 16px;
     max-width: 98%;
+    
+    .card-header label {
+      font-size: 1.125rem;
+    }
+    
+    .food-items-list .food-item-row-simple {
+      padding: 10px 0;
+      padding-left: .5rem;
+      padding-right: .5rem;
+      .food-info {
+        .food-name {
+          font-size: 15px;
+        }
+        
+        .brand-name, .serving-info {
+          font-size: 13px;
+        }
+      }
+      
+      .edit-icon {
+        font-size: 18px;
+      }
+    }
+    
+    .expanded-food-selection {
+      margin-top: 10px;
+      padding: 12px;
+      
+      .food-item-row {
+        .food-name {
+          margin-bottom: 10px;
+          
+          label {
+            font-size: 15px;
+            margin-bottom: 5px;
+          }
+          
+          ion-select {
+            font-size: 14px;
+            min-height: 36px;
+          }
+        }
+        
+        .serving-options-inline {
+          margin-top: 10px;
+          
+          ion-radio {
+            font-size: 13px;
+            padding: 5px 0;
+          }
+        }
+      }
+    }
     
     .food-options-inline {
       .food-item-row {
@@ -169,9 +426,9 @@
     .confirm-section {
       padding: 16px 0 0 0;
       
-      ion-button {
-        height: 44px;
-        font-size: 15px;
+      .confirm-button {
+        height: 3rem;
+        font-size: 0.9rem;
       }
     }
   }
@@ -182,6 +439,58 @@
   .food-selection-container {
     max-width: 90%;
     padding: 32px;
+    
+    .card-header label {
+      font-size: 20px;
+    }
+    
+    .food-items-list .food-item-row-simple {
+      padding: 14px 0;
+      
+      .food-info {
+        .food-name {
+          font-size: 17px;
+        }
+        
+        .brand-name, .serving-info {
+          font-size: 15px;
+        }
+      }
+      
+      .edit-icon {
+        font-size: 22px;
+      }
+    }
+    
+    .expanded-food-selection {
+      margin-top: 14px;
+      padding: 20px;
+      
+      .food-item-row {
+        .food-name {
+          margin-bottom: 14px;
+          
+          label {
+            font-size: 17px;
+            margin-bottom: 7px;
+          }
+          
+          ion-select {
+            font-size: 16px;
+            min-height: 44px;
+          }
+        }
+        
+        .serving-options-inline {
+          margin-top: 14px;
+          
+          ion-radio {
+            font-size: 15px;
+            padding: 7px 0;
+          }
+        }
+      }
+    }
     
     .food-options-inline {
       .food-item-row {

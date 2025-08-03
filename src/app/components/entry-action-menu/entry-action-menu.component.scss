@@ -2,7 +2,7 @@ ion-list {
   margin: 0;
   padding: 0;
   background: white;
-  border-radius: 1.125rem;
+  border-radius: 2.25rem;
   overflow: hidden;
 }
 
@@ -65,7 +65,7 @@ ion-icon {
   --border-radius: 1.125rem;
   
   .popover-content {
-    border-radius: 1.125rem !important;
+    border-radius: 2.25rem !important;
     overflow: visible;
     background-color: var(--color-bone);
     padding: 0.5rem !important;
@@ -73,7 +73,7 @@ ion-icon {
 } 
 
 ::ng-deep ion-popover::part(content) {
-  border-radius: 1.125rem !important;
+  border-radius: 2.25rem !important;
   overflow: visible !important;
   background-color: var(--color-bone) !important;
   padding: 0.5rem !important;
@@ -81,7 +81,7 @@ ion-icon {
 
 // More aggressive global targeting with higher specificity
 ::ng-deep ion-popover div.popover-content[part="content"] {
-  border-radius: 1.125rem !important;
+  border-radius: 2.25rem !important;
   overflow: visible !important;
   background-color: var(--color-bone) !important;
   padding: 0.5rem !important;
@@ -89,7 +89,7 @@ ion-icon {
 
 // Even more specific targeting
 ::ng-deep ion-popover div.popover-content {
-  border-radius: 1.125rem !important;
+  border-radius: 2.25rem !important;
   overflow: visible !important;
   background-color: var(--color-bone) !important;
   padding: 0.5rem !important;

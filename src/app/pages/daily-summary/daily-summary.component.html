@@ -41,12 +41,12 @@
       <!-- Nutrients View -->
       <div *ngIf="viewMode === 'nutrients'" class="breakdown-container">
         <!-- Macronutrients Card -->
-        <ion-card>
+        <ion-card [class.expanded]="selectedNutrient">
           <ion-card-header>
             <ion-card-title>Macronutrients</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-list>
+            <ion-list [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, macronutrientList)">
               <ng-container *ngFor="let nutrient of macronutrientList; trackBy: trackById">
                 <ion-item 
                   class="nutrient-entry"
@@ -106,12 +106,12 @@
         </ion-card>
 
         <!-- Micronutrients Card -->
-        <ion-card>
+        <ion-card [class.expanded]="selectedNutrient">
           <ion-card-header>
             <ion-card-title>Micronutrients</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-list>
+            <ion-list [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, micronutrientList)">
               <ng-container *ngFor="let nutrient of micronutrientList; trackBy: trackById">
                 <ion-item 
                   class="nutrient-entry"
@@ -183,12 +183,12 @@
         </div>
 
         <!-- Foods List (when foods are logged) -->
-        <ion-card *ngIf="hasFoodEntries">
+        <ion-card *ngIf="hasFoodEntries" [class.expanded]="selectedFood">
           <ion-card-header>
             <ion-card-title>Foods</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-list>
+            <ion-list [class.expanded]="selectedFood && isLastItem(selectedFood, detailedData?.foods ?? [])">
               <ng-container *ngFor="let food of detailedData?.foods; trackBy: trackById">
                 <ion-item 
                   (click)="selectFood(food)" 

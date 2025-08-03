@@ -1,44 +1,78 @@
 <div class="food-selection-container">
-
-  <!-- Food options inline layout -->
-  <div *ngIf="hasPayload" class="food-options-inline">
-    <div *ngFor="let phrase of payloadKeys" class="food-item-row">
-      
-      <!-- Food name and brand -->
-      <div class="food-name">
-        <label for="foodSelect-{{ phrase }}"><strong>{{ phrase }}</strong></label>
-        <ion-select 
-          interface="popover"
-          [value]="getSelectedFood(phrase)?.fatSecretFoodId" 
-          (ionChange)="onFoodSelected(phrase, $event.detail.value)" 
-          id="foodSelect-{{ phrase }}">
-          <ion-select-option 
-            *ngFor="let food of (foodOptions?.[phrase] || [])" 
-            [value]="food.fatSecretFoodId">
-            {{ food.displayName }}
-            <span *ngIf="food.brandName"> – {{ food.brandName }}</span>
-          </ion-select-option>
-        </ion-select>
-      </div>
-
-      <!-- Inline radio buttons for serving options -->
-      <div class="serving-options-inline">
-        <ion-radio-group 
-          [value]="getSelectedServingId(phrase)"
-          (ionChange)="onServingSelected(phrase, $event.detail.value)">
-          
-          <ion-radio 
-            *ngFor="let serving of getSelectedFood(phrase)?.servings"
-            [value]="serving.fatSecretServingId">
-            {{ serving.description }}
-            <span *ngIf="serving.quantity && serving.unit">
-              ({{ serving.quantity }} {{ serving.unit }})
-            </span>
-          </ion-radio>
-        </ion-radio-group>
-      </div>
-
+  <div class="food-selection-container-inner">
+    <!-- Food items list -->
+    <div *ngIf="hasPayload" class="card-header">
+      <label><strong>Food Items</strong></label>
     </div>
+    
+    <div *ngIf="hasPayload" class="food-items-list">
+      <ng-container *ngFor="let phrase of payloadKeys">
+        <!-- Compact food item row -->
+        <div class="food-item-row-simple">
+          <div class="breakdown-item">
+            <div class="primary-info">
+              <div class="name-section">
+                <span class="name">{{ getFirstFoodOption(phrase)?.displayName }}</span>
+                <span *ngIf="getFirstFoodOption(phrase)?.brandName" class="brand-name">
+                  – {{ getFirstFoodOption(phrase)?.brandName }}
+                </span>
+              </div>
+              <div *ngIf="getFirstServingOption(phrase)" class="amount">
+                ({{ getFirstServingOption(phrase)?.quantity }} {{ getFirstServingOption(phrase)?.unit }})
+              </div>
+            </div>
+          </div>
+          <ion-icon 
+            [name]="isExpanded(phrase) ? 'chevron-up-outline' : 'create-outline'" 
+            class="edit-icon" 
+            [class.expanded]="isExpanded(phrase)"
+            (click)="toggleExpansion(phrase)">
+          </ion-icon>
+        </div>
+        
+        <!-- Expanded selection card for this specific food item -->
+        <div *ngIf="isExpanded(phrase)" class="expanded-food-selection">
+          <div class="food-item-row">
+            
+            <!-- Food name and brand -->
+            <div class="food-name">
+              <label for="foodSelect-{{ phrase }}"><strong>{{ phrase }}</strong></label>
+              <ion-select 
+                interface="popover"
+                [value]="getSelectedFood(phrase)?.fatSecretFoodId" 
+                (ionChange)="onFoodSelected(phrase, $event.detail.value)" 
+                id="foodSelect-{{ phrase }}">
+                <ion-select-option 
+                  *ngFor="let food of (foodOptions?.[phrase] || [])" 
+                  [value]="food.fatSecretFoodId">
+                  {{ food.displayName }}
+                  <span *ngIf="food.brandName"> – {{ food.brandName }}</span>
+                </ion-select-option>
+              </ion-select>
+            </div>
+
+            <!-- Inline radio buttons for serving options -->
+            <div class="serving-options-inline">
+              <ion-radio-group 
+                [value]="getSelectedServingId(phrase)"
+                (ionChange)="onServingSelected(phrase, $event.detail.value)">
+                
+                <ion-radio 
+                  *ngFor="let serving of getSelectedFood(phrase)?.servings"
+                  [value]="serving.fatSecretServingId">
+                  {{ serving.description }}
+                  <span *ngIf="serving.quantity && serving.unit">
+                    ({{ serving.quantity }} {{ serving.unit }})
+                  </span>
+                </ion-radio>
+              </ion-radio-group>
+            </div>
+
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
   </div>
 
   <!-- Confirm button -->
@@ -47,7 +81,8 @@
       expand="block" 
       [disabled]="!isSelectionComplete()"
       (click)="confirmSelections()"
-      color="primary">
+      color="tertiary"
+      class="confirm-button">
       Confirm Selection
     </ion-button>
   </div>

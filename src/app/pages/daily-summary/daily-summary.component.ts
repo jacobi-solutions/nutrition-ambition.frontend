@@ -526,4 +526,25 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   get hasFoodEntries(): boolean {
     return !!this.detailedData?.foods?.length;
   }
+
+  // Helper method to check if an item is the last in the list
+  isLastItem(selectedItem: any, list: any[]): boolean {
+    if (!selectedItem || !list || list.length === 0) {
+      return false;
+    }
+    
+    const lastItem = list[list.length - 1];
+    
+    // For nutrients, compare by nutrientKey
+    if (selectedItem.nutrientKey && lastItem.nutrientKey) {
+      return selectedItem.nutrientKey === lastItem.nutrientKey;
+    }
+    
+    // For foods, compare by name
+    if (selectedItem.name && lastItem.name) {
+      return selectedItem.name === lastItem.name;
+    }
+    
+    return false;
+  }
 }

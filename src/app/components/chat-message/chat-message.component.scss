@@ -6,10 +6,14 @@
 .message {
   max-width: 80%;
   margin-bottom: 10px;
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 2.25rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-top: 1.5rem;
+  padding-bottom: 0.5rem;
   position: relative;
   word-wrap: break-word;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
   
   // Make messages with food options much wider
   &.has-food-options {
@@ -32,15 +36,15 @@
     color: white;
     align-self: flex-end;
     margin-left: auto;
-    border-bottom-right-radius: 2px;
+    border-bottom-right-radius: 0.25rem;
   }
   
   &.bot-message {
-    background: white;   /* bone white */
+    background: #fff;
     color: var(--ion-color-dark);
     align-self: flex-start;
     margin-right: auto;
-    border-bottom-left-radius: 2px;
+    border-bottom-left-radius: 0.25rem;
   }
   
   &.tool-message {
@@ -48,7 +52,7 @@
     color: var(--color-olive);
     align-self: flex-start;
     margin-right: auto;
-    border-bottom-left-radius: 2px;
+    border-bottom-left-radius: 0.25rem;
     border-left: 3px solid var(--ion-color-secondary);
   }
 }
@@ -130,6 +134,7 @@
 .message-time {
   font-size: 11px;
   margin-top: 5px;
+  margin-bottom: 5px;
   opacity: 0.8;
   text-align: right;
 } 
