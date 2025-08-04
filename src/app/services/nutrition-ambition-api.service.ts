@@ -1301,6 +1301,8 @@ export class ChatMessage implements IChatMessage {
     loggedDateUtc?: Date;
     foodEntryId?: string | undefined;
     isRead?: boolean;
+    toolCallId?: string | undefined;
+    toolFunctionName?: string | undefined;
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
@@ -1326,6 +1328,8 @@ export class ChatMessage implements IChatMessage {
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             this.foodEntryId = _data["foodEntryId"];
             this.isRead = _data["isRead"];
+            this.toolCallId = _data["toolCallId"];
+            this.toolFunctionName = _data["toolFunctionName"];
             this.responseId = _data["responseId"];
             this.assistantMode = _data["assistantMode"];
             this.assistantPhase = _data["assistantPhase"];
@@ -1357,6 +1361,8 @@ export class ChatMessage implements IChatMessage {
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         data["foodEntryId"] = this.foodEntryId;
         data["isRead"] = this.isRead;
+        data["toolCallId"] = this.toolCallId;
+        data["toolFunctionName"] = this.toolFunctionName;
         data["responseId"] = this.responseId;
         data["assistantMode"] = this.assistantMode;
         data["assistantPhase"] = this.assistantPhase;
@@ -1381,6 +1387,8 @@ export interface IChatMessage {
     loggedDateUtc?: Date;
     foodEntryId?: string | undefined;
     isRead?: boolean;
+    toolCallId?: string | undefined;
+    toolFunctionName?: string | undefined;
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
@@ -2790,6 +2798,7 @@ export enum MessageRoleTypes {
     System = "System",
     ContextNote = "ContextNote",
     PendingFoodSelection = "PendingFoodSelection",
+    CompletedFoodSelection = "CompletedFoodSelection",
 }
 
 export class NutrientBreakdown implements INutrientBreakdown {

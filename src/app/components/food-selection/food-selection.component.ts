@@ -47,6 +47,7 @@ export interface UserSelectedServingRequest {
 })
 export class FoodSelectionComponent implements OnInit {
   @Input() foodOptions?: Record<string, SelectableFoodMatch[]> | null = null;
+  @Input() isReadOnly: boolean = false;
   @Output() selectionConfirmed = new EventEmitter<UserSelectedServingRequest[]>();
 
   // Map to track selected food and serving: phrase -> { foodId, servingId }

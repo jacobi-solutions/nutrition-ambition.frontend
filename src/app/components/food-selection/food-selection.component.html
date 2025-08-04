@@ -23,6 +23,7 @@
             </div>
           </div>
           <ion-icon 
+            *ngIf="!isReadOnly"
             [name]="isExpanded(phrase) ? 'chevron-up-outline' : 'create-outline'" 
             class="edit-icon" 
             [class.expanded]="isExpanded(phrase)"
@@ -42,6 +43,7 @@
                 interface="popover"
                 [value]="getSelectedFood(phrase)?.fatSecretFoodId" 
                 (ionChange)="onFoodSelected(phrase, $event.detail.value)" 
+                [disabled]="isReadOnly"
                 id="foodSelect-{{ phrase }}">
                 <ion-select-option 
                   *ngFor="let food of (foodOptions?.[phrase] || [])" 
@@ -60,7 +62,8 @@
                 
                 <ion-radio 
                   *ngFor="let serving of getSelectedFood(phrase)?.servings"
-                  [value]="serving.fatSecretServingId">
+                  [value]="serving.fatSecretServingId"
+                  [disabled]="isReadOnly">
                   {{ serving.description }}
                   <span *ngIf="serving.quantity && serving.unit">
                     ({{ serving.quantity }} {{ serving.unit }})
@@ -78,7 +81,7 @@
   </div>
 
   <!-- Confirm button -->
-  <div class="confirm-section">
+  <div *ngIf="!isReadOnly" class="confirm-section">
     <ion-button 
       expand="block" 
       [disabled]="!isSelectionComplete()"

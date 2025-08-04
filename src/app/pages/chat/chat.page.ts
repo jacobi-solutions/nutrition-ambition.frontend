@@ -313,14 +313,15 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             const contextNoteMsgs: ChatMessage[] = [];
             const regularMsgs: ChatMessage[] = [];
             
-            // Separate messages by role - only include User (0), Assistant (1), ContextNote (4), and PendingFoodSelection (5)
+            // Separate messages by role - only include User (0), Assistant (1), ContextNote (4), PendingFoodSelection (5), and CompletedFoodSelection (6)
             response.messages.forEach(msg => {
               if (msg.role === MessageRoleTypes.ContextNote) {
                 contextNoteMsgs.push(msg);
               } else if (
                 msg.role === MessageRoleTypes.User || 
                 msg.role === MessageRoleTypes.Assistant || 
-                msg.role === 'PendingFoodSelection'
+                msg.role === 'PendingFoodSelection' ||
+                msg.role === 'CompletedFoodSelection'
               ) {
                 regularMsgs.push(msg);
               }
