@@ -9,7 +9,11 @@ import {
   GetChatMessagesResponse,
   ClearChatMessagesResponse,
   RunChatRequest,
-  LearnMoreAboutRequest
+  LearnMoreAboutRequest,
+  SubmitServingSelectionRequest,
+  SubmitServingSelectionResponse,
+  UserSelectedServing,
+  ErrorDto
 } from './nutrition-ambition-api.service';
 import { DateService } from './date.service';
 import { UserSelectedServingRequest } from '../components/food-selection/food-selection.component';
@@ -157,11 +161,28 @@ export class ChatService {
     this.contextNoteSubject.next(null);
   }
 
-  submitServingSelection(selections: UserSelectedServingRequest[]): Observable<void> {
-    // Stub implementation - log selections and return Observable
-    console.log('Stub: submitServingSelection called with selections:', selections);
+  submitServingSelection(selections: UserSelectedServingRequest[]): Observable<SubmitServingSelectionResponse> {
+    const req = new SubmitServingSelectionRequest({
+      loggedDateUtc: this.dateService.getSelectedDateUtc(),
+      selections: selections.map(s => new UserSelectedServing({
+        originalText: s.originalText,
+        fatSecretFoodId: s.foodId,
+        fatSecretServingId: s.servingId
+      }))
+    });
     
-    // Simulate async operation and return Observable<void>
-    return of(void 0);
+    return this.apiService.submitServingSelection(req).pipe(
+      catchError(err => {
+        console.error('Failed to submit selection', err);
+        const errorDto = new ErrorDto();
+        errorDto.errorMessage = 'Submission failed';
+        return of(new SubmitServingSelectionResponse({ isSuccess: false, errors: [errorDto] }));
+      })
+    );
+  }
+
+  // Add a method to reload messages for the current date
+  loadMessages(): Observable<GetChatMessagesResponse> {
+    return this.getMessageHistory(this.dateService.getSelectedDateUtc());
   }
 } 

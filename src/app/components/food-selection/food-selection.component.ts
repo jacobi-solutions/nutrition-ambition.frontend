@@ -11,7 +11,9 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
-import { SelectableFoodMatch, SelectableFoodServing } from 'src/app/services/nutrition-ambition-api.service';
+import { SelectableFoodMatch, SelectableFoodServing, UserSelectedServing } from 'src/app/services/nutrition-ambition-api.service';
+import { ChatService } from 'src/app/services/chat.service';
+import { DateService } from 'src/app/services/date.service';
 
 // Interface definitions
 export interface FoodServing {
@@ -53,7 +55,7 @@ export class FoodSelectionComponent implements OnInit {
   // Map to track which sections are expanded
   expandedSections: { [phrase: string]: boolean } = {};
 
-  constructor() {
+  constructor(private chatService: ChatService, private dateService: DateService) {
     addIcons({ createOutline, chevronDownOutline, chevronUpOutline });
   }
 
@@ -71,9 +73,10 @@ export class FoodSelectionComponent implements OnInit {
     for (const phrase of Object.keys(this.foodOptions)) {
       const foods = this.foodOptions[phrase];
       const foodId = foods?.[0]?.fatSecretFoodId;
+      const servingId = foods?.[0]?.selectedServingId;
   
       if (foodId) {
-        this.selections[phrase] = { foodId };
+        this.selections[phrase] = { foodId, servingId };
       }
       
       // Initialize all sections as collapsed
@@ -147,21 +150,26 @@ export class FoodSelectionComponent implements OnInit {
   }
 
   confirmSelections(): void {
-    if (!this.foodOptions) return;
-
     const selections: UserSelectedServingRequest[] = [];
-    
-    for (const phrase in this.selections) {
-      const selection = this.selections[phrase];
-      if (selection.foodId && selection.servingId) {
+
+    for (const phrase of this.payloadKeys) {
+      const selectedFood = this.getSelectedFood(phrase);
+      const selectedServingId = this.getSelectedServingId(phrase);
+      if (selectedFood && selectedFood.fatSecretFoodId && selectedServingId) {
         selections.push({
           originalText: phrase,
-          foodId: selection.foodId,
-          servingId: selection.servingId
+          foodId: selectedFood.fatSecretFoodId,
+          servingId: selectedServingId
         });
       }
     }
 
-    this.selectionConfirmed.emit(selections);
+    this.chatService.submitServingSelection(selections).subscribe(resp => {
+      if (resp.isSuccess) {
+        this.chatService.loadMessages();  // reload chat to reflect logged entry
+      } else {
+        console.warn('Selection submission failed:', resp.errors);
+      }
+    });
   }
 } 

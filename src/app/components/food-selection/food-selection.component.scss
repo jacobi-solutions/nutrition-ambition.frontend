@@ -121,12 +121,20 @@
     
     // Expanded selection section that appears inline
     .expanded-food-selection {
-      margin-top: 12px;
-      padding: 16px;
-      background: #fff;
-      border-radius: 1.25rem;
-      box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
-      border: none;
+      padding-left: .25rem;
+      padding-right: .25rem;
+      background-color: white !important;
+      --background: white !important;
+      border-radius: 0.75rem;
+      
+      .drilldown-content {
+        width: 100%;
+        margin-bottom: 1rem;
+        margin-top: 1rem;
+        padding: 1rem; 
+        background-color: rgba(78, 110, 93, 0.2);
+        border-radius: 1rem;
+      }
       
       .food-item-row {
         padding: 0;

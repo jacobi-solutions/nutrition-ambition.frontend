@@ -609,11 +609,16 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     // Call the chat service to submit the selections
     this.chatService.submitServingSelection(selections).subscribe({
       next: (response) => {
-        console.log('Selection submission successful:', response);
-        console.log('Submitted selections:', selections);
-        
-        // Reload chat history to show updated messages
-        this.loadChatHistory(this.dateService.getSelectedDateUtc());
+        if (response.isSuccess) {
+          console.log('Selection submission successful:', response);
+          console.log('Submitted selections:', selections);
+          
+          // Reload chat history to show updated messages
+          this.loadChatHistory(this.dateService.getSelectedDateUtc());
+        } else {
+          console.warn('Selection submission failed:', response.errors);
+          // Could show an error message here if needed
+        }
       },
       error: (error) => {
         console.error('Error submitting food selections:', error);

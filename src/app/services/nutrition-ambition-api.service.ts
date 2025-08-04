@@ -45,6 +45,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    submitServingSelection(body: SubmitServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getDetailedSummary(body: GetDetailedSummaryRequest | undefined): Observable<GetDetailedSummaryResponse>;
     /**
      * @param body (optional) 
@@ -386,6 +391,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<BotMessageResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    submitServingSelection(body: SubmitServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/submit-serving-selection";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSubmitServingSelection(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSubmitServingSelection(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SubmitServingSelectionResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SubmitServingSelectionResponse>;
+        }));
+    }
+
+    protected processSubmitServingSelection(response: HttpResponseBase): Observable<SubmitServingSelectionResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SubmitServingSelectionResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SubmitServingSelectionResponse>(null as any);
     }
 
     /**
@@ -2118,6 +2179,9 @@ export class FoodItem implements IFoodItem {
     id?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
+    fatSecretFoodId?: string | undefined;
+    fatSecretServingId?: string | undefined;
+    scaleFactor?: number;
     quantity?: number;
     unit?: string | undefined;
     weightGramsPerUnit?: number | undefined;
@@ -2138,6 +2202,9 @@ export class FoodItem implements IFoodItem {
             this.id = _data["id"];
             this.name = _data["name"];
             this.brandName = _data["brandName"];
+            this.fatSecretFoodId = _data["fatSecretFoodId"];
+            this.fatSecretServingId = _data["fatSecretServingId"];
+            this.scaleFactor = _data["scaleFactor"];
             this.quantity = _data["quantity"];
             this.unit = _data["unit"];
             this.weightGramsPerUnit = _data["weightGramsPerUnit"];
@@ -2164,6 +2231,9 @@ export class FoodItem implements IFoodItem {
         data["id"] = this.id;
         data["name"] = this.name;
         data["brandName"] = this.brandName;
+        data["fatSecretFoodId"] = this.fatSecretFoodId;
+        data["fatSecretServingId"] = this.fatSecretServingId;
+        data["scaleFactor"] = this.scaleFactor;
         data["quantity"] = this.quantity;
         data["unit"] = this.unit;
         data["weightGramsPerUnit"] = this.weightGramsPerUnit;
@@ -2183,6 +2253,9 @@ export interface IFoodItem {
     id?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
+    fatSecretFoodId?: string | undefined;
+    fatSecretServingId?: string | undefined;
+    scaleFactor?: number;
     quantity?: number;
     unit?: string | undefined;
     weightGramsPerUnit?: number | undefined;
@@ -2939,6 +3012,10 @@ export class SelectableFoodMatch implements ISelectableFoodMatch {
     brandName?: string | undefined;
     originalText?: string | undefined;
     rank?: number;
+    selectedServingId?: string | undefined;
+    scaledQuantity?: number;
+    scaledUnit?: string | undefined;
+    totalGrams?: number;
     servings?: SelectableFoodServing[] | undefined;
 
     constructor(data?: ISelectableFoodMatch) {
@@ -2957,6 +3034,10 @@ export class SelectableFoodMatch implements ISelectableFoodMatch {
             this.brandName = _data["brandName"];
             this.originalText = _data["originalText"];
             this.rank = _data["rank"];
+            this.selectedServingId = _data["selectedServingId"];
+            this.scaledQuantity = _data["scaledQuantity"];
+            this.scaledUnit = _data["scaledUnit"];
+            this.totalGrams = _data["totalGrams"];
             if (Array.isArray(_data["servings"])) {
                 this.servings = [] as any;
                 for (let item of _data["servings"])
@@ -2979,6 +3060,10 @@ export class SelectableFoodMatch implements ISelectableFoodMatch {
         data["brandName"] = this.brandName;
         data["originalText"] = this.originalText;
         data["rank"] = this.rank;
+        data["selectedServingId"] = this.selectedServingId;
+        data["scaledQuantity"] = this.scaledQuantity;
+        data["scaledUnit"] = this.scaledUnit;
+        data["totalGrams"] = this.totalGrams;
         if (Array.isArray(this.servings)) {
             data["servings"] = [];
             for (let item of this.servings)
@@ -2994,6 +3079,10 @@ export interface ISelectableFoodMatch {
     brandName?: string | undefined;
     originalText?: string | undefined;
     rank?: number;
+    selectedServingId?: string | undefined;
+    scaledQuantity?: number;
+    scaledUnit?: string | undefined;
+    totalGrams?: number;
     servings?: SelectableFoodServing[] | undefined;
 }
 
@@ -3067,6 +3156,118 @@ export interface ISelectableFoodServing {
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
+}
+
+export class SubmitServingSelectionRequest implements ISubmitServingSelectionRequest {
+    loggedDateUtc?: Date;
+    selections?: UserSelectedServing[] | undefined;
+
+    constructor(data?: ISubmitServingSelectionRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            if (Array.isArray(_data["selections"])) {
+                this.selections = [] as any;
+                for (let item of _data["selections"])
+                    this.selections!.push(UserSelectedServing.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SubmitServingSelectionRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SubmitServingSelectionRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        if (Array.isArray(this.selections)) {
+            data["selections"] = [];
+            for (let item of this.selections)
+                data["selections"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ISubmitServingSelectionRequest {
+    loggedDateUtc?: Date;
+    selections?: UserSelectedServing[] | undefined;
+}
+
+export class SubmitServingSelectionResponse implements ISubmitServingSelectionResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    foodEntryId?: string | undefined;
+
+    constructor(data?: ISubmitServingSelectionResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.foodEntryId = _data["foodEntryId"];
+        }
+    }
+
+    static fromJS(data: any): SubmitServingSelectionResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new SubmitServingSelectionResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["foodEntryId"] = this.foodEntryId;
+        return data;
+    }
+}
+
+export interface ISubmitServingSelectionResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    foodEntryId?: string | undefined;
 }
 
 export class SubmitUserFeedbackRequest implements ISubmitUserFeedbackRequest {
@@ -3417,6 +3618,50 @@ export interface IUpdateFoodEntryResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     updatedEntry?: FoodEntry;
+}
+
+export class UserSelectedServing implements IUserSelectedServing {
+    originalText?: string | undefined;
+    fatSecretFoodId?: string | undefined;
+    fatSecretServingId?: string | undefined;
+
+    constructor(data?: IUserSelectedServing) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.originalText = _data["originalText"];
+            this.fatSecretFoodId = _data["fatSecretFoodId"];
+            this.fatSecretServingId = _data["fatSecretServingId"];
+        }
+    }
+
+    static fromJS(data: any): UserSelectedServing {
+        data = typeof data === 'object' ? data : {};
+        let result = new UserSelectedServing();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["originalText"] = this.originalText;
+        data["fatSecretFoodId"] = this.fatSecretFoodId;
+        data["fatSecretServingId"] = this.fatSecretServingId;
+        return data;
+    }
+}
+
+export interface IUserSelectedServing {
+    originalText?: string | undefined;
+    fatSecretFoodId?: string | undefined;
+    fatSecretServingId?: string | undefined;
 }
 
 export class ApiException extends Error {

@@ -17,8 +17,8 @@
                   – {{ getFirstFoodOption(phrase)?.brandName }}
                 </span>
               </div>
-              <div *ngIf="getFirstServingOption(phrase)" class="amount">
-                ({{ getFirstServingOption(phrase)?.quantity }} {{ getFirstServingOption(phrase)?.unit }})
+              <div *ngIf="getFirstFoodOption(phrase)?.scaledQuantity && getFirstFoodOption(phrase)?.scaledUnit" class="amount">
+                ({{ getFirstFoodOption(phrase)?.scaledQuantity }} {{ getFirstFoodOption(phrase)?.scaledUnit }})
               </div>
             </div>
           </div>
@@ -30,8 +30,9 @@
           </ion-icon>
         </div>
         
-        <!-- Expanded selection card for this specific food item -->
-        <div *ngIf="isExpanded(phrase)" class="expanded-food-selection">
+              <!-- Expanded selection card for this specific food item -->
+      <div *ngIf="isExpanded(phrase)" class="expanded-food-selection">
+        <div class="drilldown-content">
           <div class="food-item-row">
             
             <!-- Food name and brand -->
@@ -70,6 +71,7 @@
 
           </div>
         </div>
+      </div>
       </ng-container>
     </div>
 
