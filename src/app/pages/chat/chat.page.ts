@@ -435,7 +435,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             text: response.message || 'Please confirm your food selections:',
             isUser: false,
             timestamp: new Date(),
-            foodOptions: response.selectableFoodMatches
+            foodOptions: response.selectableFoodMatches,
+            role: 'PendingFoodSelection'
           };
           console.log('Pushing food selection message:', foodSelectionMessage);
           this.messages.push(foodSelectionMessage);
