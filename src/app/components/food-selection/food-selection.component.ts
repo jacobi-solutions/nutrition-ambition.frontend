@@ -106,6 +106,11 @@ export class FoodSelectionComponent implements OnInit {
     return !!this.expandedSections[phrase];
   }
 
+  isWeightUnit(unit: string | undefined): boolean {
+    if (!unit) return false;
+    return ['g', 'gram', 'grams', 'ml', 'milliliter', 'milliliters'].includes(unit.toLowerCase());
+  }
+
   onFoodSelected(phrase: string, foodId: string): void {
     const food = this.foodOptions?.[phrase]?.find(f => f.fatSecretFoodId === foodId);
     
@@ -116,7 +121,7 @@ export class FoodSelectionComponent implements OnInit {
     }
   
     this.selections[phrase] = { foodId, servingId: defaultServingId };
-    this.expandedSections[phrase] = false;
+    //this.expandedSections[phrase] = false;
   }
 
   onServingSelected(phrase: string, servingId: string): void {
@@ -127,6 +132,15 @@ export class FoodSelectionComponent implements OnInit {
 
   getSelectedServingId(phrase: string): string | undefined {
     return this.selections[phrase]?.servingId;
+  }
+
+  getSelectedServing(phrase: string): SelectableFoodServing | null {
+    const selectedFood = this.getSelectedFood(phrase);
+    const selectedServingId = this.getSelectedServingId(phrase);
+    
+    if (!selectedFood?.servings || !selectedServingId) return null;
+    
+    return selectedFood.servings.find(serving => serving.fatSecretServingId === selectedServingId) || null;
   }
 
   getFirstFoodOption(phrase: string): SelectableFoodMatch | null {
