@@ -1204,6 +1204,8 @@ export class BotMessageResponse implements IBotMessageResponse {
     loggedMeal?: boolean;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
+    model?: string | undefined;
+    usage?: TokenUsage;
 
     constructor(data?: IBotMessageResponse) {
         if (data) {
@@ -1230,7 +1232,7 @@ export class BotMessageResponse implements IBotMessageResponse {
                 this.selectableFoodMatches = {} as any;
                 for (let key in _data["selectableFoodMatches"]) {
                     if (_data["selectableFoodMatches"].hasOwnProperty(key))
-                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : [];
+                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : <any>undefined;
                 }
             }
             this.terminateEarlyForUserInput = _data["terminateEarlyForUserInput"];
@@ -1238,6 +1240,8 @@ export class BotMessageResponse implements IBotMessageResponse {
             this.loggedMeal = _data["loggedMeal"];
             this.assistantMode = _data["assistantMode"];
             this.assistantPhase = _data["assistantPhase"];
+            this.model = _data["model"];
+            this.usage = _data["usage"] ? TokenUsage.fromJS(_data["usage"]) : <any>undefined;
         }
     }
 
@@ -1272,6 +1276,8 @@ export class BotMessageResponse implements IBotMessageResponse {
         data["loggedMeal"] = this.loggedMeal;
         data["assistantMode"] = this.assistantMode;
         data["assistantPhase"] = this.assistantPhase;
+        data["model"] = this.model;
+        data["usage"] = this.usage ? this.usage.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -1289,6 +1295,8 @@ export interface IBotMessageResponse {
     loggedMeal?: boolean;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
+    model?: string | undefined;
+    usage?: TokenUsage;
 }
 
 export class ChatMessage implements IChatMessage {
@@ -1307,6 +1315,10 @@ export class ChatMessage implements IChatMessage {
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
     selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    modelUsed?: string | undefined;
+    promptTokens?: number | undefined;
+    completionTokens?: number | undefined;
+    totalTokens?: number | undefined;
 
     constructor(data?: IChatMessage) {
         if (data) {
@@ -1340,6 +1352,10 @@ export class ChatMessage implements IChatMessage {
                         (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : <any>undefined;
                 }
             }
+            this.modelUsed = _data["modelUsed"];
+            this.promptTokens = _data["promptTokens"];
+            this.completionTokens = _data["completionTokens"];
+            this.totalTokens = _data["totalTokens"];
         }
     }
 
@@ -1373,6 +1389,10 @@ export class ChatMessage implements IChatMessage {
                     (<any>data["selectableFoodMatches"])[key] = (<any>this.selectableFoodMatches)[key];
             }
         }
+        data["modelUsed"] = this.modelUsed;
+        data["promptTokens"] = this.promptTokens;
+        data["completionTokens"] = this.completionTokens;
+        data["totalTokens"] = this.totalTokens;
         return data;
     }
 }
@@ -1393,6 +1413,10 @@ export interface IChatMessage {
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
     selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    modelUsed?: string | undefined;
+    promptTokens?: number | undefined;
+    completionTokens?: number | undefined;
+    totalTokens?: number | undefined;
 }
 
 export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
@@ -3103,6 +3127,7 @@ export class SelectableFoodServing implements ISelectableFoodServing {
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
+    isBestMatch?: boolean;
 
     constructor(data?: ISelectableFoodServing) {
         if (data) {
@@ -3128,6 +3153,7 @@ export class SelectableFoodServing implements ISelectableFoodServing {
                 }
             }
             this.apiServingKind = _data["apiServingKind"];
+            this.isBestMatch = _data["isBestMatch"];
         }
     }
 
@@ -3153,6 +3179,7 @@ export class SelectableFoodServing implements ISelectableFoodServing {
             }
         }
         data["apiServingKind"] = this.apiServingKind;
+        data["isBestMatch"] = this.isBestMatch;
         return data;
     }
 }
@@ -3165,6 +3192,7 @@ export interface ISelectableFoodServing {
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
+    isBestMatch?: boolean;
 }
 
 export class SubmitServingSelectionRequest implements ISubmitServingSelectionRequest {
@@ -3385,6 +3413,50 @@ export interface ISubmitUserFeedbackResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     feedbackEntry?: FeedbackEntry;
+}
+
+export class TokenUsage implements ITokenUsage {
+    promptTokens?: number | undefined;
+    completionTokens?: number | undefined;
+    totalTokens?: number | undefined;
+
+    constructor(data?: ITokenUsage) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.promptTokens = _data["promptTokens"];
+            this.completionTokens = _data["completionTokens"];
+            this.totalTokens = _data["totalTokens"];
+        }
+    }
+
+    static fromJS(data: any): TokenUsage {
+        data = typeof data === 'object' ? data : {};
+        let result = new TokenUsage();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["promptTokens"] = this.promptTokens;
+        data["completionTokens"] = this.completionTokens;
+        data["totalTokens"] = this.totalTokens;
+        return data;
+    }
+}
+
+export interface ITokenUsage {
+    promptTokens?: number | undefined;
+    completionTokens?: number | undefined;
+    totalTokens?: number | undefined;
 }
 
 export enum UnitKind {
