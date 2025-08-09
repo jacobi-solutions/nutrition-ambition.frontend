@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -11,23 +11,11 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
-import { SelectableFoodMatch, SelectableFoodServing, UserSelectedServing } from 'src/app/services/nutrition-ambition-api.service';
-import { ChatService } from 'src/app/services/chat.service';
-import { DateService } from 'src/app/services/date.service';
+import { SelectableFoodMatch, SelectableFoodServing, SubmitServingSelectionRequest, UserSelectedServing } from 'src/app/services/nutrition-ambition-api.service';
 
-// Interface definitions
-export interface FoodServing {
-  servingId: string;
-  description: string;
-  unit?: string;
-  amount?: number;
-}
 
-export interface UserSelectedServingRequest {
-  originalText: string;
-  foodId: string;
-  servingId: string;
-}
+
+
 
 @Component({
   selector: 'app-food-selection',
@@ -45,10 +33,11 @@ export interface UserSelectedServingRequest {
     IonIcon
   ]
 })
-export class FoodSelectionComponent implements OnInit {
+export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() foodOptions?: Record<string, SelectableFoodMatch[]> | null = null;
   @Input() isReadOnly: boolean = false;
-  @Output() selectionConfirmed = new EventEmitter<UserSelectedServingRequest[]>();
+  @Input() messageId?: string;
+  @Output() selectionConfirmed = new EventEmitter<SubmitServingSelectionRequest>();
 
   // Map to track selected food and serving: phrase -> { foodId, servingId }
   selections: { [phrase: string]: { foodId: string; servingId?: string } } = {};
@@ -59,7 +48,7 @@ export class FoodSelectionComponent implements OnInit {
   // Local loading state for submission
   isSubmitting: boolean = false;
 
-  constructor(private chatService: ChatService, private dateService: DateService) {
+  constructor() {
     addIcons({ createOutline, chevronDownOutline, chevronUpOutline });
   }
 
@@ -85,6 +74,13 @@ export class FoodSelectionComponent implements OnInit {
       
       // Initialize all sections as collapsed
       this.expandedSections[phrase] = false;
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['isReadOnly'] && this.isReadOnly) {
+      // Stop submitting spinner when component becomes read-only after successful submission
+      this.isSubmitting = false;
     }
   }
 
@@ -168,39 +164,24 @@ export class FoodSelectionComponent implements OnInit {
   }
 
   confirmSelections(): void {
-    const selections: UserSelectedServingRequest[] = [];
+    var request = new SubmitServingSelectionRequest();
+    request.pendingMessageId = this.messageId;
+    request.selections = [];
 
     for (const phrase of this.payloadKeys) {
       const selectedFood = this.getSelectedFood(phrase);
       const selectedServingId = this.getSelectedServingId(phrase);
       if (selectedFood && selectedFood.fatSecretFoodId && selectedServingId) {
-        selections.push({
+        request.selections.push(new UserSelectedServing({
           originalText: phrase,
-          foodId: selectedFood.fatSecretFoodId,
-          servingId: selectedServingId
-        });
+          fatSecretFoodId: selectedFood.fatSecretFoodId,
+          fatSecretServingId: selectedServingId
+        }));
       }
     }
 
-    // Show typing indicator while submitting
+    // Show typing indicator and let parent handle submission
     this.isSubmitting = true;
-
-    this.chatService.submitServingSelection(selections).subscribe({
-      next: (resp) => {
-        this.isSubmitting = false;
-        if (resp.isSuccess) {
-          // Switch to read-only after successful submission
-          this.isReadOnly = true;
-          // Reload chat to reflect logged entry
-          this.chatService.loadMessages();
-        } else {
-          console.warn('Selection submission failed:', resp.errors);
-        }
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        console.error('Error submitting selection:', err);
-      }
-    });
+    this.selectionConfirmed.emit(request);
   }
 } 

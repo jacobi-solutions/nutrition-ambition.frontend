@@ -1311,6 +1311,7 @@ export class ChatMessage implements IChatMessage {
     isRead?: boolean;
     toolCallId?: string | undefined;
     toolFunctionName?: string | undefined;
+    toolCallArgumentsJson?: string | undefined;
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
@@ -1342,6 +1343,7 @@ export class ChatMessage implements IChatMessage {
             this.isRead = _data["isRead"];
             this.toolCallId = _data["toolCallId"];
             this.toolFunctionName = _data["toolFunctionName"];
+            this.toolCallArgumentsJson = _data["toolCallArgumentsJson"];
             this.responseId = _data["responseId"];
             this.assistantMode = _data["assistantMode"];
             this.assistantPhase = _data["assistantPhase"];
@@ -1379,6 +1381,7 @@ export class ChatMessage implements IChatMessage {
         data["isRead"] = this.isRead;
         data["toolCallId"] = this.toolCallId;
         data["toolFunctionName"] = this.toolFunctionName;
+        data["toolCallArgumentsJson"] = this.toolCallArgumentsJson;
         data["responseId"] = this.responseId;
         data["assistantMode"] = this.assistantMode;
         data["assistantPhase"] = this.assistantPhase;
@@ -1409,6 +1412,7 @@ export interface IChatMessage {
     isRead?: boolean;
     toolCallId?: string | undefined;
     toolFunctionName?: string | undefined;
+    toolCallArgumentsJson?: string | undefined;
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
@@ -3197,6 +3201,7 @@ export interface ISelectableFoodServing {
 
 export class SubmitServingSelectionRequest implements ISubmitServingSelectionRequest {
     loggedDateUtc?: Date;
+    pendingMessageId?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
 
     constructor(data?: ISubmitServingSelectionRequest) {
@@ -3211,6 +3216,7 @@ export class SubmitServingSelectionRequest implements ISubmitServingSelectionReq
     init(_data?: any) {
         if (_data) {
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.pendingMessageId = _data["pendingMessageId"];
             if (Array.isArray(_data["selections"])) {
                 this.selections = [] as any;
                 for (let item of _data["selections"])
@@ -3229,6 +3235,7 @@ export class SubmitServingSelectionRequest implements ISubmitServingSelectionReq
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["pendingMessageId"] = this.pendingMessageId;
         if (Array.isArray(this.selections)) {
             data["selections"] = [];
             for (let item of this.selections)
@@ -3240,6 +3247,7 @@ export class SubmitServingSelectionRequest implements ISubmitServingSelectionReq
 
 export interface ISubmitServingSelectionRequest {
     loggedDateUtc?: Date;
+    pendingMessageId?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
 }
 

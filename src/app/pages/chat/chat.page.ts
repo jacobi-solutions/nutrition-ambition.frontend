@@ -13,15 +13,17 @@ import {
   GetChatMessagesResponse,
   ChatMessage,
   MessageRoleTypes,
-  SelectableFoodMatch
+  SelectableFoodMatch,
+  SubmitServingSelectionRequest
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { ChatMessageComponent } from 'src/app/components/chat-message/chat-message.component';
-import { FoodSelectionComponent, UserSelectedServingRequest } from 'src/app/components/food-selection/food-selection.component';
+import { FoodSelectionComponent } from 'src/app/components/food-selection/food-selection.component';
 import { format } from 'date-fns';
 
 interface DisplayMessage {
+  id?: string;
   text: string;
   isUser: boolean;
   isContextNote?: boolean; // Property to identify context note messages
@@ -330,6 +332,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             
             // Convert regular messages (User, Assistant, and PendingFoodSelection) to display messages
             this.messages = regularMsgs.map(msg => ({
+              id: msg.id,
               text: msg.content || '',
               isUser: msg.role === MessageRoleTypes.User,
               timestamp: msg.loggedDateUtc || new Date(),
@@ -605,27 +608,96 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // Handle food selection confirmation for standalone food selection components
-  onFoodSelectionConfirmed(selections: UserSelectedServingRequest[]): void {
-    console.log('Food selections confirmed:', selections);
+  onFoodSelectionConfirmed(request: SubmitServingSelectionRequest): void {
+    console.log('Food selections confirmed:', request);
     
-    // Call the chat service to submit the selections
-    this.chatService.submitServingSelection(selections).subscribe({
-      next: (response) => {
-        if (response.isSuccess) {
-          console.log('Selection submission successful:', response);
-          console.log('Submitted selections:', selections);
-          
-          // Reload chat history to show updated messages
-          this.loadChatHistory(this.dateService.getSelectedDateUtc());
-        } else {
-          console.warn('Selection submission failed:', response.errors);
+    // Optimistically mark the pending selection as completed in the UI
+    if (request.pendingMessageId) {
+      const idx = this.messages.findIndex(dm => dm.id === request.pendingMessageId);
+      if (idx !== -1) {
+        this.messages[idx] = {
+          ...this.messages[idx],
+          role: 'CompletedFoodSelection'
+        };
+      }
+    }
+
+    const submit = (req: SubmitServingSelectionRequest) => {
+      this.chatService.submitServingSelection(req).subscribe({
+        next: (response) => {
+          if (response.isSuccess) {
+            console.log('Selection submission successful:', response);
+            console.log('Submitted selections:', req.selections);
+
+            // Minimal UI update: patch the pending message and append latest assistant message without full reload
+            this.chatService.getMessageHistoryByDate(this.dateService.getSelectedDateUtc()).subscribe(history => {
+              if (!history || !history.isSuccess || !history.messages) {
+                return;
+              }
+
+              const byId = new Map<string, ChatMessage>();
+              history.messages.forEach(m => { if (m.id) byId.set(m.id, m); });
+
+              // 1) Update the pending/now-completed selection message in-place
+              const updated = req.pendingMessageId ? byId.get(req.pendingMessageId) : undefined;
+              if (updated && updated.id) {
+                const idx = this.messages.findIndex(dm => dm.id === updated.id);
+                if (idx !== -1) {
+                  const updatedDisplay: DisplayMessage = {
+                    id: updated.id,
+                    text: updated.content || '',
+                    isUser: false,
+                    timestamp: updated.loggedDateUtc || new Date(),
+                    foodOptions: updated.selectableFoodMatches || null,
+                    role: updated.role
+                  };
+                  this.messages[idx] = updatedDisplay;
+                }
+              }
+
+              // 2) Append any new assistant message(s) that aren't already in the UI
+              const existingIds = new Set(this.messages.map(m => m.id).filter(Boolean) as string[]);
+              const newAssistantMsgs = history.messages
+                .filter(m => m.role === MessageRoleTypes.Assistant && m.id && !existingIds.has(m.id))
+                .sort((a, b) => (a.loggedDateUtc?.getTime() || 0) - (b.loggedDateUtc?.getTime() || 0));
+
+              newAssistantMsgs.forEach(m => {
+                this.messages.push({
+                  id: m.id,
+                  text: m.content || '',
+                  isUser: false,
+                  timestamp: m.loggedDateUtc || new Date(),
+                  role: m.role
+                });
+              });
+
+              this.scrollToBottom();
+            });
+          } else {
+            console.warn('Selection submission failed:', response.errors);
+            // Could show an error message here if needed
+          }
+        },
+        error: (error) => {
+          console.error('Error submitting food selections:', error);
           // Could show an error message here if needed
         }
-      },
-      error: (error) => {
-        console.error('Error submitting food selections:', error);
-        // Could show an error message here if needed
-      }
-    });
+      });
+    };
+
+    // Ensure we have pendingMessageId. If missing, attempt to resolve from latest pending message.
+    if (!request.pendingMessageId) {
+      this.chatService.getMessageHistoryByDate(this.dateService.getSelectedDateUtc()).subscribe(resp => {
+        const pending = resp?.messages?.filter(m => m.role === MessageRoleTypes.PendingFoodSelection) || [];
+        if (pending.length > 0) {
+          const latest = pending[pending.length - 1];
+          request.pendingMessageId = latest.id;
+        }
+        submit(request);
+      });
+      return;
+    }
+
+    submit(request);
   }
 } 

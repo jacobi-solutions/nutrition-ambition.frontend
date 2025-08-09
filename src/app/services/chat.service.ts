@@ -16,7 +16,6 @@ import {
   ErrorDto
 } from './nutrition-ambition-api.service';
 import { DateService } from './date.service';
-import { UserSelectedServingRequest } from '../components/food-selection/food-selection.component';
 
 @Injectable({
   providedIn: 'root'
@@ -161,17 +160,11 @@ export class ChatService {
     this.contextNoteSubject.next(null);
   }
 
-  submitServingSelection(selections: UserSelectedServingRequest[]): Observable<SubmitServingSelectionResponse> {
-    const req = new SubmitServingSelectionRequest({
-      loggedDateUtc: this.dateService.getSelectedDateUtc(),
-      selections: selections.map(s => new UserSelectedServing({
-        originalText: s.originalText,
-        fatSecretFoodId: s.foodId,
-        fatSecretServingId: s.servingId
-      }))
-    });
-    
-    return this.apiService.submitServingSelection(req).pipe(
+  submitServingSelection(request: SubmitServingSelectionRequest): Observable<SubmitServingSelectionResponse> {
+    // Ensure loggedDateUtc is set
+    request.loggedDateUtc = this.dateService.getSelectedDateUtc();
+
+    return this.apiService.submitServingSelection(request).pipe(
       catchError(err => {
         console.error('Failed to submit selection', err);
         const errorDto = new ErrorDto();

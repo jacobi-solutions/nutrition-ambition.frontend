@@ -50,7 +50,7 @@
         </div>
         
               <!-- Expanded selection card for this specific food item -->
-      <div *ngIf="isExpanded(phrase)" class="expanded-food-selection">
+      <div *ngIf="!isReadOnly && isExpanded(phrase)" class="expanded-food-selection">
         <div class="drilldown-content">
           <div class="food-item-row">
             
@@ -100,7 +100,7 @@
   <!-- Action/status footer -->
   <div class="confirm-section">
     <!-- Dots while submitting -->
-    <div *ngIf="isSubmitting" class="typing-indicator">
+    <div *ngIf="isSubmitting && !isReadOnly" class="typing-indicator">
       <div class="typing-indicator-dots">
         <div class="dot"></div>
         <div class="dot"></div>
