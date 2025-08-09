@@ -14,13 +14,15 @@ import {
   ChatMessage,
   MessageRoleTypes,
   SelectableFoodMatch,
-  SubmitServingSelectionRequest
+    SubmitServingSelectionRequest,
+    SubmitServingSelectionResponse
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { ChatMessageComponent } from 'src/app/components/chat-message/chat-message.component';
 import { FoodSelectionComponent } from 'src/app/components/food-selection/food-selection.component';
 import { format } from 'date-fns';
+import { ToastService } from '../../services/toast.service';
 
 interface DisplayMessage {
   id?: string;
@@ -29,7 +31,8 @@ interface DisplayMessage {
   isContextNote?: boolean; // Property to identify context note messages
   timestamp: Date;
   foodOptions?: Record<string, SelectableFoodMatch[]> | null; // Add foodOptions property
-  role?: string;
+  mealName?: string | null;
+  role?: MessageRoleTypes;
 }
 
 @Component({
@@ -52,6 +55,7 @@ interface DisplayMessage {
   ]
 })
 export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
+  MessageRoleTypes = MessageRoleTypes;
   private animationCtrl = inject(AnimationController);
   isOpen = false;
   messages: DisplayMessage[] = [];
@@ -78,7 +82,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     private chatService: ChatService,
     private authService: AuthService,
     private dateService: DateService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {
     // Add the icons explicitly to the library
     addIcons({
@@ -322,8 +327,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
               } else if (
                 msg.role === MessageRoleTypes.User || 
                 msg.role === MessageRoleTypes.Assistant || 
-                msg.role === 'PendingFoodSelection' ||
-                msg.role === 'CompletedFoodSelection'
+                msg.role === MessageRoleTypes.PendingFoodSelection ||
+                msg.role === MessageRoleTypes.CompletedFoodSelection
               ) {
                 regularMsgs.push(msg);
               }
@@ -336,7 +341,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
               text: msg.content || '',
               isUser: msg.role === MessageRoleTypes.User,
               timestamp: msg.loggedDateUtc || new Date(),
-              foodOptions: msg.selectableFoodMatches || null,
+              foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
+              mealName: msg.logMealToolResponse?.mealName || null,
               role: msg.role
             }));
             
@@ -429,8 +435,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         // Check if response has food selection requirement
         if (
           response.terminateEarlyForUserInput &&
-          response.selectableFoodMatches &&
-          Object.keys(response.selectableFoodMatches).length > 0
+          response.logMealToolResponse?.selectableFoodMatches &&
+          Object.keys(response.logMealToolResponse.selectableFoodMatches).length > 0
         ) {
           // Create a new assistant message with food options
           
@@ -438,8 +444,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             text: response.message || 'Please confirm your food selections:',
             isUser: false,
             timestamp: new Date(),
-            foodOptions: response.selectableFoodMatches,
-            role: 'PendingFoodSelection'
+            foodOptions: response.logMealToolResponse?.selectableFoodMatches || null,
+            mealName: response.logMealToolResponse?.mealName || null,
+            role: MessageRoleTypes.PendingFoodSelection
           };
           console.log('Pushing food selection message:', foodSelectionMessage);
           this.messages.push(foodSelectionMessage);
@@ -607,97 +614,49 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     }, 350); // Slightly longer than scroll animation (300ms)
   }
 
+  private async showErrorToast(message: string) {
+    await this.toastService.showToast({ message, color: 'danger' });
+  }
+
   // Handle food selection confirmation for standalone food selection components
   onFoodSelectionConfirmed(request: SubmitServingSelectionRequest): void {
     console.log('Food selections confirmed:', request);
-    
-    // Optimistically mark the pending selection as completed in the UI
-    if (request.pendingMessageId) {
-      const idx = this.messages.findIndex(dm => dm.id === request.pendingMessageId);
-      if (idx !== -1) {
-        this.messages[idx] = {
-          ...this.messages[idx],
-          role: 'CompletedFoodSelection'
-        };
-      }
-    }
 
-    const submit = (req: SubmitServingSelectionRequest) => {
-      this.chatService.submitServingSelection(req).subscribe({
-        next: (response) => {
-          if (response.isSuccess) {
-            console.log('Selection submission successful:', response);
-            console.log('Submitted selections:', req.selections);
+    const toDisplayMessage = (msg: ChatMessage): DisplayMessage => ({
+      id: msg.id,
+      text: msg.content || '',
+      isUser: msg.role === MessageRoleTypes.User,
+      timestamp: msg.loggedDateUtc || new Date(),
+      foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
+      mealName: msg.logMealToolResponse?.mealName || null,
+      role: msg.role
+    });
 
-            // Minimal UI update: patch the pending message and append latest assistant message without full reload
-            this.chatService.getMessageHistoryByDate(this.dateService.getSelectedDateUtc()).subscribe(history => {
-              if (!history || !history.isSuccess || !history.messages) {
-                return;
-              }
+    this.chatService.submitServingSelection(request).subscribe({
+      next: (response: SubmitServingSelectionResponse) => {
+        if (!response.isSuccess) {
+          console.warn('Selection submission failed:', response.errors);
+          this.showErrorToast('Failed to log food selection.');
+          return;
+        }
 
-              const byId = new Map<string, ChatMessage>();
-              history.messages.forEach(m => { if (m.id) byId.set(m.id, m); });
-
-              // 1) Update the pending/now-completed selection message in-place
-              const updated = req.pendingMessageId ? byId.get(req.pendingMessageId) : undefined;
-              if (updated && updated.id) {
-                const idx = this.messages.findIndex(dm => dm.id === updated.id);
-                if (idx !== -1) {
-                  const updatedDisplay: DisplayMessage = {
-                    id: updated.id,
-                    text: updated.content || '',
-                    isUser: false,
-                    timestamp: updated.loggedDateUtc || new Date(),
-                    foodOptions: updated.selectableFoodMatches || null,
-                    role: updated.role
-                  };
-                  this.messages[idx] = updatedDisplay;
-                }
-              }
-
-              // 2) Append any new assistant message(s) that aren't already in the UI
-              const existingIds = new Set(this.messages.map(m => m.id).filter(Boolean) as string[]);
-              const newAssistantMsgs = history.messages
-                .filter(m => m.role === MessageRoleTypes.Assistant && m.id && !existingIds.has(m.id))
-                .sort((a, b) => (a.loggedDateUtc?.getTime() || 0) - (b.loggedDateUtc?.getTime() || 0));
-
-              newAssistantMsgs.forEach(m => {
-                this.messages.push({
-                  id: m.id,
-                  text: m.content || '',
-                  isUser: false,
-                  timestamp: m.loggedDateUtc || new Date(),
-                  role: m.role
-                });
-              });
-
-              this.scrollToBottom();
-            });
-          } else {
-            console.warn('Selection submission failed:', response.errors);
-            // Could show an error message here if needed
+        if (response.updatedSelectionMessage && response.updatedSelectionMessage.id) {
+          const idx = this.messages.findIndex(m => m.id === response.updatedSelectionMessage!.id);
+          if (idx !== -1) {
+            this.messages[idx] = toDisplayMessage(response.updatedSelectionMessage);
           }
-        },
-        error: (error) => {
-          console.error('Error submitting food selections:', error);
-          // Could show an error message here if needed
         }
-      });
-    };
 
-    // Ensure we have pendingMessageId. If missing, attempt to resolve from latest pending message.
-    if (!request.pendingMessageId) {
-      this.chatService.getMessageHistoryByDate(this.dateService.getSelectedDateUtc()).subscribe(resp => {
-        const pending = resp?.messages?.filter(m => m.role === MessageRoleTypes.PendingFoodSelection) || [];
-        if (pending.length > 0) {
-          const latest = pending[pending.length - 1];
-          request.pendingMessageId = latest.id;
+        if (response.newAssistantMessage) {
+          this.messages.push(toDisplayMessage(response.newAssistantMessage));
         }
-        submit(request);
-      });
-      return;
-    }
 
-    submit(request);
+        this.scrollToBottom();
+      },
+      error: (error) => {
+        console.error('Error submitting food selections:', error);
+        this.showErrorToast('Failed to log food selection.');
+      }
+    });
   }
 } 

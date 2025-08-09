@@ -40,18 +40,19 @@
           </div>
 
           <!-- Standalone food selection cards for pending and completed selection messages -->
-          <div *ngIf="!message.isContextNote && (message.role === 'PendingFoodSelection' || message.role === 'CompletedFoodSelection')" class="standalone-food-selection">
+          <div *ngIf="!message.isContextNote && (message.role === MessageRoleTypes.PendingFoodSelection || message.role === MessageRoleTypes.CompletedFoodSelection)" class="standalone-food-selection">
             <app-food-selection 
               [messageId]="message.id"
               [foodOptions]="message.foodOptions || null"
-              [isReadOnly]="message.role === 'CompletedFoodSelection'"
+              [mealName]="message.mealName || null"
+              [isReadOnly]="message.role === MessageRoleTypes.CompletedFoodSelection"
               (selectionConfirmed)="onFoodSelectionConfirmed($event)">
             </app-food-selection>
           </div>
 
           <!-- Regular chat message -->
           <app-chat-message 
-            *ngIf="!message.isContextNote && message.role !== 'PendingFoodSelection' && message.role !== 'CompletedFoodSelection'"
+            *ngIf="!message.isContextNote && message.role !== MessageRoleTypes.PendingFoodSelection && message.role !== MessageRoleTypes.CompletedFoodSelection"
             [text]="message.text"
             [isUser]="message.isUser"
             [timestamp]="message.timestamp"

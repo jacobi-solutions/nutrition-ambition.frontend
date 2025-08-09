@@ -398,7 +398,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @return Success
      */
     submitServingSelection(body: SubmitServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/submit-serving-selection";
+        let url_ = this.baseUrl + "/api/Conversation/SubmitServingSelection";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -1198,7 +1198,7 @@ export class BotMessageResponse implements IBotMessageResponse {
     stackTrace?: string | undefined;
     message?: string | undefined;
     accountId?: string | undefined;
-    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    logMealToolResponse?: LogMealToolResponse;
     terminateEarlyForUserInput?: boolean;
     responseId?: string | undefined;
     loggedMeal?: boolean;
@@ -1228,13 +1228,7 @@ export class BotMessageResponse implements IBotMessageResponse {
             this.stackTrace = _data["stackTrace"];
             this.message = _data["message"];
             this.accountId = _data["accountId"];
-            if (_data["selectableFoodMatches"]) {
-                this.selectableFoodMatches = {} as any;
-                for (let key in _data["selectableFoodMatches"]) {
-                    if (_data["selectableFoodMatches"].hasOwnProperty(key))
-                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : <any>undefined;
-                }
-            }
+            this.logMealToolResponse = _data["logMealToolResponse"] ? LogMealToolResponse.fromJS(_data["logMealToolResponse"]) : <any>undefined;
             this.terminateEarlyForUserInput = _data["terminateEarlyForUserInput"];
             this.responseId = _data["responseId"];
             this.loggedMeal = _data["loggedMeal"];
@@ -1264,13 +1258,7 @@ export class BotMessageResponse implements IBotMessageResponse {
         data["stackTrace"] = this.stackTrace;
         data["message"] = this.message;
         data["accountId"] = this.accountId;
-        if (this.selectableFoodMatches) {
-            data["selectableFoodMatches"] = {};
-            for (let key in this.selectableFoodMatches) {
-                if (this.selectableFoodMatches.hasOwnProperty(key))
-                    (<any>data["selectableFoodMatches"])[key] = (<any>this.selectableFoodMatches)[key];
-            }
-        }
+        data["logMealToolResponse"] = this.logMealToolResponse ? this.logMealToolResponse.toJSON() : <any>undefined;
         data["terminateEarlyForUserInput"] = this.terminateEarlyForUserInput;
         data["responseId"] = this.responseId;
         data["loggedMeal"] = this.loggedMeal;
@@ -1289,7 +1277,7 @@ export interface IBotMessageResponse {
     stackTrace?: string | undefined;
     message?: string | undefined;
     accountId?: string | undefined;
-    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    logMealToolResponse?: LogMealToolResponse;
     terminateEarlyForUserInput?: boolean;
     responseId?: string | undefined;
     loggedMeal?: boolean;
@@ -1315,7 +1303,7 @@ export class ChatMessage implements IChatMessage {
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
-    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    logMealToolResponse?: LogMealToolResponse;
     modelUsed?: string | undefined;
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
@@ -1347,13 +1335,7 @@ export class ChatMessage implements IChatMessage {
             this.responseId = _data["responseId"];
             this.assistantMode = _data["assistantMode"];
             this.assistantPhase = _data["assistantPhase"];
-            if (_data["selectableFoodMatches"]) {
-                this.selectableFoodMatches = {} as any;
-                for (let key in _data["selectableFoodMatches"]) {
-                    if (_data["selectableFoodMatches"].hasOwnProperty(key))
-                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : <any>undefined;
-                }
-            }
+            this.logMealToolResponse = _data["logMealToolResponse"] ? LogMealToolResponse.fromJS(_data["logMealToolResponse"]) : <any>undefined;
             this.modelUsed = _data["modelUsed"];
             this.promptTokens = _data["promptTokens"];
             this.completionTokens = _data["completionTokens"];
@@ -1385,13 +1367,7 @@ export class ChatMessage implements IChatMessage {
         data["responseId"] = this.responseId;
         data["assistantMode"] = this.assistantMode;
         data["assistantPhase"] = this.assistantPhase;
-        if (this.selectableFoodMatches) {
-            data["selectableFoodMatches"] = {};
-            for (let key in this.selectableFoodMatches) {
-                if (this.selectableFoodMatches.hasOwnProperty(key))
-                    (<any>data["selectableFoodMatches"])[key] = (<any>this.selectableFoodMatches)[key];
-            }
-        }
+        data["logMealToolResponse"] = this.logMealToolResponse ? this.logMealToolResponse.toJSON() : <any>undefined;
         data["modelUsed"] = this.modelUsed;
         data["promptTokens"] = this.promptTokens;
         data["completionTokens"] = this.completionTokens;
@@ -1416,7 +1392,7 @@ export interface IChatMessage {
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
-    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    logMealToolResponse?: LogMealToolResponse;
     modelUsed?: string | undefined;
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
@@ -2811,6 +2787,62 @@ export interface ILearnMoreAboutRequest {
     loggedDateUtc?: Date | undefined;
 }
 
+export class LogMealToolResponse implements ILogMealToolResponse {
+    mealName?: string | undefined;
+    loggedDateUtc?: Date;
+    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+
+    constructor(data?: ILogMealToolResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.mealName = _data["mealName"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            if (_data["selectableFoodMatches"]) {
+                this.selectableFoodMatches = {} as any;
+                for (let key in _data["selectableFoodMatches"]) {
+                    if (_data["selectableFoodMatches"].hasOwnProperty(key))
+                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : [];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): LogMealToolResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new LogMealToolResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["mealName"] = this.mealName;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        if (this.selectableFoodMatches) {
+            data["selectableFoodMatches"] = {};
+            for (let key in this.selectableFoodMatches) {
+                if (this.selectableFoodMatches.hasOwnProperty(key))
+                    (<any>data["selectableFoodMatches"])[key] = (<any>this.selectableFoodMatches)[key];
+            }
+        }
+        return data;
+    }
+}
+
+export interface ILogMealToolResponse {
+    mealName?: string | undefined;
+    loggedDateUtc?: Date;
+    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+}
+
 export enum MealType {
     Unknown = "Unknown",
     Breakfast = "Breakfast",
@@ -3258,6 +3290,8 @@ export class SubmitServingSelectionResponse implements ISubmitServingSelectionRe
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     foodEntryId?: string | undefined;
+    updatedSelectionMessage?: ChatMessage;
+    newAssistantMessage?: ChatMessage;
 
     constructor(data?: ISubmitServingSelectionResponse) {
         if (data) {
@@ -3280,6 +3314,8 @@ export class SubmitServingSelectionResponse implements ISubmitServingSelectionRe
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
             this.foodEntryId = _data["foodEntryId"];
+            this.updatedSelectionMessage = _data["updatedSelectionMessage"] ? ChatMessage.fromJS(_data["updatedSelectionMessage"]) : <any>undefined;
+            this.newAssistantMessage = _data["newAssistantMessage"] ? ChatMessage.fromJS(_data["newAssistantMessage"]) : <any>undefined;
         }
     }
 
@@ -3302,6 +3338,8 @@ export class SubmitServingSelectionResponse implements ISubmitServingSelectionRe
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
         data["foodEntryId"] = this.foodEntryId;
+        data["updatedSelectionMessage"] = this.updatedSelectionMessage ? this.updatedSelectionMessage.toJSON() : <any>undefined;
+        data["newAssistantMessage"] = this.newAssistantMessage ? this.newAssistantMessage.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -3313,6 +3351,8 @@ export interface ISubmitServingSelectionResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     foodEntryId?: string | undefined;
+    updatedSelectionMessage?: ChatMessage;
+    newAssistantMessage?: ChatMessage;
 }
 
 export class SubmitUserFeedbackRequest implements ISubmitUserFeedbackRequest {

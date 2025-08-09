@@ -71,77 +71,51 @@
         padding-bottom: 0;
       }
       
-      .breakdown-item {
-        flex: 1;
-        
-        .primary-info {
-          display: flex;
-          flex-direction: column;
-          width: 100%;
-          min-height: 36px;
-          justify-content: center;
-          
-          .name-section {
-            .name {
-              font-family: 'Poppins', sans-serif;
-              font-weight: 500;
-              font-size: 0.875rem;
-              color: var(--ion-color-dark);
-            }
-            
-            .brand-name {
-              font-family: 'Poppins', sans-serif;
-              font-weight: 600;
-              font-size: 0.9em;
-              color: var(--ion-color-primary);
-            }
+      .row-grid { 
+        width: 100%;
+        --ion-grid-padding: 0;           // remove outer grid padding
+      }
+      .row-grid ion-row { --ion-grid-column-padding: 0; } // remove column gutters
+      .top-row { align-items: center; }
+      .left { display: flex; flex-direction: column; }
 
-            .inline-amount {
-              margin-left: 6px;
-              font-family: 'Poppins', sans-serif;
-              font-weight: 500;
-              font-size: 0.875rem;
-              color: var(--ion-color-medium);
-            }
-
-            // Inline macro chips next to amount
-            .macro-row {
-              display: inline-flex;
-              gap: 6px;
-              margin-left: 8px;
-              align-items: baseline;
-
-              .macro {
-                font-size: 0.75rem;
-                color: var(--ion-color-medium);
-                background: rgba(0,0,0,0.04);
-                padding: 2px 6px;
-                border-radius: 10px;
-              }
-            }
-          }
-          
-          .amount {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: var(--ion-color-medium);
-            margin-top: 2px;
-
-            .macro-inline {
-              margin-left: 8px;
-              font-weight: 500;
-              font-size: 0.85em;
-              color: var(--ion-color-medium);
-            }
-            .macro-inline-servings {
-              margin-left: 8px;
-              font-weight: 500;
-              font-size: 0.75rem !important;
-              color: var(--ion-color-medium);
-            }
-          }
+      .name-section {
+        .name {
+          font-family: 'Poppins', sans-serif;
+          font-weight: 500;
+          font-size: 0.875rem;
+          color: var(--ion-color-dark);
+          line-height: 1.2;
         }
+        
+        .brand-name {
+          font-family: 'Poppins', sans-serif;
+          font-weight: 600;
+          font-size: 0.9em;
+          color: var(--ion-color-primary);
+          line-height: 1.2;
+        }
+        margin-bottom: 2px; // tighten space below name
+      }
+
+      .serving-line {
+        margin-top: 0;
+        .inline-amount {
+          margin-left: 0;
+          font-family: 'Poppins', sans-serif;
+          font-weight: 600;
+          font-size: 0.875rem;
+          color: var(--ion-color-medium);
+          line-height: 1.2;
+        }
+      }
+
+      .macro-summary {
+        margin-top: 2px;
+        font-weight: 500;
+        font-size: 0.85em;
+        color: var(--ion-color-medium);
+        line-height: 1.3;
       }
       
       .edit-icon {
@@ -152,6 +126,23 @@
         
         &.expanded {
           color: var(--ion-color-secondary);
+        }
+      }
+
+      // Group action icons with clear spacing and larger tap targets
+      .action-icons {
+        display: inline-flex;
+        align-items: center;
+        // gap: 14px; // increased spacing between edit and delete
+
+        ion-icon {
+          padding: 8px; // increases tap area
+          padding-right: 0;          
+          border-radius: 8px;
+        }
+
+        .delete-icon {
+          color: var(--color-smoke);
         }
       }
     }
@@ -390,6 +381,21 @@
   }
 }
 
+.food-item-row-simple {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.food-item-row-simple.removing {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+
+
 /* Ensure the smaller inline macro text applies specifically to the serving options block */
 .food-selection-container .macro-inline-servings {
   font-size: 0.75rem !important;
@@ -481,8 +487,9 @@
         }
       }
       
-      .edit-icon {
-        font-size: 18px;
+      .action-icons {
+        // gap: 16px; // slightly more spacing on mobile for finger comfort
+        ion-icon { font-size: 20px; }
       }
     }
     

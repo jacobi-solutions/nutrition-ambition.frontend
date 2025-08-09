@@ -2,116 +2,110 @@
   <div class="food-selection-container-inner">
     <!-- Food items list -->
     <div *ngIf="hasPayload" class="card-header">
-      <label><strong>Food Items</strong></label>
+      <label><strong>{{ ((mealName && mealName.trim().length > 0) ? mealName : 'Food Items') | titlecase }}</strong></label>
     </div>
-    
+
     <div *ngIf="hasPayload" class="food-items-list">
       <ng-container *ngFor="let phrase of payloadKeys">
-        <!-- Compact food item row -->
-        <div class="food-item-row-simple">
-          <div class="breakdown-item">
-            <div class="primary-info">
-              <div class="name-section">
-                <span class="name">{{ getSelectedFood(phrase)?.displayName }}</span>
-                <span *ngIf="getSelectedFood(phrase)?.brandName" class="brand-name">
-                  – {{ getSelectedFood(phrase)?.brandName }}
-                </span>
-                <!-- Inline quantity for read-only (CompletedFoodSelection) -->
-                <span class="inline-amount" *ngIf="isReadOnly">
-                  <ng-container *ngIf="getSelectedFood(phrase)?.scaledQuantity && getSelectedFood(phrase)?.scaledUnit; else fallbackServingInline">
-                    ({{ getSelectedFood(phrase)?.scaledQuantity | number:'1.0-2' }} {{ getSelectedFood(phrase)?.scaledUnit }})
+        <div class="food-item-row-simple" [id]="'row-' + phrase">
+          <ion-grid class="row-grid">
+            <ion-row class="top-row" align-items-center>
+              <ion-col size="10" class="left">
+                <div class="name-section">
+                  <span class="name">{{ getSelectedFood(phrase)?.displayName }}</span>
+                  <span *ngIf="getSelectedFood(phrase)?.brandName" class="brand-name"> – {{ getSelectedFood(phrase)?.brandName }}</span>
+                </div>
+                <div class="serving-line">
+                  <ng-container *ngIf="isReadOnly; else editableServing">
+                    <ng-container *ngIf="getSelectedFood(phrase)?.scaledQuantity && getSelectedFood(phrase)?.scaledUnit; else fallbackServingInline2">
+                      <span class="inline-amount">({{ getSelectedFood(phrase)?.scaledQuantity | number:'1.0-2' }} {{ getSelectedFood(phrase)?.scaledUnit }})</span>
+                    </ng-container>
+                    <ng-template #fallbackServingInline2>
+                      <ng-container *ngIf="getSelectedServing(phrase)?.quantity && getSelectedServing(phrase)?.unit">
+                        <span class="inline-amount">({{ getSelectedServing(phrase)?.quantity | number:'1.0-2' }} {{ getSelectedServing(phrase)?.unit }})</span>
+                      </ng-container>
+                    </ng-template>
                   </ng-container>
-                  <ng-template #fallbackServingInline>
-                    <ng-container *ngIf="getSelectedServing(phrase)?.quantity && getSelectedServing(phrase)?.unit">
-                      ({{ getSelectedServing(phrase)?.quantity | number:'1.0-2' }} {{ getSelectedServing(phrase)?.unit }})
+                  <ng-template #editableServing>
+                    <ng-container *ngIf="getSelectedServing(phrase) as selectedServing">
+                      <ng-container *ngIf="selectedServing.weightGramsPerUnit && isWeightUnit(selectedServing.unit); else simpleServing2">
+                        <span class="inline-amount">{{ (selectedServing.quantity! * selectedServing.weightGramsPerUnit) | number:'1.0-0' }}g</span>
+                      </ng-container>
+                      <ng-template #simpleServing2>
+                        <span class="inline-amount">{{ selectedServing.quantity | number:'1.0-2' }} {{ selectedServing.unit }}</span>
+                      </ng-template>
                     </ng-container>
                   </ng-template>
-                </span>
+                </div>
+              </ion-col>
+              <ion-col size="2" class="right" *ngIf="!isReadOnly">
+                <div class="action-icons">
+                  <ion-icon [name]="isExpanded(phrase) ? 'chevron-up-outline' : 'create-outline'" class="edit-icon" [class.expanded]="isExpanded(phrase)" (click)="toggleExpansion(phrase)"></ion-icon>
+                  <ion-icon name="trash-outline" class="delete-icon" (click)="removeItem(phrase)"></ion-icon>
+                </div>
+              </ion-col>
+            </ion-row>
+            <ion-row class="macro-row" *ngIf="!isReadOnly && getSelectedServing(phrase) as selectedServing">
+              <ion-col size="12" class="macro-summary">
+                ({{ caloriesForServing(selectedServing) || 0 | number:'1.0-0' }} cal,
+                {{ proteinForServing(selectedServing) || 0 | number:'1.0-0' }} protein,
+                {{ fatForServing(selectedServing) || 0 | number:'1.0-0' }} fat,
+                {{ carbsForServing(selectedServing) || 0 | number:'1.0-0' }} carbs)
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </div>
+
+        <!-- Expanded selection card -->
+        <div *ngIf="!isReadOnly && isExpanded(phrase)" class="expanded-food-selection">
+          <div class="drilldown-content">
+            <div class="food-item-row">
+              <div class="food-name">
+                <label for="foodSelect-{{ phrase }}"><strong>{{ phrase }}</strong></label>
+                <ion-select 
+                  interface="popover"
+                  [value]="getSelectedFood(phrase)?.fatSecretFoodId" 
+                  (ionChange)="onFoodSelected(phrase, $event.detail.value)" 
+                  [disabled]="isReadOnly"
+                  id="foodSelect-{{ phrase }}">
+                  <ion-select-option 
+                    *ngFor="let food of (foodOptions?.[phrase] || [])" 
+                    [value]="food.fatSecretFoodId">
+                    {{ food.displayName }}
+                    <span *ngIf="food.brandName" class="brand-name"> – {{ food.brandName }}</span>
+                  </ion-select-option>
+                </ion-select>
               </div>
-              <div *ngIf="!isReadOnly && getSelectedServing(phrase)?.quantity && getSelectedServing(phrase)?.unit" class="amount">
-                <ng-container *ngIf="getSelectedServing(phrase) as selectedServing">
-                  <ng-container *ngIf="selectedServing.weightGramsPerUnit && isWeightUnit(selectedServing.unit); else simpleServing">
-                    {{ (selectedServing.quantity! * selectedServing.weightGramsPerUnit) | number:'1.0-0' }}g
-                  </ng-container>
-                  <ng-template #simpleServing>
-                    {{ selectedServing.quantity | number:'1.0-2' }} {{ selectedServing.unit }}
-                  </ng-template>
-                  <div class="macro-inline">
-                    ({{ caloriesForServing(selectedServing) || 0 | number:'1.0-0' }} cal, 
-                    {{ proteinForServing(selectedServing) || 0 | number:'1.0-0' }} protien, 
-                    {{ fatForServing(selectedServing) || 0 | number:'1.0-0' }} fat, 
-                    {{ carbsForServing(selectedServing) || 0 | number:'1.0-0' }} carbs)
-                  </div>
-                </ng-container>
+
+              <div class="serving-options-inline">
+                <ion-radio-group 
+                  [value]="getSelectedServingId(phrase)"
+                  (ionChange)="onServingSelected(phrase, $event.detail.value)">
+                  <ion-radio 
+                    *ngFor="let serving of getSelectedFood(phrase)?.servings"
+                    [value]="serving.fatSecretServingId"
+                    [disabled]="isReadOnly">
+                    <span *ngIf="serving.quantity && serving.unit">
+                      {{ serving.quantity | number:'1.0-2' }} {{ serving.unit }}
+                    </span>
+                    <div class="macro-inline-servings">
+                      ({{ caloriesForServing(serving) || 0 | number:'1.0-0' }} cal, 
+                      {{ proteinForServing(serving) || 0 | number:'1.0-0' }} protein, 
+                      {{ fatForServing(serving) || 0 | number:'1.0-0' }} fat, 
+                      {{ carbsForServing(serving) || 0 | number:'1.0-0' }} carbs)
+                    </div>
+                  </ion-radio>
+                </ion-radio-group>
               </div>
             </div>
           </div>
-          <ion-icon 
-            *ngIf="!isReadOnly"
-            [name]="isExpanded(phrase) ? 'chevron-up-outline' : 'create-outline'" 
-            class="edit-icon" 
-            [class.expanded]="isExpanded(phrase)"
-            (click)="toggleExpansion(phrase)">
-          </ion-icon>
         </div>
-        
-              <!-- Expanded selection card for this specific food item -->
-      <div *ngIf="!isReadOnly && isExpanded(phrase)" class="expanded-food-selection">
-        <div class="drilldown-content">
-          <div class="food-item-row">
-            
-            <!-- Food name and brand -->
-            <div class="food-name">
-              <label for="foodSelect-{{ phrase }}"><strong>{{ phrase }}</strong></label>
-              <ion-select 
-                interface="popover"
-                [value]="getSelectedFood(phrase)?.fatSecretFoodId" 
-                (ionChange)="onFoodSelected(phrase, $event.detail.value)" 
-                [disabled]="isReadOnly"
-                id="foodSelect-{{ phrase }}">
-                <ion-select-option 
-                  *ngFor="let food of (foodOptions?.[phrase] || [])" 
-                  [value]="food.fatSecretFoodId">
-                  {{ food.displayName }}
-                  <span *ngIf="food.brandName" class="brand-name"> – {{ food.brandName }}</span>
-                </ion-select-option>
-              </ion-select>
-            </div>
-
-            <!-- Inline radio buttons for serving options -->
-            <div class="serving-options-inline">
-              <ion-radio-group 
-                [value]="getSelectedServingId(phrase)"
-                (ionChange)="onServingSelected(phrase, $event.detail.value)">
-                
-                <ion-radio 
-                  *ngFor="let serving of getSelectedFood(phrase)?.servings"
-                  [value]="serving.fatSecretServingId"
-                  [disabled]="isReadOnly">
-                  <span *ngIf="serving.quantity && serving.unit">
-                    {{ serving.quantity | number:'1.0-2' }} {{ serving.unit }}
-                  </span>
-                  <div class="macro-inline-servings">
-                    ({{ caloriesForServing(serving) || 0 | number:'1.0-0' }} cal, 
-                    {{ proteinForServing(serving) || 0 | number:'1.0-0' }} protien, 
-                    {{ fatForServing(serving) || 0 | number:'1.0-0' }} fat, 
-                    {{ carbsForServing(serving) || 0 | number:'1.0-0' }} carbs)
-                  </div>
-                </ion-radio>
-              </ion-radio-group>
-            </div>
-
-          </div>
-        </div>
-      </div>
       </ng-container>
     </div>
-
   </div>
 
   <!-- Action/status footer -->
   <div class="confirm-section">
-    <!-- Dots while submitting -->
     <div *ngIf="isSubmitting && !isReadOnly" class="typing-indicator">
       <div class="typing-indicator-dots">
         <div class="dot"></div>
@@ -120,10 +114,8 @@
       </div>
     </div>
 
-    <!-- Status text when logged / read-only -->
     <div *ngIf="!isSubmitting && isReadOnly" class="status-text">food logged</div>
 
-    <!-- Confirm button (editable only) -->
     <ion-button 
       *ngIf="!isSubmitting && !isReadOnly"
       expand="block" 
@@ -134,5 +126,4 @@
       Confirm Selection
     </ion-button>
   </div>
-
 </div>
