@@ -64,6 +64,7 @@
                 <label for="foodSelect-{{ phrase }}"><strong>{{ phrase }}</strong></label>
                 <ion-select 
                   interface="popover"
+                  [interfaceOptions]="{ cssClass: 'wide-select-popover' }"
                   [value]="getSelectedFood(phrase)?.fatSecretFoodId" 
                   (ionChange)="onFoodSelected(phrase, $event.detail.value)" 
                   [disabled]="isReadOnly"
@@ -114,7 +115,7 @@
       </div>
     </div>
 
-    <div *ngIf="!isSubmitting && isReadOnly" class="status-text">food logged</div>
+    <div *ngIf="!isSubmitting && isReadOnly" class="status-text">{{ ((mealName && mealName.trim().length > 0) ? mealName : 'Food') | titlecase }} logged</div>
 
     <ion-button 
       *ngIf="!isSubmitting && !isReadOnly"

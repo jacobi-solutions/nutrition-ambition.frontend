@@ -420,11 +420,15 @@
   to { opacity: 1; }
 }
 
-// Override ion-select popover width globally (since popover is outside normal DOM flow)
-::ng-deep .select-popover {
-  min-width: 320px;              // Wider default
-  max-width: 90vw;               // Limit to viewport width on mobile
-  width: auto !important;        // Ensure it adapts to content
+// Wide popover class for food selection
+::ng-deep .wide-select-popover {
+  --min-width: 90vw;            // Ionic respects CSS vars for some popover theming
+}
+// Fallback: target popover panel content when our class is applied
+::ng-deep .wide-select-popover .popover-content, 
+::ng-deep ion-popover.wide-select-popover .popover-content {
+  min-width: 90vw !important;
+  max-width: 92vw !important;
 }
 
 // Optional tweak: increase font size slightly for readability
