@@ -36,6 +36,12 @@
                   <ng-template #simpleServing>
                     {{ selectedServing.quantity | number:'1.0-2' }} {{ selectedServing.unit }}
                   </ng-template>
+                  <div class="macro-inline">
+                    ({{ caloriesForServing(selectedServing) || 0 | number:'1.0-0' }} cal, 
+                    {{ proteinForServing(selectedServing) || 0 | number:'1.0-0' }} protien, 
+                    {{ fatForServing(selectedServing) || 0 | number:'1.0-0' }} fat, 
+                    {{ carbsForServing(selectedServing) || 0 | number:'1.0-0' }} carbs)
+                  </div>
                 </ng-container>
               </div>
             </div>
@@ -85,6 +91,12 @@
                   <span *ngIf="serving.quantity && serving.unit">
                     {{ serving.quantity | number:'1.0-2' }} {{ serving.unit }}
                   </span>
+                  <div class="macro-inline-servings">
+                    ({{ caloriesForServing(serving) || 0 | number:'1.0-0' }} cal, 
+                    {{ proteinForServing(serving) || 0 | number:'1.0-0' }} protien, 
+                    {{ fatForServing(serving) || 0 | number:'1.0-0' }} fat, 
+                    {{ carbsForServing(serving) || 0 | number:'1.0-0' }} carbs)
+                  </div>
                 </ion-radio>
               </ion-radio-group>
             </div>

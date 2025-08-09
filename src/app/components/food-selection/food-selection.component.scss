@@ -103,6 +103,22 @@
               font-size: 0.875rem;
               color: var(--ion-color-medium);
             }
+
+            // Inline macro chips next to amount
+            .macro-row {
+              display: inline-flex;
+              gap: 6px;
+              margin-left: 8px;
+              align-items: baseline;
+
+              .macro {
+                font-size: 0.75rem;
+                color: var(--ion-color-medium);
+                background: rgba(0,0,0,0.04);
+                padding: 2px 6px;
+                border-radius: 10px;
+              }
+            }
           }
           
           .amount {
@@ -111,6 +127,19 @@
             font-size: 0.875rem;
             color: var(--ion-color-medium);
             margin-top: 2px;
+
+            .macro-inline {
+              margin-left: 8px;
+              font-weight: 500;
+              font-size: 0.85em;
+              color: var(--ion-color-medium);
+            }
+            .macro-inline-servings {
+              margin-left: 8px;
+              font-weight: 500;
+              font-size: 0.75rem !important;
+              color: var(--ion-color-medium);
+            }
           }
         }
       }
@@ -359,6 +388,15 @@
       }
     }
   }
+}
+
+/* Ensure the smaller inline macro text applies specifically to the serving options block */
+.food-selection-container .macro-inline-servings {
+  font-size: 0.75rem !important;
+  font-weight: 500;
+  color: var(--ion-color-medium);
+  // display: inline; /* inline to sit next to serving label if desired */
+  margin-left: 8px;
 }
 
 // Additional specificity for confirm button text color (matching login button)

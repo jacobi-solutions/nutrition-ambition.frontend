@@ -142,6 +142,36 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return selectedFood.servings.find(serving => serving.fatSecretServingId === selectedServingId) || null;
   }
 
+  // Minimal macro helpers
+  private getMacro(nutrients: { [key: string]: number } | undefined, keys: string[]): number | null {
+    if (!nutrients) return null;
+    for (const k of keys) {
+      const v = nutrients[k];
+      if (typeof v === 'number') return v;
+    }
+    return null;
+  }
+
+  caloriesForServing(serving: SelectableFoodServing | null): number | null {
+    if (!serving) return null;
+    return this.getMacro(serving.nutrients, ['Calories', 'calories', 'energy_kcal', 'Energy']);
+  }
+
+  proteinForServing(serving: SelectableFoodServing | null): number | null {
+    if (!serving) return null;
+    return this.getMacro(serving.nutrients, ['Protein', 'protein']);
+  }
+
+  fatForServing(serving: SelectableFoodServing | null): number | null {
+    if (!serving) return null;
+    return this.getMacro(serving.nutrients, ['Fat', 'fat', 'total_fat']);
+  }
+
+  carbsForServing(serving: SelectableFoodServing | null): number | null {
+    if (!serving) return null;
+    return this.getMacro(serving.nutrients, ['Carbohydrate', 'carbohydrates', 'carbs']);
+  }
+
   getFirstFoodOption(phrase: string): SelectableFoodMatch | null {
     const foods = this.foodOptions?.[phrase];
     return foods && foods.length > 0 ? foods[0] : null;
