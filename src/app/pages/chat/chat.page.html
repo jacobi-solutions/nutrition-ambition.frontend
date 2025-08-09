@@ -32,8 +32,22 @@
     <div *ngIf="!isLoadingHistory && !error">
       <!-- Messages container -->
       <div class="chat-container">
-        <!-- Loop through each message -->
+        <!-- Loop through each message in chronological order and render appropriately -->
         <ng-container *ngFor="let message of messages">
+          <!-- Context note message -->
+          <div *ngIf="message.isContextNote" class="context-note-inline">
+            {{ message.text }}
+          </div>
+
+          <!-- Standalone food selection cards for pending and completed selection messages -->
+          <div *ngIf="!message.isContextNote && (message.role === 'PendingFoodSelection' || message.role === 'CompletedFoodSelection')" class="standalone-food-selection">
+            <app-food-selection 
+              [foodOptions]="message.foodOptions || null"
+              [isReadOnly]="message.role === 'CompletedFoodSelection'"
+              (selectionConfirmed)="onFoodSelectionConfirmed($event)">
+            </app-food-selection>
+          </div>
+
           <!-- Regular chat message -->
           <app-chat-message 
             *ngIf="!message.isContextNote && message.role !== 'PendingFoodSelection' && message.role !== 'CompletedFoodSelection'"
@@ -42,22 +56,6 @@
             [timestamp]="message.timestamp"
             [role]="message.role">
           </app-chat-message>
-          
-          <!-- Context note message -->
-          <div *ngIf="message.isContextNote" class="context-note-inline">
-            {{ message.text }}
-          </div>
-        </ng-container>
-        
-        <!-- Standalone food selection cards for pending and completed selection messages -->
-        <ng-container *ngFor="let message of messages">
-          <div *ngIf="message.role === 'PendingFoodSelection' || message.role === 'CompletedFoodSelection'" class="standalone-food-selection">
-            <app-food-selection 
-              [foodOptions]="message.foodOptions || null"
-              [isReadOnly]="message.role === 'CompletedFoodSelection'"
-              (selectionConfirmed)="onFoodSelectionConfirmed($event)">
-            </app-food-selection>
-          </div>
         </ng-container>
         
         <!-- Typing indicator positioned where next message will appear -->

@@ -67,7 +67,7 @@
                   *ngFor="let food of (foodOptions?.[phrase] || [])" 
                   [value]="food.fatSecretFoodId">
                   {{ food.displayName }}
-                  <span *ngIf="food.brandName"> – {{ food.brandName }}</span>
+                  <span *ngIf="food.brandName" class="brand-name"> – {{ food.brandName }}</span>
                 </ion-select-option>
               </ion-select>
             </div>
@@ -97,10 +97,10 @@
 
   </div>
 
-  <!-- Confirm button -->
-  <div *ngIf="!isReadOnly" class="confirm-section">
+  <!-- Action/status footer -->
+  <div class="confirm-section">
     <!-- Dots while submitting -->
-    <div *ngIf="isSubmitting" class="typing-indicator bot-message-container">
+    <div *ngIf="isSubmitting" class="typing-indicator">
       <div class="typing-indicator-dots">
         <div class="dot"></div>
         <div class="dot"></div>
@@ -108,9 +108,12 @@
       </div>
     </div>
 
-    <!-- Confirm button -->
+    <!-- Status text when logged / read-only -->
+    <div *ngIf="!isSubmitting && isReadOnly" class="status-text">food logged</div>
+
+    <!-- Confirm button (editable only) -->
     <ion-button 
-      *ngIf="!isSubmitting"
+      *ngIf="!isSubmitting && !isReadOnly"
       expand="block" 
       [disabled]="!isSelectionComplete()"
       (click)="confirmSelections()"

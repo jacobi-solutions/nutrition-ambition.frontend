@@ -91,9 +91,9 @@
             
             .brand-name {
               font-family: 'Poppins', sans-serif;
-              font-weight: 500;
-              font-size: 0.875rem;
-              color: var(--ion-color-dark);
+              font-weight: 600;
+              font-size: 0.9em;
+              color: var(--ion-color-primary);
             }
 
             .inline-amount {
@@ -175,6 +175,14 @@
             border: 1px solid var(--ion-color-medium-tint);
             border-radius: 6px;
             min-height: 40px;
+          }
+
+          // Make brand highlight color inside popover/options as well
+          ::ng-deep .select-popover, ::ng-deep ion-select-popover {
+            .brand-name {
+              color: var(--ion-color-primary);
+              font-weight: 600;
+            }
           }
         }
         
@@ -285,6 +293,22 @@
       max-width: 80px;
       animation: fadeIn 0.3s ease-in;
       margin: 0 auto 12px auto;
+    }
+
+    // Centered non-bubble typing indicator for submit state
+    .typing-indicator {
+      display: flex;
+      justify-content: center;
+      margin: 0 auto 12px auto;
+    }
+
+    .status-text {
+      text-align: center;
+      color: var(--ion-color-medium);
+      font-weight: 600;
+      margin: 0 auto 12px auto;
+      text-transform: lowercase;
+      letter-spacing: 0.02em;
     }
 
     .typing-indicator-dots {
