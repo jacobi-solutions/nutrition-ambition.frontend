@@ -5,6 +5,7 @@ import { RouterOutlet } from '@angular/router';
 import { AccountsService } from './services/accounts.service';
 import { AuthService } from './services/auth.service';
 import { take } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -29,12 +30,12 @@ export class AppComponent implements OnInit {
         try {
           const currentUser = (this.authService as any)['authInstance']?.currentUser;
           if (!currentUser) {
-            if ((window as any).environment?.authDebug) {
+            if (environment.authDebug) {
               // eslint-disable-next-line no-console
               console.debug('[Auth] No user at ready → starting anonymous session');
             }
             await this.authService.ensureAnonymousSession();
-          } else if ((window as any).environment?.authDebug) {
+          } else if (environment.authDebug) {
             // eslint-disable-next-line no-console
             console.debug('[Auth] Existing user at ready:', { uid: currentUser.uid, anon: currentUser.isAnonymous });
           }

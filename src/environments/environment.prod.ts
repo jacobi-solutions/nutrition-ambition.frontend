@@ -2,6 +2,7 @@ export const environment = {
   production: true,
   backendApiUrl: 'https://backend-496562523884.us-central1.run.app',
 
+  authDebug: false,
   firebase: {
     "projectId": "nutrition-ambition",
     "appId": "1:496562523884:web:d709330c10dbcc761f1fc9",

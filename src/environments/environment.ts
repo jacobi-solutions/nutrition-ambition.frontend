@@ -8,6 +8,7 @@ export const environment = {
   backendApiUrl: 'http://localhost:5165',
 
   storageBucketBaseUrl: 'https://storage.googleapis.com/nutritionambition.app',
+  authDebug: true,
   firebase: {
     "projectId": "nutrition-ambition",
     "appId": "1:496562523884:web:d709330c10dbcc761f1fc9",
