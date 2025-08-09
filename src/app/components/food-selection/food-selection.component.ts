@@ -56,6 +56,9 @@ export class FoodSelectionComponent implements OnInit {
   // Map to track which sections are expanded
   expandedSections: { [phrase: string]: boolean } = {};
 
+  // Local loading state for submission
+  isSubmitting: boolean = false;
+
   constructor(private chatService: ChatService, private dateService: DateService) {
     addIcons({ createOutline, chevronDownOutline, chevronUpOutline });
   }
@@ -179,11 +182,24 @@ export class FoodSelectionComponent implements OnInit {
       }
     }
 
-    this.chatService.submitServingSelection(selections).subscribe(resp => {
-      if (resp.isSuccess) {
-        this.chatService.loadMessages();  // reload chat to reflect logged entry
-      } else {
-        console.warn('Selection submission failed:', resp.errors);
+    // Show typing indicator while submitting
+    this.isSubmitting = true;
+
+    this.chatService.submitServingSelection(selections).subscribe({
+      next: (resp) => {
+        this.isSubmitting = false;
+        if (resp.isSuccess) {
+          // Switch to read-only after successful submission
+          this.isReadOnly = true;
+          // Reload chat to reflect logged entry
+          this.chatService.loadMessages();
+        } else {
+          console.warn('Selection submission failed:', resp.errors);
+        }
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        console.error('Error submitting selection:', err);
       }
     });
   }

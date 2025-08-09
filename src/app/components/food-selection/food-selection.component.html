@@ -99,7 +99,18 @@
 
   <!-- Confirm button -->
   <div *ngIf="!isReadOnly" class="confirm-section">
+    <!-- Dots while submitting -->
+    <div *ngIf="isSubmitting" class="typing-indicator bot-message-container">
+      <div class="typing-indicator-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+
+    <!-- Confirm button -->
     <ion-button 
+      *ngIf="!isSubmitting"
       expand="block" 
       [disabled]="!isSelectionComplete()"
       (click)="confirmSelections()"
