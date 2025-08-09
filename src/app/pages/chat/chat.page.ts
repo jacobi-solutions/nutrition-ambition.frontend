@@ -492,10 +492,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   }
   
   // Handle keydown events for textarea
-  onKeyDown(event: KeyboardEvent) {
-    // Send message on Enter key if Shift is not pressed
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault(); // Prevent new line
+  onKeyDown(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
       this.sendMessage();
     }
   }

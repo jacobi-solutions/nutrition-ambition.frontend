@@ -201,7 +201,7 @@ ion-content {
   box-shadow: none !important;
   border-top: none;
   padding-top: .5rem;
-  padding-bottom: .5rem;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
   padding-left: 1rem;
   padding-right: .5rem;
   background-color: var(--color-bone);
@@ -210,44 +210,52 @@ ion-content {
 .fab-and-input {
   display: flex;
   align-items: flex-end;
+  gap: 8px;
   justify-content: flex-start;
 }
 
 .input-group {
   display: flex;
   align-items: center;
-  background: white;
+  flex: 1 1 auto;
+  position: relative;
+  background: #fff;
   border-radius: 2rem;
-  //padding: 0.25rem 0.25rem 0.25rem 1.25rem;
-  flex: 1;
+  border: 1px solid rgba(0,0,0,.08);
 }
 
 .chat-text-input {
-  min-height: 1rem;
-  max-height: 8rem;
-  flex: 1;
-  padding: 0.75rem 0;
-  padding-left: 1.25rem;
-  padding-right: 1rem;
-  border: none;
-  outline: none;
+  width: 100%;
+  flex: 1 1 auto;
+  resize: none;
+  line-height: 1.35;
+  padding: 12px 14px;
   background: transparent;
+  border: none;
   border-radius: 2rem;
   font-family: var(--font-primary);
   font-size: 1rem;
   color: var(--color-charcoal);
-  resize: none;
+  outline: none;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
   overflow-y: auto;
-  line-height: 1.2;
-  transition: height 0.2s ease;
-  
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+
+  &::-webkit-scrollbar { /* Chrome/Safari */
+    width: 0;
+    height: 0;
+  }
+
   &::placeholder {
     color: var(--color-smoke);
   }
-  
-  &:focus {
+
+  &:focus,
+  &:focus-visible {
     outline: none;
-    border: none;
     box-shadow: none;
   }
 }
@@ -259,35 +267,31 @@ ion-content {
   box-shadow: none !important;
 }
 
-.send-icon-button {
-  font-size: 1.5rem;
-  color: var(--color-charcoal);
+.send-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
   cursor: pointer;
-  padding: 0.5rem;
-  padding-left: 0;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  margin-left: 0.5rem;
+}
 
-  &:hover {
-    background-color: rgba(231, 111, 81, 0.1);
-    transform: scale(1.1);
-  }
+.send-btn[disabled] {
+  opacity: .35;
+  cursor: default;
+  pointer-events: none;
+}
 
-  &:active {
-    transform: scale(0.95);
-  }
+.send-btn ion-icon {
+  font-size: 22px;
+  color: var(--color-charcoal);
+}
 
-  &.disabled {
-    color: var(--color-smoke);
-    cursor: not-allowed;
-    //opacity: 0.5;
-
-    &:hover {
-      background-color: transparent;
-      transform: none;
-    }
-  }
+.send-btn[disabled] ion-icon {
+  color: var(--color-smoke);
 }
 
 .main-chat-fab-icon {

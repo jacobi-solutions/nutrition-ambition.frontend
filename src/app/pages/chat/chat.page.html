@@ -105,6 +105,8 @@
         #messageInput
         class="chat-text-input"
         placeholder="Type your message..."
+        inputmode="text"
+        enterkeyhint="enter"
         [(ngModel)]="userMessage"
         (keydown)="onKeyDown($event)"
         (input)="onTextareaInput($event)"
@@ -113,12 +115,12 @@
       </textarea>
       
     </div>
-    <ion-icon 
-      name="paper-plane-sharp" 
-      class="send-icon-button"
-      [class.disabled]="isLoading || !userMessage.trim()"
+    <button
+      class="send-btn"
+      [disabled]="isLoading || !userMessage.trim()"
       (click)="sendMessage()"
-      [style.pointer-events]="(isLoading || !userMessage.trim()) ? 'none' : 'auto'">
-    </ion-icon>
+      aria-label="Send message">
+      <ion-icon name="paper-plane-sharp"></ion-icon>
+    </button>
   </div>
 </ion-footer> 
