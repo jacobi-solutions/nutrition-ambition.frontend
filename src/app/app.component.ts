@@ -24,30 +24,18 @@ export class AppComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    // After auth is ready, ensure an anonymous session exists exactly once if needed
+    // After auth is ready, only load account if authenticated. Do not start anonymous sessions here.
     this.authService.authReady$.pipe(take(1)).subscribe({
       next: async () => {
         try {
-          const currentUser = (this.authService as any)['authInstance']?.currentUser;
-          if (!currentUser) {
-            if (environment.authDebug) {
-              // eslint-disable-next-line no-console
-              console.debug('[Auth] No user at ready → starting anonymous session');
-            }
-            await this.authService.ensureAnonymousSession();
-          } else if (environment.authDebug) {
-            // eslint-disable-next-line no-console
-            console.debug('[Auth] Existing user at ready:', { uid: currentUser.uid, anon: currentUser.isAnonymous });
-          }
-
-          // Existing behavior: attempt to load account if authenticated
+          // Only load account data if a user is present (anon or registered)
           const isAuthenticated = await this.authService.isAuthenticated();
           if (isAuthenticated) {
             await this.accountsService.loadAccount();
           }
         } catch (e) {
           // eslint-disable-next-line no-console
-          console.warn('[Auth] ensureAnonymousSession error', e);
+          console.warn('[App] init error', e);
         }
       }
     });

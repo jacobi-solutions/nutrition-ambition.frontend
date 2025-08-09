@@ -5,6 +5,8 @@ import { first, switchMap, catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { environment } from 'src/environments/environment';
 
+let anonInitPromise: Promise<void> | null = null;
+
 export const ApiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn): Observable<HttpEvent<any>> => {
   const authService = inject(AuthService);
   const backendUrl = environment.backendApiUrl;
@@ -24,14 +26,32 @@ export const ApiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: H
     return req.clone({ setHeaders: headers });
   };
 
+  const resolveToken = async (): Promise<string | null> => {
+    let token = await authService.getFreshIdToken(false);
+    if (!token) {
+      if ((environment as any).authDebug) {
+        // eslint-disable-next-line no-console
+        console.debug('ApiInterceptor: no token → starting anon session (deduped)');
+      }
+      if (!anonInitPromise) {
+        anonInitPromise = authService.ensureAnonymousSession().finally(() => {
+          anonInitPromise = null;
+        });
+      }
+      await anonInitPromise;
+      token = await authService.getFreshIdToken(true);
+    }
+    return token;
+  };
+
   // Wait for AuthService to be ready, then attach token if available
   return authService.authReady$.pipe(
     first(),
-    switchMap(() => from(authService.getFreshIdToken(false))),
+    switchMap(() => from(resolveToken())),
     switchMap(token => {
       if ((environment as any).authDebug) {
         // eslint-disable-next-line no-console
-        console.debug('ApiInterceptor: attaching token on first attempt?', !!token);
+        console.debug('ApiInterceptor: attaching token after resolve?', !!token);
       }
       const intercepted = addHeaders(token);
       return next(intercepted).pipe(
