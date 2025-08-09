@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { RouterOutlet } from '@angular/router';
 import { AccountsService } from './services/accounts.service';
 import { AuthService } from './services/auth.service';
-import { filter, take } from 'rxjs/operators';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -16,27 +16,38 @@ import { filter, take } from 'rxjs/operators';
 export class AppComponent implements OnInit {
   title = 'Nutrition Ambition';
 
+  private authService = inject(AuthService);
+
   constructor(
-    private accountsService: AccountsService,
-    private authService: AuthService
+    private accountsService: AccountsService
   ) {}
 
   async ngOnInit() {
-    console.log('[AppComponent] Initializing app');
-    
-    // Wait for auth to be ready, then load account info
-    this.authService.authReady$.pipe(
-      filter(ready => ready), // Wait until Firebase Auth is initialized
-      take(1) // Only take the first ready event
-    ).subscribe(async () => {
-      console.log('[AppComponent] Auth is ready, loading account...');
-      
-      // Check if user is authenticated before loading account
-      const isAuthenticated = await this.authService.isAuthenticated();
-      if (isAuthenticated) {
-        await this.accountsService.loadAccount();
-      } else {
-        console.log('[AppComponent] User not authenticated, skipping account load');
+    // After auth is ready, ensure an anonymous session exists exactly once if needed
+    this.authService.authReady$.pipe(take(1)).subscribe({
+      next: async () => {
+        try {
+          const currentUser = (this.authService as any)['authInstance']?.currentUser;
+          if (!currentUser) {
+            if ((window as any).environment?.authDebug) {
+              // eslint-disable-next-line no-console
+              console.debug('[Auth] No user at ready → starting anonymous session');
+            }
+            await this.authService.ensureAnonymousSession();
+          } else if ((window as any).environment?.authDebug) {
+            // eslint-disable-next-line no-console
+            console.debug('[Auth] Existing user at ready:', { uid: currentUser.uid, anon: currentUser.isAnonymous });
+          }
+
+          // Existing behavior: attempt to load account if authenticated
+          const isAuthenticated = await this.authService.isAuthenticated();
+          if (isAuthenticated) {
+            await this.accountsService.loadAccount();
+          }
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.warn('[Auth] ensureAnonymousSession error', e);
+        }
       }
     });
   }

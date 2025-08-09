@@ -303,7 +303,7 @@
                   <h4>Admin Note</h4>
                   <p>{{ feedback.completionNote }}</p>
                   <small *ngIf="feedback.completedDateUtc">
-                    Completed: {{ formatDate(feedback.completedDateUtc?.toString()) }}
+                    Completed: {{ formatDate(feedback.completedDateUtc.toString()) }}
                   </small>
                 </div>
               </div>

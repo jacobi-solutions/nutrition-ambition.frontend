@@ -1,5 +1,6 @@
-import { inject, Injectable, effect } from '@angular/core';
-import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, getIdToken, onAuthStateChanged, signInAnonymously, linkWithCredential, EmailAuthProvider } from '@angular/fire/auth';
+import { inject, Injectable } from '@angular/core';
+import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, onIdTokenChanged, signInAnonymously, linkWithCredential, EmailAuthProvider } from '@angular/fire/auth';
+import { setPersistence, indexedDBLocalPersistence } from 'firebase/auth';
 import { Observable, BehaviorSubject, first } from 'rxjs';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 
@@ -13,19 +14,37 @@ export class AuthService {
   private _userEmailSubject = new BehaviorSubject<string | null>(null);
   userEmail$: Observable<string | null> = this._userEmailSubject.asObservable();
 
+  private _userUidSubject = new BehaviorSubject<string | null>(null);
+  userUid$: Observable<string | null> = this._userUidSubject.asObservable();
+
   private _authReadySubject = new BehaviorSubject<boolean>(false);
   authReady$ = this._authReadySubject.asObservable();
+
+  private _ensureAnonAttempted = false;
 
   constructor() {
     this.authInstance = inject(Auth);
 
+    // Ensure durable persistence at runtime as a safety net alongside bootstrap config
+    setPersistence(this.authInstance, indexedDBLocalPersistence)
+      .then(() => {
+        console.log('Auth persistence set to IndexedDB (durable).');
+      })
+      .catch((error) => {
+        console.warn('Failed to set auth persistence to IndexedDB.', error);
+      });
+
+    // Listen for auth state changes (login/logout, anonymous/registered)
     onAuthStateChanged(this.authInstance, user => {
-      if (user) {
-        this._userEmailSubject.next(user.email ?? null);
-      } else {
-        this._userEmailSubject.next(null);
-      }
-      this._authReadySubject.next(true); // ✅ auth system has initialized
+      this._userEmailSubject.next(user?.email ?? null);
+      this._userUidSubject.next(user?.uid ?? null);
+      this._authReadySubject.next(true); // auth initialized after first event
+    });
+
+    // Listen for ID token changes (refresh, credential link, etc.) to keep subjects fresh
+    onIdTokenChanged(this.authInstance, user => {
+      this._userEmailSubject.next(user?.email ?? null);
+      this._userUidSubject.next(user?.uid ?? null);
     });
   }
 
@@ -82,19 +101,29 @@ export class AuthService {
   }
 
   async getIdToken(): Promise<string | null> {
-    let user = this.authInstance.currentUser;
-    
-    if (!user) {
-      try {
-        const credential = await signInAnonymously(this.authInstance);
-        user = credential.user;
-      } catch (error) {
-        console.error('Anonymous sign-in failed:', error);
-        return null;
-      }
+    const user = this.authInstance.currentUser;
+    return user ? await user.getIdToken() : null;
+  }
+
+  async getFreshIdToken(forceRefresh: boolean = false): Promise<string | null> {
+    const user = this.authInstance.currentUser;
+    return user ? await user.getIdToken(forceRefresh) : null;
+  }
+
+  async ensureAnonymousSession(): Promise<void> {
+    if (this.authInstance.currentUser) {
+      return; // User already present (anonymous or registered)
     }
-    
-    return user ? await getIdToken(user) : null;
+    if (this._ensureAnonAttempted) {
+      return; // Already attempted; avoid repeated calls
+    }
+    this._ensureAnonAttempted = true;
+    try {
+      const credential = await signInAnonymously(this.authInstance);
+      console.log('Anonymous session established. uid:', credential.user.uid);
+    } catch (error) {
+      console.error('Anonymous sign-in failed:', error);
+    }
   }
 
   async signInWithGoogle(): Promise<void> {
