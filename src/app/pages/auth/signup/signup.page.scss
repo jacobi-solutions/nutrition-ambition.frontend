@@ -152,7 +152,7 @@ ion-input::placeholder {
   font-size: 1rem;
   margin-bottom: 1.25rem;
   --background: var(--color-salmon);
-  --color: var(--color-bone);
+  --color: #ffffff;
   --border-radius: 30px;
   text-transform: none;
   transition: background-color 0.3s ease, transform 0.2s ease;
@@ -168,7 +168,7 @@ ion-input::placeholder {
 
 // Additional specificity for button text color
 .signup-button::part(native) {
-  color: var(--color-bone) !important;
+  color: #ffffff !important;
 }
 
 // Footer link styling

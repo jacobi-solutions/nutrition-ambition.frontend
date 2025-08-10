@@ -360,7 +360,7 @@
       font-size: 1rem;
       margin: 0;
       --background: var(--color-salmon);
-      --color: var(--color-bone);
+      --color: #ffffff;
       --border-radius: 30px;
       text-transform: none;
       transition: background-color 0.3s ease, transform 0.2s ease;
@@ -411,7 +411,7 @@
 
 // Additional specificity for confirm button text color (matching login button)
 .confirm-button::part(native) {
-  color: var(--color-bone) !important;
+  color: #ffffff !important;
 }
 
 @keyframes bounce {
