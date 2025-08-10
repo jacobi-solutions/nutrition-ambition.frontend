@@ -13,7 +13,7 @@ import {
   FoodContribution,
   NutritionAmbitionApiService
 } from '../../services/nutrition-ambition-api.service';
-import { catchError, finalize, of, Subscription } from 'rxjs';
+import { catchError, finalize, of, Subscription, skip } from 'rxjs';
 import { DailySummaryService } from 'src/app/services/daily-summary.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { DateService } from 'src/app/services/date.service';
@@ -110,10 +110,13 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   ngOnInit() {
-    this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
-      this.selectedDate = date;
-      this.loadDetailedSummary(this.dateService.getSelectedDateUtc());
-    });
+    // React to date changes after initial value to prevent duplicate load with ionViewWillEnter
+    this.dateSubscription = this.dateService.selectedDate$
+      .pipe(skip(1))
+      .subscribe(date => {
+        this.selectedDate = date;
+        this.loadDetailedSummary(this.dateService.getSelectedDateUtc());
+      });
 
     this.authService.userEmail$.subscribe(email => {
       this.userEmail = email;
@@ -141,6 +144,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   ionViewWillEnter() {
     console.log('📊 Summary tab entered, refreshing data for date:', this.selectedDate);
     // Force reload when entering the tab since user might have added food from chat
+    this.selectedDate = this.dateService.getSelectedDate();
     this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
   }
 
