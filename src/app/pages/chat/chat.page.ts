@@ -340,7 +340,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
               id: msg.id,
               text: msg.content || '',
               isUser: msg.role === MessageRoleTypes.User,
-              timestamp: msg.loggedDateUtc || new Date(),
+              timestamp: msg.createdDateUtc || new Date(),
               foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
               mealName: msg.logMealToolResponse?.mealName || null,
               role: msg.role
@@ -354,7 +354,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
                   text: note.content || '',
                   isUser: false,
                   isContextNote: true,
-                  timestamp: note.loggedDateUtc || new Date()
+                  timestamp: note.createdDateUtc || new Date()
                 });
               });
             }
@@ -441,6 +441,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           // Create a new assistant message with food options
           
           const foodSelectionMessage: DisplayMessage = {
+            id: response.logMealToolResponse?.pendingMessageId || '',
             text: response.message || 'Please confirm your food selections:',
             isUser: false,
             timestamp: new Date(),

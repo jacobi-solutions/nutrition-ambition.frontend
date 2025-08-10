@@ -3,11 +3,13 @@ ion-content {
 }
 
 .context-note {
+  
   font-size: 0.75rem;
   color: var(--color-olive);
   font-style: italic;
-  padding: 0.5rem 1rem 0.25rem 1rem;
-  margin-bottom: 0.5rem;
+  padding: 1rem !important;
+  margin-bottom: 0.75rem !important;
+  margin-top: .0 !important;
   border-bottom: 1px solid var(--ion-color-light-shade);
   background-color: rgba(78, 110, 93, 0.20);
   position: sticky;
@@ -17,12 +19,16 @@ ion-content {
 }
 
 .context-note-inline {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  margin-top: 0.75rem;
   font-size: 0.85rem;
   color: var(--color-olive);
   font-style: italic;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  background-color: rgba(78, 110, 93, 0.20);
+  padding: 1rem !important;
+  margin-bottom: 0.75rem !important;
+  margin-top: 0 !important;
+  background-color: var(--color-light-smoke);
   border-radius: 16px;
   align-self: center;
   text-align: center;
@@ -43,7 +49,7 @@ ion-content {
 }
 
 .message {
-  margin-bottom: 8px;
+  margin-bottom: .75rem !important;
   max-width: 80%;
   padding: 8px 12px;
   border-radius: 16px;
@@ -96,7 +102,7 @@ ion-content {
 
 .standalone-food-selection {
   width: 100%;
-  margin: 16px auto;
+  margin-bottom: .75rem;
   
   @media (min-width: 768px) {
     margin: 20px auto;

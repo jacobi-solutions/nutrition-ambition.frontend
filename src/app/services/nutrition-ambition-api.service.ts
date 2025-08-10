@@ -2789,6 +2789,7 @@ export interface ILearnMoreAboutRequest {
 
 export class LogMealToolResponse implements ILogMealToolResponse {
     mealName?: string | undefined;
+    pendingMessageId?: string | undefined;
     loggedDateUtc?: Date;
     selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
 
@@ -2804,6 +2805,7 @@ export class LogMealToolResponse implements ILogMealToolResponse {
     init(_data?: any) {
         if (_data) {
             this.mealName = _data["mealName"];
+            this.pendingMessageId = _data["pendingMessageId"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             if (_data["selectableFoodMatches"]) {
                 this.selectableFoodMatches = {} as any;
@@ -2825,6 +2827,7 @@ export class LogMealToolResponse implements ILogMealToolResponse {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["mealName"] = this.mealName;
+        data["pendingMessageId"] = this.pendingMessageId;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         if (this.selectableFoodMatches) {
             data["selectableFoodMatches"] = {};
@@ -2839,6 +2842,7 @@ export class LogMealToolResponse implements ILogMealToolResponse {
 
 export interface ILogMealToolResponse {
     mealName?: string | undefined;
+    pendingMessageId?: string | undefined;
     loggedDateUtc?: Date;
     selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
 }

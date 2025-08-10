@@ -1,4 +1,4 @@
-<div class="food-selection-container">
+<div class="food-selection-container" [class.read-only]="isReadOnly">
   <div class="food-selection-container-inner">
     <!-- Food items list -->
     <div *ngIf="hasPayload" class="card-header">

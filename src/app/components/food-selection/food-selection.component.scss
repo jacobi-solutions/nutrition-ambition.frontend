@@ -9,6 +9,10 @@
   border: none;
   outline: none;
   
+  &.read-only {
+    background: var(--color-light-smoke) !important;
+  }
+  
   .empty-state {
     display: flex;
     justify-content: center;
