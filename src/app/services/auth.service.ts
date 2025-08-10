@@ -2,6 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, onIdTokenChanged, signInAnonymously, linkWithCredential, EmailAuthProvider } from '@angular/fire/auth';
 import { setPersistence, indexedDBLocalPersistence } from 'firebase/auth';
 import { Observable, BehaviorSubject, first } from 'rxjs';
+import { Router } from '@angular/router';
+import { environment } from 'src/environments/environment';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 
 @Injectable({
@@ -10,6 +12,12 @@ import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 export class AuthService {
   private authInstance = inject(Auth);
   private _apiService = inject(NutritionAmbitionApiService);
+  private _router = inject(Router);
+
+  // UI coordination: last attempted route and one-time notice
+  private _lastAttemptedRoute: string | null = null;
+  private _authNotice$ = new BehaviorSubject<string | null>(null);
+  public readonly authNotice$ = this._authNotice$.asObservable();
 
   private _userEmailSubject = new BehaviorSubject<string | null>(null);
   userEmail$: Observable<string | null> = this._userEmailSubject.asObservable();
@@ -20,7 +28,15 @@ export class AuthService {
   private _authReadySubject = new BehaviorSubject<boolean>(false);
   authReady$ = this._authReadySubject.asObservable();
 
-  private _ensureAnonAttempted = false;
+  // Tracks whether the user intentionally signed out
+  private _manualSignOut = false;
+
+  // Tracks an in-flight anonymous initialization to dedupe concurrent calls
+  private _anonInFlight: Promise<void> | null = null;
+
+  // Emits when authentication is required (e.g., after manual or unexpected sign out)
+  private _authRequired$ = new BehaviorSubject<boolean>(false);
+  public authRequired$ = this._authRequired$.asObservable();
 
   constructor() {
     this.authInstance = inject(Auth);
@@ -38,6 +54,22 @@ export class AuthService {
     onAuthStateChanged(this.authInstance, user => {
       this._userEmailSubject.next(user?.email ?? null);
       this._userUidSubject.next(user?.uid ?? null);
+
+      if (user) {
+        if (environment.authDebug) {
+          // eslint-disable-next-line no-console
+          console.debug('Auth state: user present');
+        }
+        this._authRequired$.next(false);
+      } else {
+        if (environment.authDebug) {
+          // eslint-disable-next-line no-console
+          console.debug(`Auth state: user null (manualSignOut=${this._manualSignOut})`);
+        }
+        // Manual sign-out or unexpected session loss → require auth UI
+        this._authRequired$.next(true);
+      }
+
       this._authReadySubject.next(true); // auth initialized after first event
     });
 
@@ -110,20 +142,95 @@ export class AuthService {
     return user ? await user.getIdToken(forceRefresh) : null;
   }
 
+  public isAnonymous(): boolean {
+    return !!this.authInstance.currentUser?.isAnonymous;
+  }
+
+  // Last-attempted-route helpers
+  public setLastAttemptedRoute(url: string): void {
+    this._lastAttemptedRoute = url;
+  }
+
+  public consumeLastAttemptedRoute(defaultRoute: string = '/app/chat'): string {
+    const route = this._lastAttemptedRoute || defaultRoute;
+    this._lastAttemptedRoute = null;
+    return route;
+  }
+
+  public peekLastAttemptedRoute(): string | null {
+    return this._lastAttemptedRoute;
+  }
+
+  public clearLastAttemptedRoute(): void {
+    this._lastAttemptedRoute = null;
+  }
+
+  // Auth notice helpers
+  public setAuthNotice(message: string | null): void {
+    this._authNotice$.next(message);
+  }
+
+  public consumeAuthNotice(): string | null {
+    const message = this._authNotice$.getValue();
+    this._authNotice$.next(null);
+    return message;
+  }
+
+  // DEPRECATED as an automatic pathway. Call startAnonymousSession() only from explicit user intent (e.g., "Continue as guest").
   async ensureAnonymousSession(): Promise<void> {
-    if (this.authInstance.currentUser) {
-      return; // User already present (anonymous or registered)
+    return this.startAnonymousSession();
+  }
+
+  // Explicit, idempotent, concurrency-safe anonymous session start
+  public async startAnonymousSession(): Promise<void> {
+    const current = this.authInstance.currentUser;
+
+    // Already authenticated with a real user
+    if (current && !current.isAnonymous) {
+      if (environment.authDebug) {
+        // eslint-disable-next-line no-console
+        console.debug('startAnonymousSession: already authenticated (non-anon). Skipping.');
+      }
+      return;
     }
-    if (this._ensureAnonAttempted) {
-      return; // Already attempted; avoid repeated calls
+
+    // Already anonymous
+    if (current && current.isAnonymous) {
+      if (environment.authDebug) {
+        // eslint-disable-next-line no-console
+        console.debug('startAnonymousSession: already anonymous. Skipping.');
+      }
+      return;
     }
-    this._ensureAnonAttempted = true;
-    try {
-      const credential = await signInAnonymously(this.authInstance);
-      console.log('Anonymous session established. uid:', credential.user.uid);
-    } catch (error) {
-      console.error('Anonymous sign-in failed:', error);
+
+    // Dedupe concurrent calls
+    if (this._anonInFlight) {
+      if (environment.authDebug) {
+        // eslint-disable-next-line no-console
+        console.debug('startAnonymousSession: awaiting in-flight anon init');
+      }
+      await this._anonInFlight;
+      return;
     }
+
+    this._anonInFlight = (async () => {
+      try {
+        const credential = await signInAnonymously(this.authInstance);
+        if (environment.authDebug) {
+          // eslint-disable-next-line no-console
+          console.debug('startAnonymousSession: anonymous session established. uid:', credential.user.uid);
+        }
+        this._authRequired$.next(false);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('startAnonymousSession: anonymous sign-in failed:', error);
+        throw error;
+      } finally {
+        this._anonInFlight = null;
+      }
+    })();
+
+    return this._anonInFlight;
   }
 
   async signInWithGoogle(): Promise<void> {
@@ -146,11 +253,29 @@ export class AuthService {
   }
 
   async signOutUser(): Promise<void> {
+    this._manualSignOut = true;
     try {
       await signOut(this.authInstance);
-      console.log('User signed out successfully');
+      if (environment.authDebug) {
+        // eslint-disable-next-line no-console
+        console.debug('signOutUser: user signed out successfully');
+      }
+      // After successful sign-out, require auth UI and route to login
+      try {
+        const currentRoute = this._router.url;
+        this.setLastAttemptedRoute(currentRoute);
+        this.setAuthNotice("You’ve been signed out.");
+      } catch {}
+      this._authRequired$.next(true);
+      this._router.navigate(['/login']);
     } catch (error) {
-      console.error('Sign out failed:', error);
+      if (environment.authDebug) {
+        // eslint-disable-next-line no-console
+        console.warn('signOutUser: sign out failed', error);
+      }
+    } finally {
+      this._manualSignOut = false;
+      this._anonInFlight = null;
     }
   }
 }

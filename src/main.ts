@@ -7,7 +7,7 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 // Firebase and AngularFire imports
 import { initializeApp, provideFirebaseApp, getApp } from '@angular/fire/app';
 import { provideAuth, initializeAuth } from '@angular/fire/auth';
-import { indexedDBLocalPersistence, browserPopupRedirectResolver } from 'firebase/auth';
+import { indexedDBLocalPersistence, browserPopupRedirectResolver, browserLocalPersistence } from 'firebase/auth';
 
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
@@ -98,7 +98,7 @@ bootstrapApplication(AppComponent, {
       // Force durable, multi-tab persistence to prevent session-only logouts across reloads
       // and mitigate iOS Safari/WebKit storage quirks. Also attach popup/redirect handling.
       return initializeAuth(app, {
-        persistence: [indexedDBLocalPersistence],
+        persistence: [indexedDBLocalPersistence, browserLocalPersistence],
         popupRedirectResolver: browserPopupRedirectResolver,
       });
     }),

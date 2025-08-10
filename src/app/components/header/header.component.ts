@@ -158,6 +158,16 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   onLogin() {
     this.login.emit();
   }
+
+  get isRealUser(): boolean {
+    // Real user means authenticated AND not anonymous
+    return !!(this as any).authService?.['authInstance']?.currentUser && !this.authService.isAnonymous();
+  }
+
+  get isAnonOrNoUser(): boolean {
+    const hasUser = !!(this as any).authService?.['authInstance']?.currentUser;
+    return !hasUser || this.authService.isAnonymous();
+  }
   
   // Navigate to previous day
   onPreviousDay() {

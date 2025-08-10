@@ -11,16 +11,16 @@
     
     <!-- Center: User status -->
     <ion-title class="ion-text-center user-status">
-      <span *ngIf="userEmail">Logged in as {{ userEmail }}</span>
-      <span *ngIf="!userEmail">Anonymous</span>
+      <span *ngIf="isRealUser">Logged in as {{ userEmail }}</span>
+      <span *ngIf="isAnonOrNoUser">Anonymous</span>
     </ion-title>
     
     <!-- Right: Auth buttons -->
     <ion-buttons slot="end">
-      <ion-button *ngIf="userEmail" (click)="onLogout()">
+      <ion-button *ngIf="isRealUser" (click)="onLogout()">
         Sign out
       </ion-button>
-      <ion-button *ngIf="!userEmail" (click)="onLogin()">
+      <ion-button *ngIf="isAnonOrNoUser" (click)="onLogin()">
         Sign in
       </ion-button>
     </ion-buttons>

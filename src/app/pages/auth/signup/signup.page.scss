@@ -5,6 +5,8 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative; /* ensure ::before covers full wrapper height, not just viewport */
+  isolation: isolate; /* create stacking context so children z-index works reliably */
   padding: 1.25rem;
   background-image: url('https://storage.googleapis.com/nutritionambition.app/images/AdobeStock_320314361.jpeg');
   background-size: cover;
@@ -17,10 +19,11 @@
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: 0; /* fill the entire wrapper, which grows with content */
     background: linear-gradient(0deg, rgba(0, 0, 0, 0.33) 0%, rgba(0, 0, 0, 0.33) 100%), #4E6E5D;
     mix-blend-mode: multiply;
     pointer-events: none;
+    z-index: 0;
   }
   
   > * {
@@ -35,8 +38,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 2rem;
-  padding-bottom: 1rem;
 }
 
 // Signup logo styling
@@ -169,6 +170,30 @@ ion-input::placeholder {
 // Additional specificity for button text color
 .signup-button::part(native) {
   color: #ffffff !important;
+}
+
+.guest-login-button {
+  height: 3.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  --background: var(--color-smoke);
+  --color: #ffffff;
+  --border-radius: 30px;
+  text-transform: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.guest-login-button::part(native) {
+  color: white !important;
 }
 
 // Footer link styling

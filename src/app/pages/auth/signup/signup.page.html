@@ -50,6 +50,10 @@
         <ion-button expand="block" type="submit" color="tertiary" class="signup-button">
           Sign up
         </ion-button>
+
+        <ion-button expand="block" class="guest-login-button" color="medium" [disabled]="isWorking" (click)="onContinueAsGuest()">
+          Continue as Guest
+        </ion-button>
       </form>
       
       <div class="form-footer">

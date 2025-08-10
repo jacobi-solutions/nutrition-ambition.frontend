@@ -3,7 +3,7 @@ ion-content {
 }
 
 .context-note {
-  
+  border-radius: 2.25rem;
   font-size: 0.75rem;
   color: var(--color-olive);
   font-style: italic;
@@ -29,7 +29,7 @@ ion-content {
   margin-bottom: 0.75rem !important;
   margin-top: 0 !important;
   background-color: var(--color-light-smoke);
-  border-radius: 16px;
+  border-radius: 2.25rem;
   align-self: center;
   text-align: center;
   max-width: 90%;

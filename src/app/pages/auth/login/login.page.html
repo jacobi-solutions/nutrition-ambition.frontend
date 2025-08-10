@@ -1,5 +1,8 @@
 <ion-content>
   <div class="login-wrapper">
+    <div *ngIf="notice" class="auth-notice">
+      {{ notice }}
+    </div>
     <div class="logo-container">
       <img src="https://storage.googleapis.com/nutritionambition.app/logos/login-screen-logo.svg" alt="Nutrition Ambition Logo" class="login-logo clickable-logo" (click)="navigateToChat()" />
     </div>
@@ -41,12 +44,17 @@
         <ion-button expand="block" type="submit" color="tertiary" class="login-button">
           Log in
         </ion-button>
+
+        <ion-button expand="block" class="guest-login-button" color="medium" [disabled]="isWorking" (click)="onContinueAsGuest()">
+          Continue as Guest
+        </ion-button>
       </form>
       
       <div class="form-footer">
         <a routerLink="/signup" class="form-footer-link">Don't have an account? Sign up!</a>
       </div>
     </div>
+
     
     <div class="copyright-text">
       Copyright © 2025 Nutrition Ambition All rights reserved
