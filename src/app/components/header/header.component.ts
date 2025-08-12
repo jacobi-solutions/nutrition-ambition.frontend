@@ -54,8 +54,9 @@ import { format } from 'date-fns';
 })
 export class AppHeaderComponent implements OnInit, OnDestroy {
   @Input() showBackButton: boolean = false;
-  @Input() userEmail: string | null = null;
+  
   @Input() title: string = 'Nutrition Ambition';
+  userEmail: string | null = null;
   
   // We'll use both input and service to ensure synchronization
   @Input() set selectedDate(value: string) {
@@ -82,6 +83,12 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   private lastDateChange = 0;
   private dateSubscription: Subscription;
   private dateService = inject(DateService);
+  private authSubscriptions: Subscription[] = [];
+
+  // Auth-derived UI state
+  isLoggedIn: boolean = false;
+  isAnonymousUser: boolean = false;
+  displayName: string | null = null;
 
   constructor(
     private authService: AuthService, 
@@ -103,12 +110,16 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     console.log(`[AppHeader] Init with date: ${this._selectedDate}`);
     console.log(`[AppHeader] Service date: ${this.dateService.getSelectedDate()}`);
     
-    // Only get the email from AuthService if not provided as input
-    if (!this.userEmail) {
-      this.authService.userEmail$.subscribe(email => {
-        this.userEmail = email;
-      });
-    }
+    // Subscribe to auth state so the header reflects changes immediately
+    const subUid = this.authService.userUid$.subscribe(uid => {
+      this.isLoggedIn = !!uid;
+      this.updateDisplayName();
+    });
+    const subEmail = this.authService.userEmail$.subscribe(email => {
+      this.userEmail = email;
+      this.updateDisplayName();
+    });
+    this.authSubscriptions.push(subUid, subEmail);
     
     // Subscribe to date changes from the service
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
@@ -125,6 +136,7 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     if (this.dateSubscription) {
       this.dateSubscription.unsubscribe();
     }
+    this.authSubscriptions.forEach(s => s.unsubscribe());
     console.log('[AppHeader] Component destroyed');
   }
   
@@ -159,14 +171,21 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     this.login.emit();
   }
 
-  get isRealUser(): boolean {
-    // Real user means authenticated AND not anonymous
-    return !!(this as any).authService?.['authInstance']?.currentUser && !this.authService.isAnonymous();
-  }
-
-  get isAnonOrNoUser(): boolean {
-    const hasUser = !!(this as any).authService?.['authInstance']?.currentUser;
-    return !hasUser || this.authService.isAnonymous();
+  private updateDisplayName() {
+    // Query anonymity from service and derive a compact display name
+    this.isAnonymousUser = this.authService.isAnonymous();
+    if (!this.isLoggedIn) {
+      this.displayName = null;
+    } else if (this.isAnonymousUser) {
+      this.displayName = 'Guest';
+    } else if (this.userEmail) {
+      const localPart = this.userEmail.split('@')[0];
+      this.displayName = localPart || 'User';
+    } else {
+      this.displayName = 'User';
+    }
+    // Ensure the view updates even if this fires outside Angular zone
+    try { this.cdRef.detectChanges(); } catch {}
   }
   
   // Navigate to previous day

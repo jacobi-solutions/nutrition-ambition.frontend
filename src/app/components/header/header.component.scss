@@ -49,6 +49,32 @@ ion-header {
       max-width: 180px;
       margin: 0 auto;
     }
+
+    /* Ensure the same style when inside the right-side auth button */
+    ion-buttons {
+      ion-button.user-auth-button {
+        /* match user-status text style */
+        .user-status {
+          font-size: 0.9rem;
+          color: var(--ion-color-medium) !important;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 180px;
+          margin: 0 auto;
+        }
+        /* match icon color/weight to user-status look */
+        ion-icon[name="log-out-outline"] {
+          color: var(--ion-color-medium);
+          margin-left: 6px;
+        }
+        /* neutralize default button coloring so text/icon color show */
+        color: var(--ion-color-medium) !important;
+        .button-native {
+          color: var(--ion-color-medium) !important;
+        }
+      }
+    }
     
     /* Auth buttons */
     ion-buttons {
@@ -118,6 +144,7 @@ ion-header {
   }
 }
 
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
   ion-header {
@@ -132,8 +159,9 @@ ion-header {
         }
       }
       
-      .user-status {
-        display: none; /* Hide user status on small screens */
+      /* Hide only the centered title status on small screens, keep the button text */
+      ion-title .user-status {
+        display: none;
       }
       
       ion-buttons {
