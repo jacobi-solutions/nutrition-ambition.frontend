@@ -62,6 +62,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   userMessage: string = '';
   isLoading: boolean = false;
   isLoadingHistory: boolean = false;
+  private readonly draftStorageKey: string = 'na.chat.draftMessage';
   // Local date only — uses 'yyyy-MM-dd' format
   // UTC conversion handled via dateService when communicating with backend
   selectedDate: string = format(new Date(), 'yyyy-MM-dd');
@@ -154,6 +155,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       
 
     });
+
+    // Restore any saved draft message
+    const savedDraft = localStorage.getItem(this.draftStorageKey);
+    if (savedDraft) {
+      this.userMessage = savedDraft;
+    }
   }
   
 
@@ -190,6 +197,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     console.log('[DEBUG] Chat view fully entered');
     // Ensure we scroll to bottom when the view is fully active
     this.scrollToBottom();
+
+    // Adjust textarea height if there is a restored draft
+    if (this.messageInput?.nativeElement && this.userMessage) {
+      this.adjustTextareaHeight(this.messageInput.nativeElement);
+    }
   }
 
   // Handle date changes from the header
@@ -399,8 +411,19 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.scrollToBottom();
   }
 
-  sendMessage() {
+  async sendMessage() {
     if (!this.userMessage.trim()) return;
+
+    // Check authentication BEFORE removing text from the input
+    const isAuthenticated = await this.authService.isAuthenticated();
+    if (!isAuthenticated) {
+      // Persist draft so it's available after login navigation
+      localStorage.setItem(this.draftStorageKey, this.userMessage);
+      await this.toastService.showToast({ message: 'Please sign in to send your message.', color: 'primary' });
+      try { this.authService.setLastAttemptedRoute(this.router.url); } catch {}
+      this.router.navigate(['/login']);
+      return;
+    }
     
     // Get message text before clearing the input
     const sentMessage = this.userMessage;
@@ -414,7 +437,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       timestamp: messageDate
     });
     
-    // Clear input and show loading
+    // Remove any persisted draft and clear input. Then show loading
+    localStorage.removeItem(this.draftStorageKey);
     this.userMessage = '';
     this.isLoading = true;
     
@@ -504,6 +528,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   onTextareaInput(event: Event) {
     const textarea = event.target as HTMLTextAreaElement;
     this.adjustTextareaHeight(textarea);
+
+    // Persist draft on every input change so it's never lost on navigation
+    const value = textarea.value || '';
+    if (value.trim().length > 0) {
+      localStorage.setItem(this.draftStorageKey, value);
+    } else {
+      localStorage.removeItem(this.draftStorageKey);
+    }
   }
   
   // Adjust textarea height based on content
