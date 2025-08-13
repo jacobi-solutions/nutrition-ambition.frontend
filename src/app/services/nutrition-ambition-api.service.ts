@@ -3086,8 +3086,6 @@ export class SelectableFoodMatch implements ISelectableFoodMatch {
     originalText?: string | undefined;
     rank?: number;
     selectedServingId?: string | undefined;
-    scaledQuantity?: number;
-    scaledUnit?: string | undefined;
     totalGrams?: number;
     servings?: SelectableFoodServing[] | undefined;
 
@@ -3108,8 +3106,6 @@ export class SelectableFoodMatch implements ISelectableFoodMatch {
             this.originalText = _data["originalText"];
             this.rank = _data["rank"];
             this.selectedServingId = _data["selectedServingId"];
-            this.scaledQuantity = _data["scaledQuantity"];
-            this.scaledUnit = _data["scaledUnit"];
             this.totalGrams = _data["totalGrams"];
             if (Array.isArray(_data["servings"])) {
                 this.servings = [] as any;
@@ -3134,8 +3130,6 @@ export class SelectableFoodMatch implements ISelectableFoodMatch {
         data["originalText"] = this.originalText;
         data["rank"] = this.rank;
         data["selectedServingId"] = this.selectedServingId;
-        data["scaledQuantity"] = this.scaledQuantity;
-        data["scaledUnit"] = this.scaledUnit;
         data["totalGrams"] = this.totalGrams;
         if (Array.isArray(this.servings)) {
             data["servings"] = [];
@@ -3153,8 +3147,6 @@ export interface ISelectableFoodMatch {
     originalText?: string | undefined;
     rank?: number;
     selectedServingId?: string | undefined;
-    scaledQuantity?: number;
-    scaledUnit?: string | undefined;
     totalGrams?: number;
     servings?: SelectableFoodServing[] | undefined;
 }
@@ -3162,8 +3154,10 @@ export interface ISelectableFoodMatch {
 export class SelectableFoodServing implements ISelectableFoodServing {
     fatSecretServingId?: string | undefined;
     description?: string | undefined;
-    quantity?: number;
-    unit?: string | undefined;
+    displayQuantity?: number;
+    displayUnit?: string | undefined;
+    scaledQuantity?: number;
+    scaledUnit?: string | undefined;
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
@@ -3182,8 +3176,10 @@ export class SelectableFoodServing implements ISelectableFoodServing {
         if (_data) {
             this.fatSecretServingId = _data["fatSecretServingId"];
             this.description = _data["description"];
-            this.quantity = _data["quantity"];
-            this.unit = _data["unit"];
+            this.displayQuantity = _data["displayQuantity"];
+            this.displayUnit = _data["displayUnit"];
+            this.scaledQuantity = _data["scaledQuantity"];
+            this.scaledUnit = _data["scaledUnit"];
             this.weightGramsPerUnit = _data["weightGramsPerUnit"];
             if (_data["nutrients"]) {
                 this.nutrients = {} as any;
@@ -3208,8 +3204,10 @@ export class SelectableFoodServing implements ISelectableFoodServing {
         data = typeof data === 'object' ? data : {};
         data["fatSecretServingId"] = this.fatSecretServingId;
         data["description"] = this.description;
-        data["quantity"] = this.quantity;
-        data["unit"] = this.unit;
+        data["displayQuantity"] = this.displayQuantity;
+        data["displayUnit"] = this.displayUnit;
+        data["scaledQuantity"] = this.scaledQuantity;
+        data["scaledUnit"] = this.scaledUnit;
         data["weightGramsPerUnit"] = this.weightGramsPerUnit;
         if (this.nutrients) {
             data["nutrients"] = {};
@@ -3227,8 +3225,10 @@ export class SelectableFoodServing implements ISelectableFoodServing {
 export interface ISelectableFoodServing {
     fatSecretServingId?: string | undefined;
     description?: string | undefined;
-    quantity?: number;
-    unit?: string | undefined;
+    displayQuantity?: number;
+    displayUnit?: string | undefined;
+    scaledQuantity?: number;
+    scaledUnit?: string | undefined;
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;

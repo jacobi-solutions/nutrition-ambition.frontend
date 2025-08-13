@@ -16,26 +16,9 @@
                   <span *ngIf="getSelectedFood(phrase)?.brandName" class="brand-name"> – {{ getSelectedFood(phrase)?.brandName }}</span>
                 </div>
                 <div class="serving-line">
-                  <ng-container *ngIf="isReadOnly; else editableServing">
-                    <ng-container *ngIf="getSelectedFood(phrase)?.scaledQuantity && getSelectedFood(phrase)?.scaledUnit; else fallbackServingInline2">
-                      <span class="inline-amount">({{ getSelectedFood(phrase)?.scaledQuantity | number:'1.0-2' }} {{ getSelectedFood(phrase)?.scaledUnit }})</span>
-                    </ng-container>
-                    <ng-template #fallbackServingInline2>
-                      <ng-container *ngIf="getSelectedServing(phrase)?.quantity && getSelectedServing(phrase)?.unit">
-                        <span class="inline-amount">({{ getSelectedServing(phrase)?.quantity | number:'1.0-2' }} {{ getSelectedServing(phrase)?.unit }})</span>
-                      </ng-container>
-                    </ng-template>
+                  <ng-container *ngIf="getSelectedServing(phrase) as selectedServing">
+                    <span class="inline-amount">{{ getServingLabel(selectedServing) }}</span>
                   </ng-container>
-                  <ng-template #editableServing>
-                    <ng-container *ngIf="getSelectedServing(phrase) as selectedServing">
-                      <ng-container *ngIf="selectedServing.weightGramsPerUnit && isWeightUnit(selectedServing.unit); else simpleServing2">
-                        <span class="inline-amount">{{ (selectedServing.quantity! * selectedServing.weightGramsPerUnit) | number:'1.0-0' }}g</span>
-                      </ng-container>
-                      <ng-template #simpleServing2>
-                        <span class="inline-amount">{{ selectedServing.quantity | number:'1.0-2' }} {{ selectedServing.unit }}</span>
-                      </ng-template>
-                    </ng-container>
-                  </ng-template>
                 </div>
               </ion-col>
               <ion-col size="2" class="right" *ngIf="!isReadOnly">
@@ -86,9 +69,7 @@
                     *ngFor="let serving of getSelectedFood(phrase)?.servings"
                     [value]="serving.fatSecretServingId"
                     [disabled]="isReadOnly">
-                    <span *ngIf="serving.quantity && serving.unit">
-                      {{ serving.quantity | number:'1.0-2' }} {{ serving.unit }}
-                    </span>
+                    <span>{{ getServingLabel(serving) }}</span>
                     <div class="macro-inline-servings">
                       ({{ caloriesForServing(serving) || 0 | number:'1.0-0' }} cal, 
                       {{ proteinForServing(serving) || 0 | number:'1.0-0' }} protein, 

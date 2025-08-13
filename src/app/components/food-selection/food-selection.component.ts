@@ -98,10 +98,19 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     for (const k of keys) if (typeof nutrients[k] === 'number') return nutrients[k];
     return null;
   }
-  caloriesForServing(s: SelectableFoodServing | null) { return this.getMacro(s?.nutrients, ['Calories', 'calories', 'energy_kcal', 'Energy']); }
-  proteinForServing(s: SelectableFoodServing | null) { return this.getMacro(s?.nutrients, ['Protein', 'protein']); }
-  fatForServing(s: SelectableFoodServing | null) { return this.getMacro(s?.nutrients, ['Fat', 'fat', 'total_fat']); }
-  carbsForServing(s: SelectableFoodServing | null) { return this.getMacro(s?.nutrients, ['Carbohydrate', 'carbohydrates', 'carbs']); }
+  caloriesForServing(s: SelectableFoodServing | null) {
+    return this.scaledMacro(s, ['Calories','calories','energy_kcal','Energy']);
+  }
+  proteinForServing(s: SelectableFoodServing | null) {
+    return this.scaledMacro(s, ['Protein','protein']);
+  }
+  fatForServing(s: SelectableFoodServing | null) {
+    return this.scaledMacro(s, ['Fat','fat','total_fat']);
+  }
+  carbsForServing(s: SelectableFoodServing | null) {
+    return this.scaledMacro(s, ['Carbohydrate','carbohydrates','carbs']);
+  }
+  
 
   isSelectionComplete(): boolean {
     if (!this.foodOptions) return false;
@@ -131,6 +140,47 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.isSubmitting = true;
     this.selectionConfirmed.emit(req);
   }
+  // Format a number nicely for UI (0, 1, 1.5, 1.33, 473.2, etc.)
+
+
+  // Build the user-facing label for a serving row
+  getServingLabel(s: SelectableFoodServing | null): string {
+    if (!s) return '';
+  
+    const dq = (s as any).displayQuantity as number | undefined;
+    const du = (s as any).displayUnit as string | undefined;
+    if (dq !== undefined && du) return `${this.fmt(dq)} ${du}`.trim();
+  
+    const sq = (s as any).scaledQuantity as number | undefined;
+    const su = (s as any).scaledUnit as string | undefined;
+    if (sq !== undefined && su) return `${this.fmt(sq)} ${su}`;
+  
+    if (s.description) return s.description;
+    return 'serving';
+  }
+  
+
+  private nf = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+  
+  private fmt(n: number): string {
+    if (!isFinite(n)) return '0';
+    return this.nf.format(n);
+  }
+  
+
+  // Scale a macro per 1 serving by the per-row scaledQuantity
+  private scaledMacro(s: SelectableFoodServing | null, keys: string[]): number | null {
+    if (!s || !s.nutrients) return null;
+    const base = this.getMacro(s.nutrients, keys);
+    if (base == null) return null;
+    const q = Number((s as any).scaledQuantity ?? 1);
+    if (!isFinite(q) || q <= 0) return base; // be forgiving; show per-serving
+    return base * q;
+  }
+
 
   async removeItem(phrase: string) {
     const rowElement = document.getElementById(`row-${phrase}`);
