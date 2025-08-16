@@ -3818,6 +3818,7 @@ export class UserSelectedServing implements IUserSelectedServing {
     originalText?: string | undefined;
     fatSecretFoodId?: string | undefined;
     fatSecretServingId?: string | undefined;
+    editedQuantity?: number | undefined;
 
     constructor(data?: IUserSelectedServing) {
         if (data) {
@@ -3833,6 +3834,7 @@ export class UserSelectedServing implements IUserSelectedServing {
             this.originalText = _data["originalText"];
             this.fatSecretFoodId = _data["fatSecretFoodId"];
             this.fatSecretServingId = _data["fatSecretServingId"];
+            this.editedQuantity = _data["editedQuantity"];
         }
     }
 
@@ -3848,6 +3850,7 @@ export class UserSelectedServing implements IUserSelectedServing {
         data["originalText"] = this.originalText;
         data["fatSecretFoodId"] = this.fatSecretFoodId;
         data["fatSecretServingId"] = this.fatSecretServingId;
+        data["editedQuantity"] = this.editedQuantity;
         return data;
     }
 }
@@ -3856,6 +3859,7 @@ export interface IUserSelectedServing {
     originalText?: string | undefined;
     fatSecretFoodId?: string | undefined;
     fatSecretServingId?: string | undefined;
+    editedQuantity?: number | undefined;
 }
 
 export class ApiException extends Error {

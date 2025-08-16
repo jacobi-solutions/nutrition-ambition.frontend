@@ -272,3 +272,43 @@ body {
     display: none;
   }
 }
+
+/* Global fix for ion-select popover text wrapping - targets shadow parts */
+ion-list.sc-ion-select-popover-md ion-radio.sc-ion-select-popover-md::part(label) {
+  white-space: pre-line !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  text-overflow: unset !important;
+  overflow: visible !important;
+  line-height: 1.4 !important;
+}
+
+ion-list.sc-ion-select-popover-ios ion-radio.sc-ion-select-popover-ios::part(label) {
+  white-space: pre-line !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  text-overflow: unset !important;
+  overflow: visible !important;
+  line-height: 1.4 !important;
+}
+
+/* Additional shadow part targeting for broader compatibility */
+ion-select-popover ion-radio::part(label) {
+  white-space: pre-line !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  text-overflow: unset !important;
+  overflow: visible !important;
+  line-height: 1.4 !important;
+}
+
+/* Ensure popover items expand to fit wrapped content */
+ion-select-popover ion-item,
+ion-list.sc-ion-select-popover-md ion-item,
+ion-list.sc-ion-select-popover-ios ion-item {
+  height: auto !important;
+  min-height: 48px !important;
+  --inner-padding-top: 8px !important;
+  --inner-padding-bottom: 8px !important;
+  align-items: flex-start !important;
+}

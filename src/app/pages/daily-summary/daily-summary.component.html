@@ -197,7 +197,7 @@
                       <span class="name">
                         <span *ngIf="food.brandName" class="brand-name">{{ food.brandName }} - </span>{{ food.name }}
                       </span>
-                      <span class="amount">{{ food.totalAmount }} {{ food.unit }}</span>
+                      <span class="amount">{{ formatQuantity(food.totalAmount) }} {{ food.unit }}</span>
                     </div>
                   </div>
 

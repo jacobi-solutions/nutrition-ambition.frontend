@@ -1,17 +1,18 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, trashOutline } from 'ionicons/icons';
 import { SelectableFoodMatch, SelectableFoodServing, SubmitServingSelectionRequest, UserSelectedServing } from 'src/app/services/nutrition-ambition-api.service';
+import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input/serving-quantity-input.component';
 
 @Component({
   selector: 'app-food-selection',
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol]
+  imports: [CommonModule, FormsModule, IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() foodOptions?: Record<string, SelectableFoodMatch[]> | null = null;
@@ -25,7 +26,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   removedPhrases: Set<string> = new Set();
   isSubmitting = false;
 
-  constructor(private toastController: ToastController) {
+  constructor(private toastController: ToastController, private cdr: ChangeDetectorRef) {
     addIcons({ createOutline, chevronUpOutline, trashOutline });
   }
 
@@ -128,11 +129,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     for (const phrase of this.payloadKeys) {
       const food = this.getSelectedFood(phrase);
       const servingId = this.getSelectedServingId(phrase);
-      if (food?.fatSecretFoodId && servingId) {
+      const selectedServing = this.getSelectedServing(phrase);
+      
+      if (food?.fatSecretFoodId && servingId && selectedServing) {
+        // Get the display quantity from the selected serving
+        const displayQuantity = this.getDisplayQuantity(selectedServing);
+        
         req.selections.push(new UserSelectedServing({
           originalText: phrase,
           fatSecretFoodId: food.fatSecretFoodId,
-          fatSecretServingId: servingId
+          fatSecretServingId: servingId,
+          editedQuantity: displayQuantity
         }));
       }
     }
@@ -157,6 +164,35 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   
     if (s.description) return s.description;
     return 'serving';
+  }
+
+  getDisplayQuantity(s: SelectableFoodServing | null): number {
+    if (!s) return 1;
+    
+    const dq = (s as any).displayQuantity as number | undefined;
+    if (dq !== undefined && isFinite(dq) && dq > 0) return dq;
+    
+    const sq = (s as any).scaledQuantity as number | undefined;
+    if (sq !== undefined && isFinite(sq) && sq > 0) return sq;
+    
+    return 1;
+  }
+
+  getUnitText(s: SelectableFoodServing): string {
+    const disp = (s as any).displayUnit as string | undefined;
+    if (disp && disp.trim().length) return disp.trim();
+
+    const desc = (s as any).description as string | undefined;
+    const md = (s as any).measurementDescription as string | undefined;
+    const mu = (s as any).metricServingUnit as string | undefined;
+
+    // metric rows: use metric unit (g/ml)
+    if (this.isMetricRow(s) && mu) return mu.trim();
+
+    // household rows: strip leading numbers from description/measurementDescription
+    const label = (desc && desc.trim().length ? desc : (md || '')).trim();
+    const stripped = this.stripLeadingCount(label);
+    return stripped || 'serving';
   }
   
 
@@ -203,5 +239,161 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       });
       await toast.present();
     }, 300);
+  }
+
+  // Rescaling helper methods
+  private num(x: any): number {
+    const n = parseFloat(x);
+    return isFinite(n) ? n : NaN;
+  }
+
+  private getMetricAmt(s: SelectableFoodServing): number {
+    return this.num((s as any).metricServingAmount);
+  }
+
+  private getMetricUnit(s: SelectableFoodServing): string {
+    return String((s as any).metricServingUnit || '').trim();
+  }
+
+  private getNumberOfUnits(s: SelectableFoodServing): number {
+    const units = this.num((s as any).numberOfUnits ?? 1);
+    return isFinite(units) && units > 0 ? units : 1;
+  }
+
+  private stripLeadingCount(label: string | undefined): string {
+    if (!label) return '';
+    // Remove leading digits, fractions, and whitespace (e.g., "2 medium" -> "medium")
+    return label.replace(/^\s*[\d¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞.,/]*\s*/, '').trim();
+  }
+
+  private isMetricRow(s: SelectableFoodServing): boolean {
+    const desc = (s as any).description as string | undefined;
+    const mu = this.getMetricUnit(s).toLowerCase();
+    const md = (s as any).measurementDescription as string | undefined;
+    
+    // Consider "100 g", "250 ml", or measurementDescription==="g"/"ml" as metric rows
+    const looksMetric = !!desc && /^\s*[\d¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/.test(desc) && ['g','ml','l'].includes(mu);
+    const mdMetric = (md || '').trim().toLowerCase();
+    return looksMetric || mdMetric === 'g' || mdMetric === 'ml';
+  }
+
+  private rescaleFromSelected(phrase: string, selected: SelectableFoodServing, editedQty: number): void {
+    // 0) guard
+    if (!this.foodOptions?.[phrase]) return;
+    
+    // 1) compute targetMass in metric (g/ml)
+    const selMetricAmt = this.getMetricAmt(selected); // per "one" serving of selected
+    const selIsMetric = this.isMetricRow(selected);
+    let targetMass = NaN;
+    
+    if (selIsMetric) {
+      // if selected row's unit is already metric, editedQty is the targetMass (e.g., 120 g)
+      targetMass = editedQty;
+    } else {
+      // household/size row: convert to metric via its per-serving metric amount
+      // editedQty (e.g., 2 large) * 50 g (metric per 1 large) → 100 g target
+      targetMass = editedQty * (isFinite(selMetricAmt) ? selMetricAmt : NaN);
+    }
+    
+    if (!isFinite(targetMass) || targetMass <= 0) return;
+
+    // 2) iterate all servings in the selected food and recompute scaledQuantity + display fields
+    const selectedFood = this.getSelectedFood(phrase);
+    if (!selectedFood?.servings) return;
+
+    // ensure exactly one best match (the edited row)
+    const editedId = selected.fatSecretServingId;
+
+    for (const s of selectedFood.servings) {
+      const mAmt = this.getMetricAmt(s);
+      const hasMetric = isFinite(mAmt) && mAmt > 0;
+      let scaledQ = (s as any).scaledQuantity;
+
+      if (hasMetric) {
+        // math: scaledQuantity = targetMass / metricServingAmount
+        scaledQ = targetMass / mAmt;
+        if (!isFinite(scaledQ) || scaledQ < 0) scaledQ = 0;
+      } else {
+        // fallback if no metric amount; keep existing or default to 1
+        if (!isFinite(scaledQ) || scaledQ <= 0) scaledQ = 1;
+      }
+
+      // Update scaledQuantity used by your macro math
+      (s as any).scaledQuantity = scaledQ;
+
+      // Update displayQuantity / displayUnit for the row
+      const mu = this.getMetricUnit(s);
+      const desc = (s as any).description as string | undefined;
+      const md = (s as any).measurementDescription as string | undefined;
+      let uiQty = (s as any).displayQuantity;
+      let uiUnit = (s as any).displayUnit;
+
+      if (this.isMetricRow(s) && hasMetric && mu) {
+        // metric row: uiQuantity = targetMass; uiUnit = metric unit
+        uiQty = targetMass;
+        uiUnit = mu;
+      } else {
+        // household/size row: uiQuantity = scaledQuantity * numberOfUnits; uiUnit = stripped desc/md
+        const units = this.getNumberOfUnits(s);
+        uiQty = scaledQ * (isFinite(units) && units > 0 ? units : 1);
+        const label = (desc && desc.trim().length > 0 ? desc : (md || '')).trim();
+        uiUnit = this.stripLeadingCount(label) || 'serving';
+      }
+
+      // Clamp & assign
+      if (!isFinite(uiQty) || uiQty < 0) uiQty = 0;
+      (s as any).displayQuantity = uiQty;
+      (s as any).displayUnit = (uiUnit || '').trim();
+
+      // mark best match
+      (s as any).isBestMatch = s.fatSecretServingId === editedId;
+    }
+
+    // ensure UI shows the edited row as selected
+    if (editedId) {
+      this.onServingSelected(phrase, editedId);
+    }
+  }
+
+  onInlineQtyChanged(phrase: string, s: SelectableFoodServing, newValue: number): void {
+    // clamp
+    const v = Math.max(0.1, Math.min(999, Number(newValue) || 0));
+    (s as any).displayQuantity = v;
+
+    // if this row isn't selected, select it now
+    const currentSelected = this.getSelectedServingId(phrase);
+    if (currentSelected !== s.fatSecretServingId && s.fatSecretServingId) {
+      this.onServingSelected(phrase, s.fatSecretServingId);
+    }
+
+    // For simple cases like "medium banana", just update scaledQuantity directly
+    // This is a simpler approach that works for household servings
+    (s as any).scaledQuantity = v;
+    
+    // Also update display values for this serving
+    const units = this.getNumberOfUnits(s);
+    (s as any).displayQuantity = v;
+    (s as any).displayUnit = this.getUnitText(s);
+    
+    // Mark this as the best match
+    const selectedFood = this.getSelectedFood(phrase);
+    if (selectedFood?.servings) {
+      for (const serving of selectedFood.servings) {
+        (serving as any).isBestMatch = serving.fatSecretServingId === s.fatSecretServingId;
+      }
+    }
+
+    // drive the rescale from the selected row and edited quantity (for other servings)
+    this.rescaleFromSelected(phrase, s, v);
+    
+    // Force change detection to update the UI immediately
+    this.cdr.detectChanges();
+  }
+
+  onRowClicked(phrase: string, s: SelectableFoodServing): void {
+    const current = this.getSelectedServingId(phrase);
+    if (current !== s.fatSecretServingId && s.fatSecretServingId) {
+      this.onServingSelected(phrase, s.fatSecretServingId);
+    }
   }
 }

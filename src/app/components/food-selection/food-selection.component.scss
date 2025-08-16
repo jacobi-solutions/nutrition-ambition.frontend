@@ -232,6 +232,23 @@
             &::part(label) {
               margin-left: 10px;
             }
+
+            .serving-row-content {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+            }
+
+            .unit-label {
+              font-weight: 500;
+              line-height: 1;
+            }
+
+            .serving-label {
+              font-weight: 500;
+              color: var(--ion-color-dark);
+              line-height: 1;
+            }
           }
         }
       }
@@ -438,6 +455,24 @@
 // Optional tweak: increase font size slightly for readability
 .food-name ion-select-option {
   font-size: 16px;
+}
+
+// Enable text wrapping in select popover options - target Ionic popover structure
+::ng-deep ion-select-popover ion-item ion-label {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  word-break: break-word !important;
+  display: block !important;
+  line-height: 1.4 !important;
+}
+
+::ng-deep ion-select-popover ion-item {
+  height: auto !important;
+  min-height: 48px !important;
+  align-items: flex-start !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
 }
 
 // Dark mode adjustments

@@ -266,6 +266,13 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     return `${Math.round(amount * 10) / 10} ${unit}`;
   }
 
+  formatQuantity(value: number | undefined): string {
+    if (!value || !isFinite(value) || isNaN(value)) return '0';
+    // Round to 2 decimal places and remove trailing zeros
+    const rounded = Math.round(value * 100) / 100;
+    return rounded.toString();
+  }
+
   selectNutrient(nutrient: NutrientBreakdown) {
     this.selectedNutrient = this.selectedNutrient?.nutrientKey === nutrient.nutrientKey ? null : nutrient;
     this.selectedFood = null;

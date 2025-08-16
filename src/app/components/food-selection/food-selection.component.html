@@ -68,8 +68,28 @@
                   <ion-radio 
                     *ngFor="let serving of getSelectedFood(phrase)?.servings"
                     [value]="serving.fatSecretServingId"
-                    [disabled]="isReadOnly">
-                    <span>{{ getServingLabel(serving) }}</span>
+                    [disabled]="isReadOnly"
+                    (click)="onRowClicked(phrase, serving)">
+                    <div class="serving-row-content" (click)="$event.stopPropagation(); onRowClicked(phrase, serving)">
+                      <!-- Show stepper only for selected row -->
+                      <ng-container *ngIf="getSelectedServingId(phrase) === serving.fatSecretServingId && !isReadOnly">
+                        <app-serving-quantity-input
+                          [value]="getDisplayQuantity(serving)"
+                          [step]="1"
+                          [min]="0.1"
+                          [max]="999"
+                          [disabled]="isReadOnly"
+                          [ariaLabel]="'Quantity for ' + getUnitText(serving)"
+                          (click)="$event.stopPropagation(); onRowClicked(phrase, serving)"
+                          (valueChange)="onInlineQtyChanged(phrase, serving, $event)">
+                        </app-serving-quantity-input>
+                        <span class="unit-label">{{ getUnitText(serving) }}</span>
+                      </ng-container>
+                      <!-- Show normal label for unselected rows or read-only mode -->
+                      <ng-container *ngIf="getSelectedServingId(phrase) !== serving.fatSecretServingId || isReadOnly">
+                        <span class="serving-label">{{ getServingLabel(serving) }}</span>
+                      </ng-container>
+                    </div>
                     <div class="macro-inline-servings">
                       ({{ caloriesForServing(serving) || 0 | number:'1.0-0' }} cal, 
                       {{ proteinForServing(serving) || 0 | number:'1.0-0' }} protein, 
