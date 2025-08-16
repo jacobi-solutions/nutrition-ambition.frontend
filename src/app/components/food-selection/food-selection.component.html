@@ -108,7 +108,7 @@
 
   <!-- Action/status footer -->
   <div class="confirm-section">
-    <div *ngIf="isSubmitting && !isReadOnly" class="typing-indicator">
+    <div *ngIf="(isSubmitting || isCanceling) && !isReadOnly" class="typing-indicator">
       <div class="typing-indicator-dots">
         <div class="dot"></div>
         <div class="dot"></div>
@@ -116,16 +116,25 @@
       </div>
     </div>
 
-    <div *ngIf="!isSubmitting && isReadOnly" class="status-text">{{ ((mealName && mealName.trim().length > 0) ? mealName : 'Food') | titlecase }} logged</div>
+    <div *ngIf="!isSubmitting && !isCanceling && isReadOnly" class="status-text">{{ ((mealName && mealName.trim().length > 0) ? mealName : 'Food') | titlecase }} logged</div>
 
     <ion-button 
-      *ngIf="!isSubmitting && !isReadOnly"
+      *ngIf="!isSubmitting && !isCanceling && !isReadOnly"
       expand="block" 
       [disabled]="!isSelectionComplete()"
       (click)="confirmSelections()"
       color="tertiary"
       class="confirm-button">
       Confirm Selection
+    </ion-button>
+
+    <ion-button 
+      *ngIf="!isSubmitting && !isCanceling && !isReadOnly"
+      expand="block" 
+      (click)="cancelSelection()"
+      fill="outline"
+      class="cancel-button">
+      Cancel
     </ion-button>
   </div>
 </div>

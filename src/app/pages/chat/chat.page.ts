@@ -15,7 +15,8 @@ import {
   MessageRoleTypes,
   SelectableFoodMatch,
     SubmitServingSelectionRequest,
-    SubmitServingSelectionResponse
+    SubmitServingSelectionResponse,
+    CancelServingSelectionRequest
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -150,6 +151,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         this.focusInput();
       }
     });
+    
+
     
     // Get the current user email
     this.authService.userEmail$.subscribe(email => {
@@ -690,6 +693,79 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       error: (error) => {
         console.error('Error submitting food selections:', error);
         this.showErrorToast('Failed to log food selection.');
+      }
+    });
+  }
+
+  // Handle food selection cancellation
+  onCancelFoodSelection(message: DisplayMessage): void {
+    if (!message.id) {
+      console.warn('Cannot cancel food selection: message has no ID');
+      return;
+    }
+
+    console.log('Canceling food selection for message:', message.id);
+
+    // Remove the pending food selection message from UI
+    const messageIndex = this.messages.findIndex(m => m.id === message.id);
+    if (messageIndex !== -1) {
+      this.messages.splice(messageIndex, 1);
+    }
+
+    // Set context note and show typing indicator
+    this.chatService.setContextNote('Canceled food logging');
+    
+    // Create request and call FoodSelectionService directly
+    const request = new CancelServingSelectionRequest({
+      pendingMessageId: message.id,
+      loggedDateUtc: this.dateService.getSelectedDateUtc()
+    });
+    
+    // Make API call using FoodSelectionService
+    this.foodSelectionService.cancelFoodLogging(request).subscribe({
+      next: (response) => {
+        if (!response.isSuccess) {
+          console.warn('Cancel food logging failed:', response.errors);
+          this.showErrorToast('Failed to cancel food selection.');
+          
+          // Restore the pending food selection message if cancellation failed
+          if (messageIndex !== -1) {
+            this.messages.splice(messageIndex, 0, message);
+          }
+          // Turn off loading indicator
+          this.isLoading = false;
+          return;
+        }
+
+        // Add the bot's response message if successful
+        if (response.message) {
+          this.messages.push({
+            text: response.message,
+            isUser: false,
+            timestamp: new Date()
+          });
+        }
+        
+        // Turn off loading indicator
+        this.isLoading = false;
+        
+        // Scroll to the new message
+        this.scrollToBottom();
+        
+        // Focus the input after response is posted
+        this.focusInput();
+      },
+      error: (error) => {
+        console.error('Error canceling food selection:', error);
+        this.showErrorToast('Failed to cancel food selection.');
+        
+        // Restore the pending food selection message if cancellation failed
+        if (messageIndex !== -1) {
+          this.messages.splice(messageIndex, 0, message);
+        }
+        
+        // Turn off loading indicator
+        this.isLoading = false;
       }
     });
   }

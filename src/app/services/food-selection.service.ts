@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { NutritionAmbitionApiService, SubmitServingSelectionRequest, SubmitServingSelectionResponse, ErrorDto } from '../services/nutrition-ambition-api.service';
+import { NutritionAmbitionApiService, SubmitServingSelectionRequest, SubmitServingSelectionResponse, CancelServingSelectionRequest, BotMessageResponse, ErrorDto } from '../services/nutrition-ambition-api.service';
 import { DateService } from './date.service';
 
 @Injectable({
@@ -23,6 +23,20 @@ export class FoodSelectionService {
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Submission failed';
         return of(new SubmitServingSelectionResponse({ isSuccess: false, errors: [errorDto] }));
+      })
+    );
+  }
+
+  cancelFoodLogging(request: CancelServingSelectionRequest): Observable<BotMessageResponse> {
+    // Ensure loggedDateUtc is set
+    request.loggedDateUtc = this.dateService.getSelectedDateUtc();
+
+    return this.apiService.cancelFoodLogging(request).pipe(
+      catchError(err => {
+        console.error('Failed to cancel food logging', err);
+        const errorDto = new ErrorDto();
+        errorDto.errorMessage = 'Cancel failed';
+        return of(new BotMessageResponse({ isSuccess: false, errors: [errorDto] }));
       })
     );
   }

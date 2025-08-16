@@ -45,7 +45,8 @@
               [foodOptions]="message.foodOptions || null"
               [mealName]="message.mealName || null"
               [isReadOnly]="message.role === MessageRoleTypes.CompletedFoodSelection"
-              (selectionConfirmed)="onFoodSelectionConfirmed($event)">
+              (selectionConfirmed)="onFoodSelectionConfirmed($event)"
+              (cancel)="onCancelFoodSelection(message)">
             </app-food-selection>
           </div>
 

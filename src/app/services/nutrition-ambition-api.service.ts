@@ -102,6 +102,11 @@ export interface INutritionAmbitionApiService {
      */
     submitServingSelection2(body: SubmitServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse>;
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    cancelFoodLogging(body: CancelServingSelectionRequest | undefined): Observable<BotMessageResponse>;
+    /**
      * @return Success
      */
     ip(): Observable<void>;
@@ -1071,6 +1076,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    cancelFoodLogging(body: CancelServingSelectionRequest | undefined): Observable<BotMessageResponse> {
+        let url_ = this.baseUrl + "/api/FoodSelection/CancelFoodLogging";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCancelFoodLogging(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCancelFoodLogging(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<BotMessageResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<BotMessageResponse>;
+        }));
+    }
+
+    protected processCancelFoodLogging(response: HttpResponseBase): Observable<BotMessageResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BotMessageResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<BotMessageResponse>(null as any);
+    }
+
+    /**
      * @return Success
      */
     ip(): Observable<void> {
@@ -1346,6 +1407,46 @@ export interface IBotMessageResponse {
     assistantPhase?: string | undefined;
     model?: string | undefined;
     usage?: TokenUsage;
+}
+
+export class CancelServingSelectionRequest implements ICancelServingSelectionRequest {
+    pendingMessageId?: string | undefined;
+    loggedDateUtc?: Date;
+
+    constructor(data?: ICancelServingSelectionRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.pendingMessageId = _data["pendingMessageId"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): CancelServingSelectionRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CancelServingSelectionRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["pendingMessageId"] = this.pendingMessageId;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ICancelServingSelectionRequest {
+    pendingMessageId?: string | undefined;
+    loggedDateUtc?: Date;
 }
 
 export class ChatMessage implements IChatMessage {
@@ -2924,6 +3025,7 @@ export enum MessageRoleTypes {
     ContextNote = "ContextNote",
     PendingFoodSelection = "PendingFoodSelection",
     CompletedFoodSelection = "CompletedFoodSelection",
+    CanceledFoodSelection = "CanceledFoodSelection",
 }
 
 export class NutrientBreakdown implements INutrientBreakdown {

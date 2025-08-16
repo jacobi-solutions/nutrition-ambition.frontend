@@ -20,11 +20,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() isReadOnly: boolean = false;
   @Input() messageId?: string;
   @Output() selectionConfirmed = new EventEmitter<SubmitServingSelectionRequest>();
+  @Output() cancel = new EventEmitter<void>();
 
   selections: { [phrase: string]: { foodId: string; servingId?: string } } = {};
   expandedSections: { [phrase: string]: boolean } = {};
   removedPhrases: Set<string> = new Set();
   isSubmitting = false;
+  isCanceling = false;
+  private cancelTimeout: any = null;
 
   constructor(private toastController: ToastController, private cdr: ChangeDetectorRef) {
     addIcons({ createOutline, chevronUpOutline, trashOutline });
@@ -225,6 +228,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     setTimeout(async () => {
       this.removedPhrases.add(phrase);
 
+      // Check if this was the last remaining food item
+      const remainingItems = this.payloadKeys; // This will exclude the just-removed item
+      const isLastItem = remainingItems.length === 0;
+
+      if (isLastItem) {
+        // If this was the last item, trigger cancellation instead of showing undo toast
+        this.cancelSelection();
+        return;
+      }
+
       const toast = await this.toastController.create({
         message: `${this.getSelectedFood(phrase)?.displayName || phrase} removed`,
         duration: 5000,
@@ -395,5 +408,50 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (current !== s.fatSecretServingId && s.fatSecretServingId) {
       this.onServingSelected(phrase, s.fatSecretServingId);
     }
+  }
+
+  async cancelSelection(): Promise<void> {
+    // Start the canceling state to show thinking dots
+    this.isCanceling = true;
+    
+    // Show toast with undo option
+    const toast = await this.toastController.create({
+      message: 'Food logging canceled',
+      duration: 5000,
+      buttons: [
+        {
+          text: 'Undo',
+          handler: () => {
+            // User clicked undo - stop the cancellation process
+            this.isCanceling = false;
+            if (this.cancelTimeout) {
+              clearTimeout(this.cancelTimeout);
+              this.cancelTimeout = null;
+            }
+            return true; // Close the toast
+          }
+        }
+      ]
+    });
+    
+    await toast.present();
+    
+    // Set a timeout to actually cancel after toast duration
+    this.cancelTimeout = setTimeout(() => {
+      // Toast expired without undo - proceed with cancellation
+      this.cancel.emit();
+      this.cancelTimeout = null;
+    }, 5000);
+    
+    // Listen for toast dismissal (if user dismisses manually)
+    toast.onDidDismiss().then((result) => {
+      // If toast was dismissed but not by undo button, proceed with cancellation
+      if (result.role !== 'cancel' && this.isCanceling && this.cancelTimeout) {
+        // User dismissed toast manually - proceed with cancellation immediately
+        clearTimeout(this.cancelTimeout);
+        this.cancel.emit();
+        this.cancelTimeout = null;
+      }
+    });
   }
 }

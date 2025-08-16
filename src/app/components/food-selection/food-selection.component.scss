@@ -375,7 +375,7 @@
       height: 3.25rem;
       font-weight: 600;
       font-size: 1rem;
-      margin: 0;
+      margin: 0 0 12px 0;
       --background: var(--color-salmon);
       --color: #ffffff;
       --border-radius: 30px;
@@ -397,6 +397,29 @@
         &:hover {
           transform: none;
         }
+      }
+    }
+
+    .cancel-button {
+      height: 3.25rem;
+      font-weight: 600;
+      font-size: 1rem;
+      margin: 0;
+      --color: var(--ion-color-medium);
+      --border-color: #e6e3dd;
+      
+      --border-radius: 30px;
+      text-transform: none;
+      transition: all 0.3s ease, transform 0.2s ease;
+
+      &:hover {
+        --color: #000;
+        --border-color: #000;
+        transform: scale(1.02);
+      }
+
+      &:active {
+        transform: scale(0.98);
       }
     }
   }
@@ -594,6 +617,11 @@
       padding: 16px 0 0 0;
       
       .confirm-button {
+        height: 3rem;
+        font-size: 0.9rem;
+      }
+
+      .cancel-button {
         height: 3rem;
         font-size: 0.9rem;
       }

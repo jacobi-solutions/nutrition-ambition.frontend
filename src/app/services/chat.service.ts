@@ -32,6 +32,8 @@ export class ChatService {
   private learnMoreAboutResponseSubject = new Subject<BotMessageResponse>();
   public learnMoreAboutResponse$ = this.learnMoreAboutResponseSubject.asObservable();
   
+
+  
   constructor(
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService,
@@ -151,6 +153,8 @@ export class ChatService {
     );
   }
   
+
+
   // Set a context note that will be shown in the chat UI
   public setContextNote(note: string) {
     this.contextNoteSubject.next(note);
