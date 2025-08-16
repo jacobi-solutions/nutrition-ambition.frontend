@@ -160,19 +160,6 @@ export class ChatService {
     this.contextNoteSubject.next(null);
   }
 
-  submitServingSelection(request: SubmitServingSelectionRequest): Observable<SubmitServingSelectionResponse> {
-    // Ensure loggedDateUtc is set
-    request.loggedDateUtc = this.dateService.getSelectedDateUtc();
-
-    return this.apiService.submitServingSelection(request).pipe(
-      catchError(err => {
-        console.error('Failed to submit selection', err);
-        const errorDto = new ErrorDto();
-        errorDto.errorMessage = 'Submission failed';
-        return of(new SubmitServingSelectionResponse({ isSuccess: false, errors: [errorDto] }));
-      })
-    );
-  }
 
   // Add a method to reload messages for the current date
   loadMessages(): Observable<GetChatMessagesResponse> {

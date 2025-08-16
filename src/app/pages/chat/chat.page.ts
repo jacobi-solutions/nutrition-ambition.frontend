@@ -23,6 +23,7 @@ import { ChatMessageComponent } from 'src/app/components/chat-message/chat-messa
 import { FoodSelectionComponent } from 'src/app/components/food-selection/food-selection.component';
 import { format } from 'date-fns';
 import { ToastService } from '../../services/toast.service';
+import { FoodSelectionService } from 'src/app/services/food-selection.service';
 
 interface DisplayMessage {
   id?: string;
@@ -81,6 +82,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private chatService: ChatService,
+    private foodSelectionService: FoodSelectionService,
     private authService: AuthService,
     private dateService: DateService,
     private router: Router,
@@ -664,7 +666,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       role: msg.role
     });
 
-    this.chatService.submitServingSelection(request).subscribe({
+    this.foodSelectionService.submitServingSelection(request).subscribe({
       next: (response: SubmitServingSelectionResponse) => {
         if (!response.isSuccess) {
           console.warn('Selection submission failed:', response.errors);
