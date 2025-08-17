@@ -5,15 +5,14 @@ import { AuthService } from './auth.service';
 import { 
   GetChatMessagesRequest,
   ClearChatMessagesRequest,
-  BotMessageResponse,
-  GetChatMessagesResponse,
+  ChatMessagesResponse,
   ClearChatMessagesResponse,
   RunChatRequest,
   LearnMoreAboutRequest,
   SubmitServingSelectionRequest,
-  SubmitServingSelectionResponse,
   UserSelectedServing,
-  ErrorDto
+  ErrorDto,
+  ChatMessage
 } from './nutrition-ambition-api.service';
 import { DateService } from './date.service';
 
@@ -24,12 +23,15 @@ export class ChatService {
   // Subject to emit when meals are logged
   mealLogged$ = new Subject<void>();
   
+  // Subject to emit when edit food selections are started
+  editFoodSelectionStarted$ = new Subject<ChatMessage[]>();
+  
   // Add a new BehaviorSubject to manage the context note
   private contextNoteSubject = new BehaviorSubject<string | null>(null);
   public contextNote$ = this.contextNoteSubject.asObservable();
   
   // Add a subject to emit focus in chat responses
-  private learnMoreAboutResponseSubject = new Subject<BotMessageResponse>();
+  private learnMoreAboutResponseSubject = new Subject<ChatMessagesResponse>();
   public learnMoreAboutResponse$ = this.learnMoreAboutResponseSubject.asObservable();
   
 
@@ -44,7 +46,7 @@ export class ChatService {
   }
 
   // Send message to the assistant
-  sendMessage(message: string): Observable<BotMessageResponse> {
+  sendMessage(message: string): Observable<ChatMessagesResponse> {
     console.log('[DEBUG] Sending message to the assistant:', message.substring(0, 30) + '...');
     
     // Send to the assistant for processing
@@ -52,16 +54,16 @@ export class ChatService {
     return this.runAssistantMessage(message).pipe(
       catchError(error => {
         console.error('Error in sendMessage:', error);
-        return of(new BotMessageResponse({
+        return of(new ChatMessagesResponse({
           isSuccess: false,
-          message: "Sorry, I'm having trouble processing your message right now. Please try again later."
+          messages: []
         }));
       })
     );
   }
   
   // Run assistant message
-  runAssistantMessage(message: string): Observable<BotMessageResponse> {
+  runAssistantMessage(message: string): Observable<ChatMessagesResponse> {
     console.log('[DEBUG] Running assistant message:', message.substring(0, 30) + '...');
     const request = new RunChatRequest({
       message: message,
@@ -72,28 +74,24 @@ export class ChatService {
       map(response => {
         console.log('[DEBUG] Assistant response received');
         
-        // No need to map response properties as the API now returns BotMessageResponse directly
+        // No need to map response properties as the API now returns ChatMessagesResponse directly
         const botResponse = response;
         
-        // Check if a meal was logged by looking for confirmation in the response
-        if (response.isSuccess && response.loggedMeal) {
-          console.log('[DEBUG] Meal logging detected, emitting mealLogged event');
-          this.mealLogged$.next();
-        }
+        // Note: Meal logging events are now handled by individual service methods
         
         return botResponse;
       }),
       catchError(error => {
         console.error('Error in assistant conversation:', error);
-        const errorResponse = new BotMessageResponse();
+        const errorResponse = new ChatMessagesResponse();
         errorResponse.isSuccess = false;
-        errorResponse.message = "Sorry, I'm having trouble processing your request right now. Please try again later.";
+        errorResponse.messages = [];
         return of(errorResponse);
       })
     );
   }
 
-  getMessageHistoryByDate(date: Date): Observable<GetChatMessagesResponse> {
+  getMessageHistoryByDate(date: Date): Observable<ChatMessagesResponse> {
     console.log('[DEBUG] Getting message history for date:', date);
     const request = new GetChatMessagesRequest({
       loggedDateUtc: date
@@ -101,7 +99,7 @@ export class ChatService {
     return this.apiService.getChatMessages(request);
   }
   
-  getMessageHistory(date: Date): Observable<GetChatMessagesResponse> {
+  getMessageHistory(date: Date): Observable<ChatMessagesResponse> {
     const request = new GetChatMessagesRequest({
       loggedDateUtc: date
     });
@@ -118,7 +116,7 @@ export class ChatService {
   
   
   // Learn more about a specific topic in chat
-  learnMoreAbout(topic: string, date: Date): Observable<BotMessageResponse> {
+  learnMoreAbout(topic: string, date: Date): Observable<ChatMessagesResponse> {
     // Create the request to the backend
     const request = new LearnMoreAboutRequest({
       topic: topic,
@@ -129,19 +127,9 @@ export class ChatService {
     return this.apiService.learnMoreAbout(request).pipe(
       map(response => {
         // Emit a new message received event to indicate the response is complete
-        if (response.isSuccess && response.message) {
-          // Add the bot's response message to the chat UI
-          const botMessage: any = {
-            text: response.message,
-            isUser: false,
-            isTool: false,
-            timestamp: new Date()
-          };
-          
-          // Emit the response so the chat page can update
+        if (response.isSuccess) {
+          // Emit the response so the chat page can reload messages
           this.learnMoreAboutResponseSubject.next(response);
-          
-          return response;
         }
         
         return response;
@@ -164,9 +152,13 @@ export class ChatService {
     this.contextNoteSubject.next(null);
   }
 
+  // Emit an event when edit food selection is started
+  public notifyEditFoodSelectionStarted(messages?: ChatMessage[]) {
+    this.editFoodSelectionStarted$.next(messages || []);
+  }
 
   // Add a method to reload messages for the current date
-  loadMessages(): Observable<GetChatMessagesResponse> {
+  loadMessages(): Observable<ChatMessagesResponse> {
     return this.getMessageHistory(this.dateService.getSelectedDateUtc());
   }
 } 

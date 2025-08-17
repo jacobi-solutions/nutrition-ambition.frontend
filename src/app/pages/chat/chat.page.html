@@ -34,13 +34,10 @@
           </div>
 
           <!-- Standalone food selection cards for pending and completed selection messages -->
-          <div *ngIf="!message.isContextNote && (message.role === MessageRoleTypes.PendingFoodSelection || message.role === MessageRoleTypes.CompletedFoodSelection || message.role === MessageRoleTypes.PendingEditFoodSelection)" class="standalone-food-selection">
+          <div *ngIf="!message.isContextNote && (message.role === MessageRoleTypes.PendingFoodSelection || message.role === MessageRoleTypes.CompletedFoodSelection || message.role === MessageRoleTypes.PendingEditFoodSelection || message.role === MessageRoleTypes.CompletedEditFoodSelection)" class="standalone-food-selection">
             <app-food-selection
-              *ngIf="message?.foodOptions && (message?.role === MessageRoleTypes.PendingFoodSelection || message?.role === MessageRoleTypes.PendingEditFoodSelection)"
-              [foodOptions]="message.foodOptions"
-              [mealName]="message.mealName"
-              [messageId]="message.id"
-              [isEditMode]="message.role === MessageRoleTypes.PendingEditFoodSelection"
+              *ngIf="message?.foodOptions && (message?.role === MessageRoleTypes.PendingFoodSelection || message?.role === MessageRoleTypes.PendingEditFoodSelection || message?.role === MessageRoleTypes.CompletedFoodSelection || message?.role === MessageRoleTypes.CompletedEditFoodSelection)"
+              [message]="message"
               (selectionConfirmed)="onFoodSelectionConfirmed($event)"
               (editConfirmed)="onEditFoodSelectionConfirmed($event)"
               (cancel)="onCancelFoodSelection(message)">
@@ -50,7 +47,7 @@
 
           <!-- Regular chat message -->
           <app-chat-message 
-            *ngIf="!message.isContextNote && message.role !== MessageRoleTypes.PendingFoodSelection && message.role !== MessageRoleTypes.CompletedFoodSelection && message.role !== MessageRoleTypes.PendingEditFoodSelection"
+            *ngIf="!message.isContextNote && message.role !== MessageRoleTypes.PendingFoodSelection && message.role !== MessageRoleTypes.CompletedFoodSelection && message.role !== MessageRoleTypes.PendingEditFoodSelection && message.role !== MessageRoleTypes.CompletedEditFoodSelection"
             [text]="message.text"
             [isUser]="message.isUser"
             [timestamp]="message.timestamp"

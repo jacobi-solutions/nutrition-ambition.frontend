@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, AnimationController } from '@ionic/angular/standalone';
@@ -8,14 +8,13 @@ import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlan
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { DateService } from '../../services/date.service';
+import { DisplayMessage } from '../../models/display-message';
 import { 
-  BotMessageResponse,
-  GetChatMessagesResponse,
+  ChatMessagesResponse,
   ChatMessage,
   MessageRoleTypes,
   SelectableFoodMatch,
     SubmitServingSelectionRequest,
-    SubmitServingSelectionResponse,
     CancelServingSelectionRequest,
     SubmitEditServingSelectionRequest,
     LogMealToolResponse,
@@ -29,21 +28,7 @@ import { format } from 'date-fns';
 import { ToastService } from '../../services/toast.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 
-interface DisplayMessage {
-  id?: string;
-  text: string;
-  isUser: boolean;
-  isContextNote?: boolean;
-  timestamp: Date;
-  role?: MessageRoleTypes;
 
-  // keep full payload from backend
-  logMealToolResponse?: LogMealToolResponse | null;
-
-  // optional convenience fields
-  foodOptions?: Record<string, SelectableFoodMatch[]> | null;
-  mealName?: string | null;
-}
 
 @Component({
   selector: 'app-chat',
@@ -80,6 +65,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   private dateSubscription: Subscription;
   private contextNoteSubscription: Subscription;
   private learnMoreAboutSubscription: Subscription;
+  private editFoodSelectionStartedSubscription: Subscription;
 
   private hasInitialMessage: boolean = false;
 
@@ -93,7 +79,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     private authService: AuthService,
     private dateService: DateService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private cdr: ChangeDetectorRef
   ) {
     // Add the icons explicitly to the library
     addIcons({
@@ -139,23 +126,31 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     
     // Subscribe to receive the bot's response from the focusInChat method
     this.learnMoreAboutSubscription = this.chatService.learnMoreAboutResponse$.subscribe(response => {
-      if (response && response.isSuccess && response.message) {
-        // Add the bot's response to the messages array
-        this.messages.push({
-          text: response.message,
-          isUser: false,
-          timestamp: new Date()
-        });
+      if (response && response.isSuccess) {
+        // Process the returned messages and add them to the chat
+        if (response.messages && response.messages.length > 0) {
+          this.processAndAddNewMessages(response.messages);
+        }
         
         // Turn off loading indicator
         this.isLoading = false;
         
-        // Scroll to the new message
-        this.scrollToBottom();
-        
-        // Focus the input after response is posted
-        this.focusInput();
+        // Focus the input after response is processed
+        setTimeout(() => this.focusInput(), 300);
       }
+    });
+    
+    // Subscribe to edit food selection started events to process returned messages
+    this.editFoodSelectionStartedSubscription = this.chatService.editFoodSelectionStarted$.subscribe((messages) => {
+      console.log('[DEBUG] Edit food selection started, processing returned messages');
+      // Only process if we're currently viewing today's date (edit operations always happen on today)
+      const today = format(new Date(), 'yyyy-MM-dd');
+      if (this.selectedDate === today && messages && messages.length > 0) {
+        this.processAndAddNewMessages(messages);
+      }
+      
+      // Turn off loading indicator
+      this.isLoading = false;
     });
     
 
@@ -188,6 +183,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     
     if (this.learnMoreAboutSubscription) {
       this.learnMoreAboutSubscription.unsubscribe();
+    }
+    
+    if (this.editFoodSelectionStartedSubscription) {
+      this.editFoodSelectionStartedSubscription.unsubscribe();
     }
   }
 
@@ -276,6 +275,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     // Don't make any backend calls until they're authenticated
     if (!isAuthenticated) {
       this.isLoadingHistory = false;
+      
+      
+      
       console.log('[DEBUG] Not authenticated, showing welcome message in UI only without backend calls');
       const welcomeMessage = this.chatService.getFirstTimeWelcomeMessage();
       
@@ -302,10 +304,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         catchError(error => {
           console.error('Error loading chat history:', error);
           this.error = 'Unable to load chat history. Please try again later.';
-          return of(null as GetChatMessagesResponse | null);
+          return of(null as ChatMessagesResponse | null);
         }),
         finalize(() => {
           this.isLoadingHistory = false;
+          
+
           
           // Restore existing context note if it existed and no messages were loaded
           if (this.messages.length === 0 && existingContextNote) {
@@ -323,7 +327,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         })
       )
       .subscribe({
-        next: (response: GetChatMessagesResponse | null) => {
+        next: (response: ChatMessagesResponse | null) => {
           if (response && response.isSuccess && response.messages && response.messages.length > 0) {
             // Convert API messages to display messages
             console.log('[DEBUG] Received chat history, message count:', response.messages.length);
@@ -332,7 +336,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             const contextNoteMsgs: ChatMessage[] = [];
             const regularMsgs: ChatMessage[] = [];
             
-            // Separate messages by role - only include User (0), Assistant (1), ContextNote (4), PendingFoodSelection (5), CompletedFoodSelection (6), and PendingEditFoodSelection (8)
+            // Separate messages by role - only include User (0), Assistant (1), ContextNote (4), PendingFoodSelection (5), CompletedFoodSelection (6), PendingEditFoodSelection (8), and CompletedEditFoodSelection (9)
             response.messages.forEach(msg => {
               if (msg.role === MessageRoleTypes.ContextNote) {
                 contextNoteMsgs.push(msg);
@@ -357,6 +361,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
               timestamp: msg.createdDateUtc || new Date(),
               foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
               mealName: msg.logMealToolResponse?.mealName || null,
+              logMealToolResponse: msg.logMealToolResponse || null,
               role: msg.role
             }));
             
@@ -455,48 +460,29 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     // Send the message - authentication token will be added by the AuthInterceptor
     console.log('[DEBUG] Sending message to backend:', sentMessage);
     this.chatService.sendMessage(sentMessage).subscribe({
-      next: (response: BotMessageResponse) => {
+      next: (response: ChatMessagesResponse) => {
         this.isLoading = false;
 
-        // Check if response has food selection requirement
-        if (response.terminateEarlyForUserInput &&
-          response.logMealToolResponse?.selectableFoodMatches &&
-          Object.keys(response.logMealToolResponse.selectableFoodMatches).length > 0) {
-      
-        const ltr = response.logMealToolResponse;
-      
-        const foodSelectionMessage: DisplayMessage = {
-          id: ltr?.pendingMessageId || '',
-          text: response.message || 'Please confirm your food selections:',
-          isUser: false,
-          timestamp: new Date(),
-          role: MessageRoleTypes.PendingFoodSelection,
-          logMealToolResponse: ltr, // <-- keep the full payload
-          foodOptions: ltr?.selectableFoodMatches || null,
-          mealName: ltr?.mealName || null
-        };
-      
-        this.messages.push(foodSelectionMessage);
-        this.scrollToBottom();
-        return;
-      }
-
-        if (response.isSuccess && response.message) {
-          console.log('[DEBUG] Received bot response:', response.message);
+        if (response.isSuccess) {
+          console.log('[DEBUG] Message sent successfully, processing returned messages');
           
-          // Add the bot message to UI only (already logged on backend)
-          const botMessage = {
-            text: response.message,
+          // Process the returned messages and add them to the chat
+          if (response.messages && response.messages.length > 0) {
+            this.processAndAddNewMessages(response.messages);
+          } else {
+            console.log('[DEBUG] No messages returned in response');
+          }
+          
+          // Focus the input after response is processed
+          setTimeout(() => this.focusInput(), 300);
+        } else {
+          console.warn('Message sending failed:', response.errors);
+          this.messages.push({
+            text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
             isUser: false,
             timestamp: new Date()
-          };
-          
-          this.messages.push(botMessage);
-          
-          // Scroll for bot's message response
+          });
           this.scrollToBottom();
-          
-          // Focus the input after response is posted
           this.focusInput();
         }
       },
@@ -652,40 +638,106 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     await this.toastService.showToast({ message, color: 'danger' });
   }
 
+  // Process new messages from API responses and add them to the chat
+  private processAndAddNewMessages(newMessages: ChatMessage[]): void {
+    console.log('[DEBUG] Processing', newMessages.length, 'new messages:', newMessages);
+    
+    // Filter to only show allowed roles and convert to display messages
+    const allowedRoles = [
+      MessageRoleTypes.User,
+      MessageRoleTypes.Assistant,
+      MessageRoleTypes.PendingFoodSelection,
+      MessageRoleTypes.CompletedFoodSelection,
+      MessageRoleTypes.PendingEditFoodSelection,
+      MessageRoleTypes.CompletedEditFoodSelection,
+      MessageRoleTypes.ContextNote
+    ];
+
+    const newDisplayMessages: DisplayMessage[] = [];
+
+    newMessages.forEach(msg => {
+      if (allowedRoles.includes(msg.role!)) {
+        // Check if message already exists (avoid duplicates)
+        const existingMessageIndex = this.messages.findIndex(existing => existing.id === msg.id);
+        
+        let displayMessage: DisplayMessage;
+        
+        if (msg.role === MessageRoleTypes.ContextNote) {
+          // Handle context notes separately
+          displayMessage = {
+            text: msg.content || '',
+            isUser: false,
+            isContextNote: true,
+            timestamp: msg.createdDateUtc || new Date()
+          };
+        } else {
+          // Handle regular messages
+          displayMessage = {
+            id: msg.id,
+            text: msg.content || '',
+            isUser: msg.role === MessageRoleTypes.User,
+            timestamp: msg.createdDateUtc || new Date(),
+            foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
+            mealName: msg.logMealToolResponse?.mealName || null,
+            logMealToolResponse: msg.logMealToolResponse || null,
+            role: msg.role
+          };
+        }
+
+        if (existingMessageIndex !== -1) {
+          // Update existing message (e.g., pending -> completed)
+          console.log('[DEBUG] Updating existing message:', msg.id);
+          this.messages[existingMessageIndex] = displayMessage;
+        } else {
+          // Add new message
+          console.log('[DEBUG] Adding new message:', msg.id);
+          newDisplayMessages.push(displayMessage);
+        }
+      }
+    });
+
+    // Add all new messages and create a new array reference to trigger change detection
+    if (newDisplayMessages.length > 0) {
+      console.log('[DEBUG] Adding', newDisplayMessages.length, 'new messages to chat');
+      this.messages = [...this.messages, ...newDisplayMessages];
+    } else {
+      console.log('[DEBUG] No new messages to add, but creating new array reference for updates');
+      // If we only updated existing messages, create new array reference
+      this.messages = [...this.messages];
+    }
+
+    // Sort messages by timestamp to ensure correct order
+    this.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    
+    console.log('[DEBUG] Total messages after processing:', this.messages.length);
+    console.log('[DEBUG] Messages array after update:', this.messages);
+    
+    // Force change detection to ensure UI updates
+    this.cdr.detectChanges();
+    
+    // Scroll to show new messages
+    this.scrollToBottom();
+  }
+
   // Handle food selection confirmation for standalone food selection components
   onFoodSelectionConfirmed(request: SubmitServingSelectionRequest): void {
     console.log('Food selections confirmed:', request);
 
-    const toDisplayMessage = (msg: ChatMessage): DisplayMessage => ({
-      id: msg.id,
-      text: msg.content || '',
-      isUser: msg.role === MessageRoleTypes.User,
-      timestamp: msg.loggedDateUtc || new Date(),
-      foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
-      mealName: msg.logMealToolResponse?.mealName || null,
-      role: msg.role
-    });
-
     this.foodSelectionService.submitServingSelection(request).subscribe({
-      next: (response: SubmitServingSelectionResponse) => {
+      next: (response: ChatMessagesResponse) => {
         if (!response.isSuccess) {
           console.warn('Selection submission failed:', response.errors);
           this.showErrorToast('Failed to log food selection.');
           return;
         }
 
-        if (response.updatedSelectionMessage && response.updatedSelectionMessage.id) {
-          const idx = this.messages.findIndex(m => m.id === response.updatedSelectionMessage!.id);
-          if (idx !== -1) {
-            this.messages[idx] = toDisplayMessage(response.updatedSelectionMessage);
-          }
+        // Process the returned messages and add them to the chat
+        if (response.messages && response.messages.length > 0) {
+          this.processAndAddNewMessages(response.messages);
         }
 
-        if (response.newAssistantMessage) {
-          this.messages.push(toDisplayMessage(response.newAssistantMessage));
-        }
-
-        this.scrollToBottom();
+        // Notify other views (e.g., summary) that nutrients changed
+        this.chatService.mealLogged$.next?.();
       },
       error: (error) => {
         console.error('Error submitting food selections:', error);
@@ -695,70 +747,41 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // Handle edit food selection confirmation for standalone food selection components
-  // Child emits: { selections: UserSelectedServing[] }
-onEditFoodSelectionConfirmed(evt: { selections: UserSelectedServing[] }): void {
-  // find the latest PendingEditFoodSelection message
-  let pendingEdit: DisplayMessage | undefined;
-  for (let i = this.messages.length - 1; i >= 0; i--) {
-    const m = this.messages[i];
-    if (m.role === MessageRoleTypes.PendingEditFoodSelection) {
-      pendingEdit = m;
-      break;
-    }
-  }
-
-  if (!pendingEdit?.logMealToolResponse) {
-    this.showErrorToast('Edit session not found.');
-    return;
-  }
-
-  const ltr = pendingEdit.logMealToolResponse;
-  const pendingMessageId = ltr.pendingMessageId || pendingEdit.id;
-  const foodEntryId = ltr.foodEntryId;
-
-  if (!pendingMessageId || !foodEntryId) {
+// Child now emits a fully-formed SubmitEditServingSelectionRequest
+onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
+  if (!evt.pendingMessageId || !evt.foodEntryId) {
     this.showErrorToast('Missing edit context. Please start editing again.');
     return;
   }
 
-  const built = new SubmitEditServingSelectionRequest ({
-    pendingMessageId,
-    foodEntryId,
-    loggedDateUtc: this.dateService.getSelectedDateUtc(),
-    selections: evt.selections || []
-  });
+  // Ensure loggedDateUtc is set (child may or may not provide it)
+  evt.loggedDateUtc = evt.loggedDateUtc ?? this.dateService.getSelectedDateUtc();
 
-  this.foodSelectionService.submitEditServingSelection(built).subscribe({
+  // Submit and update the chat timeline
+  this.foodSelectionService.submitEditServingSelection(evt).subscribe({
     next: (response) => {
       if (!response.isSuccess) {
-        this.showErrorToast('Failed to update food selection.');
+        this.showErrorToast(response.errors?.[0]?.errorMessage ?? 'Failed to update food selection.');
         return;
       }
 
-      if (response.updatedSelectionMessage && response.updatedSelectionMessage.id) {
-        const idx = this.messages.findIndex(m => m.id === response.updatedSelectionMessage!.id);
-        if (idx !== -1) {
-          this.messages[idx] = this.toDisplayMessage(response.updatedSelectionMessage);
-        } else {
-          this.messages.push(this.toDisplayMessage(response.updatedSelectionMessage));
-        }
+      // Process the returned messages and add them to the chat
+      if (response.messages && response.messages.length > 0) {
+        this.processAndAddNewMessages(response.messages);
       }
 
-      if (response.newAssistantMessage) {
-        this.messages.push(this.toDisplayMessage(response.newAssistantMessage));
-      }
-
-      // Optionally notify summary to refresh
+      // Notify other views (e.g., summary) that nutrients changed
       this.chatService.mealLogged$.next?.();
-
-      this.scrollToBottom();
     },
-    error: (error) => {
-      console.error('Error submitting edit food selections:', error);
+    error: (err) => {
+      console.error('Error submitting edit food selections:', err);
       this.showErrorToast('Failed to update food selection.');
     }
   });
 }
+
+  
+  
 
 
   // Handle food selection cancellation
@@ -801,20 +824,13 @@ onEditFoodSelectionConfirmed(evt: { selections: UserSelectedServing[] }): void {
           return;
         }
 
-        // Add the bot's response message if successful
-        if (response.message) {
-          this.messages.push({
-            text: response.message,
-            isUser: false,
-            timestamp: new Date()
-          });
+        // Process the returned messages and add them to the chat
+        if (response.messages && response.messages.length > 0) {
+          this.processAndAddNewMessages(response.messages);
         }
         
         // Turn off loading indicator
         this.isLoading = false;
-        
-        // Scroll to the new message
-        this.scrollToBottom();
         
         // Focus the input after response is posted
         this.focusInput();
@@ -833,17 +849,6 @@ onEditFoodSelectionConfirmed(evt: { selections: UserSelectedServing[] }): void {
       }
     });
   }
-  private toDisplayMessage(msg: ChatMessage): DisplayMessage {
-    return {
-      id: msg.id,
-      text: msg.content || '',
-      isUser: msg.role === MessageRoleTypes.User,
-      timestamp: msg.loggedDateUtc || msg.createdDateUtc || new Date(),
-      role: msg.role,
-      logMealToolResponse: msg.logMealToolResponse || null,
-      foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
-      mealName: msg.logMealToolResponse?.mealName || null
-    };
-  }
+
   
 } 

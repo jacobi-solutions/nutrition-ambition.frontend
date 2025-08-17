@@ -25,7 +25,7 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    getChatMessages(body: GetChatMessagesRequest | undefined): Observable<GetChatMessagesResponse>;
+    getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -35,17 +35,12 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    runResponsesConversation(body: RunChatRequest | undefined): Observable<BotMessageResponse>;
+    runResponsesConversation(body: RunChatRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
      */
-    learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<BotMessageResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    submitServingSelection(body: SubmitServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse>;
+    learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -90,22 +85,27 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    submitServingSelection2(body: SubmitServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse>;
+    submitServingSelection(body: SubmitServingSelectionRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
      */
-    cancelFoodLogging(body: CancelServingSelectionRequest | undefined): Observable<BotMessageResponse>;
+    cancelFoodLogging(body: CancelServingSelectionRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
      */
-    startEditSelection(body: EditFoodSelectionRequest | undefined): Observable<EditFoodSelectionResponse>;
+    startEditSelection(body: EditFoodSelectionRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
      */
-    submitEditServingSelection(body: SubmitEditServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse>;
+    submitEditServingSelection(body: SubmitEditServingSelectionRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    cancelEditSelection(body: CancelEditSelectionRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @return Success
      */
@@ -183,7 +183,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    getChatMessages(body: GetChatMessagesRequest | undefined): Observable<GetChatMessagesResponse> {
+    getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/Conversation/GetChatMessages";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -206,14 +206,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
                 try {
                     return this.processGetChatMessages(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<GetChatMessagesResponse>;
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<GetChatMessagesResponse>;
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
         }));
     }
 
-    protected processGetChatMessages(response: HttpResponseBase): Observable<GetChatMessagesResponse> {
+    protected processGetChatMessages(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -224,7 +224,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = GetChatMessagesResponse.fromJS(resultData200);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -232,7 +232,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<GetChatMessagesResponse>(null as any);
+        return _observableOf<ChatMessagesResponse>(null as any);
     }
 
     /**
@@ -295,7 +295,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    runResponsesConversation(body: RunChatRequest | undefined): Observable<BotMessageResponse> {
+    runResponsesConversation(body: RunChatRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/Conversation/RunResponsesConversation";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -318,14 +318,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
                 try {
                     return this.processRunResponsesConversation(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<BotMessageResponse>;
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<BotMessageResponse>;
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
         }));
     }
 
-    protected processRunResponsesConversation(response: HttpResponseBase): Observable<BotMessageResponse> {
+    protected processRunResponsesConversation(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -336,7 +336,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BotMessageResponse.fromJS(resultData200);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -344,14 +344,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<BotMessageResponse>(null as any);
+        return _observableOf<ChatMessagesResponse>(null as any);
     }
 
     /**
      * @param body (optional) 
      * @return Success
      */
-    learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<BotMessageResponse> {
+    learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/Conversation/LearnMoreAbout";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -374,14 +374,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
                 try {
                     return this.processLearnMoreAbout(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<BotMessageResponse>;
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<BotMessageResponse>;
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
         }));
     }
 
-    protected processLearnMoreAbout(response: HttpResponseBase): Observable<BotMessageResponse> {
+    protected processLearnMoreAbout(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -392,7 +392,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BotMessageResponse.fromJS(resultData200);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -400,63 +400,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<BotMessageResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    submitServingSelection(body: SubmitServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/SubmitServingSelection";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSubmitServingSelection(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processSubmitServingSelection(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<SubmitServingSelectionResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<SubmitServingSelectionResponse>;
-        }));
-    }
-
-    protected processSubmitServingSelection(response: HttpResponseBase): Observable<SubmitServingSelectionResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = SubmitServingSelectionResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<SubmitServingSelectionResponse>(null as any);
+        return _observableOf<ChatMessagesResponse>(null as any);
     }
 
     /**
@@ -911,7 +855,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    submitServingSelection2(body: SubmitServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse> {
+    submitServingSelection(body: SubmitServingSelectionRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/FoodSelection/SubmitServingSelection";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -928,20 +872,20 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSubmitServingSelection2(response_);
+            return this.processSubmitServingSelection(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processSubmitServingSelection2(response_ as any);
+                    return this.processSubmitServingSelection(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<SubmitServingSelectionResponse>;
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<SubmitServingSelectionResponse>;
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
         }));
     }
 
-    protected processSubmitServingSelection2(response: HttpResponseBase): Observable<SubmitServingSelectionResponse> {
+    protected processSubmitServingSelection(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -952,7 +896,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = SubmitServingSelectionResponse.fromJS(resultData200);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -960,14 +904,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<SubmitServingSelectionResponse>(null as any);
+        return _observableOf<ChatMessagesResponse>(null as any);
     }
 
     /**
      * @param body (optional) 
      * @return Success
      */
-    cancelFoodLogging(body: CancelServingSelectionRequest | undefined): Observable<BotMessageResponse> {
+    cancelFoodLogging(body: CancelServingSelectionRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/FoodSelection/CancelFoodLogging";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -990,14 +934,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
                 try {
                     return this.processCancelFoodLogging(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<BotMessageResponse>;
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<BotMessageResponse>;
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
         }));
     }
 
-    protected processCancelFoodLogging(response: HttpResponseBase): Observable<BotMessageResponse> {
+    protected processCancelFoodLogging(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1008,7 +952,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BotMessageResponse.fromJS(resultData200);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -1016,14 +960,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<BotMessageResponse>(null as any);
+        return _observableOf<ChatMessagesResponse>(null as any);
     }
 
     /**
      * @param body (optional) 
      * @return Success
      */
-    startEditSelection(body: EditFoodSelectionRequest | undefined): Observable<EditFoodSelectionResponse> {
+    startEditSelection(body: EditFoodSelectionRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/FoodSelection/StartEditSelection";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1046,14 +990,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
                 try {
                     return this.processStartEditSelection(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<EditFoodSelectionResponse>;
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<EditFoodSelectionResponse>;
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
         }));
     }
 
-    protected processStartEditSelection(response: HttpResponseBase): Observable<EditFoodSelectionResponse> {
+    protected processStartEditSelection(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1064,7 +1008,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = EditFoodSelectionResponse.fromJS(resultData200);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -1072,14 +1016,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<EditFoodSelectionResponse>(null as any);
+        return _observableOf<ChatMessagesResponse>(null as any);
     }
 
     /**
      * @param body (optional) 
      * @return Success
      */
-    submitEditServingSelection(body: SubmitEditServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse> {
+    submitEditServingSelection(body: SubmitEditServingSelectionRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/FoodSelection/SubmitEditServingSelection";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -1102,14 +1046,14 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
                 try {
                     return this.processSubmitEditServingSelection(response_ as any);
                 } catch (e) {
-                    return _observableThrow(e) as any as Observable<SubmitServingSelectionResponse>;
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
             } else
-                return _observableThrow(response_) as any as Observable<SubmitServingSelectionResponse>;
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
         }));
     }
 
-    protected processSubmitEditServingSelection(response: HttpResponseBase): Observable<SubmitServingSelectionResponse> {
+    protected processSubmitEditServingSelection(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1120,7 +1064,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = SubmitServingSelectionResponse.fromJS(resultData200);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status !== 200 && status !== 204) {
@@ -1128,7 +1072,63 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             }));
         }
-        return _observableOf<SubmitServingSelectionResponse>(null as any);
+        return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    cancelEditSelection(body: CancelEditSelectionRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/FoodSelection/CancelEditSelection";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCancelEditSelection(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCancelEditSelection(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
+        }));
+    }
+
+    protected processCancelEditSelection(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ChatMessagesResponse>(null as any);
     }
 
     /**
@@ -1313,23 +1313,11 @@ export enum AssistantModeTypes {
     UserFeedback = "UserFeedback",
 }
 
-export class BotMessageResponse implements IBotMessageResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    message?: string | undefined;
-    accountId?: string | undefined;
-    logMealToolResponse?: LogMealToolResponse;
-    terminateEarlyForUserInput?: boolean;
-    responseId?: string | undefined;
-    loggedMeal?: boolean;
-    assistantMode?: AssistantModeTypes;
-    assistantPhase?: string | undefined;
-    model?: string | undefined;
-    usage?: TokenUsage;
+export class CancelEditSelectionRequest implements ICancelEditSelectionRequest {
+    pendingMessageId?: string | undefined;
+    loggedDateUtc?: Date;
 
-    constructor(data?: IBotMessageResponse) {
+    constructor(data?: ICancelEditSelectionRequest) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -1340,73 +1328,29 @@ export class BotMessageResponse implements IBotMessageResponse {
 
     init(_data?: any) {
         if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.message = _data["message"];
-            this.accountId = _data["accountId"];
-            this.logMealToolResponse = _data["logMealToolResponse"] ? LogMealToolResponse.fromJS(_data["logMealToolResponse"]) : <any>undefined;
-            this.terminateEarlyForUserInput = _data["terminateEarlyForUserInput"];
-            this.responseId = _data["responseId"];
-            this.loggedMeal = _data["loggedMeal"];
-            this.assistantMode = _data["assistantMode"];
-            this.assistantPhase = _data["assistantPhase"];
-            this.model = _data["model"];
-            this.usage = _data["usage"] ? TokenUsage.fromJS(_data["usage"]) : <any>undefined;
+            this.pendingMessageId = _data["pendingMessageId"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
         }
     }
 
-    static fromJS(data: any): BotMessageResponse {
+    static fromJS(data: any): CancelEditSelectionRequest {
         data = typeof data === 'object' ? data : {};
-        let result = new BotMessageResponse();
+        let result = new CancelEditSelectionRequest();
         result.init(data);
         return result;
     }
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["message"] = this.message;
-        data["accountId"] = this.accountId;
-        data["logMealToolResponse"] = this.logMealToolResponse ? this.logMealToolResponse.toJSON() : <any>undefined;
-        data["terminateEarlyForUserInput"] = this.terminateEarlyForUserInput;
-        data["responseId"] = this.responseId;
-        data["loggedMeal"] = this.loggedMeal;
-        data["assistantMode"] = this.assistantMode;
-        data["assistantPhase"] = this.assistantPhase;
-        data["model"] = this.model;
-        data["usage"] = this.usage ? this.usage.toJSON() : <any>undefined;
+        data["pendingMessageId"] = this.pendingMessageId;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         return data;
     }
 }
 
-export interface IBotMessageResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    message?: string | undefined;
-    accountId?: string | undefined;
-    logMealToolResponse?: LogMealToolResponse;
-    terminateEarlyForUserInput?: boolean;
-    responseId?: string | undefined;
-    loggedMeal?: boolean;
-    assistantMode?: AssistantModeTypes;
-    assistantPhase?: string | undefined;
-    model?: string | undefined;
-    usage?: TokenUsage;
+export interface ICancelEditSelectionRequest {
+    pendingMessageId?: string | undefined;
+    loggedDateUtc?: Date;
 }
 
 export class CancelServingSelectionRequest implements ICancelServingSelectionRequest {
@@ -1559,6 +1503,78 @@ export interface IChatMessage {
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
     totalTokens?: number | undefined;
+}
+
+export class ChatMessagesResponse implements IChatMessagesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    messages?: ChatMessage[] | undefined;
+
+    constructor(data?: IChatMessagesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            if (Array.isArray(_data["messages"])) {
+                this.messages = [] as any;
+                for (let item of _data["messages"])
+                    this.messages!.push(ChatMessage.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ChatMessagesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ChatMessagesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        if (Array.isArray(this.messages)) {
+            data["messages"] = [];
+            for (let item of this.messages)
+                data["messages"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IChatMessagesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    messages?: ChatMessage[] | undefined;
 }
 
 export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
@@ -1979,6 +1995,8 @@ export interface IDeleteFoodEntryResponse {
 
 export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
     foodEntryId?: string | undefined;
+    groupId?: string | undefined;
+    itemSetId?: string | undefined;
     loggedDateUtc?: Date | undefined;
 
     constructor(data?: IEditFoodSelectionRequest) {
@@ -1993,6 +2011,8 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
     init(_data?: any) {
         if (_data) {
             this.foodEntryId = _data["foodEntryId"];
+            this.groupId = _data["groupId"];
+            this.itemSetId = _data["itemSetId"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
         }
     }
@@ -2007,6 +2027,8 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["foodEntryId"] = this.foodEntryId;
+        data["groupId"] = this.groupId;
+        data["itemSetId"] = this.itemSetId;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         return data;
     }
@@ -2014,75 +2036,9 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
 
 export interface IEditFoodSelectionRequest {
     foodEntryId?: string | undefined;
+    groupId?: string | undefined;
+    itemSetId?: string | undefined;
     loggedDateUtc?: Date | undefined;
-}
-
-export class EditFoodSelectionResponse implements IEditFoodSelectionResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    foodEntry?: FoodEntry;
-    contextNote?: string | undefined;
-
-    constructor(data?: IEditFoodSelectionResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.foodEntry = _data["foodEntry"] ? FoodEntry.fromJS(_data["foodEntry"]) : <any>undefined;
-            this.contextNote = _data["contextNote"];
-        }
-    }
-
-    static fromJS(data: any): EditFoodSelectionResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new EditFoodSelectionResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["foodEntry"] = this.foodEntry ? this.foodEntry.toJSON() : <any>undefined;
-        data["contextNote"] = this.contextNote;
-        return data;
-    }
-}
-
-export interface IEditFoodSelectionResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    foodEntry?: FoodEntry;
-    contextNote?: string | undefined;
 }
 
 export class ErrorDto implements IErrorDto {
@@ -2349,174 +2305,6 @@ export interface IFoodContribution {
     displayQuantity?: number;
 }
 
-export class FoodEntry implements IFoodEntry {
-    id?: string | undefined;
-    createdDateUtc?: Date;
-    lastUpdatedDateUtc?: Date;
-    accountId?: string | undefined;
-    mealName?: string | undefined;
-    originalChatMessageId?: string | undefined;
-    loggedDateUtc?: Date;
-    groups?: FoodGroup[] | undefined;
-
-    constructor(data?: IFoodEntry) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
-            this.lastUpdatedDateUtc = _data["lastUpdatedDateUtc"] ? new Date(_data["lastUpdatedDateUtc"].toString()) : <any>undefined;
-            this.accountId = _data["accountId"];
-            this.mealName = _data["mealName"];
-            this.originalChatMessageId = _data["originalChatMessageId"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
-            if (Array.isArray(_data["groups"])) {
-                this.groups = [] as any;
-                for (let item of _data["groups"])
-                    this.groups!.push(FoodGroup.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): FoodEntry {
-        data = typeof data === 'object' ? data : {};
-        let result = new FoodEntry();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
-        data["lastUpdatedDateUtc"] = this.lastUpdatedDateUtc ? this.lastUpdatedDateUtc.toISOString() : <any>undefined;
-        data["accountId"] = this.accountId;
-        data["mealName"] = this.mealName;
-        data["originalChatMessageId"] = this.originalChatMessageId;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
-        if (Array.isArray(this.groups)) {
-            data["groups"] = [];
-            for (let item of this.groups)
-                data["groups"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface IFoodEntry {
-    id?: string | undefined;
-    createdDateUtc?: Date;
-    lastUpdatedDateUtc?: Date;
-    accountId?: string | undefined;
-    mealName?: string | undefined;
-    originalChatMessageId?: string | undefined;
-    loggedDateUtc?: Date;
-    groups?: FoodGroup[] | undefined;
-}
-
-export class FoodGroup implements IFoodGroup {
-    id?: string | undefined;
-    groupName?: string | undefined;
-    itemSet?: FoodItem;
-
-    constructor(data?: IFoodGroup) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.groupName = _data["groupName"];
-            this.itemSet = _data["itemSet"] ? FoodItem.fromJS(_data["itemSet"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): FoodGroup {
-        data = typeof data === 'object' ? data : {};
-        let result = new FoodGroup();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["groupName"] = this.groupName;
-        data["itemSet"] = this.itemSet ? this.itemSet.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IFoodGroup {
-    id?: string | undefined;
-    groupName?: string | undefined;
-    itemSet?: FoodItem;
-}
-
-export class FoodItem implements IFoodItem {
-    id?: string | undefined;
-    selectedFatSecretFoodId?: string | undefined;
-    items?: SelectableFoodMatch[] | undefined;
-
-    constructor(data?: IFoodItem) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.selectedFatSecretFoodId = _data["selectedFatSecretFoodId"];
-            if (Array.isArray(_data["items"])) {
-                this.items = [] as any;
-                for (let item of _data["items"])
-                    this.items!.push(SelectableFoodMatch.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): FoodItem {
-        data = typeof data === 'object' ? data : {};
-        let result = new FoodItem();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["selectedFatSecretFoodId"] = this.selectedFatSecretFoodId;
-        if (Array.isArray(this.items)) {
-            data["items"] = [];
-            for (let item of this.items)
-                data["items"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface IFoodItem {
-    id?: string | undefined;
-    selectedFatSecretFoodId?: string | undefined;
-    items?: SelectableFoodMatch[] | undefined;
-}
-
 export class GetChatMessagesRequest implements IGetChatMessagesRequest {
     loggedDateUtc!: Date;
 
@@ -2551,78 +2339,6 @@ export class GetChatMessagesRequest implements IGetChatMessagesRequest {
 
 export interface IGetChatMessagesRequest {
     loggedDateUtc: Date;
-}
-
-export class GetChatMessagesResponse implements IGetChatMessagesResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    messages?: ChatMessage[] | undefined;
-
-    constructor(data?: IGetChatMessagesResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            if (Array.isArray(_data["messages"])) {
-                this.messages = [] as any;
-                for (let item of _data["messages"])
-                    this.messages!.push(ChatMessage.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): GetChatMessagesResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new GetChatMessagesResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        if (Array.isArray(this.messages)) {
-            data["messages"] = [];
-            for (let item of this.messages)
-                data["messages"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface IGetChatMessagesResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    messages?: ChatMessage[] | undefined;
 }
 
 export class GetDetailedSummaryRequest implements IGetDetailedSummaryRequest {
@@ -2922,8 +2638,8 @@ export class LogMealToolResponse implements ILogMealToolResponse {
     pendingMessageId?: string | undefined;
     selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
     foodEntryId?: string | undefined;
-    groupIdsByPhrase?: { [key: string]: string; } | undefined;
-    itemSetIdsByPhrase?: { [key: string]: string; } | undefined;
+    groupId?: string | undefined;
+    itemSetId?: string | undefined;
 
     constructor(data?: ILogMealToolResponse) {
         if (data) {
@@ -2942,24 +2658,12 @@ export class LogMealToolResponse implements ILogMealToolResponse {
                 this.selectableFoodMatches = {} as any;
                 for (let key in _data["selectableFoodMatches"]) {
                     if (_data["selectableFoodMatches"].hasOwnProperty(key))
-                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : [];
+                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : <any>undefined;
                 }
             }
             this.foodEntryId = _data["foodEntryId"];
-            if (_data["groupIdsByPhrase"]) {
-                this.groupIdsByPhrase = {} as any;
-                for (let key in _data["groupIdsByPhrase"]) {
-                    if (_data["groupIdsByPhrase"].hasOwnProperty(key))
-                        (<any>this.groupIdsByPhrase)![key] = _data["groupIdsByPhrase"][key];
-                }
-            }
-            if (_data["itemSetIdsByPhrase"]) {
-                this.itemSetIdsByPhrase = {} as any;
-                for (let key in _data["itemSetIdsByPhrase"]) {
-                    if (_data["itemSetIdsByPhrase"].hasOwnProperty(key))
-                        (<any>this.itemSetIdsByPhrase)![key] = _data["itemSetIdsByPhrase"][key];
-                }
-            }
+            this.groupId = _data["groupId"];
+            this.itemSetId = _data["itemSetId"];
         }
     }
 
@@ -2982,20 +2686,8 @@ export class LogMealToolResponse implements ILogMealToolResponse {
             }
         }
         data["foodEntryId"] = this.foodEntryId;
-        if (this.groupIdsByPhrase) {
-            data["groupIdsByPhrase"] = {};
-            for (let key in this.groupIdsByPhrase) {
-                if (this.groupIdsByPhrase.hasOwnProperty(key))
-                    (<any>data["groupIdsByPhrase"])[key] = (<any>this.groupIdsByPhrase)[key];
-            }
-        }
-        if (this.itemSetIdsByPhrase) {
-            data["itemSetIdsByPhrase"] = {};
-            for (let key in this.itemSetIdsByPhrase) {
-                if (this.itemSetIdsByPhrase.hasOwnProperty(key))
-                    (<any>data["itemSetIdsByPhrase"])[key] = (<any>this.itemSetIdsByPhrase)[key];
-            }
-        }
+        data["groupId"] = this.groupId;
+        data["itemSetId"] = this.itemSetId;
         return data;
     }
 }
@@ -3005,8 +2697,8 @@ export interface ILogMealToolResponse {
     pendingMessageId?: string | undefined;
     selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
     foodEntryId?: string | undefined;
-    groupIdsByPhrase?: { [key: string]: string; } | undefined;
-    itemSetIdsByPhrase?: { [key: string]: string; } | undefined;
+    groupId?: string | undefined;
+    itemSetId?: string | undefined;
 }
 
 export enum MessageRoleTypes {
@@ -3395,6 +3087,8 @@ export interface ISelectableFoodServing {
 export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {
     pendingMessageId?: string | undefined;
     foodEntryId?: string | undefined;
+    groupId?: string | undefined;
+    itemSetId?: string | undefined;
     loggedDateUtc?: Date;
     selections?: UserSelectedServing[] | undefined;
 
@@ -3411,6 +3105,8 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
         if (_data) {
             this.pendingMessageId = _data["pendingMessageId"];
             this.foodEntryId = _data["foodEntryId"];
+            this.groupId = _data["groupId"];
+            this.itemSetId = _data["itemSetId"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             if (Array.isArray(_data["selections"])) {
                 this.selections = [] as any;
@@ -3431,6 +3127,8 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
         data = typeof data === 'object' ? data : {};
         data["pendingMessageId"] = this.pendingMessageId;
         data["foodEntryId"] = this.foodEntryId;
+        data["groupId"] = this.groupId;
+        data["itemSetId"] = this.itemSetId;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         if (Array.isArray(this.selections)) {
             data["selections"] = [];
@@ -3444,6 +3142,8 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
 export interface ISubmitEditServingSelectionRequest {
     pendingMessageId?: string | undefined;
     foodEntryId?: string | undefined;
+    groupId?: string | undefined;
+    itemSetId?: string | undefined;
     loggedDateUtc?: Date;
     selections?: UserSelectedServing[] | undefined;
 }
@@ -3498,78 +3198,6 @@ export interface ISubmitServingSelectionRequest {
     loggedDateUtc?: Date;
     pendingMessageId?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
-}
-
-export class SubmitServingSelectionResponse implements ISubmitServingSelectionResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    foodEntryId?: string | undefined;
-    updatedSelectionMessage?: ChatMessage;
-    newAssistantMessage?: ChatMessage;
-
-    constructor(data?: ISubmitServingSelectionResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.foodEntryId = _data["foodEntryId"];
-            this.updatedSelectionMessage = _data["updatedSelectionMessage"] ? ChatMessage.fromJS(_data["updatedSelectionMessage"]) : <any>undefined;
-            this.newAssistantMessage = _data["newAssistantMessage"] ? ChatMessage.fromJS(_data["newAssistantMessage"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): SubmitServingSelectionResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new SubmitServingSelectionResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["foodEntryId"] = this.foodEntryId;
-        data["updatedSelectionMessage"] = this.updatedSelectionMessage ? this.updatedSelectionMessage.toJSON() : <any>undefined;
-        data["newAssistantMessage"] = this.newAssistantMessage ? this.newAssistantMessage.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface ISubmitServingSelectionResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    foodEntryId?: string | undefined;
-    updatedSelectionMessage?: ChatMessage;
-    newAssistantMessage?: ChatMessage;
 }
 
 export class SubmitUserFeedbackRequest implements ISubmitUserFeedbackRequest {
@@ -3678,50 +3306,6 @@ export interface ISubmitUserFeedbackResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     feedbackEntry?: FeedbackEntry;
-}
-
-export class TokenUsage implements ITokenUsage {
-    promptTokens?: number | undefined;
-    completionTokens?: number | undefined;
-    totalTokens?: number | undefined;
-
-    constructor(data?: ITokenUsage) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.promptTokens = _data["promptTokens"];
-            this.completionTokens = _data["completionTokens"];
-            this.totalTokens = _data["totalTokens"];
-        }
-    }
-
-    static fromJS(data: any): TokenUsage {
-        data = typeof data === 'object' ? data : {};
-        let result = new TokenUsage();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["promptTokens"] = this.promptTokens;
-        data["completionTokens"] = this.completionTokens;
-        data["totalTokens"] = this.totalTokens;
-        return data;
-    }
-}
-
-export interface ITokenUsage {
-    promptTokens?: number | undefined;
-    completionTokens?: number | undefined;
-    totalTokens?: number | undefined;
 }
 
 export enum UnitKind {

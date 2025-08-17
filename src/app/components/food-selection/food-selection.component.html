@@ -2,7 +2,7 @@
   <div class="food-selection-container-inner">
     <!-- Food items list -->
     <div *ngIf="hasPayload" class="card-header">
-      <label><strong>{{ ((mealName && mealName.trim().length > 0) ? mealName : 'Food Items') | titlecase }}</strong></label>
+      <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Items') | titlecase }}</strong></label>
     </div>
 
     <div *ngIf="hasPayload" class="food-items-list">
@@ -24,7 +24,7 @@
               <ion-col size="2" class="right" *ngIf="!isReadOnly">
                 <div class="action-icons">
                   <ion-icon [name]="isExpanded(phrase) ? 'chevron-up-outline' : 'create-outline'" class="edit-icon" [class.expanded]="isExpanded(phrase)" (click)="toggleExpansion(phrase)"></ion-icon>
-                  <ion-icon name="trash-outline" class="delete-icon" (click)="removeItem(phrase)"></ion-icon>
+                  <ion-icon *ngIf="!isEditMode" name="trash-outline" class="delete-icon" (click)="removeItem(phrase)"></ion-icon>
                 </div>
               </ion-col>
             </ion-row>
@@ -53,7 +53,7 @@
                   [disabled]="isReadOnly"
                   id="foodSelect-{{ phrase }}">
                   <ion-select-option 
-                    *ngFor="let food of (foodOptions?.[phrase] || [])" 
+                    *ngFor="let food of (message.foodOptions?.[phrase] || [])" 
                     [value]="food.fatSecretFoodId">
                     {{ food.displayName }}
                     <span *ngIf="food.brandName" class="brand-name"> – {{ food.brandName }}</span>
@@ -116,7 +116,7 @@
       </div>
     </div>
 
-    <div *ngIf="!isSubmitting && !isCanceling && isReadOnly" class="status-text">{{ ((mealName && mealName.trim().length > 0) ? mealName : 'Food') | titlecase }} logged</div>
+    <div *ngIf="!isSubmitting && !isCanceling && isReadOnly" class="status-text">{{ statusText }}</div>
 
     <ion-button 
       *ngIf="!isSubmitting && !isCanceling && !isReadOnly"

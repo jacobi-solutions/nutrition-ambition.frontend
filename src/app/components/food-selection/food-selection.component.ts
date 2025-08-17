@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, trashOutline } from 'ionicons/icons';
-import { SelectableFoodMatch, SelectableFoodServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest } from 'src/app/services/nutrition-ambition-api.service';
+import { SelectableFoodMatch, SelectableFoodServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input/serving-quantity-input.component';
+import { DisplayMessage } from 'src/app/models/display-message';
 
 @Component({
   selector: 'app-food-selection',
@@ -15,14 +16,12 @@ import { ServingQuantityInputComponent } from 'src/app/components/serving-quanti
   imports: [CommonModule, FormsModule, IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
-  @Input() foodOptions?: Record<string, SelectableFoodMatch[]> | null = null;
-  @Input() mealName?: string | null = null;
-  @Input() isReadOnly: boolean = false;
-  @Input() isEditMode: boolean = false;
-  @Input() messageId?: string;
+  @Input() message!: DisplayMessage;
   @Output() selectionConfirmed = new EventEmitter<SubmitServingSelectionRequest>();
   @Output() editConfirmed = new EventEmitter<SubmitEditServingSelectionRequest>();
   @Output() cancel = new EventEmitter<void>();
+  isReadOnly = false;
+  isEditMode = false;
 
   selections: { [phrase: string]: { foodId: string; servingId?: string } } = {};
   expandedSections: { [phrase: string]: boolean } = {};
@@ -36,23 +35,35 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   get hasPayload(): boolean {
-    return !!this.foodOptions && Object.keys(this.foodOptions).length > 0;
+    return !!this.message.foodOptions && Object.keys(this.message.foodOptions).length > 0;
   }
 
   get payloadKeys(): string[] {
-    if (!this.foodOptions) return [];
-    return Object.keys(this.foodOptions).filter(p => !this.removedPhrases.has(p));
+    if (!this.message.foodOptions) return [];
+    return Object.keys(this.message.foodOptions).filter(p => !this.removedPhrases.has(p));
+  }
+
+  get statusText(): string {
+    const mealName = this.message.mealName && this.message.mealName.trim().length > 0 ? this.message.mealName : 'Food';
+    const capitalizedMealName = mealName.charAt(0).toUpperCase() + mealName.slice(1).toLowerCase();
+    
+    if (this.message.role === MessageRoleTypes.CompletedEditFoodSelection) {
+      return `${capitalizedMealName} edited`;
+    }
+    return `${capitalizedMealName} logged`;
   }
 
   ngOnInit(): void {
-    if (!this.foodOptions) return;
-    for (const phrase of Object.keys(this.foodOptions)) {
-      const foods = this.foodOptions[phrase];
+    if (!this.message.foodOptions) return;
+    for (const phrase of Object.keys(this.message.foodOptions)) {
+      const foods = this.message.foodOptions[phrase];
       const foodId = foods?.[0]?.fatSecretFoodId;
       const servingId = foods?.[0]?.selectedServingId;
       if (foodId) this.selections[phrase] = { foodId, servingId };
       this.expandedSections[phrase] = false;
     }
+    this.isReadOnly = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
+    this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -69,11 +80,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   getSelectedFood(phrase: string): SelectableFoodMatch | null {
     const selection = this.selections[phrase];
-    return this.foodOptions?.[phrase]?.find(f => f.fatSecretFoodId === selection?.foodId) || null;
+    return this.message.foodOptions?.[phrase]?.find(f => f.fatSecretFoodId === selection?.foodId) || null;
   }
 
   onFoodSelected(phrase: string, foodId: string): void {
-    const food = this.foodOptions?.[phrase]?.find(f => f.fatSecretFoodId === foodId);
+    const food = this.message.foodOptions?.[phrase]?.find(f => f.fatSecretFoodId === foodId);
     const defaultServingId = food?.servings?.[0]?.fatSecretServingId;
     this.selections[phrase] = { foodId, servingId: defaultServingId };
   }
@@ -119,7 +130,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   
 
   isSelectionComplete(): boolean {
-    if (!this.foodOptions) return false;
+    if (!this.message.foodOptions) return false;
     return this.payloadKeys.every(phrase => {
       const sel = this.selections[phrase];
       return sel?.foodId && sel?.servingId;
@@ -136,7 +147,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   private confirmRegularSelections(): void {
     const req = new SubmitServingSelectionRequest();
-    req.pendingMessageId = this.messageId;
+    req.pendingMessageId = this.message.id;
     req.selections = [];
 
     for (const phrase of this.payloadKeys) {
@@ -163,18 +174,19 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   private confirmEditSelections(): void {
     const req = new SubmitEditServingSelectionRequest();
-    req.pendingMessageId = this.messageId;
+    req.pendingMessageId = this.message.id;
+    req.foodEntryId = this.message.logMealToolResponse?.foodEntryId ?? '';
+    req.groupId = this.message.logMealToolResponse?.groupId ?? '';
+    req.itemSetId = this.message.logMealToolResponse?.itemSetId ?? '';
     req.selections = [];
-
+  
     for (const phrase of this.payloadKeys) {
       const food = this.getSelectedFood(phrase);
       const servingId = this.getSelectedServingId(phrase);
       const selectedServing = this.getSelectedServing(phrase);
-      
+  
       if (food?.fatSecretFoodId && servingId && selectedServing) {
-        // Get the display quantity from the selected serving
         const displayQuantity = this.getDisplayQuantity(selectedServing);
-        
         req.selections.push(new UserSelectedServing({
           originalText: phrase,
           fatSecretFoodId: food.fatSecretFoodId,
@@ -183,10 +195,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         }));
       }
     }
-
+  
     this.isSubmitting = true;
     this.editConfirmed.emit(req);
   }
+  
   // Format a number nicely for UI (0, 1, 1.5, 1.33, 473.2, etc.)
 
 
@@ -329,7 +342,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   private rescaleFromSelected(phrase: string, selected: SelectableFoodServing, editedQty: number): void {
     // 0) guard
-    if (!this.foodOptions?.[phrase]) return;
+    if (!this.message.foodOptions?.[phrase]) return;
     
     // 1) compute targetMass in metric (g/ml)
     const selMetricAmt = this.getMetricAmt(selected); // per "one" serving of selected

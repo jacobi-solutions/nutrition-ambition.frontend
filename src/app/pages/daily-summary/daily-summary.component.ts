@@ -372,17 +372,20 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     this.router.navigate(['/app/chat']);
   
     const req = new EditFoodSelectionRequest({
-      foodEntryId: entry.foodEntryId,                 // key change
+      foodEntryId: entry.foodEntryId,
+      groupId: entry.groupId,
+      itemSetId: entry.itemSetId,
       loggedDateUtc: this.dateService.getSelectedDateUtc()
-      // optional: you can add a phrase hint later if you want to pre-focus a group
     });
   
     this.foodSelectionService.startEditFoodSelection(req).subscribe({
       next: (resp) => {
         if (!resp?.isSuccess) {
           this.showErrorToast('Failed to start edit. Please try again.');
+        } else {
+          // Notify the chat service that an edit food selection was started and pass the messages
+          this.chatService.notifyEditFoodSelectionStarted(resp.messages);
         }
-        // Chat page will render the PendingEditFoodSelection card automatically.
       },
       error: (err) => {
         console.error('Edit start error', err);
