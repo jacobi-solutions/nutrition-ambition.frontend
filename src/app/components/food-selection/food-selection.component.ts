@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, trashOutline } from 'ionicons/icons';
-import { SelectableFoodMatch, SelectableFoodServing, SubmitServingSelectionRequest, UserSelectedServing } from 'src/app/services/nutrition-ambition-api.service';
+import { SelectableFoodMatch, SelectableFoodServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input/serving-quantity-input.component';
 
 @Component({
@@ -18,8 +18,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() foodOptions?: Record<string, SelectableFoodMatch[]> | null = null;
   @Input() mealName?: string | null = null;
   @Input() isReadOnly: boolean = false;
+  @Input() isEditMode: boolean = false;
   @Input() messageId?: string;
   @Output() selectionConfirmed = new EventEmitter<SubmitServingSelectionRequest>();
+  @Output() editConfirmed = new EventEmitter<SubmitEditServingSelectionRequest>();
   @Output() cancel = new EventEmitter<void>();
 
   selections: { [phrase: string]: { foodId: string; servingId?: string } } = {};
@@ -125,6 +127,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   confirmSelections(): void {
+    if (this.isEditMode) {
+      this.confirmEditSelections();
+    } else {
+      this.confirmRegularSelections();
+    }
+  }
+
+  private confirmRegularSelections(): void {
     const req = new SubmitServingSelectionRequest();
     req.pendingMessageId = this.messageId;
     req.selections = [];
@@ -149,6 +159,33 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     this.isSubmitting = true;
     this.selectionConfirmed.emit(req);
+  }
+
+  private confirmEditSelections(): void {
+    const req = new SubmitEditServingSelectionRequest();
+    req.pendingMessageId = this.messageId;
+    req.selections = [];
+
+    for (const phrase of this.payloadKeys) {
+      const food = this.getSelectedFood(phrase);
+      const servingId = this.getSelectedServingId(phrase);
+      const selectedServing = this.getSelectedServing(phrase);
+      
+      if (food?.fatSecretFoodId && servingId && selectedServing) {
+        // Get the display quantity from the selected serving
+        const displayQuantity = this.getDisplayQuantity(selectedServing);
+        
+        req.selections.push(new UserSelectedServing({
+          originalText: phrase,
+          fatSecretFoodId: food.fatSecretFoodId,
+          fatSecretServingId: servingId,
+          editedQuantity: displayQuantity
+        }));
+      }
+    }
+
+    this.isSubmitting = true;
+    this.editConfirmed.emit(req);
   }
   // Format a number nicely for UI (0, 1, 1.5, 1.33, 473.2, etc.)
 

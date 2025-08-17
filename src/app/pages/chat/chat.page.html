@@ -6,18 +6,13 @@
   (previousDay)="onPreviousDay()"
   (nextDay)="onNextDay()"
   (login)="onLogin()"
-  (logout)="onLogout()">
+  (logout)="onLogout()"
+  (refresh)="onRefresh()">
 </app-header>
 
 <ion-content [scrollEvents]="true" (ionScroll)="onScroll($event)" #content>
   <!-- Refresh functionality -->
-  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
-    <ion-refresher-content
-      pullingText="Pull to refresh"
-      refreshingSpinner="circles"
-      refreshingText="Refreshing...">
-    </ion-refresher-content>
-  </ion-refresher>
+
 
   <div class="ion-padding">
     <div *ngIf="isLoadingHistory" class="loading-container">
@@ -39,20 +34,23 @@
           </div>
 
           <!-- Standalone food selection cards for pending and completed selection messages -->
-          <div *ngIf="!message.isContextNote && (message.role === MessageRoleTypes.PendingFoodSelection || message.role === MessageRoleTypes.CompletedFoodSelection)" class="standalone-food-selection">
-            <app-food-selection 
+          <div *ngIf="!message.isContextNote && (message.role === MessageRoleTypes.PendingFoodSelection || message.role === MessageRoleTypes.CompletedFoodSelection || message.role === MessageRoleTypes.PendingEditFoodSelection)" class="standalone-food-selection">
+            <app-food-selection
+              *ngIf="message?.foodOptions && (message?.role === MessageRoleTypes.PendingFoodSelection || message?.role === MessageRoleTypes.PendingEditFoodSelection)"
+              [foodOptions]="message.foodOptions"
+              [mealName]="message.mealName"
               [messageId]="message.id"
-              [foodOptions]="message.foodOptions || null"
-              [mealName]="message.mealName || null"
-              [isReadOnly]="message.role === MessageRoleTypes.CompletedFoodSelection"
+              [isEditMode]="message.role === MessageRoleTypes.PendingEditFoodSelection"
               (selectionConfirmed)="onFoodSelectionConfirmed($event)"
+              (editConfirmed)="onEditFoodSelectionConfirmed($event)"
               (cancel)="onCancelFoodSelection(message)">
             </app-food-selection>
+
           </div>
 
           <!-- Regular chat message -->
           <app-chat-message 
-            *ngIf="!message.isContextNote && message.role !== MessageRoleTypes.PendingFoodSelection && message.role !== MessageRoleTypes.CompletedFoodSelection"
+            *ngIf="!message.isContextNote && message.role !== MessageRoleTypes.PendingFoodSelection && message.role !== MessageRoleTypes.CompletedFoodSelection && message.role !== MessageRoleTypes.PendingEditFoodSelection"
             [text]="message.text"
             [isUser]="message.isUser"
             [timestamp]="message.timestamp"

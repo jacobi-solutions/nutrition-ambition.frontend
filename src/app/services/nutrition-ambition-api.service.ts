@@ -85,16 +85,6 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    getFoodEntries(body: GetFoodEntriesRequest | undefined): Observable<GetFoodEntriesResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    updateFoodEntry(body: UpdateFoodEntryRequest | undefined): Observable<UpdateFoodEntryResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     deleteFoodEntry(body: DeleteFoodEntryRequest | undefined): Observable<DeleteFoodEntryResponse>;
     /**
      * @param body (optional) 
@@ -106,6 +96,16 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     cancelFoodLogging(body: CancelServingSelectionRequest | undefined): Observable<BotMessageResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    startEditSelection(body: EditFoodSelectionRequest | undefined): Observable<EditFoodSelectionResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    submitEditServingSelection(body: SubmitEditServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse>;
     /**
      * @return Success
      */
@@ -855,118 +855,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    getFoodEntries(body: GetFoodEntriesRequest | undefined): Observable<GetFoodEntriesResponse> {
-        let url_ = this.baseUrl + "/api/FoodEntry/GetFoodEntries";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetFoodEntries(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetFoodEntries(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<GetFoodEntriesResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<GetFoodEntriesResponse>;
-        }));
-    }
-
-    protected processGetFoodEntries(response: HttpResponseBase): Observable<GetFoodEntriesResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = GetFoodEntriesResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<GetFoodEntriesResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    updateFoodEntry(body: UpdateFoodEntryRequest | undefined): Observable<UpdateFoodEntryResponse> {
-        let url_ = this.baseUrl + "/api/FoodEntry/UpdateFoodEntry";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUpdateFoodEntry(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processUpdateFoodEntry(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<UpdateFoodEntryResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<UpdateFoodEntryResponse>;
-        }));
-    }
-
-    protected processUpdateFoodEntry(response: HttpResponseBase): Observable<UpdateFoodEntryResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = UpdateFoodEntryResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<UpdateFoodEntryResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     deleteFoodEntry(body: DeleteFoodEntryRequest | undefined): Observable<DeleteFoodEntryResponse> {
         let url_ = this.baseUrl + "/api/FoodEntry/DeleteFoodEntry";
         url_ = url_.replace(/[?&]$/, "");
@@ -1129,6 +1017,118 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<BotMessageResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    startEditSelection(body: EditFoodSelectionRequest | undefined): Observable<EditFoodSelectionResponse> {
+        let url_ = this.baseUrl + "/api/FoodSelection/StartEditSelection";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processStartEditSelection(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processStartEditSelection(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<EditFoodSelectionResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<EditFoodSelectionResponse>;
+        }));
+    }
+
+    protected processStartEditSelection(response: HttpResponseBase): Observable<EditFoodSelectionResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = EditFoodSelectionResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<EditFoodSelectionResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    submitEditServingSelection(body: SubmitEditServingSelectionRequest | undefined): Observable<SubmitServingSelectionResponse> {
+        let url_ = this.baseUrl + "/api/FoodSelection/SubmitEditServingSelection";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSubmitEditServingSelection(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSubmitEditServingSelection(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SubmitServingSelectionResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SubmitServingSelectionResponse>;
+        }));
+    }
+
+    protected processSubmitEditServingSelection(response: HttpResponseBase): Observable<SubmitServingSelectionResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SubmitServingSelectionResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SubmitServingSelectionResponse>(null as any);
     }
 
     /**
@@ -1977,6 +1977,114 @@ export interface IDeleteFoodEntryResponse {
     accountId?: string | undefined;
 }
 
+export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
+    foodEntryId?: string | undefined;
+    loggedDateUtc?: Date | undefined;
+
+    constructor(data?: IEditFoodSelectionRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodEntryId = _data["foodEntryId"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): EditFoodSelectionRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new EditFoodSelectionRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodEntryId"] = this.foodEntryId;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IEditFoodSelectionRequest {
+    foodEntryId?: string | undefined;
+    loggedDateUtc?: Date | undefined;
+}
+
+export class EditFoodSelectionResponse implements IEditFoodSelectionResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    foodEntry?: FoodEntry;
+    contextNote?: string | undefined;
+
+    constructor(data?: IEditFoodSelectionResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.foodEntry = _data["foodEntry"] ? FoodEntry.fromJS(_data["foodEntry"]) : <any>undefined;
+            this.contextNote = _data["contextNote"];
+        }
+    }
+
+    static fromJS(data: any): EditFoodSelectionResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new EditFoodSelectionResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["foodEntry"] = this.foodEntry ? this.foodEntry.toJSON() : <any>undefined;
+        data["contextNote"] = this.contextNote;
+        return data;
+    }
+}
+
+export interface IEditFoodSelectionResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    foodEntry?: FoodEntry;
+    contextNote?: string | undefined;
+}
+
 export class ErrorDto implements IErrorDto {
     errorMessage?: string | undefined;
     errorCode?: string | undefined;
@@ -2103,6 +2211,9 @@ export interface IFeedbackEntry {
 
 export class FoodBreakdown implements IFoodBreakdown {
     foodItemIds?: string[] | undefined;
+    foodEntryId?: string | undefined;
+    groupId?: string | undefined;
+    itemSetId?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     totalAmount?: number;
@@ -2125,6 +2236,9 @@ export class FoodBreakdown implements IFoodBreakdown {
                 for (let item of _data["foodItemIds"])
                     this.foodItemIds!.push(item);
             }
+            this.foodEntryId = _data["foodEntryId"];
+            this.groupId = _data["groupId"];
+            this.itemSetId = _data["itemSetId"];
             this.name = _data["name"];
             this.brandName = _data["brandName"];
             this.totalAmount = _data["totalAmount"];
@@ -2151,6 +2265,9 @@ export class FoodBreakdown implements IFoodBreakdown {
             for (let item of this.foodItemIds)
                 data["foodItemIds"].push(item);
         }
+        data["foodEntryId"] = this.foodEntryId;
+        data["groupId"] = this.groupId;
+        data["itemSetId"] = this.itemSetId;
         data["name"] = this.name;
         data["brandName"] = this.brandName;
         data["totalAmount"] = this.totalAmount;
@@ -2166,6 +2283,9 @@ export class FoodBreakdown implements IFoodBreakdown {
 
 export interface IFoodBreakdown {
     foodItemIds?: string[] | undefined;
+    foodEntryId?: string | undefined;
+    groupId?: string | undefined;
+    itemSetId?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     totalAmount?: number;
@@ -2234,10 +2354,10 @@ export class FoodEntry implements IFoodEntry {
     createdDateUtc?: Date;
     lastUpdatedDateUtc?: Date;
     accountId?: string | undefined;
-    description?: string | undefined;
+    mealName?: string | undefined;
+    originalChatMessageId?: string | undefined;
     loggedDateUtc?: Date;
-    meal?: MealType;
-    groupedItems?: FoodGroup[] | undefined;
+    groups?: FoodGroup[] | undefined;
 
     constructor(data?: IFoodEntry) {
         if (data) {
@@ -2254,13 +2374,13 @@ export class FoodEntry implements IFoodEntry {
             this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
             this.lastUpdatedDateUtc = _data["lastUpdatedDateUtc"] ? new Date(_data["lastUpdatedDateUtc"].toString()) : <any>undefined;
             this.accountId = _data["accountId"];
-            this.description = _data["description"];
+            this.mealName = _data["mealName"];
+            this.originalChatMessageId = _data["originalChatMessageId"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
-            this.meal = _data["meal"];
-            if (Array.isArray(_data["groupedItems"])) {
-                this.groupedItems = [] as any;
-                for (let item of _data["groupedItems"])
-                    this.groupedItems!.push(FoodGroup.fromJS(item));
+            if (Array.isArray(_data["groups"])) {
+                this.groups = [] as any;
+                for (let item of _data["groups"])
+                    this.groups!.push(FoodGroup.fromJS(item));
             }
         }
     }
@@ -2278,13 +2398,13 @@ export class FoodEntry implements IFoodEntry {
         data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
         data["lastUpdatedDateUtc"] = this.lastUpdatedDateUtc ? this.lastUpdatedDateUtc.toISOString() : <any>undefined;
         data["accountId"] = this.accountId;
-        data["description"] = this.description;
+        data["mealName"] = this.mealName;
+        data["originalChatMessageId"] = this.originalChatMessageId;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
-        data["meal"] = this.meal;
-        if (Array.isArray(this.groupedItems)) {
-            data["groupedItems"] = [];
-            for (let item of this.groupedItems)
-                data["groupedItems"].push(item.toJSON());
+        if (Array.isArray(this.groups)) {
+            data["groups"] = [];
+            for (let item of this.groups)
+                data["groups"].push(item.toJSON());
         }
         return data;
     }
@@ -2295,15 +2415,16 @@ export interface IFoodEntry {
     createdDateUtc?: Date;
     lastUpdatedDateUtc?: Date;
     accountId?: string | undefined;
-    description?: string | undefined;
+    mealName?: string | undefined;
+    originalChatMessageId?: string | undefined;
     loggedDateUtc?: Date;
-    meal?: MealType;
-    groupedItems?: FoodGroup[] | undefined;
+    groups?: FoodGroup[] | undefined;
 }
 
 export class FoodGroup implements IFoodGroup {
+    id?: string | undefined;
     groupName?: string | undefined;
-    items?: FoodItem[] | undefined;
+    itemSet?: FoodItem;
 
     constructor(data?: IFoodGroup) {
         if (data) {
@@ -2316,12 +2437,9 @@ export class FoodGroup implements IFoodGroup {
 
     init(_data?: any) {
         if (_data) {
+            this.id = _data["id"];
             this.groupName = _data["groupName"];
-            if (Array.isArray(_data["items"])) {
-                this.items = [] as any;
-                for (let item of _data["items"])
-                    this.items!.push(FoodItem.fromJS(item));
-            }
+            this.itemSet = _data["itemSet"] ? FoodItem.fromJS(_data["itemSet"]) : <any>undefined;
         }
     }
 
@@ -2334,33 +2452,23 @@ export class FoodGroup implements IFoodGroup {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
         data["groupName"] = this.groupName;
-        if (Array.isArray(this.items)) {
-            data["items"] = [];
-            for (let item of this.items)
-                data["items"].push(item.toJSON());
-        }
+        data["itemSet"] = this.itemSet ? this.itemSet.toJSON() : <any>undefined;
         return data;
     }
 }
 
 export interface IFoodGroup {
+    id?: string | undefined;
     groupName?: string | undefined;
-    items?: FoodItem[] | undefined;
+    itemSet?: FoodItem;
 }
 
 export class FoodItem implements IFoodItem {
     id?: string | undefined;
-    name?: string | undefined;
-    brandName?: string | undefined;
-    fatSecretFoodId?: string | undefined;
-    fatSecretServingId?: string | undefined;
-    scaleFactor?: number;
-    quantity?: number;
-    unit?: string | undefined;
-    weightGramsPerUnit?: number | undefined;
-    nutrients?: { [key: string]: number; } | undefined;
-    apiServingKind?: UnitKind;
+    selectedFatSecretFoodId?: string | undefined;
+    items?: SelectableFoodMatch[] | undefined;
 
     constructor(data?: IFoodItem) {
         if (data) {
@@ -2374,22 +2482,12 @@ export class FoodItem implements IFoodItem {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
-            this.name = _data["name"];
-            this.brandName = _data["brandName"];
-            this.fatSecretFoodId = _data["fatSecretFoodId"];
-            this.fatSecretServingId = _data["fatSecretServingId"];
-            this.scaleFactor = _data["scaleFactor"];
-            this.quantity = _data["quantity"];
-            this.unit = _data["unit"];
-            this.weightGramsPerUnit = _data["weightGramsPerUnit"];
-            if (_data["nutrients"]) {
-                this.nutrients = {} as any;
-                for (let key in _data["nutrients"]) {
-                    if (_data["nutrients"].hasOwnProperty(key))
-                        (<any>this.nutrients)![key] = _data["nutrients"][key];
-                }
+            this.selectedFatSecretFoodId = _data["selectedFatSecretFoodId"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(SelectableFoodMatch.fromJS(item));
             }
-            this.apiServingKind = _data["apiServingKind"];
         }
     }
 
@@ -2403,38 +2501,20 @@ export class FoodItem implements IFoodItem {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
-        data["name"] = this.name;
-        data["brandName"] = this.brandName;
-        data["fatSecretFoodId"] = this.fatSecretFoodId;
-        data["fatSecretServingId"] = this.fatSecretServingId;
-        data["scaleFactor"] = this.scaleFactor;
-        data["quantity"] = this.quantity;
-        data["unit"] = this.unit;
-        data["weightGramsPerUnit"] = this.weightGramsPerUnit;
-        if (this.nutrients) {
-            data["nutrients"] = {};
-            for (let key in this.nutrients) {
-                if (this.nutrients.hasOwnProperty(key))
-                    (<any>data["nutrients"])[key] = (<any>this.nutrients)[key];
-            }
+        data["selectedFatSecretFoodId"] = this.selectedFatSecretFoodId;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
         }
-        data["apiServingKind"] = this.apiServingKind;
         return data;
     }
 }
 
 export interface IFoodItem {
     id?: string | undefined;
-    name?: string | undefined;
-    brandName?: string | undefined;
-    fatSecretFoodId?: string | undefined;
-    fatSecretServingId?: string | undefined;
-    scaleFactor?: number;
-    quantity?: number;
-    unit?: string | undefined;
-    weightGramsPerUnit?: number | undefined;
-    nutrients?: { [key: string]: number; } | undefined;
-    apiServingKind?: UnitKind;
+    selectedFatSecretFoodId?: string | undefined;
+    items?: SelectableFoodMatch[] | undefined;
 }
 
 export class GetChatMessagesRequest implements IGetChatMessagesRequest {
@@ -2797,118 +2877,6 @@ export interface IGetFeedbackResponse {
     feedbackEntry?: FeedbackEntry;
 }
 
-export class GetFoodEntriesRequest implements IGetFoodEntriesRequest {
-    loggedDateUtc?: Date | undefined;
-    meal?: MealType;
-
-    constructor(data?: IGetFoodEntriesRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
-            this.meal = _data["meal"];
-        }
-    }
-
-    static fromJS(data: any): GetFoodEntriesRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new GetFoodEntriesRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
-        data["meal"] = this.meal;
-        return data;
-    }
-}
-
-export interface IGetFoodEntriesRequest {
-    loggedDateUtc?: Date | undefined;
-    meal?: MealType;
-}
-
-export class GetFoodEntriesResponse implements IGetFoodEntriesResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    foodEntries?: FoodEntry[] | undefined;
-
-    constructor(data?: IGetFoodEntriesResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            if (Array.isArray(_data["foodEntries"])) {
-                this.foodEntries = [] as any;
-                for (let item of _data["foodEntries"])
-                    this.foodEntries!.push(FoodEntry.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): GetFoodEntriesResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new GetFoodEntriesResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        if (Array.isArray(this.foodEntries)) {
-            data["foodEntries"] = [];
-            for (let item of this.foodEntries)
-                data["foodEntries"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface IGetFoodEntriesResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    foodEntries?: FoodEntry[] | undefined;
-}
-
 export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
     topic?: string | undefined;
     loggedDateUtc?: Date | undefined;
@@ -2952,8 +2920,10 @@ export interface ILearnMoreAboutRequest {
 export class LogMealToolResponse implements ILogMealToolResponse {
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
-    loggedDateUtc?: Date;
     selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    foodEntryId?: string | undefined;
+    groupIdsByPhrase?: { [key: string]: string; } | undefined;
+    itemSetIdsByPhrase?: { [key: string]: string; } | undefined;
 
     constructor(data?: ILogMealToolResponse) {
         if (data) {
@@ -2968,12 +2938,26 @@ export class LogMealToolResponse implements ILogMealToolResponse {
         if (_data) {
             this.mealName = _data["mealName"];
             this.pendingMessageId = _data["pendingMessageId"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
             if (_data["selectableFoodMatches"]) {
                 this.selectableFoodMatches = {} as any;
                 for (let key in _data["selectableFoodMatches"]) {
                     if (_data["selectableFoodMatches"].hasOwnProperty(key))
                         (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : [];
+                }
+            }
+            this.foodEntryId = _data["foodEntryId"];
+            if (_data["groupIdsByPhrase"]) {
+                this.groupIdsByPhrase = {} as any;
+                for (let key in _data["groupIdsByPhrase"]) {
+                    if (_data["groupIdsByPhrase"].hasOwnProperty(key))
+                        (<any>this.groupIdsByPhrase)![key] = _data["groupIdsByPhrase"][key];
+                }
+            }
+            if (_data["itemSetIdsByPhrase"]) {
+                this.itemSetIdsByPhrase = {} as any;
+                for (let key in _data["itemSetIdsByPhrase"]) {
+                    if (_data["itemSetIdsByPhrase"].hasOwnProperty(key))
+                        (<any>this.itemSetIdsByPhrase)![key] = _data["itemSetIdsByPhrase"][key];
                 }
             }
         }
@@ -2990,12 +2974,26 @@ export class LogMealToolResponse implements ILogMealToolResponse {
         data = typeof data === 'object' ? data : {};
         data["mealName"] = this.mealName;
         data["pendingMessageId"] = this.pendingMessageId;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
         if (this.selectableFoodMatches) {
             data["selectableFoodMatches"] = {};
             for (let key in this.selectableFoodMatches) {
                 if (this.selectableFoodMatches.hasOwnProperty(key))
                     (<any>data["selectableFoodMatches"])[key] = (<any>this.selectableFoodMatches)[key];
+            }
+        }
+        data["foodEntryId"] = this.foodEntryId;
+        if (this.groupIdsByPhrase) {
+            data["groupIdsByPhrase"] = {};
+            for (let key in this.groupIdsByPhrase) {
+                if (this.groupIdsByPhrase.hasOwnProperty(key))
+                    (<any>data["groupIdsByPhrase"])[key] = (<any>this.groupIdsByPhrase)[key];
+            }
+        }
+        if (this.itemSetIdsByPhrase) {
+            data["itemSetIdsByPhrase"] = {};
+            for (let key in this.itemSetIdsByPhrase) {
+                if (this.itemSetIdsByPhrase.hasOwnProperty(key))
+                    (<any>data["itemSetIdsByPhrase"])[key] = (<any>this.itemSetIdsByPhrase)[key];
             }
         }
         return data;
@@ -3005,16 +3003,10 @@ export class LogMealToolResponse implements ILogMealToolResponse {
 export interface ILogMealToolResponse {
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
-    loggedDateUtc?: Date;
     selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
-}
-
-export enum MealType {
-    Unknown = "Unknown",
-    Breakfast = "Breakfast",
-    Lunch = "Lunch",
-    Dinner = "Dinner",
-    Snack = "Snack",
+    foodEntryId?: string | undefined;
+    groupIdsByPhrase?: { [key: string]: string; } | undefined;
+    itemSetIdsByPhrase?: { [key: string]: string; } | undefined;
 }
 
 export enum MessageRoleTypes {
@@ -3026,6 +3018,8 @@ export enum MessageRoleTypes {
     PendingFoodSelection = "PendingFoodSelection",
     CompletedFoodSelection = "CompletedFoodSelection",
     CanceledFoodSelection = "CanceledFoodSelection",
+    PendingEditFoodSelection = "PendingEditFoodSelection",
+    CompletedEditFoodSelection = "CompletedEditFoodSelection",
 }
 
 export class NutrientBreakdown implements INutrientBreakdown {
@@ -3396,6 +3390,62 @@ export interface ISelectableFoodServing {
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
     isBestMatch?: boolean;
+}
+
+export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {
+    pendingMessageId?: string | undefined;
+    foodEntryId?: string | undefined;
+    loggedDateUtc?: Date;
+    selections?: UserSelectedServing[] | undefined;
+
+    constructor(data?: ISubmitEditServingSelectionRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.pendingMessageId = _data["pendingMessageId"];
+            this.foodEntryId = _data["foodEntryId"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            if (Array.isArray(_data["selections"])) {
+                this.selections = [] as any;
+                for (let item of _data["selections"])
+                    this.selections!.push(UserSelectedServing.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SubmitEditServingSelectionRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SubmitEditServingSelectionRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["pendingMessageId"] = this.pendingMessageId;
+        data["foodEntryId"] = this.foodEntryId;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        if (Array.isArray(this.selections)) {
+            data["selections"] = [];
+            for (let item of this.selections)
+                data["selections"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface ISubmitEditServingSelectionRequest {
+    pendingMessageId?: string | undefined;
+    foodEntryId?: string | undefined;
+    loggedDateUtc?: Date;
+    selections?: UserSelectedServing[] | undefined;
 }
 
 export class SubmitServingSelectionRequest implements ISubmitServingSelectionRequest {
@@ -3790,130 +3840,6 @@ export interface IUpdateFeedbackResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     feedbackEntry?: FeedbackEntry;
-}
-
-export class UpdateFoodEntryRequest implements IUpdateFoodEntryRequest {
-    foodEntryId?: string | undefined;
-    description?: string | undefined;
-    meal?: MealType;
-    loggedDateUtc?: Date | undefined;
-    parsedItems?: FoodItem[] | undefined;
-
-    constructor(data?: IUpdateFoodEntryRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.foodEntryId = _data["foodEntryId"];
-            this.description = _data["description"];
-            this.meal = _data["meal"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
-            if (Array.isArray(_data["parsedItems"])) {
-                this.parsedItems = [] as any;
-                for (let item of _data["parsedItems"])
-                    this.parsedItems!.push(FoodItem.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): UpdateFoodEntryRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new UpdateFoodEntryRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["foodEntryId"] = this.foodEntryId;
-        data["description"] = this.description;
-        data["meal"] = this.meal;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
-        if (Array.isArray(this.parsedItems)) {
-            data["parsedItems"] = [];
-            for (let item of this.parsedItems)
-                data["parsedItems"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface IUpdateFoodEntryRequest {
-    foodEntryId?: string | undefined;
-    description?: string | undefined;
-    meal?: MealType;
-    loggedDateUtc?: Date | undefined;
-    parsedItems?: FoodItem[] | undefined;
-}
-
-export class UpdateFoodEntryResponse implements IUpdateFoodEntryResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    updatedEntry?: FoodEntry;
-
-    constructor(data?: IUpdateFoodEntryResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.updatedEntry = _data["updatedEntry"] ? FoodEntry.fromJS(_data["updatedEntry"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): UpdateFoodEntryResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new UpdateFoodEntryResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["updatedEntry"] = this.updatedEntry ? this.updatedEntry.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IUpdateFoodEntryResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    updatedEntry?: FoodEntry;
 }
 
 export class UserSelectedServing implements IUserSelectedServing {

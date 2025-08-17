@@ -68,7 +68,7 @@ export class EntryActionMenuComponent {
     console.log(`🎯 Action selected: ${action} for entry:`, this.entry);
     
     // Check if the action is implemented
-    const implementedActions: ActionType[] = ['remove', 'learn'];
+    const implementedActions: ActionType[] = ['remove', 'learn', 'edit'];
     
     if (implementedActions.includes(action)) {
       // Emit the event for implemented actions

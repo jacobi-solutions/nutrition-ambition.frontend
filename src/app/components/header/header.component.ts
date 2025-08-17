@@ -16,7 +16,9 @@ import {
   IonText,
   IonRow,
   IonCol,
-  IonGrid
+  IonGrid,
+  IonRefresher,
+  IonRefresherContent
 } from '@ionic/angular/standalone';
 import { AuthService } from 'src/app/services/auth.service';
 import { Router, RouterModule } from '@angular/router';
@@ -49,7 +51,9 @@ import { format } from 'date-fns';
     IonTitle, 
     IonDatetimeButton,
     IonModal,
-    IonDatetime
+    IonDatetime,
+    IonRefresher,
+    IonRefresherContent
   ]
 })
 export class AppHeaderComponent implements OnInit, OnDestroy {
@@ -79,6 +83,7 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   @Output() dateChanged = new EventEmitter<string>();
   @Output() logout = new EventEmitter<void>();
   @Output() login = new EventEmitter<void>();
+  @Output() refresh = new EventEmitter<void>();
   
   private lastDateChange = 0;
   private dateSubscription: Subscription;
@@ -198,5 +203,16 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   onNextDay() {
     console.log('[AppHeader] Next day clicked');
     this.nextDay.emit();
+  }
+  
+  // Handle pull-to-refresh
+  handleRefresh(event: CustomEvent) {
+    console.log('[AppHeader] Pull-to-refresh triggered');
+    this.refresh.emit();
+    
+    // Complete the refresh after a short delay
+    setTimeout(() => {
+      (event.target as any)?.complete();
+    }, 1000);
   }
 } 

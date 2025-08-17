@@ -7,13 +7,12 @@
   (previousDay)="onPreviousDay()"
   (nextDay)="onNextDay()"
   (login)="onLogin()"
-  (logout)="onLogout()">
+  (logout)="onLogout()"
+  (refresh)="onRefresh()">
 </app-header>
 
 <ion-content class="ion-padding">
-  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
-    <ion-refresher-content></ion-refresher-content>
-  </ion-refresher>
+
 
   <div class="main-content-wrapper">
     <div *ngIf="detailedLoading" class="loading-container">

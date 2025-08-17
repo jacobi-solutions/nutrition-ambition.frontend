@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import {
   IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
   IonSpinner, IonText, IonSegment, IonSegmentButton, IonLabel, IonList,
-  IonItem, IonIcon, IonButton, IonPopover, IonRefresher, IonRefresherContent
+  IonItem, IonIcon, IonButton, IonPopover
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import {
@@ -11,7 +11,8 @@ import {
   NutrientBreakdown,
   FoodBreakdown,
   FoodContribution,
-  NutritionAmbitionApiService
+  NutritionAmbitionApiService,
+  EditFoodSelectionRequest
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription, skip } from 'rxjs';
 import { DailySummaryService } from 'src/app/services/daily-summary.service';
@@ -34,6 +35,7 @@ import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-
 import { ToastController } from '@ionic/angular';
 import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
+import { FoodSelectionService } from 'src/app/services/food-selection.service';
 
 @Component({
   selector: 'app-daily-summary',
@@ -57,8 +59,6 @@ import { format } from 'date-fns';
     IonIcon,
     IonButton,
     IonPopover,
-    IonRefresher,
-    IonRefresherContent,
     AppHeaderComponent,
     EntryActionMenuComponent
   ]
@@ -98,7 +98,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   private toastController = inject(ToastController);
   private apiService = inject(NutritionAmbitionApiService);
 
-  constructor(private elementRef: ElementRef) {
+  constructor(private elementRef: ElementRef, private foodSelectionService: FoodSelectionService) {
     addIcons({
       chevronDownOutline,
       chevronForwardOutline,
@@ -166,13 +166,12 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
 
   onLogout() {
     this.authService.signOutUser().then(() => {
-      this.router.navigate(['/auth']);
+      this.router.navigate(['/login']);
     });
   }
 
-  handleRefresh(event: CustomEvent) {
+  onRefresh() {
     this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
-    setTimeout(() => (event.target as any)?.complete(), 1000);
   }
 
   loadDetailedSummary(date: Date, forceReload: boolean = false) {
@@ -344,11 +343,56 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
       case 'learn':
         this.handleLearnMore(event.entry);
         break;
+      case 'edit':
+        this.handleEditEntry(event.entry);   
+      break;
       default:
         console.log('Action not implemented:', event.action);
     }
   }
 
+  private handleEditEntry(entry: any) {
+    if (entry.entryType !== 'food') {
+      this.showErrorToast('Only food items can be edited.');
+      return;
+    }
+  
+    // You should now have these from the backend in each FoodBreakdown:
+    // entry.foodEntryId, entry.groupId, entry.itemSetId  (we only need foodEntryId to start)
+    if (!entry.foodEntryId) {
+      console.warn('No foodEntryId on entry; cannot start edit.');
+      this.showErrorToast('Sorry, could not locate this food to edit.');
+      return;
+    }
+  
+    const displayName = this.getFoodDisplayName(entry);
+  
+    // UX: set context note and navigate to Chat
+    this.chatService.setContextNote(`Editing ${displayName}`);
+    this.router.navigate(['/app/chat']);
+  
+    const req = new EditFoodSelectionRequest({
+      foodEntryId: entry.foodEntryId,                 // key change
+      loggedDateUtc: this.dateService.getSelectedDateUtc()
+      // optional: you can add a phrase hint later if you want to pre-focus a group
+    });
+  
+    this.foodSelectionService.startEditFoodSelection(req).subscribe({
+      next: (resp) => {
+        if (!resp?.isSuccess) {
+          this.showErrorToast('Failed to start edit. Please try again.');
+        }
+        // Chat page will render the PendingEditFoodSelection card automatically.
+      },
+      error: (err) => {
+        console.error('Edit start error', err);
+        this.showErrorToast('An error occurred while starting the edit.');
+      }
+    });
+  }
+  
+  
+  
   private async handleRemoveEntry(entry: any) {
     
     this.isPopoverOpen = false;

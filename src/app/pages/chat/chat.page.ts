@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
+import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, AnimationController } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
 import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlaneSharp } from 'ionicons/icons';
@@ -16,7 +16,10 @@ import {
   SelectableFoodMatch,
     SubmitServingSelectionRequest,
     SubmitServingSelectionResponse,
-    CancelServingSelectionRequest
+    CancelServingSelectionRequest,
+    SubmitEditServingSelectionRequest,
+    LogMealToolResponse,
+    UserSelectedServing
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -30,11 +33,16 @@ interface DisplayMessage {
   id?: string;
   text: string;
   isUser: boolean;
-  isContextNote?: boolean; // Property to identify context note messages
+  isContextNote?: boolean;
   timestamp: Date;
-  foodOptions?: Record<string, SelectableFoodMatch[]> | null; // Add foodOptions property
-  mealName?: string | null;
   role?: MessageRoleTypes;
+
+  // keep full payload from backend
+  logMealToolResponse?: LogMealToolResponse | null;
+
+  // optional convenience fields
+  foodOptions?: Record<string, SelectableFoodMatch[]> | null;
+  mealName?: string | null;
 }
 
 @Component({
@@ -49,8 +57,6 @@ interface DisplayMessage {
     IonFooter,
     IonIcon,
     IonSpinner,
-    IonRefresher,
-    IonRefresherContent,
     AppHeaderComponent,
     ChatMessageComponent,
     FoodSelectionComponent
@@ -240,25 +246,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   // Handle logout
   onLogout() {
     this.authService.signOutUser().then(() => {
-      this.router.navigate(['/auth']);
+      this.router.navigate(['/login']);
     });
   }
 
-  // Handle refresh from header pull-down
+  // Handle refresh from header
   onRefresh() {
     console.log('[Chat] Refresh triggered, reloading chat history');
     this.loadChatHistory(this.dateService.getSelectedDateUtc());
-  }
-
-  // Handle refresh from ion-refresher
-  handleRefresh(event: CustomEvent) {
-    console.log('[Chat] Pull-to-refresh triggered, reloading chat history');
-    this.loadChatHistory(this.dateService.getSelectedDateUtc());
-    
-    // Complete the refresh after a short delay
-    setTimeout(() => {
-      (event.target as any)?.complete();
-    }, 1000);
   }
 
   async loadChatHistory(date: Date) {
@@ -337,7 +332,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             const contextNoteMsgs: ChatMessage[] = [];
             const regularMsgs: ChatMessage[] = [];
             
-            // Separate messages by role - only include User (0), Assistant (1), ContextNote (4), PendingFoodSelection (5), and CompletedFoodSelection (6)
+            // Separate messages by role - only include User (0), Assistant (1), ContextNote (4), PendingFoodSelection (5), CompletedFoodSelection (6), and PendingEditFoodSelection (8)
             response.messages.forEach(msg => {
               if (msg.role === MessageRoleTypes.ContextNote) {
                 contextNoteMsgs.push(msg);
@@ -345,7 +340,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
                 msg.role === MessageRoleTypes.User || 
                 msg.role === MessageRoleTypes.Assistant || 
                 msg.role === MessageRoleTypes.PendingFoodSelection ||
-                msg.role === MessageRoleTypes.CompletedFoodSelection
+                msg.role === MessageRoleTypes.CompletedFoodSelection ||
+                msg.role === MessageRoleTypes.PendingEditFoodSelection ||
+                msg.role === MessageRoleTypes.CompletedEditFoodSelection
               ) {
                 regularMsgs.push(msg);
               }
@@ -462,27 +459,27 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         this.isLoading = false;
 
         // Check if response has food selection requirement
-        if (
-          response.terminateEarlyForUserInput &&
+        if (response.terminateEarlyForUserInput &&
           response.logMealToolResponse?.selectableFoodMatches &&
-          Object.keys(response.logMealToolResponse.selectableFoodMatches).length > 0
-        ) {
-          // Create a new assistant message with food options
-          
-          const foodSelectionMessage: DisplayMessage = {
-            id: response.logMealToolResponse?.pendingMessageId || '',
-            text: response.message || 'Please confirm your food selections:',
-            isUser: false,
-            timestamp: new Date(),
-            foodOptions: response.logMealToolResponse?.selectableFoodMatches || null,
-            mealName: response.logMealToolResponse?.mealName || null,
-            role: MessageRoleTypes.PendingFoodSelection
-          };
-          console.log('Pushing food selection message:', foodSelectionMessage);
-          this.messages.push(foodSelectionMessage);
-          this.scrollToBottom();
-          return;
-        }
+          Object.keys(response.logMealToolResponse.selectableFoodMatches).length > 0) {
+      
+        const ltr = response.logMealToolResponse;
+      
+        const foodSelectionMessage: DisplayMessage = {
+          id: ltr?.pendingMessageId || '',
+          text: response.message || 'Please confirm your food selections:',
+          isUser: false,
+          timestamp: new Date(),
+          role: MessageRoleTypes.PendingFoodSelection,
+          logMealToolResponse: ltr, // <-- keep the full payload
+          foodOptions: ltr?.selectableFoodMatches || null,
+          mealName: ltr?.mealName || null
+        };
+      
+        this.messages.push(foodSelectionMessage);
+        this.scrollToBottom();
+        return;
+      }
 
         if (response.isSuccess && response.message) {
           console.log('[DEBUG] Received bot response:', response.message);
@@ -697,6 +694,73 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
+  // Handle edit food selection confirmation for standalone food selection components
+  // Child emits: { selections: UserSelectedServing[] }
+onEditFoodSelectionConfirmed(evt: { selections: UserSelectedServing[] }): void {
+  // find the latest PendingEditFoodSelection message
+  let pendingEdit: DisplayMessage | undefined;
+  for (let i = this.messages.length - 1; i >= 0; i--) {
+    const m = this.messages[i];
+    if (m.role === MessageRoleTypes.PendingEditFoodSelection) {
+      pendingEdit = m;
+      break;
+    }
+  }
+
+  if (!pendingEdit?.logMealToolResponse) {
+    this.showErrorToast('Edit session not found.');
+    return;
+  }
+
+  const ltr = pendingEdit.logMealToolResponse;
+  const pendingMessageId = ltr.pendingMessageId || pendingEdit.id;
+  const foodEntryId = ltr.foodEntryId;
+
+  if (!pendingMessageId || !foodEntryId) {
+    this.showErrorToast('Missing edit context. Please start editing again.');
+    return;
+  }
+
+  const built = new SubmitEditServingSelectionRequest ({
+    pendingMessageId,
+    foodEntryId,
+    loggedDateUtc: this.dateService.getSelectedDateUtc(),
+    selections: evt.selections || []
+  });
+
+  this.foodSelectionService.submitEditServingSelection(built).subscribe({
+    next: (response) => {
+      if (!response.isSuccess) {
+        this.showErrorToast('Failed to update food selection.');
+        return;
+      }
+
+      if (response.updatedSelectionMessage && response.updatedSelectionMessage.id) {
+        const idx = this.messages.findIndex(m => m.id === response.updatedSelectionMessage!.id);
+        if (idx !== -1) {
+          this.messages[idx] = this.toDisplayMessage(response.updatedSelectionMessage);
+        } else {
+          this.messages.push(this.toDisplayMessage(response.updatedSelectionMessage));
+        }
+      }
+
+      if (response.newAssistantMessage) {
+        this.messages.push(this.toDisplayMessage(response.newAssistantMessage));
+      }
+
+      // Optionally notify summary to refresh
+      this.chatService.mealLogged$.next?.();
+
+      this.scrollToBottom();
+    },
+    error: (error) => {
+      console.error('Error submitting edit food selections:', error);
+      this.showErrorToast('Failed to update food selection.');
+    }
+  });
+}
+
+
   // Handle food selection cancellation
   onCancelFoodSelection(message: DisplayMessage): void {
     if (!message.id) {
@@ -769,4 +833,17 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
       }
     });
   }
+  private toDisplayMessage(msg: ChatMessage): DisplayMessage {
+    return {
+      id: msg.id,
+      text: msg.content || '',
+      isUser: msg.role === MessageRoleTypes.User,
+      timestamp: msg.loggedDateUtc || msg.createdDateUtc || new Date(),
+      role: msg.role,
+      logMealToolResponse: msg.logMealToolResponse || null,
+      foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
+      mealName: msg.logMealToolResponse?.mealName || null
+    };
+  }
+  
 } 

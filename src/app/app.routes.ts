@@ -35,6 +35,7 @@ export const routes: Routes = [
   {
     path: 'app',
     loadComponent: () => import('./pages/tabs/tabs.page').then(m => m.TabsPage),
+    canActivate: [AuthGuard],
     children: [
       {
         path: 'chat',
