@@ -273,52 +273,103 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   selectNutrient(nutrient: NutrientBreakdown) {
-    this.selectedNutrient = this.selectedNutrient?.nutrientKey === nutrient.nutrientKey ? null : nutrient;
+    const isAlreadySelected = this.selectedNutrient?.nutrientKey === nutrient.nutrientKey;
+    this.selectedNutrient = isAlreadySelected ? null : nutrient;
     this.selectedFood = null;
+    
+    // If we're expanding a nutrient, scroll to it after DOM updates
+    if (!isAlreadySelected && nutrient && nutrient.nutrientKey) {
+      setTimeout(() => {
+        this.scrollToSelectedItem('nutrient', nutrient.nutrientKey!);
+      }, 150);
+    }
   }
 
   selectFood(food: FoodBreakdown) {
-    this.selectedFood = this.selectedFood?.name === food.name ? null : food;
+    const isAlreadySelected = this.isSameFood(this.selectedFood, food);
+    this.selectedFood = isAlreadySelected ? null : food;
     this.selectedNutrient = null;
+    
+    // If we're expanding a food, scroll to it after DOM updates
+    if (!isAlreadySelected && food) {
+      setTimeout(() => {
+        this.scrollToSelectedItem('food', food.name || '');
+      }, 150);
+    }
   }
+
+  
 
   navigateToFood(foodName: string) {
     this.viewMode = 'foods';
     this.selectedFood = this.detailedData?.foods?.find(f => f.name?.toLowerCase() === foodName.toLowerCase()) || null;
+    this.selectedNutrient = null;
     
     // Scroll to the selected food after DOM updates
     setTimeout(() => {
       this.scrollToSelectedItem('food', foodName);
-    }, 100);
+    }, 300);
   }
 
   navigateToNutrient(nutrientKey: string) {
     this.viewMode = 'nutrients';
     this.selectedNutrient = this.detailedData?.nutrients?.find(n => n.nutrientKey === nutrientKey) || null;
+    this.selectedFood = null;
     
     // Scroll to the selected nutrient after DOM updates
     setTimeout(() => {
       this.scrollToSelectedItem('nutrient', nutrientKey);
-    }, 100);
+    }, 300);
   }
 
   private scrollToSelectedItem(type: 'food' | 'nutrient', identifier: string) {
     if (!this.content) return;
 
     try {
-      // Find the selected item element
-      const targetElement = this.elementRef.nativeElement.querySelector('ion-item.selected');
-      
-      if (targetElement) {
-        // Use Ionic's scrollToPoint method to scroll to the element
-        // Get the element's offset top position relative to the content area
-        const elementTop = targetElement.offsetTop;
+      // Give Angular more time to update the DOM, especially for view mode changes
+      setTimeout(() => {
+        let targetElement: Element | null = null;
         
-        // Scroll to position the element nicely in view (not at very top)
-        const scrollPosition = Math.max(0, elementTop - 100);
+        if (type === 'food') {
+          // For foods, look for the selected food item and its expanded drilldown
+          targetElement = this.elementRef.nativeElement.querySelector('ion-item.selected');
+          
+          // If we can't find a selected item, try to find the expanded card
+          if (!targetElement) {
+            targetElement = this.elementRef.nativeElement.querySelector('ion-card.expanded');
+          }
+        } else if (type === 'nutrient') {
+          // For nutrients, look for the selected nutrient item
+          targetElement = this.elementRef.nativeElement.querySelector('ion-item.selected');
+          
+          // If we can't find a selected item, try to find the expanded card
+          if (!targetElement) {
+            targetElement = this.elementRef.nativeElement.querySelector('ion-card.expanded');
+          }
+        }
         
-        this.content.scrollToPoint(0, scrollPosition, 300);
-      }
+        if (targetElement) {
+          // Get the element's position relative to the document
+          const targetRect = targetElement.getBoundingClientRect();
+          
+          // Get the content element's scroll position
+          this.content.getScrollElement().then((scrollElement: HTMLElement) => {
+            const contentRect = scrollElement.getBoundingClientRect();
+            
+            // Calculate the target scroll position
+            // We want to position the element a bit below the top of the visible area
+            const targetPosition = scrollElement.scrollTop + targetRect.top - contentRect.top - 80;
+            
+            // Ensure we don't scroll past the top
+            const scrollPosition = Math.max(0, targetPosition);
+            
+            // Scroll smoothly to the target position
+            this.content.scrollToPoint(0, scrollPosition, 500);
+          });
+        } else {
+          console.warn(`Could not find target element for ${type}: ${identifier}`);
+        }
+      }, 100); // Additional small delay to ensure DOM is fully updated
     } catch (error) {
       console.warn('Failed to scroll to selected item:', error);
     }
@@ -453,43 +504,64 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private removeFromUI(entry: any) {
-    if (!this.detailedData?.foods) return;
-
-    // Remove the food from the UI
-    this.detailedData.foods = this.detailedData.foods.filter(food => {
-      // Compare by food item IDs
-      const foodKey = food.foodItemIds?.join(',');
-      const entryKey = entry.foodItemIds?.join(',');
-      return foodKey !== entryKey;
-    });
-
-    // Clear selected food if it was the one being removed
-    if (this.selectedFood && this.selectedFood.foodItemIds?.join(',') === entry.foodItemIds?.join(',')) {
+    // Remove from flat list (legacy)
+    if (this.detailedData?.foods) {
+      const entryKey = (entry.foodItemIds ?? []).join(',');
+      this.detailedData.foods = this.detailedData.foods
+        .filter(f => (f.foodItemIds ?? []).join(',') !== entryKey);
+    }
+  
+    // Remove from entry card
+    if (this.detailedData?.foodEntries) {
+      const targetEntry = this.detailedData.foodEntries.find(e => e.foodEntryId === entry.foodEntryId);
+      if (targetEntry?.foods) {
+        const entryKey = (entry.foodItemIds ?? []).join(',');
+        targetEntry.foods = targetEntry.foods
+          .filter((f: any) => (f.foodItemIds ?? []).join(',') !== entryKey);
+      }
+    }
+  
+    // Clear selection if it was this one
+    if (this.selectedFood && this.isSameFood(this.selectedFood, entry)) {
       this.selectedFood = null;
     }
   }
-
+  
   private undoRemoval(foodKey: string) {
     const removedFood = this.removedFoods.get(foodKey);
     if (!removedFood) return;
-
-    // Clear the timeout
+  
+    // Cancel timeout
     const timeoutId = this.undoTimeouts.get(foodKey);
     if (timeoutId) {
       clearTimeout(timeoutId);
       this.undoTimeouts.delete(foodKey);
     }
-
-    // Restore the food to the UI
+  
+    // Restore flat list
     if (this.detailedData?.foods) {
       this.detailedData.foods.push(removedFood);
-      // Re-sort foods to maintain original order (if needed)
-      // For now, just add to end
     }
-
-    // Clean up
+  
+    // Restore entry card
+    if (this.detailedData?.foodEntries) {
+      const targetEntry = this.detailedData.foodEntries.find(e => e.foodEntryId === removedFood.foodEntryId);
+      if (targetEntry) {
+        targetEntry.foods = targetEntry.foods || [];
+        targetEntry.foods.push(removedFood);
+      }
+    }
+  
     this.removedFoods.delete(foodKey);
   }
+
+  entryContainsSelectedFood(entry: any): boolean {
+    if (!entry || !this.selectedFood) return false;
+    return (entry.foods ?? []).some((f: any) => this.isSameFood(f, this.selectedFood));
+  }
+
+  
+  
 
   private confirmRemoval(foodKey: string) {
     const removedFood = this.removedFoods.get(foodKey);
@@ -523,6 +595,19 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     this.undoTimeouts.delete(foodKey);
   }
 
+  isSameFood(a: any | null, b: any | null): boolean {
+    if (!a || !b) return false;
+  
+    if (a.itemSetId && b.itemSetId) return a.itemSetId === b.itemSetId;
+  
+    const aKey = Array.isArray(a.foodItemIds) ? a.foodItemIds.join(',') : '';
+    const bKey = Array.isArray(b.foodItemIds) ? b.foodItemIds.join(',') : '';
+    if (aKey && bKey) return aKey === bKey;
+  
+    return (a.name || '').toLowerCase() === (b.name || '').toLowerCase();
+  }
+  
+  
   
 
   private handleLearnMore(entry: any) {
@@ -571,8 +656,16 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     return food.brandName ? `${food.brandName} - ${food.name}` : food.name;
   }
 
+  trackByEntryId(index: number, entry: any): string {
+    return entry?.foodEntryId || index.toString();
+  }
+  
   trackById(index: number, item: any): string {
-    return item?.id || item?.nutrientKey || item?.name || index.toString();
+    return item?.itemSetId 
+        || (Array.isArray(item?.foodItemIds) ? item.foodItemIds.join(',') : '') 
+        || item?.nutrientKey 
+        || item?.name 
+        || index.toString();
   }
 
   segmentChanged(event: any) {
@@ -582,7 +675,8 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   get hasFoodEntries(): boolean {
-    return !!this.detailedData?.foods?.length;
+    const entries = this.detailedData?.foodEntries ?? [];
+    return entries.some(e => (e.foods?.length ?? 0) > 0);
   }
 
   // Helper method to check if an item is the last in the list

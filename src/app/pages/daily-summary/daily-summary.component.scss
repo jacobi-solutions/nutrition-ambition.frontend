@@ -58,6 +58,13 @@
   }
 }
 
+.entry-timestamp {
+  font-size: 0.75rem;   // small like in the chat
+  color: var(--ion-color-medium);
+  text-align: center;;
+  margin-bottom: 0.5rem;
+}
+
 .error-message {
   color: var(--ion-color-danger);
   padding: 16px;

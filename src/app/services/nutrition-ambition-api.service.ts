@@ -2412,6 +2412,9 @@ export class FoodContribution implements IFoodContribution {
     unit?: string | undefined;
     foodUnit?: string | undefined;
     displayQuantity?: number;
+    foodEntryId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
 
     constructor(data?: IFoodContribution) {
         if (data) {
@@ -2430,6 +2433,9 @@ export class FoodContribution implements IFoodContribution {
             this.unit = _data["unit"];
             this.foodUnit = _data["foodUnit"];
             this.displayQuantity = _data["displayQuantity"];
+            this.foodEntryId = _data["foodEntryId"];
+            this.foodId = _data["foodId"];
+            this.componentId = _data["componentId"];
         }
     }
 
@@ -2448,6 +2454,9 @@ export class FoodContribution implements IFoodContribution {
         data["unit"] = this.unit;
         data["foodUnit"] = this.foodUnit;
         data["displayQuantity"] = this.displayQuantity;
+        data["foodEntryId"] = this.foodEntryId;
+        data["foodId"] = this.foodId;
+        data["componentId"] = this.componentId;
         return data;
     }
 }
@@ -2459,6 +2468,69 @@ export interface IFoodContribution {
     unit?: string | undefined;
     foodUnit?: string | undefined;
     displayQuantity?: number;
+    foodEntryId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
+}
+
+export class FoodEntryBreakdown implements IFoodEntryBreakdown {
+    foodEntryId?: string | undefined;
+    entryName?: string | undefined;
+    loggedDateUtc?: Date;
+    createdDateUtc?: Date;
+    foods?: FoodBreakdown[] | undefined;
+
+    constructor(data?: IFoodEntryBreakdown) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodEntryId = _data["foodEntryId"];
+            this.entryName = _data["entryName"];
+            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
+            if (Array.isArray(_data["foods"])) {
+                this.foods = [] as any;
+                for (let item of _data["foods"])
+                    this.foods!.push(FoodBreakdown.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): FoodEntryBreakdown {
+        data = typeof data === 'object' ? data : {};
+        let result = new FoodEntryBreakdown();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodEntryId"] = this.foodEntryId;
+        data["entryName"] = this.entryName;
+        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
+        if (Array.isArray(this.foods)) {
+            data["foods"] = [];
+            for (let item of this.foods)
+                data["foods"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IFoodEntryBreakdown {
+    foodEntryId?: string | undefined;
+    entryName?: string | undefined;
+    loggedDateUtc?: Date;
+    createdDateUtc?: Date;
+    foods?: FoodBreakdown[] | undefined;
 }
 
 export class GetChatMessagesRequest implements IGetChatMessagesRequest {
@@ -2541,6 +2613,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
     accountId?: string | undefined;
     nutrients?: NutrientBreakdown[] | undefined;
     foods?: FoodBreakdown[] | undefined;
+    foodEntries?: FoodEntryBreakdown[] | undefined;
 
     constructor(data?: IGetDetailedSummaryResponse) {
         if (data) {
@@ -2571,6 +2644,11 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
                 this.foods = [] as any;
                 for (let item of _data["foods"])
                     this.foods!.push(FoodBreakdown.fromJS(item));
+            }
+            if (Array.isArray(_data["foodEntries"])) {
+                this.foodEntries = [] as any;
+                for (let item of _data["foodEntries"])
+                    this.foodEntries!.push(FoodEntryBreakdown.fromJS(item));
             }
         }
     }
@@ -2603,6 +2681,11 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
             for (let item of this.foods)
                 data["foods"].push(item.toJSON());
         }
+        if (Array.isArray(this.foodEntries)) {
+            data["foodEntries"] = [];
+            for (let item of this.foodEntries)
+                data["foodEntries"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -2615,6 +2698,7 @@ export interface IGetDetailedSummaryResponse {
     accountId?: string | undefined;
     nutrients?: NutrientBreakdown[] | undefined;
     foods?: FoodBreakdown[] | undefined;
+    foodEntries?: FoodEntryBreakdown[] | undefined;
 }
 
 export class GetFeedbackRequest implements IGetFeedbackRequest {
