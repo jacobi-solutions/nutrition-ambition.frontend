@@ -5,6 +5,7 @@ import { Observable, BehaviorSubject, first } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
+import { AnalyticsService } from './analytics.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ export class AuthService {
   private authInstance = inject(Auth);
   private _apiService = inject(NutritionAmbitionApiService);
   private _router = inject(Router);
+  private _analytics = inject(AnalyticsService); // Firebase Analytics tracking
 
   // UI coordination: last attempted route and one-time notice
   private _lastAttemptedRoute: string | null = null;
@@ -124,6 +126,9 @@ export class AuthService {
       
       // Backend registration no longer needed as it will happen automatically
       // via the ID token in subsequent API calls
+      
+      // Firebase Analytics: Track successful registration/login
+      this._analytics.trackAuthEvent('login');
       
       return Promise.resolve();
     } catch (error) {
@@ -238,6 +243,9 @@ export class AuthService {
     try {
       await signInWithPopup(this.authInstance, provider);
       console.log('Google sign-in successful');
+      
+      // Firebase Analytics: Track successful login
+      this._analytics.trackAuthEvent('login');
     } catch (error) {
       console.error('Google sign-in failed:', error);
     }
@@ -247,6 +255,9 @@ export class AuthService {
     try {
       await signInWithEmailAndPassword(this.authInstance, email, password);
       console.log('Email sign-in successful');
+      
+      // Firebase Analytics: Track successful login
+      this._analytics.trackAuthEvent('login');
     } catch (error) {
       console.error('Email sign-in failed:', error);
     }
@@ -260,11 +271,15 @@ export class AuthService {
         // eslint-disable-next-line no-console
         console.debug('signOutUser: user signed out successfully');
       }
+      
+      // Firebase Analytics: Track successful logout
+      this._analytics.trackAuthEvent('logout');
+      
       // After successful sign-out, require auth UI and route to login
       try {
         const currentRoute = this._router.url;
         this.setLastAttemptedRoute(currentRoute);
-        this.setAuthNotice("You’ve been signed out.");
+        this.setAuthNotice("You've been signed out.");
       } catch {}
       this._authRequired$.next(true);
       this._router.navigate(['/login']);

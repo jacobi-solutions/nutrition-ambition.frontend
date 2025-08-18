@@ -36,6 +36,7 @@ import { ToastController } from '@ionic/angular';
 import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
+import { AnalyticsService } from 'src/app/services/analytics.service';
 
 @Component({
   selector: 'app-daily-summary',
@@ -98,7 +99,11 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   private toastController = inject(ToastController);
   private apiService = inject(NutritionAmbitionApiService);
 
-  constructor(private elementRef: ElementRef, private foodSelectionService: FoodSelectionService) {
+  constructor(
+    private elementRef: ElementRef, 
+    private foodSelectionService: FoodSelectionService,
+    private analytics: AnalyticsService // Firebase Analytics tracking
+  ) {
     addIcons({
       chevronDownOutline,
       chevronForwardOutline,
@@ -110,12 +115,18 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   ngOnInit() {
+    // Firebase Analytics: Track page view on initialization
+    this.analytics.trackPageView('DailySummary');
+    
     // React to date changes after initial value to prevent duplicate load with ionViewWillEnter
     this.dateSubscription = this.dateService.selectedDate$
       .pipe(skip(1))
       .subscribe(date => {
         this.selectedDate = date;
         this.loadDetailedSummary(this.dateService.getSelectedDateUtc());
+        
+        // Firebase Analytics: Track page view when date changes
+        this.analytics.trackPageView('DailySummary');
       });
 
     this.authService.userEmail$.subscribe(email => {

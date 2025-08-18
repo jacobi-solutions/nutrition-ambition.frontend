@@ -1,14 +1,19 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { NutritionAmbitionApiService, DeleteFoodEntryRequest, DeleteFoodEntryResponse } from './nutrition-ambition-api.service';
+import { AnalyticsService } from './analytics.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FoodEntryService {
   constructor(
-    private apiService: NutritionAmbitionApiService
+    private apiService: NutritionAmbitionApiService,
+    private analytics: AnalyticsService // Firebase Analytics tracking
   ) {}
+
+  // Note: Food entry creation happens via FoodSelectionService.submitServingSelection()
+  // Analytics tracking for food entry creation is handled in Chat page's onFoodSelectionConfirmed method
 
   /**
    * Delete a food entry by food item IDs

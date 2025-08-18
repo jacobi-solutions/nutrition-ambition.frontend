@@ -27,6 +27,7 @@ import { FoodSelectionComponent } from 'src/app/components/food-selection/food-s
 import { format } from 'date-fns';
 import { ToastService } from '../../services/toast.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
+import { AnalyticsService } from '../../services/analytics.service';
 
 
 
@@ -80,7 +81,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     private dateService: DateService,
     private router: Router,
     private toastService: ToastService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private analytics: AnalyticsService // Firebase Analytics tracking
   ) {
     // Add the icons explicitly to the library
     addIcons({
@@ -466,6 +468,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
         if (response.isSuccess) {
           console.log('[DEBUG] Message sent successfully, processing returned messages');
           
+          // Firebase Analytics: Track successful message sent
+          this.analytics.trackChatMessageSent(sentMessage.length);
+          
+          this.analytics.trackPageView('Chat');
+          
           // Process the returned messages and add them to the chat
           if (response.messages && response.messages.length > 0) {
             this.processAndAddNewMessages(response.messages);
@@ -729,6 +736,21 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           console.warn('Selection submission failed:', response.errors);
           this.showErrorToast('Failed to log food selection.');
           return;
+        }
+
+        // Firebase Analytics: Track successful food entry creation
+        if (response.messages && response.messages.length > 0) {
+          // Look for a completed food selection message with food entry details
+          const completedMessage = response.messages.find(msg => 
+            msg.role === MessageRoleTypes.CompletedFoodSelection && 
+            msg.logMealToolResponse?.foodEntryId
+          );
+          
+          if (completedMessage?.logMealToolResponse) {
+            const entryId = completedMessage.logMealToolResponse.foodEntryId || 'unknown';
+            const mealName = completedMessage.logMealToolResponse.mealName || 'unknown';
+            this.analytics.trackFoodEntryAdded(entryId, mealName);
+          }
         }
 
         // Process the returned messages and add them to the chat

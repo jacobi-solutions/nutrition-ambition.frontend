@@ -8,6 +8,7 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 import { initializeApp, provideFirebaseApp, getApp } from '@angular/fire/app';
 import { provideAuth, initializeAuth } from '@angular/fire/auth';
 import { indexedDBLocalPersistence, browserPopupRedirectResolver, browserLocalPersistence } from 'firebase/auth';
+import { provideAnalytics, getAnalytics, ScreenTrackingService, UserTrackingService } from '@angular/fire/analytics';
 
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
@@ -52,7 +53,6 @@ addIcons({
   'chevron-back-circle-outline': chevronBackCircleOutline,
   'chevron-forward-circle-outline': chevronForwardCircleOutline,
   'person-circle': personCircle
-  
 });
 
 // Provide the API base URL
@@ -64,20 +64,11 @@ export function getAPIBaseUrl(): string {
 @Injectable()
 export class GlobalErrorHandler implements ErrorHandler {
   handleError(error: any): void {
-    // Log the error
     console.error('Global error handler caught:', error);
-    
-    // Check if it's a network-related error
     if (error?.status === 0 || error?.name === 'HttpErrorResponse') {
       console.warn('Network error detected in global handler');
-      
-      // Clear any loading indicators that might be stuck
       const loadingSpinners = document.querySelectorAll('.loading-indicator');
-      loadingSpinners.forEach(spinner => {
-        spinner.classList.add('hidden');
-      });
-      
-      // You could also show a global connection error toast/alert here
+      loadingSpinners.forEach(spinner => spinner.classList.add('hidden'));
     }
   }
 }
@@ -92,11 +83,12 @@ bootstrapApplication(AppComponent, {
     // Initialize Firebase App
     provideFirebaseApp(() => initializeApp(environment.firebase)),
 
+    // Enable Firebase Analytics
+    provideAnalytics(() => getAnalytics()),
+
     // Initialize Firebase Auth with durable persistence
     provideAuth(() => {
-      const app = getApp(); // Get Firebase app instance
-      // Force durable, multi-tab persistence to prevent session-only logouts across reloads
-      // and mitigate iOS Safari/WebKit storage quirks. Also attach popup/redirect handling.
+      const app = getApp();
       return initializeAuth(app, {
         persistence: [indexedDBLocalPersistence, browserLocalPersistence],
         popupRedirectResolver: browserPopupRedirectResolver,
@@ -104,14 +96,16 @@ bootstrapApplication(AppComponent, {
     }),
 
     // Provide HttpClient with ApiInterceptor
-    provideHttpClient(withInterceptors([
-      ApiInterceptor
-    ])),
+    provideHttpClient(withInterceptors([ApiInterceptor])),
 
     // Provide NSwag API Service
     NutritionAmbitionApiService,
 
     // Provide API_BASE_URL using factory function
     { provide: API_BASE_URL, useFactory: getAPIBaseUrl },
+
+    // Screen & User tracking services
+    ScreenTrackingService,
+    UserTrackingService,
   ],
 }).catch(err => console.error(err));
