@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, ToastController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, trashOutline } from 'ionicons/icons';
-import { SelectableFoodMatch, SelectableFoodServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 
@@ -78,7 +78,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return !!this.expandedSections[phrase];
   }
 
-  getSelectedFood(phrase: string): SelectableFoodMatch | null {
+  getSelectedFood(phrase: string): ComponentMatch | null {
     const selection = this.selections[phrase];
     return this.message.foodOptions?.[phrase]?.find(f => f.fatSecretFoodId === selection?.foodId) || null;
   }
@@ -97,7 +97,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return this.selections[phrase]?.servingId;
   }
 
-  getSelectedServing(phrase: string): SelectableFoodServing | null {
+  getSelectedServing(phrase: string): ComponentServing | null {
     const food = this.getSelectedFood(phrase);
     const id = this.getSelectedServingId(phrase);
     return food?.servings?.find(s => s.fatSecretServingId === id) || null;
@@ -115,16 +115,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     for (const k of keys) if (typeof nutrients[k] === 'number') return nutrients[k];
     return null;
   }
-  caloriesForServing(s: SelectableFoodServing | null) {
+  caloriesForServing(s: ComponentServing | null) {
     return this.scaledMacro(s, ['Calories','calories','energy_kcal','Energy']);
   }
-  proteinForServing(s: SelectableFoodServing | null) {
+  proteinForServing(s: ComponentServing | null) {
     return this.scaledMacro(s, ['Protein','protein']);
   }
-  fatForServing(s: SelectableFoodServing | null) {
+  fatForServing(s: ComponentServing | null) {
     return this.scaledMacro(s, ['Fat','fat','total_fat']);
   }
-  carbsForServing(s: SelectableFoodServing | null) {
+  carbsForServing(s: ComponentServing | null) {
     return this.scaledMacro(s, ['Carbohydrate','carbohydrates','carbs']);
   }
   
@@ -204,7 +204,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
 
   // Build the user-facing label for a serving row
-  getServingLabel(s: SelectableFoodServing | null): string {
+  getServingLabel(s: ComponentServing | null): string {
     if (!s) return '';
   
     const dq = (s as any).displayQuantity as number | undefined;
@@ -219,7 +219,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return 'serving';
   }
 
-  getDisplayQuantity(s: SelectableFoodServing | null): number {
+  getDisplayQuantity(s: ComponentServing | null): number {
     if (!s) return 1;
     
     const dq = (s as any).displayQuantity as number | undefined;
@@ -231,7 +231,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return 1;
   }
 
-  getUnitText(s: SelectableFoodServing): string {
+  getUnitText(s: ComponentServing): string {
     const disp = (s as any).displayUnit as string | undefined;
     if (disp && disp.trim().length) return disp.trim();
 
@@ -261,7 +261,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   
 
   // Scale a macro per 1 serving by the per-row scaledQuantity
-  private scaledMacro(s: SelectableFoodServing | null, keys: string[]): number | null {
+  private scaledMacro(s: ComponentServing | null, keys: string[]): number | null {
     if (!s || !s.nutrients) return null;
     const base = this.getMacro(s.nutrients, keys);
     if (base == null) return null;
@@ -310,15 +310,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return isFinite(n) ? n : NaN;
   }
 
-  private getMetricAmt(s: SelectableFoodServing): number {
+  private getMetricAmt(s: ComponentServing): number {
     return this.num((s as any).metricServingAmount);
   }
 
-  private getMetricUnit(s: SelectableFoodServing): string {
+  private getMetricUnit(s: ComponentServing): string {
     return String((s as any).metricServingUnit || '').trim();
   }
 
-  private getNumberOfUnits(s: SelectableFoodServing): number {
+  private getNumberOfUnits(s: ComponentServing): number {
     const units = this.num((s as any).numberOfUnits ?? 1);
     return isFinite(units) && units > 0 ? units : 1;
   }
@@ -329,7 +329,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return label.replace(/^\s*[\d¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞.,/]*\s*/, '').trim();
   }
 
-  private isMetricRow(s: SelectableFoodServing): boolean {
+  private isMetricRow(s: ComponentServing): boolean {
     const desc = (s as any).description as string | undefined;
     const mu = this.getMetricUnit(s).toLowerCase();
     const md = (s as any).measurementDescription as string | undefined;
@@ -340,7 +340,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return looksMetric || mdMetric === 'g' || mdMetric === 'ml';
   }
 
-  private rescaleFromSelected(phrase: string, selected: SelectableFoodServing, editedQty: number): void {
+  private rescaleFromSelected(phrase: string, selected: ComponentServing, editedQty: number): void {
     // 0) guard
     if (!this.message.foodOptions?.[phrase]) return;
     
@@ -418,7 +418,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  onInlineQtyChanged(phrase: string, s: SelectableFoodServing, newValue: number): void {
+  onInlineQtyChanged(phrase: string, s: ComponentServing, newValue: number): void {
     // clamp
     const v = Math.max(0.1, Math.min(999, Number(newValue) || 0));
     (s as any).displayQuantity = v;
@@ -453,7 +453,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.cdr.detectChanges();
   }
 
-  onRowClicked(phrase: string, s: SelectableFoodServing): void {
+  onRowClicked(phrase: string, s: ComponentServing): void {
     const current = this.getSelectedServingId(phrase);
     if (current !== s.fatSecretServingId && s.fatSecretServingId) {
       this.onServingSelected(phrase, s.fatSecretServingId);

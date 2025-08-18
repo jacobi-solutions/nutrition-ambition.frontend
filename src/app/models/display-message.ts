@@ -1,4 +1,4 @@
-import { LogMealToolResponse, MessageRoleTypes, SelectableFoodMatch } from "../services/nutrition-ambition-api.service";
+import { ComponentMatch, LogMealToolResponse, MessageRoleTypes } from "../services/nutrition-ambition-api.service";
 
 export interface DisplayMessage {
     id?: string;
@@ -12,6 +12,6 @@ export interface DisplayMessage {
     logMealToolResponse?: LogMealToolResponse | null;
   
     // optional convenience fields
-    foodOptions?: Record<string, SelectableFoodMatch[]> | null;
+    foodOptions?: Record<string, ComponentMatch[]> | null;
     mealName?: string | null;
   }

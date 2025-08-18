@@ -1789,6 +1789,162 @@ export interface ICompleteFeedbackResponse {
     feedbackEntry?: FeedbackEntry;
 }
 
+export class ComponentMatch implements IComponentMatch {
+    fatSecretFoodId?: string | undefined;
+    displayName?: string | undefined;
+    brandName?: string | undefined;
+    originalText?: string | undefined;
+    rank?: number;
+    selectedServingId?: string | undefined;
+    totalGrams?: number;
+    servings?: ComponentServing[] | undefined;
+
+    constructor(data?: IComponentMatch) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fatSecretFoodId = _data["fatSecretFoodId"];
+            this.displayName = _data["displayName"];
+            this.brandName = _data["brandName"];
+            this.originalText = _data["originalText"];
+            this.rank = _data["rank"];
+            this.selectedServingId = _data["selectedServingId"];
+            this.totalGrams = _data["totalGrams"];
+            if (Array.isArray(_data["servings"])) {
+                this.servings = [] as any;
+                for (let item of _data["servings"])
+                    this.servings!.push(ComponentServing.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ComponentMatch {
+        data = typeof data === 'object' ? data : {};
+        let result = new ComponentMatch();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fatSecretFoodId"] = this.fatSecretFoodId;
+        data["displayName"] = this.displayName;
+        data["brandName"] = this.brandName;
+        data["originalText"] = this.originalText;
+        data["rank"] = this.rank;
+        data["selectedServingId"] = this.selectedServingId;
+        data["totalGrams"] = this.totalGrams;
+        if (Array.isArray(this.servings)) {
+            data["servings"] = [];
+            for (let item of this.servings)
+                data["servings"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IComponentMatch {
+    fatSecretFoodId?: string | undefined;
+    displayName?: string | undefined;
+    brandName?: string | undefined;
+    originalText?: string | undefined;
+    rank?: number;
+    selectedServingId?: string | undefined;
+    totalGrams?: number;
+    servings?: ComponentServing[] | undefined;
+}
+
+export class ComponentServing implements IComponentServing {
+    fatSecretServingId?: string | undefined;
+    description?: string | undefined;
+    displayQuantity?: number;
+    displayUnit?: string | undefined;
+    scaledQuantity?: number;
+    scaledUnit?: string | undefined;
+    weightGramsPerUnit?: number | undefined;
+    nutrients?: { [key: string]: number; } | undefined;
+    apiServingKind?: UnitKind;
+    isBestMatch?: boolean;
+
+    constructor(data?: IComponentServing) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fatSecretServingId = _data["fatSecretServingId"];
+            this.description = _data["description"];
+            this.displayQuantity = _data["displayQuantity"];
+            this.displayUnit = _data["displayUnit"];
+            this.scaledQuantity = _data["scaledQuantity"];
+            this.scaledUnit = _data["scaledUnit"];
+            this.weightGramsPerUnit = _data["weightGramsPerUnit"];
+            if (_data["nutrients"]) {
+                this.nutrients = {} as any;
+                for (let key in _data["nutrients"]) {
+                    if (_data["nutrients"].hasOwnProperty(key))
+                        (<any>this.nutrients)![key] = _data["nutrients"][key];
+                }
+            }
+            this.apiServingKind = _data["apiServingKind"];
+            this.isBestMatch = _data["isBestMatch"];
+        }
+    }
+
+    static fromJS(data: any): ComponentServing {
+        data = typeof data === 'object' ? data : {};
+        let result = new ComponentServing();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fatSecretServingId"] = this.fatSecretServingId;
+        data["description"] = this.description;
+        data["displayQuantity"] = this.displayQuantity;
+        data["displayUnit"] = this.displayUnit;
+        data["scaledQuantity"] = this.scaledQuantity;
+        data["scaledUnit"] = this.scaledUnit;
+        data["weightGramsPerUnit"] = this.weightGramsPerUnit;
+        if (this.nutrients) {
+            data["nutrients"] = {};
+            for (let key in this.nutrients) {
+                if (this.nutrients.hasOwnProperty(key))
+                    (<any>data["nutrients"])[key] = (<any>this.nutrients)[key];
+            }
+        }
+        data["apiServingKind"] = this.apiServingKind;
+        data["isBestMatch"] = this.isBestMatch;
+        return data;
+    }
+}
+
+export interface IComponentServing {
+    fatSecretServingId?: string | undefined;
+    description?: string | undefined;
+    displayQuantity?: number;
+    displayUnit?: string | undefined;
+    scaledQuantity?: number;
+    scaledUnit?: string | undefined;
+    weightGramsPerUnit?: number | undefined;
+    nutrients?: { [key: string]: number; } | undefined;
+    apiServingKind?: UnitKind;
+    isBestMatch?: boolean;
+}
+
 export class DeleteFeedbackRequest implements IDeleteFeedbackRequest {
     feedbackId?: string | undefined;
 
@@ -2636,7 +2792,7 @@ export interface ILearnMoreAboutRequest {
 export class LogMealToolResponse implements ILogMealToolResponse {
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
-    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    componentMatches?: { [key: string]: ComponentMatch[]; } | undefined;
     foodEntryId?: string | undefined;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
@@ -2654,11 +2810,11 @@ export class LogMealToolResponse implements ILogMealToolResponse {
         if (_data) {
             this.mealName = _data["mealName"];
             this.pendingMessageId = _data["pendingMessageId"];
-            if (_data["selectableFoodMatches"]) {
-                this.selectableFoodMatches = {} as any;
-                for (let key in _data["selectableFoodMatches"]) {
-                    if (_data["selectableFoodMatches"].hasOwnProperty(key))
-                        (<any>this.selectableFoodMatches)![key] = _data["selectableFoodMatches"][key] ? _data["selectableFoodMatches"][key].map((i: any) => SelectableFoodMatch.fromJS(i)) : <any>undefined;
+            if (_data["componentMatches"]) {
+                this.componentMatches = {} as any;
+                for (let key in _data["componentMatches"]) {
+                    if (_data["componentMatches"].hasOwnProperty(key))
+                        (<any>this.componentMatches)![key] = _data["componentMatches"][key] ? _data["componentMatches"][key].map((i: any) => ComponentMatch.fromJS(i)) : <any>undefined;
                 }
             }
             this.foodEntryId = _data["foodEntryId"];
@@ -2678,11 +2834,11 @@ export class LogMealToolResponse implements ILogMealToolResponse {
         data = typeof data === 'object' ? data : {};
         data["mealName"] = this.mealName;
         data["pendingMessageId"] = this.pendingMessageId;
-        if (this.selectableFoodMatches) {
-            data["selectableFoodMatches"] = {};
-            for (let key in this.selectableFoodMatches) {
-                if (this.selectableFoodMatches.hasOwnProperty(key))
-                    (<any>data["selectableFoodMatches"])[key] = (<any>this.selectableFoodMatches)[key];
+        if (this.componentMatches) {
+            data["componentMatches"] = {};
+            for (let key in this.componentMatches) {
+                if (this.componentMatches.hasOwnProperty(key))
+                    (<any>data["componentMatches"])[key] = (<any>this.componentMatches)[key];
             }
         }
         data["foodEntryId"] = this.foodEntryId;
@@ -2695,7 +2851,7 @@ export class LogMealToolResponse implements ILogMealToolResponse {
 export interface ILogMealToolResponse {
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
-    selectableFoodMatches?: { [key: string]: SelectableFoodMatch[]; } | undefined;
+    componentMatches?: { [key: string]: ComponentMatch[]; } | undefined;
     foodEntryId?: string | undefined;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
@@ -2926,162 +3082,6 @@ export class RunChatRequest implements IRunChatRequest {
 export interface IRunChatRequest {
     message?: string | undefined;
     loggedDateUtc?: Date | undefined;
-}
-
-export class SelectableFoodMatch implements ISelectableFoodMatch {
-    fatSecretFoodId?: string | undefined;
-    displayName?: string | undefined;
-    brandName?: string | undefined;
-    originalText?: string | undefined;
-    rank?: number;
-    selectedServingId?: string | undefined;
-    totalGrams?: number;
-    servings?: SelectableFoodServing[] | undefined;
-
-    constructor(data?: ISelectableFoodMatch) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.fatSecretFoodId = _data["fatSecretFoodId"];
-            this.displayName = _data["displayName"];
-            this.brandName = _data["brandName"];
-            this.originalText = _data["originalText"];
-            this.rank = _data["rank"];
-            this.selectedServingId = _data["selectedServingId"];
-            this.totalGrams = _data["totalGrams"];
-            if (Array.isArray(_data["servings"])) {
-                this.servings = [] as any;
-                for (let item of _data["servings"])
-                    this.servings!.push(SelectableFoodServing.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): SelectableFoodMatch {
-        data = typeof data === 'object' ? data : {};
-        let result = new SelectableFoodMatch();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["fatSecretFoodId"] = this.fatSecretFoodId;
-        data["displayName"] = this.displayName;
-        data["brandName"] = this.brandName;
-        data["originalText"] = this.originalText;
-        data["rank"] = this.rank;
-        data["selectedServingId"] = this.selectedServingId;
-        data["totalGrams"] = this.totalGrams;
-        if (Array.isArray(this.servings)) {
-            data["servings"] = [];
-            for (let item of this.servings)
-                data["servings"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface ISelectableFoodMatch {
-    fatSecretFoodId?: string | undefined;
-    displayName?: string | undefined;
-    brandName?: string | undefined;
-    originalText?: string | undefined;
-    rank?: number;
-    selectedServingId?: string | undefined;
-    totalGrams?: number;
-    servings?: SelectableFoodServing[] | undefined;
-}
-
-export class SelectableFoodServing implements ISelectableFoodServing {
-    fatSecretServingId?: string | undefined;
-    description?: string | undefined;
-    displayQuantity?: number;
-    displayUnit?: string | undefined;
-    scaledQuantity?: number;
-    scaledUnit?: string | undefined;
-    weightGramsPerUnit?: number | undefined;
-    nutrients?: { [key: string]: number; } | undefined;
-    apiServingKind?: UnitKind;
-    isBestMatch?: boolean;
-
-    constructor(data?: ISelectableFoodServing) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.fatSecretServingId = _data["fatSecretServingId"];
-            this.description = _data["description"];
-            this.displayQuantity = _data["displayQuantity"];
-            this.displayUnit = _data["displayUnit"];
-            this.scaledQuantity = _data["scaledQuantity"];
-            this.scaledUnit = _data["scaledUnit"];
-            this.weightGramsPerUnit = _data["weightGramsPerUnit"];
-            if (_data["nutrients"]) {
-                this.nutrients = {} as any;
-                for (let key in _data["nutrients"]) {
-                    if (_data["nutrients"].hasOwnProperty(key))
-                        (<any>this.nutrients)![key] = _data["nutrients"][key];
-                }
-            }
-            this.apiServingKind = _data["apiServingKind"];
-            this.isBestMatch = _data["isBestMatch"];
-        }
-    }
-
-    static fromJS(data: any): SelectableFoodServing {
-        data = typeof data === 'object' ? data : {};
-        let result = new SelectableFoodServing();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["fatSecretServingId"] = this.fatSecretServingId;
-        data["description"] = this.description;
-        data["displayQuantity"] = this.displayQuantity;
-        data["displayUnit"] = this.displayUnit;
-        data["scaledQuantity"] = this.scaledQuantity;
-        data["scaledUnit"] = this.scaledUnit;
-        data["weightGramsPerUnit"] = this.weightGramsPerUnit;
-        if (this.nutrients) {
-            data["nutrients"] = {};
-            for (let key in this.nutrients) {
-                if (this.nutrients.hasOwnProperty(key))
-                    (<any>data["nutrients"])[key] = (<any>this.nutrients)[key];
-            }
-        }
-        data["apiServingKind"] = this.apiServingKind;
-        data["isBestMatch"] = this.isBestMatch;
-        return data;
-    }
-}
-
-export interface ISelectableFoodServing {
-    fatSecretServingId?: string | undefined;
-    description?: string | undefined;
-    displayQuantity?: number;
-    displayUnit?: string | undefined;
-    scaledQuantity?: number;
-    scaledUnit?: string | undefined;
-    weightGramsPerUnit?: number | undefined;
-    nutrients?: { [key: string]: number; } | undefined;
-    apiServingKind?: UnitKind;
-    isBestMatch?: boolean;
 }
 
 export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {

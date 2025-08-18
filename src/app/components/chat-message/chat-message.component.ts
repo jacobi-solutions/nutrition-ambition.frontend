@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { IonText } from '@ionic/angular/standalone';
-import { ChatMessage, SelectableFoodMatch } from '../../services/nutrition-ambition-api.service';
+import { ChatMessage, ComponentMatch } from '../../services/nutrition-ambition-api.service';
 
 @Component({
   selector: 'app-chat-message',

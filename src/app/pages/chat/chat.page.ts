@@ -13,7 +13,7 @@ import {
   ChatMessagesResponse,
   ChatMessage,
   MessageRoleTypes,
-  SelectableFoodMatch,
+  ComponentMatch,
     SubmitServingSelectionRequest,
     CancelServingSelectionRequest,
     SubmitEditServingSelectionRequest,
@@ -359,7 +359,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
               text: msg.content || '',
               isUser: msg.role === MessageRoleTypes.User,
               timestamp: msg.createdDateUtc || new Date(),
-              foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
+              foodOptions: msg.logMealToolResponse?.componentMatches || null,
               mealName: msg.logMealToolResponse?.mealName || null,
               logMealToolResponse: msg.logMealToolResponse || null,
               role: msg.role
@@ -677,7 +677,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
             text: msg.content || '',
             isUser: msg.role === MessageRoleTypes.User,
             timestamp: msg.createdDateUtc || new Date(),
-            foodOptions: msg.logMealToolResponse?.selectableFoodMatches || null,
+            foodOptions: msg.logMealToolResponse?.componentMatches || null,
             mealName: msg.logMealToolResponse?.mealName || null,
             logMealToolResponse: msg.logMealToolResponse || null,
             role: msg.role
