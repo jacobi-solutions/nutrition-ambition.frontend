@@ -404,7 +404,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
       const toast = await this.toastController.create({
         message: 'Only food items can be removed.',
         duration: 3000,
-        color: 'warning',
+        color: 'medium',
         position: 'bottom'
       });
       await toast.present();
@@ -561,7 +561,7 @@ export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
     const toast = await this.toastController.create({
       message,
       duration: 3000,
-      color: 'danger',
+      color: 'medium',
       position: 'bottom'
     });
     await toast.present();

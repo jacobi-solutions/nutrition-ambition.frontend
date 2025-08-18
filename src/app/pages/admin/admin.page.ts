@@ -296,11 +296,11 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   // Utility methods
-  async showToast(message: string, color: 'success' | 'danger' | 'warning' = 'success') {
+  async showToast(message: string, color: 'success' | 'danger' | 'warning' | 'medium' = 'medium') {
     const toast = await this.toastController.create({
       message,
       duration: 3000,
-      color,
+      color: 'medium',
       position: 'top'
     });
     await toast.present();

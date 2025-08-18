@@ -77,14 +77,18 @@ export class EntryActionMenuComponent {
       console.log('Event data:', eventData);
       this.actionSelected.emit(eventData);
     } else {
-      // Show toast for unimplemented actions
+      // Show toast for unimplemented actions and still emit event to dismiss popover
       console.log(`🍞 Showing toast for unimplemented action: ${action}`);
       this.toastService.showToast({
         message: 'Feature not implemented yet. Check back soon!',
         duration: 3000,
-        color: 'warning',
+        color: 'medium',
         position: 'bottom'
       });
+      
+      // Still emit the event so the popover dismisses
+      const eventData = { action, entry: this.entry };
+      this.actionSelected.emit(eventData);
     }
   }
 } 

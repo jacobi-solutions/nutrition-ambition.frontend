@@ -426,7 +426,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     if (!isAuthenticated) {
       // Persist draft so it's available after login navigation
       localStorage.setItem(this.draftStorageKey, this.userMessage);
-      await this.toastService.showToast({ message: 'Please sign in to send your message.', color: 'primary' });
+      await this.toastService.showToast({ message: 'Please sign in to send your message.', color: 'medium' });
       try { this.authService.setLastAttemptedRoute(this.router.url); } catch {}
       this.router.navigate(['/login']);
       return;
@@ -635,7 +635,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async showErrorToast(message: string) {
-    await this.toastService.showToast({ message, color: 'danger' });
+    await this.toastService.showToast({ message, color: 'medium' });
   }
 
   // Process new messages from API responses and add them to the chat

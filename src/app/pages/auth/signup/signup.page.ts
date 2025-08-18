@@ -45,7 +45,7 @@ export class SignupPage {
       // Show success toast
       await this.toastService.showToast({
         message: 'Account created. You\'re all set!',
-        color: 'success',
+        color: 'medium',
         duration: 3000
       });
       

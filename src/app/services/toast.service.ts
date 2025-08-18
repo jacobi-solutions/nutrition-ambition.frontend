@@ -22,7 +22,7 @@ export class ToastService {
     const toast = await this.toastController.create({
       message: options.message,
       duration: options.duration || 3000,
-      color: options.color || 'primary',
+      color: options.color || 'medium',
       position: options.position || 'bottom',
       buttons: options.buttons || []
     });

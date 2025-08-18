@@ -291,6 +291,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const toast = await this.toastController.create({
         message: `${this.getSelectedFood(phrase)?.displayName || phrase} removed`,
         duration: 5000,
+        color: 'medium',
+        position: 'bottom',
         buttons: [
           {
             text: 'Undo',
@@ -468,6 +470,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const toast = await this.toastController.create({
       message: 'Food logging canceled',
       duration: 5000,
+      color: 'medium',
+      position: 'bottom',
       buttons: [
         {
           text: 'Undo',
