@@ -1,4 +1,4 @@
-import { enableProdMode, ErrorHandler, Injectable } from '@angular/core';
+import { enableProdMode, ErrorHandler, Injectable, isDevMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
 import { RouteReuseStrategy } from '@angular/router';
@@ -36,6 +36,7 @@ import {
   chevronForwardCircleOutline,
   personCircle
 } from 'ionicons/icons';
+import { provideServiceWorker } from '@angular/service-worker';
 
 addIcons({
   'log-out-outline': logOutOutline,
@@ -106,6 +107,9 @@ bootstrapApplication(AppComponent, {
 
     // Screen & User tracking services
     ScreenTrackingService,
-    UserTrackingService,
+    UserTrackingService, provideServiceWorker('ngsw-worker.js', {
+            enabled: !isDevMode(),
+            registrationStrategy: 'registerWhenStable:30000'
+          }),
   ],
 }).catch(err => console.error(err));

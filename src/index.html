@@ -2,28 +2,42 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8"/>
   <title>Nutrition Ambition</title>
 
-  <base href="/" />
+  <base href="/"/>
 
-  <meta name="color-scheme" content="light" />
-  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="format-detection" content="telephone=no" />
-  <meta name="msapplication-tap-highlight" content="no" />
+  <meta name="color-scheme" content="light"/>
+  <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="format-detection" content="telephone=no"/>
+  <meta name="msapplication-tap-highlight" content="no"/>
 
-  <link rel="icon" type="image/png" href="assets/icon/favicon.png" />
+  <link rel="icon" type="image/png" href="assets/icon/favicon.png"/>
 
-  <!-- add to homescreen for ios -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <!-- iOS PWA support -->
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+
+  <!-- iOS app icons -->
+  <link rel="apple-touch-icon" href="assets/logo-icons/LogoIcon-180x180.png"/>
+  <link rel="apple-touch-icon" sizes="152x152" href="assets/logo-icons/LogoIcon-152x152.png"/>
+  <link rel="apple-touch-icon" sizes="167x167" href="assets/logo-icons/LogoIcon-167x167.png"/>
+  <link rel="apple-touch-icon" sizes="120x120" href="assets/logo-icons/LogoIcon-120x120.png"/>
+
+  <!-- Google identity -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Neue+Power:wght@400;700&display=swap" rel="stylesheet">
 
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Neue+Power:wght@400;700&display=swap" rel="stylesheet"/>
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.webmanifest"/>
+  <meta name="theme-color" content="#f5f3ef"/>
 </head>
 
 <body>
   <app-root></app-root>
+  <noscript>Please enable JavaScript to continue using this application.</noscript>
 </body>
 
 </html>

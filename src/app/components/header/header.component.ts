@@ -21,7 +21,8 @@ import {
   IonRefresherContent,
   IonPopover,
   IonList,
-  IonItem
+  IonItem,
+  PopoverController
 } from '@ionic/angular/standalone';
 import { AuthService } from 'src/app/services/auth.service';
 import { Router, RouterModule } from '@angular/router';
@@ -39,6 +40,8 @@ import {
 import { DateService } from 'src/app/services/date.service';
 import { Subscription } from 'rxjs';
 import { format } from 'date-fns';
+import { PwaInstallService } from 'src/app/services/pwa-install.service';
+import { PwaInstallComponent } from '../pwa-install/pwa-install.component';
 
 @Component({
   selector: 'app-header',
@@ -107,13 +110,16 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   
   // Unique ID for popover trigger to avoid conflicts between page instances
   triggerId: string = `settings-trigger-${Math.random().toString(36).substr(2, 9)}`;
-  
+
+  canInstall: boolean = false;
   @ViewChild('settingsPopover') settingsPopover!: IonPopover;
 
   constructor(
     private authService: AuthService, 
     private router: Router,
-    private cdRef: ChangeDetectorRef
+    private cdRef: ChangeDetectorRef,
+    private pwa: PwaInstallService,
+    private popoverCtrl: PopoverController
   ) {
     // Add the icons explicitly to the library
     addIcons({ 
@@ -126,6 +132,8 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
       downloadOutline,
       informationCircleOutline
     });
+
+    this.canInstall = this.pwa.canInstall();
   }
 
   ngOnInit() {
@@ -235,7 +243,7 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   }
   
   // Settings dropdown methods
-  onSettingsAction(action: string) {
+  async onSettingsAction(action: string, event?: Event) {
     // Dismiss the popover first
     if (this.settingsPopover) {
       this.settingsPopover.dismiss();
@@ -247,9 +255,29 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
         this.onLogout();
         break;
       case 'download':
-        // TODO: Implement download functionality
-        console.log('Download action triggered');
+        await this.installPwa(event);
         break;
+    }
+  }
+
+  async installPwa(event?: Event) {
+    const result = await this.pwa.install();
+
+    // Android/Chrome prompt path (no message → handled natively)
+    if (result?.outcome) {
+      console.log('Install outcome:', result.outcome);
+      return;
+    }
+
+    // Everyone else → show instructions popover
+    if (result?.message) {
+      const popover = await this.popoverCtrl.create({
+        component: PwaInstallComponent,
+        componentProps: { message: result.message },
+        event: event,
+        translucent: true,
+      });
+      await popover.present();
     }
   }
 } 
