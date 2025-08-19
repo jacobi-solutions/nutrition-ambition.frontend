@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter, inject, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   IonHeader, 
@@ -18,7 +18,10 @@ import {
   IonCol,
   IonGrid,
   IonRefresher,
-  IonRefresherContent
+  IonRefresherContent,
+  IonPopover,
+  IonList,
+  IonItem
 } from '@ionic/angular/standalone';
 import { AuthService } from 'src/app/services/auth.service';
 import { Router, RouterModule } from '@angular/router';
@@ -28,7 +31,10 @@ import {
   logOutOutline, 
   personCircle, 
   logInOutline, 
-  chevronForwardOutline 
+  chevronForwardOutline,
+  settingsOutline,
+  downloadOutline,
+  informationCircleOutline
 } from 'ionicons/icons';
 import { DateService } from 'src/app/services/date.service';
 import { Subscription } from 'rxjs';
@@ -53,7 +59,11 @@ import { format } from 'date-fns';
     IonModal,
     IonDatetime,
     IonRefresher,
-    IonRefresherContent
+    IonRefresherContent,
+    IonPopover,
+    IonList,
+    IonItem,
+    IonLabel
   ]
 })
 export class AppHeaderComponent implements OnInit, OnDestroy {
@@ -94,6 +104,11 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   isLoggedIn: boolean = false;
   isAnonymousUser: boolean = false;
   displayName: string | null = null;
+  
+  // Unique ID for popover trigger to avoid conflicts between page instances
+  triggerId: string = `settings-trigger-${Math.random().toString(36).substr(2, 9)}`;
+  
+  @ViewChild('settingsPopover') settingsPopover!: IonPopover;
 
   constructor(
     private authService: AuthService, 
@@ -106,7 +121,10 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
       logOutOutline, 
       personCircle, 
       logInOutline, 
-      chevronForwardOutline 
+      chevronForwardOutline,
+      settingsOutline,
+      downloadOutline,
+      informationCircleOutline
     });
   }
 
@@ -214,5 +232,24 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       (event.target as any)?.complete();
     }, 1000);
+  }
+  
+  // Settings dropdown methods
+  onSettingsAction(action: string) {
+    // Dismiss the popover first
+    if (this.settingsPopover) {
+      this.settingsPopover.dismiss();
+    }
+    
+    // Then handle the action
+    switch (action) {
+      case 'signout':
+        this.onLogout();
+        break;
+      case 'download':
+        // TODO: Implement download functionality
+        console.log('Download action triggered');
+        break;
+    }
   }
 } 
