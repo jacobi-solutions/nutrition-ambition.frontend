@@ -40,8 +40,8 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
 
 @Component({
   selector: 'app-daily-summary',
-  templateUrl: './daily-summary.component.html',
-  styleUrls: ['./daily-summary.component.scss'],
+  templateUrl: './daily-summary.page.html',
+  styleUrls: ['./daily-summary.page.scss'],
   standalone: true,
   imports: [
     CommonModule,
@@ -64,7 +64,7 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
     EntryActionMenuComponent
   ]
 })
-export class DailySummaryComponent implements OnInit, OnDestroy, ViewWillEnter {
+export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   @ViewChild('popover') popover: IonPopover;
   @ViewChild(IonContent) content: IonContent;
 

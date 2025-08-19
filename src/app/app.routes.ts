@@ -3,7 +3,6 @@ import { LoginPage } from './pages/auth/login/login.page';
 import { SignupPage } from './pages/auth/signup/signup.page';
 import { AuthGuard } from './guards/auth.guard';
 import { OwnerGuard } from './guards/owner.guard';
-import { DailySummaryComponent } from './pages/daily-summary/daily-summary.component';
 
 export const routes: Routes = [
   {
@@ -43,7 +42,7 @@ export const routes: Routes = [
       },
       {
         path: 'summary',
-        component: DailySummaryComponent
+        loadComponent: () => import('./pages/daily-summary/daily-summary.page').then(m => m.DailySummaryPage)
       },
       {
         path: '',
