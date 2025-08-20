@@ -36,7 +36,7 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/auth/forgot-password-reset/forgot-password-reset.page').then(m => m.ForgotPasswordResetPage)
   },
   {
-    path: 'firebase-action',
+    path: 'auth-action',
     loadComponent: () => import('./pages/auth/firebase-action/firebase-action.page').then(m => m.FirebaseActionPage)
   },
   {
