@@ -2,4 +2,4 @@
 . "$(dirname "$0")/_/husky.sh"
 
 npm run bump:version
-git add src/environments/version.ts
+git add package.json src/environments/version.ts

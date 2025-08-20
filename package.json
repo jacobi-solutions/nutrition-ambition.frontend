@@ -1,6 +1,6 @@
 {
   "name": "nutrition-ambition-frontend",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Ionic Framework",
   "homepage": "https://ionicframework.com/",
   "scripts": {
@@ -12,7 +12,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "prepare": "husky",
-    "bump:version": "node tools/write-version.js"
+    "bump:version": "node tools/write-version.js",
+    "version:show": "node -e \"console.log(require('./src/environments/version.ts'))\""
   },
   "private": true,
   "dependencies": {

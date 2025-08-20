@@ -15,7 +15,7 @@ import {
   informationCircleOutline,
   keyOutline
 } from 'ionicons/icons';
-import { APP_VERSION } from '../../../environments/versions';
+import { APP_VERSION } from '../../../environments/version';
 
 @Component({
   selector: 'app-settings-popover',
