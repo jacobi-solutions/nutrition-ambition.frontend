@@ -24,7 +24,9 @@ export class AppComponent implements OnInit {
     private accountsService: AccountsService,
     private swUpdate: SwUpdate
   ) {
+    
     if (swUpdate.isEnabled) {
+      this.swUpdate.checkForUpdate();
       swUpdate.versionUpdates.subscribe(event => {
         if (event.type === 'VERSION_READY') {
           console.log('🚀 New version available. Reloading...');
