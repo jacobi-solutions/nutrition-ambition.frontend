@@ -10,10 +10,10 @@ import {
 import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
 import { 
-  logOutOutline, 
-  downloadOutline,
-  informationCircleOutline,
-  keyOutline
+  logOut, 
+  download,
+  informationCircle,
+  key
 } from 'ionicons/icons';
 import { APP_VERSION } from '../../../environments/version';
 
@@ -41,10 +41,10 @@ export class SettingsPopoverComponent {
   constructor(private popoverCtrl: PopoverController) {
     // Add the icons explicitly to the library
     addIcons({ 
-      logOutOutline, 
-      downloadOutline,
-      informationCircleOutline,
-      keyOutline
+      logOut, 
+      download,
+      informationCircle,
+      key
     });
   }
 

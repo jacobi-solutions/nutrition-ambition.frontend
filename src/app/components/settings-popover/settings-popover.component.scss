@@ -1,27 +1,29 @@
 .settings-dropdown {
   min-width: 200px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-bottom: 8px;
   
   ion-list {
+    margin: 0;
     padding: 0;
+    background: white;
+    border-radius: 2.25rem;
+    overflow: hidden;
   }
   
   ion-item {
-    --background: transparent;
-    --color: var(--ion-color-dark);
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --min-height: 48px;
     --border-color: transparent;
-    font-size: 0.9rem;
-    
-    &:hover {
-      --background: var(--ion-color-light);
-    }
-    
-    ion-icon {
-      color: var(--ion-color-medium);
-      margin-right: 8px;
-    }
+    --inner-border-width: 0;
     
     ion-label {
-      font-weight: 500;
+      font-size: 16px;
+      font-weight: 400;
+      color: #333;
+      text-transform: lowercase;
     }
     
     &[detail="false"]:last-child {
@@ -34,4 +36,55 @@
       }
     }
   }
+  
+  ion-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 12px;
+    color: var(--color-olive);
+  }
+}
+
+/* Apply the same scrollbar styling as entry-action-menu */
+.settings-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.settings-dropdown::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+/* Popover styling to match entry-action-menu exactly */
+::ng-deep ion-popover.settings-popover {
+  --border-radius: 1.125rem;
+  
+  .popover-content {
+    border-radius: 2.25rem !important;
+    overflow: visible;
+    background-color: var(--color-bone);
+    padding: 0.5rem !important;
+  }
+}
+
+::ng-deep ion-popover.settings-popover::part(content) {
+  border-radius: 2.25rem !important;
+  overflow: visible !important;
+  background-color: var(--color-bone) !important;
+  padding: 0.5rem !important;
+}
+
+/* More specific targeting for settings popover only */
+::ng-deep ion-popover.settings-popover div.popover-content[part="content"] {
+  border-radius: 2.25rem !important;
+  overflow: visible !important;
+  background-color: var(--color-bone) !important;
+  padding: 0.5rem !important;
+}
+
+::ng-deep ion-popover.settings-popover div.popover-content {
+  border-radius: 2.25rem !important;
+  overflow: visible !important;
+  background-color: var(--color-bone) !important;
+  padding: 0.5rem !important;
 }
