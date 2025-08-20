@@ -23,34 +23,38 @@ export class AppComponent implements OnInit {
   constructor(
     private accountsService: AccountsService,
     private swUpdate: SwUpdate
-  ) {
-    
-    if (swUpdate.isEnabled) {
-      this.swUpdate.checkForUpdate();
-      swUpdate.versionUpdates.subscribe(event => {
+  ) {}
+  
+  async ngOnInit() {
+    // 🔹 Service Worker Update Check
+    if (this.swUpdate.isEnabled) {
+      try {
+        await this.swUpdate.checkForUpdate();
+      } catch (err) {
+        console.warn('SW update check failed:', err);
+      }
+  
+      this.swUpdate.versionUpdates.subscribe(event => {
         if (event.type === 'VERSION_READY') {
           console.log('🚀 New version available. Reloading...');
           document.location.reload();
         }
       });
     }
-  }
-
-  async ngOnInit() {
-    // After auth is ready, only load account if authenticated. Do not start anonymous sessions here.
+  
+    // 🔹 Auth / Accounts init
     this.authService.authReady$.pipe(take(1)).subscribe({
       next: async () => {
         try {
-          // Only load account data if a user is present (anon or registered)
           const isAuthenticated = await this.authService.isAuthenticated();
           if (isAuthenticated) {
             await this.accountsService.loadAccount();
           }
         } catch (e) {
-          // eslint-disable-next-line no-console
           console.warn('[App] init error', e);
         }
       }
     });
   }
+  
 }
