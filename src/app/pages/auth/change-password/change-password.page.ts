@@ -8,9 +8,9 @@ import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, I
 import { environment } from 'src/environments/environment';
 
 @Component({
-  selector: 'app-signup',
-  templateUrl: './signup.page.html',
-  styleUrls: ['./signup.page.scss'],
+  selector: 'app-change-password',
+  templateUrl: './change-password.page.html',
+  styleUrls: ['./change-password.page.scss'],
   standalone: true,
   imports: [
     FormsModule,
@@ -21,9 +21,9 @@ import { environment } from 'src/environments/environment';
     IonInput, IonButton, IonInputPasswordToggle
   ],
 })
-export class SignupPage {
-  email: string = '';
-  password: string = '';
+export class ChangePasswordPage {
+  currentPassword: string = '';
+  newPassword: string = '';
   confirmPassword: string = '';
   isWorking: boolean = false;
 
@@ -33,28 +33,28 @@ export class SignupPage {
     private toastService: ToastService
   ) {}
 
-  async onSignup() {
-    if (!this.email.trim()) {
+  async onResetPassword() {
+    if (this.newPassword !== this.confirmPassword) {
       await this.toastService.showToast({
-        message: 'Email is required',
+        message: 'New passwords do not match',
         color: 'danger',
         duration: 3000
       });
       return;
     }
 
-    if (this.password.length < 8) {
+    if (this.newPassword.length < 8) {
       await this.toastService.showToast({
-        message: 'Password must be at least 8 characters',
+        message: 'New password must be at least 8 characters',
         color: 'danger',
         duration: 3000
       });
       return;
     }
 
-    if (this.password !== this.confirmPassword) {
+    if (!this.currentPassword.trim()) {
       await this.toastService.showToast({
-        message: 'Passwords do not match',
+        message: 'Current password is required',
         color: 'danger',
         duration: 3000
       });
@@ -62,23 +62,23 @@ export class SignupPage {
     }
 
     this.isWorking = true;
-
+    
     try {
-      await this.authService.registerWithEmail(this.email, this.password);
+      await this.authService.changePassword(this.currentPassword, this.newPassword);
       
       // Show success toast
       await this.toastService.showToast({
-        message: 'Account created. You\'re all set!',
+        message: 'Password has been changed successfully!',
         color: 'success',
         duration: 3000
       });
       
-      // Navigate to chat for consistency with login
+      // Navigate back to the previous page or chat
       this.router.navigate(['/app/chat']);
     } catch (error) {
-      console.error('Signup failed:', error);
+      console.error('Password change failed:', error);
       await this.toastService.showToast({
-        message: error instanceof Error ? error.message : 'Failed to create account. Please try again.',
+        message: error instanceof Error ? error.message : 'Failed to change password. Please try again.',
         color: 'danger',
         duration: 3000
       });
@@ -87,23 +87,7 @@ export class SignupPage {
     }
   }
 
-  navigateToChat() {
-    this.router.navigate(['/app/chat']);
+  navigateToLogin() {
+    this.router.navigate(['/login']);
   }
-
-  async onContinueAsGuest(): Promise<void> {
-    if (this.isWorking) return;
-    this.isWorking = true;
-    try {
-      await this.authService.startAnonymousSession();
-      this.router.navigateByUrl('/app/chat');
-    } catch (error) {
-      if (environment.authDebug) {
-        // eslint-disable-next-line no-console
-        console.warn('Continue as Guest failed:', error);
-      }
-    } finally {
-      this.isWorking = false;
-    }
-  }
-} 
+}

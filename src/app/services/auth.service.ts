@@ -1,10 +1,10 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, onIdTokenChanged, signInAnonymously, linkWithCredential, EmailAuthProvider } from '@angular/fire/auth';
-import { setPersistence, indexedDBLocalPersistence } from 'firebase/auth';
+import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, onIdTokenChanged, signInAnonymously, linkWithCredential, EmailAuthProvider, reauthenticateWithCredential } from '@angular/fire/auth';
+import { setPersistence, indexedDBLocalPersistence, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import { Observable, BehaviorSubject, first } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
-import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
+import { NutritionAmbitionApiService, ChangePasswordRequest } from './nutrition-ambition-api.service';
 import { AnalyticsService } from './analytics.service';
 
 @Injectable({
@@ -134,6 +134,119 @@ export class AuthService {
     } catch (error) {
       console.error('Error during email registration:', error);
       return Promise.reject(error);
+    }
+  }
+
+  async resetPassword(email: string): Promise<void> {
+    try {
+      await sendPasswordResetEmail(this.authInstance, email);
+      this.setAuthNotice('Password reset email sent. Please check your inbox.');
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw error;
+    }
+  }
+
+  async verifyPasswordResetCode(oobCode: string): Promise<string> {
+    try {
+      const email = await verifyPasswordResetCode(this.authInstance, oobCode);
+      return email;
+    } catch (error) {
+      console.error('Error verifying password reset code:', error);
+      
+      // Provide more specific error messages for common Firebase auth errors
+      if (error && typeof error === 'object' && 'code' in error) {
+        const firebaseError = error as any;
+        switch (firebaseError.code) {
+          case 'auth/expired-action-code':
+            throw new Error('This password reset link has expired. Please request a new one.');
+          case 'auth/invalid-action-code':
+            throw new Error('This password reset link is invalid. Please request a new one.');
+          case 'auth/user-disabled':
+            throw new Error('This account has been disabled.');
+          case 'auth/user-not-found':
+            throw new Error('No account found for this reset link.');
+          default:
+            throw new Error(firebaseError.message || 'Invalid reset link');
+        }
+      }
+      
+      throw error;
+    }
+  }
+
+  async confirmPasswordReset(oobCode: string, newPassword: string): Promise<void> {
+    try {
+      await confirmPasswordReset(this.authInstance, oobCode, newPassword);
+      console.log('Password reset confirmed successfully');
+    } catch (error) {
+      console.error('Error confirming password reset:', error);
+      
+      // Provide more specific error messages for common Firebase auth errors
+      if (error && typeof error === 'object' && 'code' in error) {
+        const firebaseError = error as any;
+        switch (firebaseError.code) {
+          case 'auth/expired-action-code':
+            throw new Error('This password reset link has expired. Please request a new one.');
+          case 'auth/invalid-action-code':
+            throw new Error('This password reset link is invalid. Please request a new one.');
+          case 'auth/user-disabled':
+            throw new Error('This account has been disabled.');
+          case 'auth/user-not-found':
+            throw new Error('No account found for this reset link.');
+          case 'auth/weak-password':
+            throw new Error('Password is too weak. Please choose a stronger password.');
+          default:
+            throw new Error(firebaseError.message || 'Failed to reset password');
+        }
+      }
+      
+      throw error;
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    try {
+      const user = this.authInstance.currentUser;
+      if (!user || !user.email) {
+        throw new Error('User not authenticated or email not available');
+      }
+
+      // First, re-authenticate the user with their current password
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      
+      // If re-authentication succeeds, call the backend to change the password
+      const request = new ChangePasswordRequest({
+        newPassword: newPassword
+      });
+      
+      const result = await this._apiService.changePassword(request).toPromise();
+      
+      if (result && !result.isSuccess) {
+        throw new Error(result.errors?.join(', ') || 'Failed to change password');
+      }
+      
+      console.log('Password changed successfully');
+    } catch (error) {
+      console.error('Error changing password:', error);
+      
+      // Provide more specific error messages for common Firebase auth errors
+      if (error && typeof error === 'object' && 'code' in error) {
+        const firebaseError = error as any;
+        switch (firebaseError.code) {
+          case 'auth/wrong-password':
+            throw new Error('Current password is incorrect');
+          case 'auth/too-many-requests':
+            throw new Error('Too many failed attempts. Please try again later');
+          case 'auth/requires-recent-login':
+            throw new Error('Please log out and log back in, then try again');
+          default:
+            throw new Error(firebaseError.message || 'Failed to change password');
+        }
+      }
+      
+      throw error;
     }
   }
 

@@ -58,6 +58,18 @@ export class LoginPage implements OnInit, OnDestroy {
     this.authRequiredSub?.unsubscribe();
     this.noticeSub?.unsubscribe();
   }
+  async onForgotPassword() {
+    if (!this.email) {
+      this.notice = 'Please enter your email first.';
+      return;
+    }
+    try {
+      await this.authService.resetPassword(this.email);
+      this.notice = 'We sent you a password reset link.';
+    } catch {
+      this.notice = 'Unable to send reset email. Please try again.';
+    }
+  } 
 
   async onLogin() {
     try {

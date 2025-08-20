@@ -1,0 +1,144 @@
+@use '../auth-shared.scss';
+
+// Firebase action wrapper - background container
+.firebase-action-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+  padding: 1.25rem;
+  background-image: url('https://storage.googleapis.com/nutritionambition.app/images/AdobeStock_320314361.jpeg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.33) 0%, rgba(0, 0, 0, 0.33) 100%), #4E6E5D;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+// Logo container for vertical centering
+.logo-container {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Firebase action logo styling
+.firebase-action-logo {
+  width: 18rem;
+  height: 13.5rem;
+  display: block;
+}
+
+// White form card
+.firebase-action-card {
+  width: 100%;
+  max-width: 26.25rem;
+  padding: 2rem;
+  background-color: var(--color-bone);
+  margin: 0 auto;
+  border-radius: 2.25rem;
+  border: 1px solid #FFF;
+  box-shadow: 0px 1px 24px 4px rgba(0, 0, 0, 0.10);
+}
+
+// Processing container
+.processing-container {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+// Processing spinner
+.processing-spinner {
+  width: 3rem;
+  height: 3rem;
+  color: var(--color-olive);
+  margin-bottom: 1.5rem;
+}
+
+// Processing title
+.processing-title {
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--color-charcoal);
+  margin-bottom: 1rem;
+  margin-top: 0;
+}
+
+// Processing message
+.processing-message {
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  color: var(--color-charcoal);
+  margin-bottom: 2rem;
+  line-height: 1.4;
+}
+
+// Action buttons container
+.action-buttons {
+  margin-top: 2rem;
+}
+
+// Action button styling
+.action-button {
+  height: 3.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  --background: var(--color-salmon);
+  --color: #ffffff;
+  --border-radius: 30px;
+  text-transform: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// Additional specificity for button text color
+.action-button::part(native) {
+  color: #ffffff !important;
+}
+
+// Copyright text styling
+.copyright-text {
+  color: #F5F3EF;
+  text-align: center;
+  font-family: var(--font-primary);
+  font-size: 0.6875rem;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-top: auto;
+}
+
+// Remove default ion-content styling
+ion-content {
+  --background: transparent;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}

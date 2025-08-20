@@ -1,0 +1,37 @@
+.settings-dropdown {
+  min-width: 200px;
+  
+  ion-list {
+    padding: 0;
+  }
+  
+  ion-item {
+    --background: transparent;
+    --color: var(--ion-color-dark);
+    --border-color: transparent;
+    font-size: 0.9rem;
+    
+    &:hover {
+      --background: var(--ion-color-light);
+    }
+    
+    ion-icon {
+      color: var(--ion-color-medium);
+      margin-right: 8px;
+    }
+    
+    ion-label {
+      font-weight: 500;
+    }
+    
+    &[detail="false"]:last-child {
+      --border-color: transparent;
+      opacity: 0.7;
+      cursor: default;
+      
+      &:hover {
+        --background: transparent;
+      }
+    }
+  }
+}

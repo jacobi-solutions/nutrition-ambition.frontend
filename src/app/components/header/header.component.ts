@@ -35,13 +35,15 @@ import {
   chevronForwardOutline,
   settingsOutline,
   downloadOutline,
-  informationCircleOutline
+  informationCircleOutline,
+  keyOutline
 } from 'ionicons/icons';
 import { DateService } from 'src/app/services/date.service';
 import { Subscription } from 'rxjs';
 import { format } from 'date-fns';
 import { PwaInstallService } from 'src/app/services/pwa-install.service';
 import { PwaInstallComponent } from '../pwa-install/pwa-install.component';
+import { SettingsPopoverComponent } from '../settings-popover/settings-popover.component';
 
 @Component({
   selector: 'app-header',
@@ -66,7 +68,8 @@ import { PwaInstallComponent } from '../pwa-install/pwa-install.component';
     IonPopover,
     IonList,
     IonItem,
-    IonLabel
+    IonLabel,
+    SettingsPopoverComponent
   ]
 })
 export class AppHeaderComponent implements OnInit, OnDestroy {
@@ -130,7 +133,8 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
       chevronForwardOutline,
       settingsOutline,
       downloadOutline,
-      informationCircleOutline
+      informationCircleOutline,
+      keyOutline
     });
 
     this.canInstall = this.pwa.canInstall();
@@ -243,13 +247,10 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   }
   
   // Settings dropdown methods
-  async onSettingsAction(action: string, event?: Event) {
-    // Dismiss the popover first
-    if (this.settingsPopover) {
-      this.settingsPopover.dismiss();
-    }
+  async onSettingsAction(actionData: { action: string, event?: Event }) {
+    const { action, event } = actionData;
     
-    // Then handle the action
+    // Handle the action
     switch (action) {
       case 'signout':
         this.onLogout();

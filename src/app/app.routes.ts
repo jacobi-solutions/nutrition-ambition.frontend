@@ -9,11 +9,11 @@ export const routes: Routes = [
     path: 'login',
     component: LoginPage
   },
-  {
-    path: 'signup',
-    component: SignupPage,
-    // Note: AuthGuard might need adjustment if registration is public
-  },
+  // {
+  //   path: 'signup',
+  //   component: SignupPage,
+  //   // Note: AuthGuard might need adjustment if registration is public
+  // },
   {
     path: 'legal',
     loadComponent: () => import('./pages/legal/legal.page').then(m => m.LegalPage)
@@ -25,6 +25,19 @@ export const routes: Routes = [
   {
     path: 'legal/terms-of-service',
     loadComponent: () => import('./pages/legal/terms-of-service/terms-of-service.page').then(m => m.TermsOfServicePage)
+  },
+  {
+    path: 'change-password',
+    loadComponent: () => import('./pages/auth/change-password/change-password.page').then(m => m.ChangePasswordPage),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'forgot-password-reset',
+    loadComponent: () => import('./pages/auth/forgot-password-reset/forgot-password-reset.page').then(m => m.ForgotPasswordResetPage)
+  },
+  {
+    path: 'firebase-action',
+    loadComponent: () => import('./pages/auth/firebase-action/firebase-action.page').then(m => m.FirebaseActionPage)
   },
   {
     path: 'admin',

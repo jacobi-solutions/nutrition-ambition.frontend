@@ -47,8 +47,8 @@
         
         <p class="form-legal">By using this app, you agree to our <a routerLink="/legal/terms-of-service" class="legal-link">Terms of Use</a> and <a routerLink="/legal/privacy-policy" class="legal-link">Privacy Policy</a>.</p>
         
-        <ion-button expand="block" type="submit" color="tertiary" class="signup-button">
-          Sign up
+        <ion-button expand="block" type="submit" color="tertiary" class="signup-button" [disabled]="isWorking">
+          {{ isWorking ? 'Creating Account...' : 'Sign up' }}
         </ion-button>
 
         <ion-button expand="block" class="guest-login-button" color="medium" [disabled]="isWorking" (click)="onContinueAsGuest()">

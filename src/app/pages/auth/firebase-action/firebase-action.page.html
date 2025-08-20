@@ -1,0 +1,30 @@
+<ion-content>
+  <div class="firebase-action-wrapper">
+    <div class="logo-container">
+      <img src="https://storage.googleapis.com/nutritionambition.app/logos/login-screen-logo.svg" alt="Nutrition Ambition Logo" class="firebase-action-logo" />
+    </div>
+    
+    <div class="firebase-action-card">
+      <div class="processing-container">
+        <ion-spinner *ngIf="isProcessing" name="crescent" class="processing-spinner"></ion-spinner>
+        
+        <h1 class="processing-title">{{ isProcessing ? 'Processing Request' : 'Request Processed' }}</h1>
+        <p class="processing-message">{{ message }}</p>
+        
+        <div *ngIf="!isProcessing" class="action-buttons">
+          <ion-button 
+            expand="block" 
+            color="tertiary" 
+            class="action-button"
+            (click)="navigateToLogin()">
+            Continue to Login
+          </ion-button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="copyright-text">
+      Copyright © 2025 Nutrition Ambition All rights reserved
+    </div>
+  </div>
+</ion-content>
