@@ -1,8 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { IonicModule, PopoverController } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { addIcons } from 'ionicons';
 import { downloadOutline } from 'ionicons/icons';
+import { PwaInstallService } from 'src/app/services/pwa-install.service';
 
 @Component({
   standalone: true,
@@ -11,12 +12,18 @@ import { downloadOutline } from 'ionicons/icons';
   styleUrls: ['./pwa-install.component.scss'],
   imports: [IonicModule, CommonModule]
 })
-export class PwaInstallComponent {
-  @Input() message: string = '';
-  
-  constructor(private popoverCtrl: PopoverController) {
-    // Add the download icon to the library
+export class PwaInstallComponent implements OnInit {
+  message: string = '';
+
+  constructor(
+    private popoverCtrl: PopoverController,
+    private installService: PwaInstallService
+  ) {
     addIcons({ downloadOutline });
+  }
+
+  ngOnInit() {
+    this.message = this.installService.getInstallMessage();
   }
 
   dismissPopover() {
