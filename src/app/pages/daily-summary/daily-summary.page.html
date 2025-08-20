@@ -10,8 +10,15 @@
   (refresh)="onRefresh()">
 </app-header>
 
-<ion-content class="ion-padding">
-
+<ion-content [fullscreen]="true" class="ion-padding">
+  <!-- Pull-to-refresh functionality -->
+  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
+    <ion-refresher-content
+      pullingText="Pull to refresh"
+      refreshingSpinner="circles"
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
 
   <div class="main-content-wrapper">
     <div *ngIf="detailedLoading" class="loading-container">

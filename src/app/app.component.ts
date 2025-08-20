@@ -6,6 +6,7 @@ import { AccountsService } from './services/accounts.service';
 import { AuthService } from './services/auth.service';
 import { take } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { SwUpdate } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
@@ -20,8 +21,18 @@ export class AppComponent implements OnInit {
   private authService = inject(AuthService);
 
   constructor(
-    private accountsService: AccountsService
-  ) {}
+    private accountsService: AccountsService,
+    private swUpdate: SwUpdate
+  ) {
+    if (swUpdate.isEnabled) {
+      swUpdate.versionUpdates.subscribe(event => {
+        if (event.type === 'VERSION_READY') {
+          console.log('🚀 New version available. Reloading...');
+          document.location.reload();
+        }
+      });
+    }
+  }
 
   async ngOnInit() {
     // After auth is ready, only load account if authenticated. Do not start anonymous sessions here.

@@ -10,8 +10,15 @@
   (refresh)="onRefresh()">
 </app-header>
 
-<ion-content [scrollEvents]="true" (ionScroll)="onScroll($event)" #content>
-  <!-- Refresh functionality -->
+<ion-content [fullscreen]="true" [scrollEvents]="true" (ionScroll)="onScroll($event)" #content>
+  <!-- Pull-to-refresh functionality -->
+  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
+    <ion-refresher-content
+      pullingText="Pull to refresh"
+      refreshingSpinner="circles"
+      refreshingText="Refreshing...">
+    </ion-refresher-content>
+  </ion-refresher>
 
 
   <div class="ion-padding">

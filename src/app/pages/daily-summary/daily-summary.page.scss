@@ -177,6 +177,11 @@ ion-content {
   }
 }
 
+// Add top padding when using fullscreen to account for header
+ion-content[fullscreen] {
+  --padding-top: 96px; // Approximate height of the two-row header
+}
+
 // Main card container responsive styling
 .main-card-container {
   max-width: 420px;

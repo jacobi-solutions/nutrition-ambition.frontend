@@ -17,11 +17,8 @@ import {
   IonRow,
   IonCol,
   IonGrid,
-  IonRefresher,
-  IonRefresherContent,
+
   IonPopover,
-  IonList,
-  IonItem,
   PopoverController
 } from '@ionic/angular/standalone';
 import { AuthService } from 'src/app/services/auth.service';
@@ -63,12 +60,8 @@ import { SettingsPopoverComponent } from '../settings-popover/settings-popover.c
     IonDatetimeButton,
     IonModal,
     IonDatetime,
-    IonRefresher,
-    IonRefresherContent,
-    IonPopover,
-    IonList,
-    IonItem,
-    IonLabel,
+
+      IonPopover,
     SettingsPopoverComponent
   ]
 })
@@ -235,16 +228,7 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     this.nextDay.emit();
   }
   
-  // Handle pull-to-refresh
-  handleRefresh(event: CustomEvent) {
-    console.log('[AppHeader] Pull-to-refresh triggered');
-    this.refresh.emit();
-    
-    // Complete the refresh after a short delay
-    setTimeout(() => {
-      (event.target as any)?.complete();
-    }, 1000);
-  }
+
   
   // Settings dropdown methods
   async onSettingsAction(actionData: { action: string, event?: Event }) {

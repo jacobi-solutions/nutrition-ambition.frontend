@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import {
   IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
   IonSpinner, IonText, IonSegment, IonSegmentButton, IonLabel, IonList,
-  IonItem, IonIcon, IonButton, IonPopover
+  IonItem, IonIcon, IonButton, IonPopover, IonRefresher, IonRefresherContent
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import {
@@ -60,6 +60,8 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
     IonIcon,
     IonButton,
     IonPopover,
+    IonRefresher,
+    IonRefresherContent,
     AppHeaderComponent,
     EntryActionMenuComponent
   ]
@@ -181,8 +183,15 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     });
   }
 
-  onRefresh() {
+  onRefresh(event?: CustomEvent) {
     this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
+    
+    // Complete the refresher if event is provided
+    if (event && event.target) {
+      setTimeout(() => {
+        (event.target as any)?.complete();
+      }, 1000);
+    }
   }
 
   loadDetailedSummary(date: Date, forceReload: boolean = false) {

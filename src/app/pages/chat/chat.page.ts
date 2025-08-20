@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, AnimationController } from '@ionic/angular/standalone';
+import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
 import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlaneSharp } from 'ionicons/icons';
@@ -43,6 +43,8 @@ import { AnalyticsService } from '../../services/analytics.service';
     IonFooter,
     IonIcon,
     IonSpinner,
+    IonRefresher,
+    IonRefresherContent,
     AppHeaderComponent,
     ChatMessageComponent,
     FoodSelectionComponent
@@ -252,9 +254,16 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // Handle refresh from header
-  onRefresh() {
+  onRefresh(event?: CustomEvent) {
     console.log('[Chat] Refresh triggered, reloading chat history');
     this.loadChatHistory(this.dateService.getSelectedDateUtc());
+    
+    // Complete the refresher if event is provided
+    if (event && event.target) {
+      setTimeout(() => {
+        (event.target as any)?.complete();
+      }, 1000);
+    }
   }
 
   async loadChatHistory(date: Date) {
