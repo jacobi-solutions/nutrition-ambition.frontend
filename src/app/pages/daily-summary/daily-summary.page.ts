@@ -438,6 +438,9 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   
     const displayName = this.getFoodDisplayName(entry);
   
+    // Start the pending edit state immediately
+    this.chatService.startPendingEdit(displayName);
+    
     // UX: set context note and navigate to Chat
     this.chatService.setContextNote(`Editing ${displayName}`);
     this.router.navigate(['/app/chat']);
@@ -453,14 +456,16 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       next: (resp) => {
         if (!resp?.isSuccess) {
           this.showErrorToast('Failed to start edit. Please try again.');
+          this.chatService.clearPendingEdit(); // Clear on error
         } else {
-          // Notify the chat service that an edit food selection was started and pass the messages
-          this.chatService.notifyEditFoodSelectionStarted(resp.messages);
+          // Complete the pending edit with the returned messages
+          this.chatService.completePendingEdit(resp.messages);
         }
       },
       error: (err) => {
         console.error('Edit start error', err);
         this.showErrorToast('An error occurred while starting the edit.');
+        this.chatService.clearPendingEdit(); // Clear on error
       }
     });
   }

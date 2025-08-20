@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inj
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
+import { ViewWillEnter } from '@ionic/angular';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
 import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlaneSharp } from 'ionicons/icons';
@@ -50,7 +51,7 @@ import { AnalyticsService } from '../../services/analytics.service';
     FoodSelectionComponent
   ]
 })
-export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
+export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter {
   MessageRoleTypes = MessageRoleTypes;
   private animationCtrl = inject(AnimationController);
   isOpen = false;
@@ -77,7 +78,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('messageInput', { static: false }) messageInput: ElementRef<HTMLTextAreaElement>;
 
   constructor(
-    private chatService: ChatService,
+    public chatService: ChatService, // Make public for template access
     private foodSelectionService: FoodSelectionService,
     private authService: AuthService,
     private dateService: DateService,
@@ -120,8 +121,20 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
           timestamp: new Date()
         });
         
-        // Show typing indicator when a context note is set
-        this.isLoading = true;
+        // Check for pending edit state to show appropriate loading indicator
+        this.chatService.pendingEdit$.subscribe(pendingEdit => {
+          if (pendingEdit?.isLoading) {
+            this.isLoading = true;
+          } else if (pendingEdit?.messages?.length) {
+            // If there are completed edit messages, process them
+            this.processAndAddNewMessages(pendingEdit.messages);
+            this.chatService.clearPendingEdit();
+            this.isLoading = false;
+          } else {
+            // Default behavior for non-edit context notes
+            this.isLoading = true;
+          }
+        }).unsubscribe(); // Use unsubscribe immediately since this is a one-time check
         
         // Scroll to see the context note and typing indicator
         this.scrollToBottom();
@@ -206,6 +219,24 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy {
     this.scrollToBottom();
   }
   
+  // This will be called when the view is about to enter
+  ionViewWillEnter() {
+    // Firebase Analytics: Track page view when entering the page
+    this.analytics.trackPageView('Chat');
+    
+    // Check for completed pending edits when entering the chat page
+    const pendingMessages = this.chatService.consumePendingEditMessages();
+    if (pendingMessages && pendingMessages.length > 0) {
+      console.log('[DEBUG] Processing pending edit messages on view enter');
+      // Only process if we're currently viewing today's date (edit operations always happen on today)
+      const today = format(new Date(), 'yyyy-MM-dd');
+      if (this.selectedDate === today) {
+        this.processAndAddNewMessages(pendingMessages);
+      }
+      this.isLoading = false;
+    }
+  }
+
   // This will be called when the component has been fully activated
   ionViewDidEnter() {
     console.log('[DEBUG] Chat view fully entered');

@@ -34,6 +34,14 @@ export class ChatService {
   private learnMoreAboutResponseSubject = new Subject<ChatMessagesResponse>();
   public learnMoreAboutResponse$ = this.learnMoreAboutResponseSubject.asObservable();
   
+  // Add pending edit state management
+  private pendingEditSubject = new BehaviorSubject<{
+    isLoading: boolean;
+    editName?: string;
+    messages?: ChatMessage[];
+  } | null>(null);
+  public pendingEdit$ = this.pendingEditSubject.asObservable();
+  
 
   
   constructor(
@@ -152,9 +160,51 @@ export class ChatService {
     this.contextNoteSubject.next(null);
   }
 
-  // Emit an event when edit food selection is started
+  // Enhanced methods for edit state management
+  public startPendingEdit(editName: string) {
+    this.pendingEditSubject.next({
+      isLoading: true,
+      editName: editName
+    });
+  }
+
+  public completePendingEdit(messages?: ChatMessage[]) {
+    const current = this.pendingEditSubject.value;
+    if (current) {
+      this.pendingEditSubject.next({
+        isLoading: false,
+        editName: current.editName,
+        messages: messages
+      });
+      
+      // Also emit to the existing stream for backward compatibility
+      this.editFoodSelectionStarted$.next(messages || []);
+    }
+  }
+
+  public clearPendingEdit() {
+    this.pendingEditSubject.next(null);
+  }
+
+  // Check if there's a completed pending edit
+  public hasPendingEditMessages(): boolean {
+    const current = this.pendingEditSubject.value;
+    return !!(current && !current.isLoading && current.messages?.length);
+  }
+
+  // Get pending edit messages and clear them
+  public consumePendingEditMessages(): ChatMessage[] | null {
+    const current = this.pendingEditSubject.value;
+    if (current && !current.isLoading && current.messages?.length) {
+      this.clearPendingEdit();
+      return current.messages;
+    }
+    return null;
+  }
+
+  // Emit an event when edit food selection is started (keeping for backward compatibility)
   public notifyEditFoodSelectionStarted(messages?: ChatMessage[]) {
-    this.editFoodSelectionStarted$.next(messages || []);
+    this.completePendingEdit(messages);
   }
 
   // Add a method to reload messages for the current date
