@@ -15,6 +15,7 @@ import {
   informationCircleOutline,
   keyOutline
 } from 'ionicons/icons';
+import { APP_VERSION } from '../../../environments/versions';
 
 @Component({
   selector: 'app-settings-popover',
@@ -33,6 +34,9 @@ import {
 export class SettingsPopoverComponent {
   @Input() canInstall: boolean = false;
   @Output() settingsAction = new EventEmitter<{ action: string, event?: Event }>();
+  
+  // Expose the app version
+  readonly appVersion = APP_VERSION;
 
   constructor(private popoverCtrl: PopoverController) {
     // Add the icons explicitly to the library
