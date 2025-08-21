@@ -4,6 +4,7 @@ import { IonicModule } from '@ionic/angular';
 import { RouterOutlet } from '@angular/router';
 import { AccountsService } from './services/accounts.service';
 import { AuthService } from './services/auth.service';
+import { AnalyticsService } from './services/analytics.service';
 import { take } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { SwUpdate } from '@angular/service-worker';
@@ -19,6 +20,7 @@ export class AppComponent implements OnInit {
   title = 'Nutrition Ambition';
 
   private authService = inject(AuthService);
+  private analyticsService = inject(AnalyticsService);
 
   constructor(
     private accountsService: AccountsService,
@@ -26,6 +28,9 @@ export class AppComponent implements OnInit {
   ) {}
   
   async ngOnInit() {
+    // 🔹 Track PWA standalone mode usage
+    this.trackStandaloneModeIfApplicable();
+
     // 🔹 Service Worker Update Check
     if (this.swUpdate.isEnabled) {
       try {
@@ -55,6 +60,17 @@ export class AppComponent implements OnInit {
         }
       }
     });
+  }
+
+  private trackStandaloneModeIfApplicable() {
+    // Check if app is running in standalone mode (PWA)
+    const isStandalone = 
+      ('standalone' in navigator && (navigator as any).standalone) || // iOS Safari
+      window.matchMedia('(display-mode: standalone)').matches; // Modern browsers
+    
+    if (isStandalone) {
+      this.analyticsService.trackPwaStandaloneMode();
+    }
   }
   
 }

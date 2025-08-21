@@ -250,7 +250,7 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
 
     // Android/Chrome prompt path (no message → handled natively)
     if (result?.outcome) {
-      console.log('Install outcome:', result.outcome);
+      // Analytics are now tracked in PwaInstallService
       return;
     }
 

@@ -40,18 +40,7 @@
             <div class="context-note-text">
               {{ message.text }}
             </div>
-            
-            <!-- Show different loading states based on pending edit -->
-            <div *ngIf="(chatService.pendingEdit$ | async) as pendingEdit" class="context-note-status">
-              <div *ngIf="pendingEdit.isLoading" class="loading-state">
-                <ion-spinner name="dots" class="small-spinner"></ion-spinner>
-                <span class="loading-text">Setting up edit for {{ pendingEdit.editName }}...</span>
-              </div>
-              <div *ngIf="!pendingEdit.isLoading && pendingEdit.messages?.length" class="ready-state">
-                <span class="ready-text">Edit ready</span>
-              </div>
-            </div>
-          </div>
+
 
           <!-- Standalone food selection cards for pending and completed selection messages -->
           <div *ngIf="!message.isContextNote && (message.role === MessageRoleTypes.PendingFoodSelection || message.role === MessageRoleTypes.CompletedFoodSelection || message.role === MessageRoleTypes.PendingEditFoodSelection || message.role === MessageRoleTypes.CompletedEditFoodSelection)" class="standalone-food-selection">

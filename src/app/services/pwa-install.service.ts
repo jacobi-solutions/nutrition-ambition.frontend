@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { AnalyticsService } from './analytics.service';
 
 export enum InstallMode {
   AndroidPrompt,     // Android + Chrome/Edge/Brave → has beforeinstallprompt
@@ -11,12 +12,20 @@ export enum InstallMode {
 @Injectable({ providedIn: 'root' })
 export class PwaInstallService {
   private deferredPrompt: any = null;
+  private analytics = inject(AnalyticsService);
 
   constructor() {
     // Capture install prompt event on Android Chrome/Edge
     window.addEventListener('beforeinstallprompt', (event: Event) => {
       event.preventDefault();
       this.deferredPrompt = event;
+    });
+
+    // Listen for successful app installation
+    window.addEventListener('appinstalled', (event: Event) => {
+      const platform = this.getPlatformName();
+      const method = this.deferredPrompt ? 'prompt' : 'manual';
+      this.analytics.trackPwaInstallCompleted(platform, method);
     });
   }
 
@@ -55,27 +64,55 @@ export class PwaInstallService {
     return mode !== InstallMode.Unsupported && !this.isInstalled();
   }
 
+  /** Get platform name for analytics */
+  private getPlatformName(): string {
+    const ua = navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(ua);
+    const isAndroid = /android/.test(ua);
+    const isSafari = isIOS && /^((?!crios|fxios|edgios).)*safari/.test(ua);
+    
+    if (isAndroid) return 'Android';
+    if (isSafari) return 'iOS Safari';
+    if (isIOS) return 'iOS Other';
+    return 'Desktop/Other';
+  }
+
   /** Trigger install prompt or return proper message for manual flow */
   async install(): Promise<{ outcome?: string; message?: string }> {
     const mode = this.getInstallMode();
+    const platform = this.getPlatformName();
 
     switch (mode) {
       case InstallMode.AndroidPrompt:
         if (!this.deferredPrompt) {
           return { message: 'Install prompt unavailable.' };
         }
+        
+        // Track install attempt
+        this.analytics.trackPwaInstallAttempted(platform, 'prompt');
+        
         this.deferredPrompt.prompt();
         const choiceResult = await this.deferredPrompt.userChoice;
         this.deferredPrompt = null;
+        
+        // Track outcome
+        if (choiceResult.outcome === 'dismissed') {
+          this.analytics.trackPwaInstallCancelled(platform, 'prompt');
+        }
+        // Note: 'accepted' outcome will be tracked by appinstalled event
+        
         return { outcome: choiceResult.outcome };
 
       case InstallMode.AndroidManual:
+        this.analytics.trackPwaInstallAttempted(platform, 'manual');
         return { message: "On Android, open your browser menu → 'Add to Home Screen'." };
 
       case InstallMode.IosSafari:
+        this.analytics.trackPwaInstallAttempted(platform, 'manual');
         return { message: "On Safari, tap the Share button → 'Add to Home Screen'." };
 
       case InstallMode.IosOther:
+        this.analytics.trackPwaInstallAttempted(platform, 'manual');
         return { message: "On iOS, tap Share → 'Add to Home Screen'.\n\nIf you don't see that option, some versions of iOS only allow this in Safari — please open this app in Safari to complete install. Don't worry, it's a one-time step." };
 
       default:
