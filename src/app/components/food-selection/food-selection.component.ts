@@ -463,6 +463,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   async cancelSelection(): Promise<void> {
+    console.log('Food selection: cancelSelection() called');
     // Start the canceling state to show thinking dots
     this.isCanceling = true;
     
@@ -493,8 +494,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Set a timeout to actually cancel after toast duration
     this.cancelTimeout = setTimeout(() => {
       // Toast expired without undo - proceed with cancellation
+      console.log('Food selection: Emitting cancel event after timeout');
       this.cancel.emit();
       this.cancelTimeout = null;
+      this.isCanceling = false;
     }, 5000);
     
     // Listen for toast dismissal (if user dismisses manually)
@@ -502,9 +505,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       // If toast was dismissed but not by undo button, proceed with cancellation
       if (result.role !== 'cancel' && this.isCanceling && this.cancelTimeout) {
         // User dismissed toast manually - proceed with cancellation immediately
+        console.log('Food selection: Emitting cancel event after toast dismissal');
         clearTimeout(this.cancelTimeout);
         this.cancel.emit();
         this.cancelTimeout = null;
+        this.isCanceling = false;
       }
     });
   }

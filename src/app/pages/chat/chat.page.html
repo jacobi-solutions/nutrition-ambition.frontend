@@ -40,7 +40,8 @@
             <div class="context-note-text">
               {{ message.text }}
             </div>
-
+            
+          </div>
 
           <!-- Standalone food selection cards for pending and completed selection messages -->
           <div *ngIf="!message.isContextNote && (message.role === MessageRoleTypes.PendingFoodSelection || message.role === MessageRoleTypes.CompletedFoodSelection || message.role === MessageRoleTypes.PendingEditFoodSelection || message.role === MessageRoleTypes.CompletedEditFoodSelection)" class="standalone-food-selection">

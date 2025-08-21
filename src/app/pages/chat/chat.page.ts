@@ -17,6 +17,7 @@ import {
   ComponentMatch,
     SubmitServingSelectionRequest,
     CancelServingSelectionRequest,
+    CancelEditSelectionRequest,
     SubmitEditServingSelectionRequest,
     LogMealToolResponse,
     UserSelectedServing
@@ -72,6 +73,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private editFoodSelectionStartedSubscription: Subscription;
 
   private hasInitialMessage: boolean = false;
+  private cancelledMessageIds: Set<string> = new Set();
 
   @ViewChild('content', { static: false }) content: IonContent;
   @ViewChild('messagesContent') messagesContent: ElementRef;
@@ -228,10 +230,21 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     const pendingMessages = this.chatService.consumePendingEditMessages();
     if (pendingMessages && pendingMessages.length > 0) {
       console.log('[DEBUG] Processing pending edit messages on view enter');
-      // Only process if we're currently viewing today's date (edit operations always happen on today)
-      const today = format(new Date(), 'yyyy-MM-dd');
-      if (this.selectedDate === today) {
-        this.processAndAddNewMessages(pendingMessages);
+      
+      // Filter out pending edit messages - only process completed edit messages
+      const completedMessages = pendingMessages.filter(msg => 
+        msg.role !== MessageRoleTypes.PendingEditFoodSelection
+      );
+      
+      if (completedMessages.length > 0) {
+        console.log('[DEBUG] Processing', completedMessages.length, 'completed edit messages');
+        // Only process if we're currently viewing today's date (edit operations always happen on today)
+        const today = format(new Date(), 'yyyy-MM-dd');
+        if (this.selectedDate === today) {
+          this.processAndAddNewMessages(completedMessages);
+        }
+      } else {
+        console.log('[DEBUG] No completed edit messages to process, all were pending');
       }
       this.isLoading = false;
     }
@@ -301,8 +314,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Preserve any existing context note
     const existingContextNote = this.messages.find(msg => msg.isContextNote);
     
-    // Reset current messages
+    // Reset current messages and clear cancelled message IDs for new date
     this.messages = [];
+    this.cancelledMessageIds.clear();
     this.isLoadingHistory = true;
     this.error = null;
 
@@ -704,6 +718,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
     newMessages.forEach(msg => {
       if (allowedRoles.includes(msg.role!)) {
+        // Skip cancelled messages
+        if (msg.id && this.cancelledMessageIds.has(msg.id)) {
+          console.log('[DEBUG] Skipping cancelled message:', msg.id);
+          return;
+        }
+        
         // Check if message already exists (avoid duplicates)
         const existingMessageIndex = this.messages.findIndex(existing => existing.id === msg.id);
         
@@ -798,6 +818,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           this.processAndAddNewMessages(response.messages);
         }
 
+        // Clear cancelled message IDs after successful food logging
+        this.cancelledMessageIds.clear();
+
         // Notify other views (e.g., summary) that nutrients changed
         this.chatService.mealLogged$.next?.();
       },
@@ -832,6 +855,9 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         this.processAndAddNewMessages(response.messages);
       }
 
+      // Clear cancelled message IDs after successful edit completion
+      this.cancelledMessageIds.clear();
+
       // Notify other views (e.g., summary) that nutrients changed
       this.chatService.mealLogged$.next?.();
     },
@@ -853,63 +879,114 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       return;
     }
 
-    console.log('Canceling food selection for message:', message.id);
+    console.log('Canceling food selection for message:', message.id, 'Role:', message.role);
 
     // Remove the pending food selection message from UI
     const messageIndex = this.messages.findIndex(m => m.id === message.id);
+    console.log('Found message at index:', messageIndex, 'Total messages before:', this.messages.length);
+    
     if (messageIndex !== -1) {
       this.messages.splice(messageIndex, 1);
+      console.log('Removed message, total messages after:', this.messages.length);
+      
+      // Track this message as cancelled to prevent re-adding
+      this.cancelledMessageIds.add(message.id);
+      console.log('Added message to cancelled list:', message.id);
+      
+      // Force change detection to ensure UI updates immediately
+      this.cdr.detectChanges();
+      
+      // Additional debugging - log the messages array
+      console.log('Messages array after removal:', this.messages.map(m => ({ id: m.id, role: m.role, text: m.text?.substring(0, 50) })));
+    } else {
+      console.warn('Message not found in array for removal');
     }
 
-    // Set context note and show typing indicator
-    this.chatService.setContextNote('Canceled food logging');
-    
-    // Create request and call FoodSelectionService directly
-    const request = new CancelServingSelectionRequest({
-      pendingMessageId: message.id,
-      loggedDateUtc: this.dateService.getSelectedDateUtc()
-    });
-    
-    // Make API call using FoodSelectionService
-    this.foodSelectionService.cancelFoodLogging(request).subscribe({
-      next: (response) => {
-        if (!response.isSuccess) {
-          console.warn('Cancel food logging failed:', response.errors);
-          this.showErrorToast('Failed to cancel food selection.');
-          
-          // Restore the pending food selection message if cancellation failed
-          if (messageIndex !== -1) {
-            this.messages.splice(messageIndex, 0, message);
-          }
-          // Turn off loading indicator
-          this.isLoading = false;
-          return;
+    // Use the appropriate API based on the message type
+    if (message.role === MessageRoleTypes.PendingEditFoodSelection) {
+      // Handle edit cancellation
+      const request = new CancelEditSelectionRequest({
+        pendingMessageId: message.id,
+        loggedDateUtc: this.dateService.getSelectedDateUtc()
+      });
+      
+      this.foodSelectionService.cancelEditSelection(request).subscribe({
+        next: (response) => {
+          this.handleCancelResponse(response, message, messageIndex);
+        },
+        error: (error) => {
+          this.handleCancelError(error, message, messageIndex);
         }
+      });
+    } else {
+      // Handle regular selection cancellation
+      const request = new CancelServingSelectionRequest({
+        pendingMessageId: message.id,
+        loggedDateUtc: this.dateService.getSelectedDateUtc()
+      });
+      
+      this.foodSelectionService.cancelFoodLogging(request).subscribe({
+        next: (response) => {
+          this.handleCancelResponse(response, message, messageIndex);
+        },
+        error: (error) => {
+          this.handleCancelError(error, message, messageIndex);
+        }
+      });
+    }
+  }
 
-        // Process the returned messages and add them to the chat
-        if (response.messages && response.messages.length > 0) {
-          this.processAndAddNewMessages(response.messages);
-        }
-        
-        // Turn off loading indicator
-        this.isLoading = false;
-        
-        // Focus the input after response is posted
-        this.focusInput();
-      },
-      error: (error) => {
-        console.error('Error canceling food selection:', error);
-        this.showErrorToast('Failed to cancel food selection.');
-        
-        // Restore the pending food selection message if cancellation failed
-        if (messageIndex !== -1) {
-          this.messages.splice(messageIndex, 0, message);
-        }
-        
-        // Turn off loading indicator
-        this.isLoading = false;
+  private handleCancelResponse(response: ChatMessagesResponse, message: DisplayMessage, messageIndex: number): void {
+    console.log('Cancel response received:', response.isSuccess, 'Messages:', response.messages?.length);
+    
+    if (!response.isSuccess) {
+      console.warn('Cancel food logging failed:', response.errors);
+      this.showErrorToast('Failed to cancel food selection.');
+      
+      // Restore the pending food selection message if cancellation failed
+      if (messageIndex !== -1) {
+        console.log('Restoring message at index:', messageIndex);
+        this.messages.splice(messageIndex, 0, message);
+        console.log('Message restored, total messages:', this.messages.length);
+        this.cdr.detectChanges();
       }
-    });
+      // Turn off loading indicator
+      this.isLoading = false;
+      return;
+    }
+
+    // Set context note after successful cancellation
+    this.chatService.setContextNote('Canceled food logging');
+
+    // Process the returned messages and add them to the chat
+    if (response.messages && response.messages.length > 0) {
+      console.log('Processing new messages from cancel response');
+      this.processAndAddNewMessages(response.messages);
+    } else {
+      console.log('No new messages in cancel response');
+    }
+    
+    // Turn off loading indicator
+    this.isLoading = false;
+    
+    // Focus the input after response is posted
+    this.focusInput();
+  }
+
+  private handleCancelError(error: any, message: DisplayMessage, messageIndex: number): void {
+    console.error('Error canceling food selection:', error);
+    this.showErrorToast('Failed to cancel food selection.');
+    
+    // Restore the pending food selection message if cancellation failed
+    if (messageIndex !== -1) {
+      console.log('Restoring message due to error at index:', messageIndex);
+      this.messages.splice(messageIndex, 0, message);
+      console.log('Message restored due to error, total messages:', this.messages.length);
+      this.cdr.detectChanges();
+    }
+    
+    // Turn off loading indicator
+    this.isLoading = false;
   }
 
   
