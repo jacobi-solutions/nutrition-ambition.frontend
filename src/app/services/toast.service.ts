@@ -23,7 +23,7 @@ export class ToastService {
       message: options.message,
       duration: options.duration || 3000,
       color: options.color || 'medium',
-      position: options.position || 'bottom',
+      position: options.position || 'top',
       buttons: options.buttons || []
     });
 

@@ -32,7 +32,7 @@ import {
 } from 'ionicons/icons';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
 import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-action-menu/entry-action-menu.component';
-import { ToastController } from '@ionic/angular';
+import { ToastService } from 'src/app/services/toast.service';
 import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
@@ -98,7 +98,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   private chatService = inject(ChatService);
   private foodEntryService = inject(FoodEntryService);
   private router = inject(Router);
-  private toastController = inject(ToastController);
+  private toastService = inject(ToastService);
   private apiService = inject(NutritionAmbitionApiService);
 
   constructor(
@@ -477,13 +477,11 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     this.isPopoverOpen = false;
     // Only allow removal of food entries, not nutrients
     if (entry.entryType !== 'food') {
-      const toast = await this.toastController.create({
+      await this.toastService.showToast({
         message: 'Only food items can be removed.',
         duration: 3000,
-        color: 'medium',
-        position: 'bottom'
+        color: 'medium'
       });
-      await toast.present();
       return;
     }
 
@@ -502,11 +500,10 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     this.removeFromUI(entry);
 
     // Show toast with undo option
-    const toast = await this.toastController.create({
+    await this.toastService.showToast({
       message: `Removing "${foodName}"`,
       duration: 2000,
       color: 'medium',
-      position: 'bottom',
       buttons: [
         {
           text: 'Undo',
@@ -517,8 +514,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
         }
       ]
     });
-
-    await toast.present();
 
     // Set timeout to actually delete after toast duration
     const timeoutId = setTimeout(() => {
@@ -668,13 +663,11 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private async showErrorToast(message: string) {
-    const toast = await this.toastController.create({
+    await this.toastService.showToast({
       message,
       duration: 3000,
-      color: 'medium',
-      position: 'bottom'
+      color: 'medium'
     });
-    await toast.present();
   }
 
   private getFoodDisplayName(food: any): string {

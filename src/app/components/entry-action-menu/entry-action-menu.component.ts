@@ -83,7 +83,7 @@ export class EntryActionMenuComponent {
         message: 'Feature not implemented yet. Check back soon!',
         duration: 3000,
         color: 'medium',
-        position: 'bottom'
+        position: 'top'
       });
       
       // Still emit the event so the popover dismisses

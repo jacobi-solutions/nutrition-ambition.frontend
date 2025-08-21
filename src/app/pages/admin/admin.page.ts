@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, AlertController, ToastController, ModalController } from '@ionic/angular';
+import { IonicModule, AlertController, ModalController } from '@ionic/angular';
 import { Subject, takeUntil } from 'rxjs';
 import { AccountsService } from '../../services/accounts.service';
 import { AdminService } from '../../services/admin.service';
 import { Account, FeedbackEntry } from '../../services/nutrition-ambition-api.service';
+import { ToastService } from '../../services/toast.service';
 import { addIcons } from 'ionicons';
 import { 
   analyticsOutline,
@@ -76,7 +77,7 @@ export class AdminPage implements OnInit, OnDestroy {
     private accountsService: AccountsService,
     private adminService: AdminService,
     private alertController: AlertController,
-    private toastController: ToastController,
+    private toastService: ToastService,
     private modalController: ModalController
   ) {}
 
@@ -297,13 +298,11 @@ export class AdminPage implements OnInit, OnDestroy {
 
   // Utility methods
   async showToast(message: string, color: 'success' | 'danger' | 'warning' | 'medium' = 'medium') {
-    const toast = await this.toastController.create({
+    await this.toastService.showToast({
       message,
       duration: 3000,
-      color: 'medium',
-      position: 'top'
+      color: 'medium'
     });
-    await toast.present();
   }
 
   getTypeColor(feedbackType: string): string {

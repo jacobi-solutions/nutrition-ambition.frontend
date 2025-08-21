@@ -1,12 +1,13 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, ToastController } from '@ionic/angular/standalone';
+import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, trashOutline } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
+import { ToastService } from 'src/app/services/toast.service';
 
 @Component({
   selector: 'app-food-selection',
@@ -30,7 +31,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   isCanceling = false;
   private cancelTimeout: any = null;
 
-  constructor(private toastController: ToastController, private cdr: ChangeDetectorRef) {
+  constructor(private toastService: ToastService, private cdr: ChangeDetectorRef) {
     addIcons({ createOutline, chevronUpOutline, trashOutline });
   }
 
@@ -288,11 +289,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         return;
       }
 
-      const toast = await this.toastController.create({
+      await this.toastService.showToast({
         message: `${this.getSelectedFood(phrase)?.displayName || phrase} removed`,
         duration: 5000,
         color: 'medium',
-        position: 'bottom',
         buttons: [
           {
             text: 'Undo',
@@ -302,7 +302,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           }
         ]
       });
-      await toast.present();
     }, 300);
   }
 
@@ -468,11 +467,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.isCanceling = true;
     
     // Show toast with undo option
-    const toast = await this.toastController.create({
+    const toast = await this.toastService.showToast({
       message: 'Food logging canceled',
       duration: 5000,
       color: 'medium',
-      position: 'bottom',
       buttons: [
         {
           text: 'Undo',
@@ -488,8 +486,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         }
       ]
     });
-    
-    await toast.present();
     
     // Set a timeout to actually cancel after toast duration
     this.cancelTimeout = setTimeout(() => {
