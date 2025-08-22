@@ -84,6 +84,7 @@ function writeVersionFile(version, gitInfo) {
 // Commit: ${gitInfo.hash}, Branch: ${gitInfo.branch}, Build: ${gitInfo.commitCount}
 
 export const APP_VERSION = "${version}";
+export const COMMIT_HASH = "${gitInfo.hash}";
 `;
 
   // Skip write if identical

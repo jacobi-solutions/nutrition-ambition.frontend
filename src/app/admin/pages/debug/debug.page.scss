@@ -1,0 +1,40 @@
+.debug-page-content {
+    --padding-start: 0;
+    --padding-end: 0;
+    --padding-top: 0;
+    --padding-bottom: 0;
+  }
+
+  .error-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 20px;
+  }
+
+  .error-state ion-card {
+    max-width: 400px;
+    text-align: center;
+  }
+
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    text-align: center;
+  }
+
+  .loading-state ion-spinner {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 16px;
+  }
+
+  ion-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }

@@ -75,7 +75,7 @@ export class ChatService {
     console.log('[DEBUG] Running assistant message:', message.substring(0, 30) + '...');
     const request = new RunChatRequest({
       message: message,
-      loggedDateUtc: this.dateService.getSelectedDateUtc()
+      loggedDateUtc: this.dateService.getSelectedDateUtc(),
     });
     
     return this.apiService.runResponsesConversation(request).pipe(

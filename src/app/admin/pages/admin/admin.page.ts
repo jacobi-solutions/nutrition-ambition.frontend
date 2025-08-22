@@ -2,11 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, AlertController, ModalController } from '@ionic/angular';
+import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import { AccountsService } from '../../services/accounts.service';
+import { AccountsService } from '../../../services/accounts.service';
 import { AdminService } from '../../services/admin.service';
-import { Account, FeedbackEntry } from '../../services/nutrition-ambition-api.service';
-import { ToastService } from '../../services/toast.service';
+import { Account, FeedbackEntry, FeedbackWithAccount, ChatMessage } from '../../../services/nutrition-ambition-api.service';
+import { ToastService } from '../../../services/toast.service';
+import { DebugViewComponent } from '../../components/debug-view/debug-view.component';
 import { addIcons } from 'ionicons';
 import { 
   analyticsOutline,
@@ -19,7 +21,12 @@ import {
   bugOutline,
   bulbOutline,
   helpOutline,
-  documentOutline
+  documentOutline,
+  phonePortraitOutline,
+  terminalOutline,
+  radioButtonOnOutline,
+  personOutline,
+  closeOutline
 } from 'ionicons/icons';
 
 // Register all icons used in this component
@@ -34,7 +41,12 @@ addIcons({
   'bug-outline': bugOutline,
   'bulb-outline': bulbOutline,
   'help-outline': helpOutline,
-  'document-outline': documentOutline
+  'document-outline': documentOutline,
+  'phone-portrait-outline': phonePortraitOutline,
+  'terminal-outline': terminalOutline,
+  'radio-button-on-outline': radioButtonOnOutline,
+  'person-outline': personOutline,
+  'close': closeOutline
 });
 
 @Component({
@@ -48,13 +60,18 @@ export class AdminPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   
   account: Account | null = null;
-  feedbackEntries: FeedbackEntry[] = [];
-  filteredFeedbackEntries: FeedbackEntry[] = [];
+  feedbackEntries: FeedbackWithAccount[] = [];
+  filteredFeedbackEntries: FeedbackWithAccount[] = [];
   isLoading = false;
   
   // Filter options
   selectedFilterType: string = 'all';
-  selectedCompletionFilter: string = 'all';
+  selectedCompletionFilter: string = 'incomplete';
+  userEmailFilter: string = '';
+  selectedVersionFilter: string = 'all';
+  
+  // Computed filter data
+  uniqueAppVersions: string[] = [];
   
   // Statistics
   feedbackStats = {
@@ -71,14 +88,15 @@ export class AdminPage implements OnInit, OnDestroy {
   feedbackTypes = ['bug', 'feature', 'other'];
   
   // Current view
-  currentView: 'overview' | 'feedback' = 'overview';
+  currentView: 'overview' | 'feedback' = 'feedback';
 
   constructor(
     private accountsService: AccountsService,
     private adminService: AdminService,
     private alertController: AlertController,
     private toastService: ToastService,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -108,6 +126,9 @@ export class AdminPage implements OnInit, OnDestroy {
       .subscribe(loading => {
         this.isLoading = loading;
       });
+
+    // Load initial data since we're starting with feedback view
+    this.loadFeedback();
   }
 
   ngOnDestroy() {
@@ -171,7 +192,21 @@ export class AdminPage implements OnInit, OnDestroy {
     this.feedbackStats = this.adminService.getFeedbackStatsFromCurrent();
     // Update cached stats entries when stats change
     this._cachedStatsEntries = Object.entries(this.feedbackStats.byType).map(([key, value]) => ({key, value}));
+    
+    // Compute unique app versions for filtering
+    const versions = new Set<string>();
+    this.feedbackEntries.forEach(entry => {
+      if (entry.feedback?.appVersion) {
+        versions.add(entry.feedback.appVersion);
+      }
+    });
+    this.uniqueAppVersions = Array.from(versions).sort((a, b) => {
+      // Sort versions in reverse order (newest first)
+      return b.localeCompare(a, undefined, { numeric: true });
+    });
+    
     console.log('[AdminPage] Stats updated:', this.feedbackStats);
+    console.log('[AdminPage] Unique app versions:', this.uniqueAppVersions);
   }
 
   // Filtering
@@ -183,26 +218,50 @@ export class AdminPage implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  onUserEmailFilterChange() {
+    this.applyFilters();
+  }
+
+  onVersionFilterChange() {
+    this.applyFilters();
+  }
+
   private applyFilters() {
     let filtered = [...this.feedbackEntries];
 
     // Filter by type
     if (this.selectedFilterType !== 'all') {
-      filtered = filtered.filter(entry => entry.feedbackType === this.selectedFilterType);
+      filtered = filtered.filter(entry => entry.feedback?.feedbackType === this.selectedFilterType);
     }
 
     // Filter by completion status
     if (this.selectedCompletionFilter === 'completed') {
-      filtered = filtered.filter(entry => entry.isCompleted);
+      filtered = filtered.filter(entry => entry.feedback?.isCompleted);
     } else if (this.selectedCompletionFilter === 'incomplete') {
-      filtered = filtered.filter(entry => !entry.isCompleted);
+      filtered = filtered.filter(entry => !entry.feedback?.isCompleted);
+    }
+
+    // Filter by user email
+    if (this.userEmailFilter.trim()) {
+      const emailFilter = this.userEmailFilter.toLowerCase().trim();
+      filtered = filtered.filter(entry => 
+        entry.accountEmail?.toLowerCase().includes(emailFilter)
+      );
+    }
+
+    // Filter by app version
+    if (this.selectedVersionFilter !== 'all') {
+      filtered = filtered.filter(entry => entry.feedback?.appVersion === this.selectedVersionFilter);
     }
 
     this.filteredFeedbackEntries = filtered;
   }
 
-  // Feedback actions
-  async markAsComplete(feedbackEntry: FeedbackEntry) {
+    // Feedback actions
+  async markAsComplete(feedbackWithAccount: FeedbackWithAccount) {
+    const feedbackEntry = feedbackWithAccount.feedback;
+    if (!feedbackEntry) return;
+
     const alert = await this.alertController.create({
       header: 'Mark as Complete',
       message: 'Add a completion note (optional):',
@@ -223,12 +282,12 @@ export class AdminPage implements OnInit, OnDestroy {
           text: 'Mark Complete',
           handler: async (data) => {
             try {
-                             await this.adminService.completeFeedback(
-                 feedbackEntry.id!, 
-                 true, 
-                 data.completionNote
-               );
-               await this.showToast('Feedback marked as complete', 'success');
+              await this.adminService.completeFeedback(
+                feedbackEntry.id!, 
+                true, 
+                data.completionNote
+              );
+              await this.showToast('Feedback marked as complete', 'success');
             } catch (error) {
               console.error('[AdminPage] Error marking feedback as complete:', error);
               await this.showToast('Error marking feedback as complete', 'danger');
@@ -241,7 +300,9 @@ export class AdminPage implements OnInit, OnDestroy {
     await alert.present();
   }
 
-  async markAsIncomplete(feedbackEntry: FeedbackEntry) {
+  async markAsIncomplete(feedbackWithAccount: FeedbackWithAccount) {
+    const feedbackEntry = feedbackWithAccount.feedback;
+    if (!feedbackEntry) return;
     const alert = await this.alertController.create({
       header: 'Mark as Incomplete',
       message: 'Are you sure you want to mark this feedback as incomplete?',
@@ -268,7 +329,10 @@ export class AdminPage implements OnInit, OnDestroy {
     await alert.present();
   }
 
-  async deleteFeedback(feedbackEntry: FeedbackEntry) {
+  async deleteFeedback(feedbackWithAccount: FeedbackWithAccount) {
+    const feedbackEntry = feedbackWithAccount.feedback;
+    if (!feedbackEntry) return;
+
     const alert = await this.alertController.create({
       header: 'Delete Feedback',
       message: 'Are you sure you want to permanently delete this feedback entry?',
@@ -281,9 +345,15 @@ export class AdminPage implements OnInit, OnDestroy {
           text: 'Delete',
           role: 'destructive',
           handler: async () => {
-                         try {
-               await this.adminService.deleteFeedback(feedbackEntry.id!);
-               await this.showToast('Feedback deleted successfully', 'success');
+            try {
+              const response = await this.adminService.deleteFeedback(feedbackEntry.id!);
+              if (response.isSuccess) {
+                await this.showToast('Feedback deleted successfully', 'success');
+                // Reload feedback with current filters maintained
+                await this.loadFeedback();
+              } else {
+                await this.showToast('Error deleting feedback', 'danger');
+              }
             } catch (error) {
               console.error('[AdminPage] Error deleting feedback:', error);
               await this.showToast('Error deleting feedback', 'danger');
@@ -294,6 +364,37 @@ export class AdminPage implements OnInit, OnDestroy {
     });
 
     await alert.present();
+  }
+
+  async viewUserContext(feedbackWithAccount: FeedbackWithAccount) {
+    const feedbackEntry = feedbackWithAccount.feedback;
+    if (!feedbackEntry || !feedbackWithAccount.accountId) return;
+
+    try {
+      console.log('[AdminPage] Opening debug view for account:', feedbackWithAccount.accountId);
+      
+      // Navigate to the debug page with the feedback data
+      await this.router.navigate(['/debug', feedbackEntry.id, feedbackWithAccount.accountId], {
+        state: { feedbackWithAccount }
+      });
+    } catch (error) {
+      console.error('[AdminPage] Error opening debug view:', error);
+      await this.showToast('Error opening debug view', 'danger');
+    }
+  }
+
+  private async showDebugView(feedbackWithAccount: FeedbackWithAccount) {
+    const modal = await this.modalController.create({
+      component: DebugViewComponent,
+      componentProps: {
+        feedbackWithAccount: feedbackWithAccount
+      },
+      cssClass: 'debug-modal', // Full-screen debug view
+      backdropDismiss: false, // Don't allow accidental dismissal
+      showBackdrop: true
+    });
+
+    await modal.present();
   }
 
   // Utility methods
@@ -308,8 +409,8 @@ export class AdminPage implements OnInit, OnDestroy {
   getTypeColor(feedbackType: string): string {
     switch (feedbackType) {
       case 'bug': return 'danger';
-      case 'feature': return 'primary';
-      case 'other': return 'medium';
+      case 'feature': return 'success';
+      case 'other': return 'warning';
       default: return 'medium';
     }
   }

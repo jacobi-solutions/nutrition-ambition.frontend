@@ -1,0 +1,194 @@
+<div class="debug-layout" (mousemove)="onMouseMove($event)" (mouseup)="onMouseUp()">
+    <!-- Left Side: App Replica -->
+    <div class="app-replica">
+      <div class="replica-header">
+        <div class="replica-title">
+          <ion-icon name="phone-portrait-outline"></ion-icon>
+          User's App View - {{ feedbackWithAccount?.accountEmail }}
+        </div>
+        <div class="replica-version" *ngIf="feedbackWithAccount?.feedback?.appVersion">
+          v{{ feedbackWithAccount?.feedback?.appVersion }}
+        </div>
+      </div>
+      
+      <!-- Chat Interface Replica -->
+      <div class="chat-replica">
+        <div class="chat-header">
+          <h2>Chat Messages</h2>
+          <span class="message-count">{{ chatMessages.length }} messages</span>
+        </div>
+        
+        <div class="chat-messages-container">
+          <div *ngIf="chatMessages.length === 0" class="no-messages">
+            <ion-icon name="chatbubbles-outline"></ion-icon>
+            <p>No chat messages found</p>
+          </div>
+          
+          <div *ngFor="let message of chatMessages; trackBy: trackByMessageId" 
+               class="message-bubble"
+               [ngClass]="'message-' + message.role?.toLowerCase()">
+            
+            <div class="message-header">
+              <strong>
+                {{ message.role | titlecase }}
+              </strong>
+              <span class="message-time">{{ formatTime(message.createdDateUtc) }}</span>
+              <span *ngIf="message.frontendAppVersion" class="app-version-tag">
+                v{{ message.frontendAppVersion }}
+              </span>
+            </div>
+            
+            <div class="message-content">
+              <p [innerHTML]="formatMessageContent(message.content)"></p>
+            </div>
+            
+            <div *ngIf="message.totalTokens" class="message-meta">
+              <small>{{ message.totalTokens }} tokens</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Summary Replica (if user has daily summary) -->
+      <div class="summary-replica" *ngIf="userDailyTargets">
+        <div class="summary-header">
+          <h3>Daily Summary</h3>
+          <span class="summary-date">{{ formatDate(selectedDate.toISOString()) }}</span>
+        </div>
+        <div class="summary-content">
+          <p><em>User's daily summary would appear here...</em></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resizable Divider -->
+    <div class="resize-divider" 
+         (mousedown)="onMouseDown($event)"
+         title="Drag to resize panels">
+      <div class="resize-handle"></div>
+      <div class="resize-tooltip">⟷</div>
+    </div>
+
+    <!-- Right Side: Debug Context Panels -->
+    <div class="debug-panels">
+      
+      <!-- Top Row: Bug Report Details and User Profile Side by Side -->
+      <div class="top-panels-row">
+        <!-- Bug Report Details Panel -->
+        <div class="debug-panel bug-details">
+          <div class="panel-header">
+            <ion-icon name="bug-outline"></ion-icon>
+            <h3>Bug Report Details</h3>
+          </div>
+          <div class="panel-content">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <label>Type:</label>
+                <ion-badge [color]="getTypeColor(feedbackWithAccount?.feedback?.feedbackType!)">
+                  {{ feedbackWithAccount?.feedback?.feedbackType | titlecase }}
+                </ion-badge>
+              </div>
+              <div class="detail-item">
+                <label>Status:</label>
+                <ion-badge [color]="feedbackWithAccount?.feedback?.isCompleted ? 'success' : 'warning'">
+                  {{ feedbackWithAccount?.feedback?.isCompleted ? 'Completed' : 'Pending' }}
+                </ion-badge>
+              </div>
+              <div class="detail-item">
+                <label>Submitted:</label>
+                <span>{{ formatDate(feedbackWithAccount?.feedback?.createdDateUtc) }}</span>
+              </div>
+              <div class="detail-item">
+                <label>App Version:</label>
+                <code>{{ feedbackWithAccount?.feedback?.appVersion || 'Unknown' }}</code>
+              </div>
+            </div>
+            
+            <div class="feedback-message">
+              <h4>User Message</h4>
+              <div class="message-box">{{ feedbackWithAccount?.feedback?.message }}</div>
+            </div>
+            
+            <div *ngIf="feedbackWithAccount?.feedback?.context" class="feedback-context">
+              <h4>Context</h4>
+              <div class="context-box">{{ feedbackWithAccount?.feedback?.context }}</div>
+            </div>
+            
+            <div *ngIf="feedbackWithAccount?.feedback?.completionNote" class="completion-note">
+              <h4>Admin Notes</h4>
+              <div class="note-box">{{ feedbackWithAccount?.feedback?.completionNote }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Profile Panel -->
+        <div class="debug-panel user-profile">
+          <div class="panel-header">
+            <ion-icon name="person-outline"></ion-icon>
+            <h3>User Profile</h3>
+          </div>
+          <div class="panel-content">
+            <div class="profile-grid">
+              <div class="profile-item">
+                <label>Account ID:</label>
+                <code>{{ feedbackWithAccount?.accountId }}</code>
+              </div>
+              <div class="profile-item">
+                <label>Email:</label>
+                <span>{{ feedbackWithAccount?.accountEmail }}</span>
+              </div>
+              <div class="profile-item">
+                <label>Account Created:</label>
+                <span>{{ formatDate(feedbackWithAccount?.accountCreatedDate) }}</span>
+              </div>
+            </div>
+            
+            <!-- User Profile Details (if available) -->
+            <div *ngIf="userProfile" class="profile-details">
+              <h4>Profile Details</h4>
+              <div class="profile-info">
+                <p><em>User profile data would be loaded here...</em></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Daily Targets and System Logs -->
+      <div class="bottom-panels-row">
+        <!-- Daily Targets Panel -->
+        <div class="debug-panel daily-targets">
+          <div class="panel-header">
+            <ion-icon name="radio-button-on-outline"></ion-icon>
+            <h3>Daily Targets</h3>
+          </div>
+          <div class="panel-content">
+            <div *ngIf="!userDailyTargets" class="no-data">
+              <p>No daily targets found for this user</p>
+            </div>
+            <div *ngIf="userDailyTargets" class="targets-info">
+              <p><em>Daily targets data would be loaded here...</em></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Logs Panel -->
+        <div class="debug-panel system-logs">
+          <div class="panel-header">
+            <ion-icon name="terminal-outline"></ion-icon>
+            <h3>System Logs</h3>
+          </div>
+          <div class="panel-content">
+            <div class="logs-container">
+              <div class="log-entry" *ngFor="let log of mockLogs">
+                <span class="log-time">{{ log.timestamp }}</span>
+                <span class="log-level" [ngClass]="'level-' + log.level">{{ log.level }}</span>
+                <span class="log-message">{{ log.message }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>

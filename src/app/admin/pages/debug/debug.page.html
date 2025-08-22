@@ -1,0 +1,38 @@
+<ion-header>
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-button (click)="goBack()">
+          <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+      <ion-title>
+        <ion-icon name="bug-outline"></ion-icon>
+        Debug View - {{ feedbackWithAccount?.accountEmail }}
+      </ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content class="debug-page-content">
+    <app-debug-view 
+      *ngIf="feedbackWithAccount" 
+      [feedbackWithAccount]="feedbackWithAccount">
+    </app-debug-view>
+    
+    <div *ngIf="!feedbackWithAccount && !loading" class="error-state">
+      <ion-card>
+        <ion-card-content>
+          <h2>Feedback Not Found</h2>
+          <p>The feedback entry could not be loaded.</p>
+          <ion-button (click)="goBack()" fill="outline">
+            <ion-icon name="arrow-back" slot="start"></ion-icon>
+            Back to Admin Panel
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <div *ngIf="loading" class="loading-state">
+      <ion-spinner></ion-spinner>
+      <p>Loading feedback data...</p>
+    </div>
+  </ion-content>

@@ -4,6 +4,11 @@ import {
   NutritionAmbitionApiService,
   GetFeedbackRequest,
   GetFeedbackResponse,
+  GetFeedbackWithAccountInfoRequest,
+  GetFeedbackWithAccountInfoResponse,
+  GetUserChatMessagesRequest,
+  GetUserChatMessagesResponse,
+  FeedbackWithAccount,
   SubmitUserFeedbackRequest,
   SubmitUserFeedbackResponse,
   UpdateFeedbackRequest,
@@ -12,14 +17,15 @@ import {
   DeleteFeedbackResponse,
   CompleteFeedbackRequest,
   CompleteFeedbackResponse,
-  FeedbackEntry
-} from './nutrition-ambition-api.service';
+  FeedbackEntry,
+  ChatMessage
+} from '../../services/nutrition-ambition-api.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AdminService {
-  private _feedbackEntriesSubject = new BehaviorSubject<FeedbackEntry[]>([]);
+  private _feedbackEntriesSubject = new BehaviorSubject<FeedbackWithAccount[]>([]);
   public feedbackEntries$ = this._feedbackEntriesSubject.asObservable();
 
   private _loadingSubject = new BehaviorSubject<boolean>(false);
@@ -30,31 +36,32 @@ export class AdminService {
   }
 
   /**
-   * Get all feedback entries with optional filtering
+   * Get all feedback entries with account information and optional filtering
    */
   async getAllFeedback(filters?: {
     feedbackType?: string;
+    accountId?: string;
     completedOnly?: boolean;
     incompleteOnly?: boolean;
-    isCompleted?: boolean;
-  }): Promise<GetFeedbackResponse> {
+    accountEmail?: string;
+  }): Promise<GetFeedbackWithAccountInfoResponse> {
     try {
       this._loadingSubject.next(true);
       console.log('[AdminService] Loading all feedback with filters:', filters);
 
-      const request = new GetFeedbackRequest({
-        includeAllAccounts: true,
+      const request = new GetFeedbackWithAccountInfoRequest({
         feedbackType: filters?.feedbackType,
+        accountId: filters?.accountId,
         completedOnly: filters?.completedOnly || false,
         incompleteOnly: filters?.incompleteOnly || false,
-        isCompleted: filters?.isCompleted
+        accountEmail: filters?.accountEmail
       });
 
-      const response = await firstValueFrom(this.apiService.getAllFeedback(request));
+      const response = await firstValueFrom(this.apiService.getFeedbackWithAccountInfo(request));
       
-      if (response.isSuccess && response.feedbackEntries) {
-        console.log('[AdminService] Loaded feedback entries:', response.feedbackEntries.length);
-        this._feedbackEntriesSubject.next(response.feedbackEntries);
+      if (response.isSuccess && response.feedbackWithAccounts) {
+        console.log('[AdminService] Loaded feedback with account info:', response.feedbackWithAccounts.length);
+        this._feedbackEntriesSubject.next(response.feedbackWithAccounts);
       } else {
         console.error('[AdminService] Failed to load feedback:', response.errors);
         this._feedbackEntriesSubject.next([]);
@@ -177,8 +184,7 @@ export class AdminService {
       
       if (response.isSuccess && response.deleted) {
         console.log('[AdminService] Feedback deleted successfully');
-        // Update the local list
-        await this.refreshCurrentFeedbackList();
+        // Note: UI will handle refreshing the list with current filters
       } else {
         console.error('[AdminService] Failed to delete feedback:', response.errors);
       }
@@ -208,15 +214,15 @@ export class AdminService {
 
       const stats = {
         total: entries.length,
-        completed: entries.filter(e => e.isCompleted).length,
-        incomplete: entries.filter(e => !e.isCompleted).length,
+        completed: entries.filter(e => e.feedback?.isCompleted).length,
+        incomplete: entries.filter(e => !e.feedback?.isCompleted).length,
         byType: {} as { [key: string]: number }
       };
 
       // Count by feedback type
       entries.forEach(entry => {
-        if (entry.feedbackType) {
-          stats.byType[entry.feedbackType] = (stats.byType[entry.feedbackType] || 0) + 1;
+        if (entry.feedback?.feedbackType) {
+          stats.byType[entry.feedback.feedbackType] = (stats.byType[entry.feedback.feedbackType] || 0) + 1;
         }
       });
 
@@ -268,7 +274,7 @@ export class AdminService {
   /**
    * Get current feedback entries value
    */
-  get currentFeedbackEntries(): FeedbackEntry[] {
+  get currentFeedbackEntries(): FeedbackWithAccount[] {
     return this._feedbackEntriesSubject.value;
   }
 
@@ -277,5 +283,36 @@ export class AdminService {
    */
   get isLoading(): boolean {
     return this._loadingSubject.value;
+  }
+
+  /**
+   * Get user chat messages for admin review
+   */
+  async getUserChatMessages(accountId: string, options?: {
+    loggedDateUtc?: Date;
+    limit?: number;
+  }): Promise<GetUserChatMessagesResponse> {
+    try {
+      console.log('[AdminService] Getting chat messages for account:', accountId);
+
+      const request = new GetUserChatMessagesRequest({
+        accountId: accountId,
+        loggedDateUtc: options?.loggedDateUtc,
+        limit: options?.limit
+      });
+
+      const response = await firstValueFrom(this.apiService.getUserChatMessages(request));
+      
+      if (response.isSuccess && response.messages) {
+        console.log('[AdminService] Retrieved', response.messages.length, 'chat messages for account', accountId);
+      } else {
+        console.error('[AdminService] Failed to get chat messages:', response.errors);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('[AdminService] Error getting chat messages:', error);
+      throw error;
+    }
   }
 } 

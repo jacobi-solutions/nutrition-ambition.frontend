@@ -41,7 +41,12 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    loadComponent: () => import('./pages/admin/admin.page').then(m => m.AdminPage),
+    loadComponent: () => import('./admin/pages/admin/admin.page').then(m => m.AdminPage),
+    canActivate: [AuthGuard, OwnerGuard]
+  },
+  {
+    path: 'debug/:feedbackId/:accountId',
+    loadComponent: () => import('./admin/pages/debug/debug.page').then(m => m.DebugPage),
     canActivate: [AuthGuard, OwnerGuard]
   },
   {
