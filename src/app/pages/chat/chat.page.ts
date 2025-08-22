@@ -492,6 +492,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     const sentMessage = this.userMessage;
     const messageDate = new Date();
     
+    // Track analytics for message sending
+    this.analytics.trackChatMessageSent(sentMessage.length);
+    
     // Add user message to UI
     console.log('[DEBUG] Adding user message to UI:', sentMessage);
     this.messages.push({
@@ -661,27 +664,58 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   toggleFab() {
     this.isOpen = !this.isOpen;
+    // Track FAB toggle analytics
+    this.analytics.trackFabToggle(this.isOpen);
   }
 
   handleAction(action: 'photo' | 'barcode' | 'edit') {
     console.log(`FAB action clicked: ${action}`);
     
+    // Determine if the action is implemented
+    const implementedActions = ['edit']; // Only manual entry is currently working
+    const isImplemented = implementedActions.includes(action);
+    
+    // Track analytics for all FAB actions
+    this.analytics.trackFabAction(action, isImplemented);
+    
     // Here we would implement the actual functionality
     switch(action) {
       case 'photo':
         console.log('Opening camera...');
+        // Track unimplemented feature
+        this.analytics.trackUnimplementedFeature('fab_action', 'photo', 'chat_page');
+        // Show toast for unimplemented feature
+        this.toastService.showToast({
+          message: 'Photo capture not implemented yet. Check back soon!',
+          duration: 3000,
+          color: 'medium',
+          position: 'top'
+        });
         break;
       case 'barcode':
         console.log('Opening barcode scanner...');
+        // Track unimplemented feature
+        this.analytics.trackUnimplementedFeature('fab_action', 'barcode', 'chat_page');
+        // Show toast for unimplemented feature
+        this.toastService.showToast({
+          message: 'Barcode scanner not implemented yet. Check back soon!',
+          duration: 3000,
+          color: 'medium',
+          position: 'top'
+        });
         break;
       case 'edit':
         console.log('Opening manual entry...');
+        // This is implemented, so track as a successful action
+        this.analytics.trackActionClick('manual_entry_open', 'fab_menu', { source: 'chat_page' });
         break;
     }
     
     // Close the FAB after action is clicked
     setTimeout(() => {
       this.isOpen = false;
+      // Track FAB close after action
+      this.analytics.trackFabToggle(false);
     }, 300);
   }
 

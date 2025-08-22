@@ -60,6 +60,47 @@ export class AnalyticsService {
     logEvent(this.analytics, 'pwa_standalone_mode' as any);
   }
 
+  /** Track entry action menu interactions */
+  trackEntryAction(action: string, entryType: string, isImplemented: boolean, entryId?: string) {
+    logEvent(this.analytics, 'entry_action_selected' as any, { 
+      action, 
+      entryType, 
+      isImplemented,
+      entryId: entryId || 'unknown'
+    });
+  }
+
+  /** Track FAB (floating action button) interactions */
+  trackFabAction(action: string, isImplemented: boolean) {
+    logEvent(this.analytics, 'fab_action_selected' as any, { 
+      action, 
+      isImplemented 
+    });
+  }
+
+  /** Track FAB toggle (open/close) */
+  trackFabToggle(isOpen: boolean) {
+    logEvent(this.analytics, 'fab_toggled' as any, { isOpen });
+  }
+
+  /** Track unimplemented feature interactions */
+  trackUnimplementedFeature(featureType: 'entry_action' | 'fab_action' | 'other', featureName: string, context?: string) {
+    logEvent(this.analytics, 'unimplemented_feature_clicked' as any, { 
+      featureType, 
+      featureName,
+      context: context || 'unknown'
+    });
+  }
+
+  /** Track button/action clicks with context */
+  trackActionClick(actionName: string, context: string, additionalData?: Record<string, any>) {
+    logEvent(this.analytics, 'action_click' as any, { 
+      actionName, 
+      context,
+      ...additionalData 
+    });
+  }
+
   /** Generic tracker for anything else */
   trackEvent(eventName: string, params?: Record<string, any>) {
     logEvent(this.analytics, eventName as any, params || {});

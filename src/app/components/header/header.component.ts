@@ -36,6 +36,7 @@ import {
   keyOutline
 } from 'ionicons/icons';
 import { DateService } from 'src/app/services/date.service';
+import { AnalyticsService } from 'src/app/services/analytics.service';
 import { Subscription } from 'rxjs';
 import { format } from 'date-fns';
 import { PwaInstallService } from 'src/app/services/pwa-install.service';
@@ -115,7 +116,8 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     private router: Router,
     private cdRef: ChangeDetectorRef,
     private pwa: PwaInstallService,
-    private popoverCtrl: PopoverController
+    private popoverCtrl: PopoverController,
+    private analyticsService: AnalyticsService
   ) {
     // Add the icons explicitly to the library
     addIcons({ 
@@ -185,6 +187,12 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
       const newDate = event.detail.value;
       console.log(`[AppHeader] Emitting new date: ${newDate}`);
       
+      // Track date change analytics
+      this.analyticsService.trackActionClick('date_changed', 'header', {
+        newDate: newDate,
+        source: 'date_picker'
+      });
+      
       // Use dateService to set the selected date (handles local format conversion)
       this.dateService.setSelectedDate(newDate);
     }
@@ -192,6 +200,8 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
 
   // Handle auth actions
   onLogout() {
+    // Track logout analytics
+    this.analyticsService.trackAuthEvent('logout');
     this.logout.emit();
   }
   

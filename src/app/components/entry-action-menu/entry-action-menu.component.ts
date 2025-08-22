@@ -12,6 +12,7 @@ import {
   bulb
 } from 'ionicons/icons';
 import { ToastService } from '../../services/toast.service';
+import { AnalyticsService } from '../../services/analytics.service';
 
 export type ActionType = 'remove' | 'edit' | 'focusInChat' | 'editGoal' | 'learn' | 'trend' | 'ignore' | 'suggest';
 
@@ -37,7 +38,10 @@ export class EntryActionMenuComponent {
   @Input() entry: any;
   @Output() actionSelected = new EventEmitter<ActionEvent>();
   
-  constructor(private toastService: ToastService) {
+  constructor(
+    private toastService: ToastService,
+    private analyticsService: AnalyticsService
+  ) {
     addIcons({
       trash,
       create,
@@ -69,14 +73,23 @@ export class EntryActionMenuComponent {
     
     // Check if the action is implemented
     const implementedActions: ActionType[] = ['remove', 'learn', 'edit'];
+    const isImplemented = implementedActions.includes(action);
+    const entryType = this.getEntryTypeName().toLowerCase();
+    const entryId = this.entry?.id || this.entry?.entryId || 'unknown';
     
-    if (implementedActions.includes(action)) {
+    // Track analytics for all entry actions
+    this.analyticsService.trackEntryAction(action, entryType, isImplemented, entryId);
+    
+    if (isImplemented) {
       // Emit the event for implemented actions
       console.log(`✅ Emitting actionSelected event for ${action}`);
       const eventData = { action, entry: this.entry };
       console.log('Event data:', eventData);
       this.actionSelected.emit(eventData);
     } else {
+      // Track specifically as unimplemented feature
+      this.analyticsService.trackUnimplementedFeature('entry_action', action, `${entryType}_entry`);
+      
       // Show toast for unimplemented actions and still emit event to dismiss popover
       console.log(`🍞 Showing toast for unimplemented action: ${action}`);
       this.toastService.showToast({

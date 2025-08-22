@@ -407,6 +407,13 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     if (this.popover) {
       this.popover.dismiss();
     }
+    
+    // Track analytics for action usage in daily summary context
+    this.analytics.trackActionClick(event.action, 'daily_summary', { 
+      entryType: event.entry?.entryType || 'unknown',
+      entryId: event.entry?.id || event.entry?.entryId || 'unknown'
+    });
+    
     switch (event.action) {
       case 'remove':
         this.handleRemoveEntry(event.entry);
@@ -419,6 +426,8 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       break;
       default:
         console.log('Action not implemented:', event.action);
+        // Track unimplemented actions specifically
+        this.analytics.trackUnimplementedFeature('entry_action', event.action, 'daily_summary');
     }
   }
 
