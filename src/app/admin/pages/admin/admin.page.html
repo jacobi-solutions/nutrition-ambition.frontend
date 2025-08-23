@@ -37,6 +37,17 @@
             {{ feedbackStats.incomplete }}
           </ion-badge>
         </button>
+        
+        <button 
+          class="nav-item" 
+          [class.active]="currentView === 'accounts'"
+          (click)="currentView = 'accounts'; loadAccounts()">
+          <ion-icon name="person-outline"></ion-icon>
+          <span>Account Management</span>
+          <ion-badge *ngIf="accounts.length > 0" color="primary" class="nav-badge">
+            {{ accounts.length }}
+          </ion-badge>
+        </button>
       </div>
 
       <!-- Mobile Navigation (fallback) -->
@@ -49,6 +60,10 @@
           <ion-label>Feedback</ion-label>
           <ion-icon name="chatbubbles-outline"></ion-icon>
           <ion-badge *ngIf="feedbackStats.incomplete > 0" color="warning">{{ feedbackStats.incomplete }}</ion-badge>
+        </ion-segment-button>
+        <ion-segment-button value="accounts">
+          <ion-label>Accounts</ion-label>
+          <ion-icon name="person-outline"></ion-icon>
         </ion-segment-button>
       </ion-segment>
     </div>
@@ -340,6 +355,155 @@
         </div>
       </div>
 
+      <!-- Accounts View -->
+      <div *ngIf="currentView === 'accounts'" class="accounts-content">
+        <div class="page-header">
+          <h1>Account Management</h1>
+          <p>Manage user accounts and perform cascade deletions</p>
+        </div>
+
+        <div class="account-controls">
+          <div class="stats-summary">
+            <div class="stat-item">
+              <span class="stat-label">Total Accounts</span>
+              <span class="stat-value">{{ accounts.length }}</span>
+            </div>
+          </div>
+          
+          <div class="control-actions">
+            <ion-button
+              color="primary"
+              fill="outline"
+              (click)="loadAccounts()"
+              [disabled]="isLoadingAccounts">
+              <ion-icon name="refresh-outline" slot="start"></ion-icon>
+              {{ isLoadingAccounts ? 'Loading...' : 'Refresh' }}
+            </ion-button>
+          </div>
+        </div>
+
+        <div *ngIf="accounts.length === 0 && !isLoadingAccounts" class="empty-state">
+          <ion-icon name="people-outline" size="large"></ion-icon>
+          <h3>No accounts found</h3>
+          <p>There are no accounts in the system.</p>
+        </div>
+
+        <div *ngIf="isLoadingAccounts" class="loading-state">
+          <ion-spinner name="crescent"></ion-spinner>
+          <p>Loading accounts...</p>
+        </div>
+
+        <!-- Accounts Table -->
+        <div *ngIf="accounts.length > 0 && !isLoadingAccounts" class="accounts-table-container">
+          <table class="accounts-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Type</th>
+                <th>Timezone</th>
+                <th>Data Count</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let account of accounts; trackBy: trackByAccountId">
+                <!-- Main account row -->
+                <tr class="account-row" 
+                    [class.expanded]="isAccountExpanded(account)"
+                    (click)="toggleAccountExpansion(account)">
+                  <td class="account-name">
+                    <div class="name-cell">
+                      <strong>{{ account.name || 'Unnamed' }}</strong>
+                      <small class="account-id">{{ account.id }}</small>
+                    </div>
+                  </td>
+                  <td class="account-email">{{ account.email }}</td>
+                  <td class="account-type">
+                    <ion-chip 
+                      [color]="account.isOwner ? 'success' : 'medium'" 
+                      [outline]="!account.isOwner"
+                      size="small">
+                      <ion-icon 
+                        [name]="account.isOwner ? 'shield-checkmark-outline' : 'person-outline'" 
+                        slot="start">
+                      </ion-icon>
+                      {{ account.isOwner ? 'Owner' : 'User' }}
+                    </ion-chip>
+                  </td>
+                  <td class="account-timezone">{{ account.timeZoneId || 'Not set' }}</td>
+                  <td class="data-count">
+                    <span *ngIf="getAccountCounts(account); else loadingOrUnknown" 
+                          class="total-count">
+                      {{ getAccountCounts(account).totalCount }}
+                    </span>
+                    <ng-template #loadingOrUnknown>
+                      <ion-spinner *ngIf="isLoadingCounts(account)" name="dots" color="medium"></ion-spinner>
+                      <span *ngIf="!isLoadingCounts(account)" class="unknown-count">—</span>
+                    </ng-template>
+                  </td>
+                  <td class="actions-cell">
+                    <ion-button
+                      size="small"
+                      color="danger"
+                      fill="outline"
+                      [disabled]="account.isOwner"
+                      (click)="deleteAccount(account); $event.stopPropagation()">
+                      <ion-icon name="trash-outline" slot="start"></ion-icon>
+                      {{ account.isOwner ? 'Protected' : 'Delete' }}
+                    </ion-button>
+                    <ion-button
+                      size="small"
+                      fill="clear"
+                      color="medium">
+                      <ion-icon 
+                        [name]="isAccountExpanded(account) ? 'chevron-up-outline' : 'chevron-down-outline'">
+                      </ion-icon>
+                    </ion-button>
+                  </td>
+                </tr>
+
+                <!-- Expanded data breakdown row -->
+                <tr *ngIf="isAccountExpanded(account)" class="expanded-row">
+                  <td colspan="6" class="expanded-content">
+                    <div *ngIf="isLoadingCounts(account)" class="loading-counts">
+                      <ion-spinner name="crescent"></ion-spinner>
+                      <span>Loading data breakdown...</span>
+                    </div>
+                    
+                    <div *ngIf="!isLoadingCounts(account) && getAccountCounts(account)" class="data-breakdown">
+                      <div class="breakdown-header">
+                        <span class="breakdown-title">Data Breakdown</span>
+                        <ion-chip color="primary" size="small">
+                          Total: {{ getAccountCounts(account).totalCount }}
+                        </ion-chip>
+                      </div>
+                      
+                      <div class="breakdown-items" *ngIf="getAccountCounts(account).breakdown?.length > 0">
+                        <div *ngFor="let item of getAccountCounts(account).breakdown" class="breakdown-item">
+                          <ion-icon [name]="item.icon" color="medium"></ion-icon>
+                          <span>{{ item.label }}</span>
+                          <ion-badge color="medium">{{ item.count }}</ion-badge>
+                        </div>
+                      </div>
+                      
+                      <div *ngIf="getAccountCounts(account).breakdown?.length === 0" class="no-data-message">
+                        <ion-icon name="checkmark-circle-outline" color="success"></ion-icon>
+                        <span>No user data - safe to delete</span>
+                      </div>
+                      
+                      <div class="warning-message" *ngIf="getAccountCounts(account).totalCount > 0">
+                        <ion-icon name="warning-outline" color="warning"></ion-icon>
+                        <span>Deleting will permanently remove {{ getAccountCounts(account).totalCount }} records</span>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
     </div>
   </div>

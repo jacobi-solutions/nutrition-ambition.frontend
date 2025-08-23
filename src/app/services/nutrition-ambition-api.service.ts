@@ -55,6 +55,21 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    getAllAccounts(body: GetAllAccountsRequest | undefined): Observable<GetAllAccountsResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    deleteAccount(body: DeleteAccountRequest | undefined): Observable<DeleteAccountResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getAccountDataCounts(body: GetAccountDataCountsRequest | undefined): Observable<GetAccountDataCountsResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
@@ -513,6 +528,174 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<SearchLogsResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getAllAccounts(body: GetAllAccountsRequest | undefined): Observable<GetAllAccountsResponse> {
+        let url_ = this.baseUrl + "/api/Admin/GetAllAccounts";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAllAccounts(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAllAccounts(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetAllAccountsResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetAllAccountsResponse>;
+        }));
+    }
+
+    protected processGetAllAccounts(response: HttpResponseBase): Observable<GetAllAccountsResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetAllAccountsResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetAllAccountsResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    deleteAccount(body: DeleteAccountRequest | undefined): Observable<DeleteAccountResponse> {
+        let url_ = this.baseUrl + "/api/Admin/DeleteAccount";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteAccount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteAccount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DeleteAccountResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DeleteAccountResponse>;
+        }));
+    }
+
+    protected processDeleteAccount(response: HttpResponseBase): Observable<DeleteAccountResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DeleteAccountResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<DeleteAccountResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getAccountDataCounts(body: GetAccountDataCountsRequest | undefined): Observable<GetAccountDataCountsResponse> {
+        let url_ = this.baseUrl + "/api/Admin/GetAccountDataCounts";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAccountDataCounts(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAccountDataCounts(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetAccountDataCountsResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetAccountDataCountsResponse>;
+        }));
+    }
+
+    protected processGetAccountDataCounts(response: HttpResponseBase): Observable<GetAccountDataCountsResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetAccountDataCountsResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetAccountDataCountsResponse>(null as any);
     }
 
     /**
@@ -2021,6 +2204,134 @@ export interface IComponentServing {
     isBestMatch?: boolean;
 }
 
+export class DeleteAccountRequest implements IDeleteAccountRequest {
+    accountId!: string;
+    confirmDelete?: boolean;
+
+    constructor(data?: IDeleteAccountRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+            this.confirmDelete = _data["confirmDelete"];
+        }
+    }
+
+    static fromJS(data: any): DeleteAccountRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new DeleteAccountRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["confirmDelete"] = this.confirmDelete;
+        return data;
+    }
+}
+
+export interface IDeleteAccountRequest {
+    accountId: string;
+    confirmDelete?: boolean;
+}
+
+export class DeleteAccountResponse implements IDeleteAccountResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    accountDeleted?: boolean;
+    deletedAccountId?: string | undefined;
+    totalRecordsDeleted?: number;
+    deletedRecordsByType?: { [key: string]: number; } | undefined;
+
+    constructor(data?: IDeleteAccountResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.accountDeleted = _data["accountDeleted"];
+            this.deletedAccountId = _data["deletedAccountId"];
+            this.totalRecordsDeleted = _data["totalRecordsDeleted"];
+            if (_data["deletedRecordsByType"]) {
+                this.deletedRecordsByType = {} as any;
+                for (let key in _data["deletedRecordsByType"]) {
+                    if (_data["deletedRecordsByType"].hasOwnProperty(key))
+                        (<any>this.deletedRecordsByType)![key] = _data["deletedRecordsByType"][key];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): DeleteAccountResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new DeleteAccountResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["accountDeleted"] = this.accountDeleted;
+        data["deletedAccountId"] = this.deletedAccountId;
+        data["totalRecordsDeleted"] = this.totalRecordsDeleted;
+        if (this.deletedRecordsByType) {
+            data["deletedRecordsByType"] = {};
+            for (let key in this.deletedRecordsByType) {
+                if (this.deletedRecordsByType.hasOwnProperty(key))
+                    (<any>data["deletedRecordsByType"])[key] = (<any>this.deletedRecordsByType)[key];
+            }
+        }
+        return data;
+    }
+}
+
+export interface IDeleteAccountResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    accountDeleted?: boolean;
+    deletedAccountId?: string | undefined;
+    totalRecordsDeleted?: number;
+    deletedRecordsByType?: { [key: string]: number; } | undefined;
+}
+
 export class DeleteFeedbackRequest implements IDeleteFeedbackRequest {
     feedbackId?: string | undefined;
 
@@ -2659,6 +2970,224 @@ export interface IFoodEntryBreakdown {
     loggedDateUtc?: Date;
     createdDateUtc?: Date;
     foods?: FoodBreakdown[] | undefined;
+}
+
+export class GetAccountDataCountsRequest implements IGetAccountDataCountsRequest {
+    accountId?: string | undefined;
+
+    constructor(data?: IGetAccountDataCountsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+        }
+    }
+
+    static fromJS(data: any): GetAccountDataCountsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetAccountDataCountsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        return data;
+    }
+}
+
+export interface IGetAccountDataCountsRequest {
+    accountId?: string | undefined;
+}
+
+export class GetAccountDataCountsResponse implements IGetAccountDataCountsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    dataCounts?: { [key: string]: number; } | undefined;
+    totalDataCount?: number;
+
+    constructor(data?: IGetAccountDataCountsResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            if (_data["dataCounts"]) {
+                this.dataCounts = {} as any;
+                for (let key in _data["dataCounts"]) {
+                    if (_data["dataCounts"].hasOwnProperty(key))
+                        (<any>this.dataCounts)![key] = _data["dataCounts"][key];
+                }
+            }
+            this.totalDataCount = _data["totalDataCount"];
+        }
+    }
+
+    static fromJS(data: any): GetAccountDataCountsResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetAccountDataCountsResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        if (this.dataCounts) {
+            data["dataCounts"] = {};
+            for (let key in this.dataCounts) {
+                if (this.dataCounts.hasOwnProperty(key))
+                    (<any>data["dataCounts"])[key] = (<any>this.dataCounts)[key];
+            }
+        }
+        data["totalDataCount"] = this.totalDataCount;
+        return data;
+    }
+}
+
+export interface IGetAccountDataCountsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    dataCounts?: { [key: string]: number; } | undefined;
+    totalDataCount?: number;
+}
+
+export class GetAllAccountsRequest implements IGetAllAccountsRequest {
+
+    constructor(data?: IGetAllAccountsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): GetAllAccountsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetAllAccountsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+export interface IGetAllAccountsRequest {
+}
+
+export class GetAllAccountsResponse implements IGetAllAccountsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    accounts?: Account[] | undefined;
+
+    constructor(data?: IGetAllAccountsResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            if (Array.isArray(_data["accounts"])) {
+                this.accounts = [] as any;
+                for (let item of _data["accounts"])
+                    this.accounts!.push(Account.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): GetAllAccountsResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetAllAccountsResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        if (Array.isArray(this.accounts)) {
+            data["accounts"] = [];
+            for (let item of this.accounts)
+                data["accounts"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IGetAllAccountsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    accounts?: Account[] | undefined;
 }
 
 export class GetChatMessagesRequest implements IGetChatMessagesRequest {

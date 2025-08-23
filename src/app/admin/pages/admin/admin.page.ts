@@ -98,7 +98,15 @@ export class AdminPage implements OnInit, OnDestroy {
   feedbackTypes = ['bug', 'feature', 'other'];
   
   // Current view
-  currentView: 'overview' | 'feedback' = 'feedback';
+  currentView: 'overview' | 'feedback' | 'accounts' = 'feedback';
+
+  // Accounts management
+  accounts: Account[] = [];
+  isLoadingAccounts = false;
+  expandedAccountIds = new Set<string>();
+  accountDataCounts: { [accountId: string]: any } = {};
+  loadingAccountCounts = new Set<string>();
+  lastDeletionAudit: any = null;
 
   constructor(
     private accountsService: AccountsService,
@@ -155,6 +163,8 @@ export class AdminPage implements OnInit, OnDestroy {
       await this.switchToOverview();
     } else if (newView === 'feedback') {
       await this.switchToFeedback();
+    } else if (newView === 'accounts') {
+      await this.switchToAccounts();
     }
   }
 
@@ -177,6 +187,14 @@ export class AdminPage implements OnInit, OnDestroy {
     }
   }
 
+  async switchToAccounts() {
+    console.log('[AdminPage] Switching to accounts');
+    this.currentView = 'accounts';
+    if (this.accounts.length === 0) {
+      await this.loadAccounts();
+    }
+  }
+
   // Data loading
   async loadFeedback() {
     try {
@@ -193,6 +211,203 @@ export class AdminPage implements OnInit, OnDestroy {
       this.feedbackStats = await this.adminService.getFeedbackStats();
     } catch (error) {
       console.error('[AdminPage] Error loading feedback stats:', error);
+    }
+  }
+
+  async loadAccounts() {
+    try {
+      this.isLoadingAccounts = true;
+      const response = await this.adminService.getAllAccounts();
+      if (response.isSuccess && response.accounts) {
+        this.accounts = response.accounts;
+        console.log('[AdminPage] Loaded', this.accounts.length, 'accounts');
+      } else {
+        console.error('[AdminPage] Failed to load accounts:', response.errors);
+        await this.showToast('Error loading accounts', 'danger');
+      }
+    } catch (error) {
+      console.error('[AdminPage] Error loading accounts:', error);
+      await this.showToast('Error loading accounts', 'danger');
+    } finally {
+      this.isLoadingAccounts = false;
+    }
+  }
+
+  async deleteAccount(account: Account) {
+    const alert = await this.alertController.create({
+      header: 'Delete Account',
+      message: `Are you sure you want to delete the account for "${account.email}"? This will permanently delete the account and all associated data including:
+      
+      • All feedback entries
+      • All chat messages
+      • All food entries
+      • All daily targets
+      • All user profiles
+      
+      This action cannot be undone.`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              const response = await this.adminService.deleteAccount(account.id!, true);
+              if (response.isSuccess) {
+                // Store deletion audit for display
+                this.lastDeletionAudit = {
+                  accountEmail: account.email,
+                  accountName: account.name,
+                  totalRecordsDeleted: response.totalRecordsDeleted,
+                  deletedRecordsByType: response.deletedRecordsByType,
+                  deletedAt: new Date()
+                };
+                
+                await this.showDeletionAudit();
+                await this.loadAccounts(); // Refresh the list
+              } else {
+                console.error('[AdminPage] Failed to delete account:', response.errors);
+                await this.showToast('Error deleting account', 'danger');
+              }
+            } catch (error) {
+              console.error('[AdminPage] Error deleting account:', error);
+              await this.showToast('Error deleting account', 'danger');
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  trackByAccountId(index: number, account: Account): string {
+    return account.id!;
+  }
+
+  async toggleAccountExpansion(account: Account) {
+    const accountId = account.id!;
+    
+    if (this.expandedAccountIds.has(accountId)) {
+      // Collapse the row
+      this.expandedAccountIds.delete(accountId);
+    } else {
+      // Expand the row and load data counts if not already loaded
+      this.expandedAccountIds.add(accountId);
+      
+      if (!this.accountDataCounts[accountId] && !this.loadingAccountCounts.has(accountId)) {
+        await this.loadAccountDataCounts(accountId);
+      }
+    }
+  }
+
+  async loadAccountDataCounts(accountId: string) {
+    try {
+      this.loadingAccountCounts.add(accountId);
+      
+      const response = await this.adminService.getAccountDataCounts(accountId);
+      if (response.isSuccess) {
+        this.accountDataCounts[accountId] = {
+          totalCount: response.totalDataCount,
+          dataCounts: response.dataCounts,
+          breakdown: this.formatDataCountsBreakdown(response.dataCounts)
+        };
+        console.log('[AdminPage] Loaded data counts for account:', accountId, this.accountDataCounts[accountId]);
+      } else {
+        console.error('[AdminPage] Failed to load data counts:', response.errors);
+        await this.showToast('Error loading account data counts', 'danger');
+      }
+    } catch (error) {
+      console.error('[AdminPage] Error loading data counts:', error);
+      await this.showToast('Error loading account data counts', 'danger');
+    } finally {
+      this.loadingAccountCounts.delete(accountId);
+    }
+  }
+
+  formatDataCountsBreakdown(dataCounts: any): { label: string, count: number, icon: string }[] {
+    const breakdown = [];
+    
+    if (dataCounts) {
+      if (dataCounts.Feedback > 0) {
+        breakdown.push({ label: 'Feedback Entries', count: dataCounts.Feedback, icon: 'chatbubbles-outline' });
+      }
+      if (dataCounts.ChatMessages > 0) {
+        breakdown.push({ label: 'Chat Messages', count: dataCounts.ChatMessages, icon: 'chatbox-outline' });
+      }
+      if (dataCounts.DailyTargets > 0) {
+        breakdown.push({ label: 'Daily Targets', count: dataCounts.DailyTargets, icon: 'target-outline' });
+      }
+      if (dataCounts.FoodEntries > 0) {
+        breakdown.push({ label: 'Food Entries', count: dataCounts.FoodEntries, icon: 'restaurant-outline' });
+      }
+      if (dataCounts.UserProfiles > 0) {
+        breakdown.push({ label: 'User Profiles', count: dataCounts.UserProfiles, icon: 'person-circle-outline' });
+      }
+    }
+    
+    return breakdown;
+  }
+
+  isAccountExpanded(account: Account): boolean {
+    return this.expandedAccountIds.has(account.id!);
+  }
+
+  isLoadingCounts(account: Account): boolean {
+    return this.loadingAccountCounts.has(account.id!);
+  }
+
+  getAccountCounts(account: Account): any {
+    return this.accountDataCounts[account.id!];
+  }
+
+  async showDeletionAudit() {
+    if (!this.lastDeletionAudit) return;
+
+    const audit = this.lastDeletionAudit;
+    
+    // Create a clean, readable message
+    let message = `Account "${audit.accountEmail}" has been successfully deleted.\n\n`;
+    message += `Total Records Deleted: ${audit.totalRecordsDeleted}\n\n`;
+    
+    if (audit.deletedRecordsByType && audit.totalRecordsDeleted > 0) {
+      message += `Breakdown by Type:\n`;
+      Object.entries(audit.deletedRecordsByType).forEach(([type, count]: [string, any]) => {
+        if (count > 0) {
+          message += `• ${type}: ${count}\n`;
+        }
+      });
+    } else if (audit.totalRecordsDeleted === 0) {
+      message += `No user data was found for this account.`;
+    }
+
+    const alert = await this.alertController.create({
+      header: 'Deletion Complete',
+      message: message,
+      buttons: [
+        {
+          text: 'OK',
+          role: 'confirm',
+          cssClass: 'alert-button-confirm'
+        }
+      ],
+      cssClass: 'deletion-audit-alert'
+    });
+
+    await alert.present();
+  }
+
+  getDataTypeIcon(type: string): string {
+    switch (type) {
+      case 'Feedback': return '💬';
+      case 'ChatMessages': return '💬';
+      case 'DailyTargets': return '🎯';
+      case 'FoodEntries': return '🍽️';
+      case 'UserProfiles': return '👤';
+      default: return '📄';
     }
   }
 

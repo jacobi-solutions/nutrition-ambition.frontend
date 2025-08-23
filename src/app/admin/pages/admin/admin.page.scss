@@ -855,4 +855,382 @@
       gap: 24px;
     }
   }
+}
+
+// Accounts View Styles
+.accounts-content {
+  .account-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: var(--ion-color-light-tint);
+    border-radius: 8px;
+
+    .stats-summary {
+      display: flex;
+      gap: 24px;
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        .stat-label {
+          font-size: 12px;
+          color: var(--ion-color-medium);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+          font-size: 20px;
+          font-weight: 600;
+          color: var(--ion-color-dark);
+        }
+      }
+    }
+
+    .control-actions {
+      display: flex;
+      gap: 12px;
+    }
+  }
+
+  .accounts-table-container {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--ion-color-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .accounts-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+
+    thead {
+      background: var(--ion-color-light);
+      
+      th {
+        padding: 16px 12px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--ion-color-dark);
+        border-bottom: 2px solid var(--ion-color-medium);
+        white-space: nowrap;
+      }
+    }
+
+    tbody {
+      .account-row {
+        border-bottom: 1px solid var(--ion-color-light);
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+        background: white;
+
+        &:hover {
+          background: var(--ion-color-light-tint);
+        }
+
+        &.expanded {
+          background: #f8f9fa;
+        }
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        td {
+          padding: 12px;
+          vertical-align: middle;
+          font-size: 14px;
+          color: var(--ion-color-dark);
+        }
+      }
+
+      .expanded-row {
+        background: #f1f3f4;
+        border-bottom: 1px solid var(--ion-color-light);
+        
+        .expanded-content {
+          padding: 16px 20px;
+        }
+      }
+    }
+  }
+
+  .account-name {
+    .name-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      strong {
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .account-id {
+        font-size: 11px;
+        color: #6c757d;
+        font-family: 'Courier New', monospace;
+      }
+    }
+  }
+
+  .account-email {
+    color: #0066cc;
+    font-weight: 500;
+  }
+
+  .account-timezone {
+    color: #495057;
+  }
+
+  .data-count {
+    text-align: center;
+    
+    .total-count {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .unknown-count {
+      color: #6c757d;
+    }
+
+    ion-spinner {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .actions-cell {
+    text-align: right;
+    white-space: nowrap;
+    
+    ion-button {
+      --padding-start: 8px;
+      --padding-end: 8px;
+      margin-left: 4px;
+      
+      &[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  // Expanded content styles
+  .loading-counts {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    color: #6c757d;
+    padding: 12px;
+
+    span {
+      font-size: 13px;
+    }
+  }
+
+  .data-breakdown {
+    .breakdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+
+      .breakdown-title {
+        font-weight: 600;
+        color: #2c3e50;
+      }
+    }
+
+    .breakdown-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+
+      .breakdown-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        font-size: 12px;
+
+        ion-icon {
+          font-size: 14px;
+          color: #6c757d;
+        }
+
+        span {
+          color: #495057;
+        }
+
+        ion-badge {
+          font-size: 10px;
+          --background: #e9ecef;
+          --color: #495057;
+        }
+      }
+    }
+
+    .no-data-message {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: #d1f2eb;
+      border-radius: 6px;
+      border: 1px solid #a7f3d0;
+      margin-bottom: 8px;
+      font-size: 12px;
+
+      ion-icon {
+        font-size: 14px;
+        color: #047857;
+      }
+
+      span {
+        color: #065f46;
+      }
+    }
+
+    .warning-message {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: #fef3cd;
+      border-radius: 6px;
+      border: 1px solid #fde68a;
+      font-size: 12px;
+
+      ion-icon {
+        font-size: 14px;
+        flex-shrink: 0;
+        color: #d97706;
+      }
+
+      span {
+        color: #92400e;
+      }
+    }
+  }
+
+  .empty-state,
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ion-color-medium);
+
+    ion-icon {
+      margin-bottom: 16px;
+      color: var(--ion-color-light-shade);
+    }
+
+    h3 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    ion-spinner {
+      margin-bottom: 16px;
+    }
+  }
+}
+
+// Mobile responsiveness for accounts
+@media (max-width: 768px) {
+  .accounts-content {
+    .account-controls {
+      flex-direction: column;
+      gap: 16px;
+      align-items: stretch;
+
+      .stats-summary {
+        justify-content: center;
+      }
+    }
+
+    .accounts-table-container {
+      border-radius: 8px;
+    }
+
+    .accounts-table {
+      min-width: 600px;
+      font-size: 13px;
+
+      thead th,
+      tbody td {
+        padding: 8px 6px;
+      }
+
+      .account-name .name-cell {
+        .account-id {
+          font-size: 10px;
+        }
+      }
+
+      .actions-cell ion-button {
+        --padding-start: 6px;
+        --padding-end: 6px;
+      }
+    }
+
+    .data-breakdown .breakdown-items {
+      flex-direction: column;
+    }
+  }
+}
+
+// Deletion audit alert styling
+.deletion-audit-alert {
+  .alert-wrapper {
+    .alert-head {
+      text-align: center;
+      background: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+
+      h2 {
+        color: #28a745;
+        font-weight: 600;
+      }
+    }
+
+    .alert-message {
+      padding: 20px;
+      line-height: 1.5;
+      color: #495057;
+      font-size: 14px;
+
+      // Make bullet points more readable
+      white-space: pre-line;
+    }
+
+    .alert-button-group {
+      border-top: 1px solid #dee2e6;
+      background: #f8f9fa;
+
+      .alert-button-confirm {
+        color: #28a745;
+        font-weight: 600;
+      }
+    }
+  }
 } 

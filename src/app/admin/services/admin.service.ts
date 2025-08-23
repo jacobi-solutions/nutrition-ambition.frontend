@@ -15,7 +15,15 @@ import {
   ChatMessage,
   SearchLogsRequest,
   SearchLogsResponse,
-  LogEntryDto
+  LogEntryDto,
+  GetAllAccountsRequest,
+  GetAllAccountsResponse,
+  DeleteAccountRequest,
+  DeleteAccountResponse,
+  GetAccountDataCountsRequest,
+  GetAccountDataCountsResponse,
+  Account,
+  ErrorDto
 } from '../../services/nutrition-ambition-api.service';
 
 @Injectable({
@@ -308,6 +316,105 @@ export class AdminService {
     } catch (error) {
       console.error('[AdminService] Error searching logs:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Get all accounts (admin only)
+   */
+  async getAllAccounts(): Promise<GetAllAccountsResponse> {
+    try {
+      console.log('[AdminService] Getting all accounts');
+
+      const request = new GetAllAccountsRequest();
+      const response = await firstValueFrom(this.apiService.getAllAccounts(request));
+      
+      if (response.isSuccess && response.accounts) {
+        console.log('[AdminService] Retrieved', response.accounts.length, 'accounts');
+      } else {
+        console.error('[AdminService] Failed to get accounts:', response.errors);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('[AdminService] Error getting accounts:', error);
+      const errorResponse = new GetAllAccountsResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while retrieving accounts.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Delete an account and all associated data (admin only)
+   */
+  async deleteAccount(accountId: string, confirmDelete: boolean = true): Promise<DeleteAccountResponse> {
+    try {
+      console.log('[AdminService] Deleting account:', accountId);
+
+      const request = new DeleteAccountRequest({
+        accountId: accountId,
+        confirmDelete: confirmDelete
+      });
+
+      const response = await firstValueFrom(this.apiService.deleteAccount(request));
+      
+      if (response.isSuccess) {
+        console.log('[AdminService] Account deleted successfully:', {
+          accountId: response.deletedAccountId,
+          totalRecordsDeleted: response.totalRecordsDeleted,
+          deletedRecordsByType: response.deletedRecordsByType
+        });
+      } else {
+        console.error('[AdminService] Failed to delete account:', response.errors);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('[AdminService] Error deleting account:', error);
+      const errorResponse = new DeleteAccountResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while deleting the account.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Get data counts for an account (admin only)
+   */
+  async getAccountDataCounts(accountId: string): Promise<GetAccountDataCountsResponse> {
+    try {
+      console.log('[AdminService] Getting data counts for account:', accountId);
+
+      const request = new GetAccountDataCountsRequest({
+        accountId: accountId
+      });
+
+      const response = await firstValueFrom(this.apiService.getAccountDataCounts(request));
+      
+      if (response.isSuccess) {
+        console.log('[AdminService] Data counts retrieved:', {
+          accountId: response.accountId,
+          totalCount: response.totalDataCount,
+          breakdownCounts: response.dataCounts
+        });
+      } else {
+        console.error('[AdminService] Failed to get data counts:', response.errors);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('[AdminService] Error getting data counts:', error);
+      const errorResponse = new GetAccountDataCountsResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while retrieving account data counts.' }));
+      return errorResponse;
     }
   }
 } 
