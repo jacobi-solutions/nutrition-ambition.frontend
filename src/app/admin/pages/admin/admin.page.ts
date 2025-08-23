@@ -26,7 +26,10 @@ import {
   terminalOutline,
   radioButtonOnOutline,
   personOutline,
-  closeOutline
+  closeOutline,
+  arrowBackOutline,
+  chevronUpOutline,
+  chevronDownOutline
 } from 'ionicons/icons';
 
 // Register all icons used in this component
@@ -46,7 +49,10 @@ addIcons({
   'terminal-outline': terminalOutline,
   'radio-button-on-outline': radioButtonOnOutline,
   'person-outline': personOutline,
-  'close': closeOutline
+  'close': closeOutline,
+  'arrow-back-outline': arrowBackOutline,
+  'chevron-up-outline': chevronUpOutline,
+  'chevron-down-outline': chevronDownOutline
 });
 
 @Component({
@@ -69,6 +75,10 @@ export class AdminPage implements OnInit, OnDestroy {
   selectedCompletionFilter: string = 'incomplete';
   userEmailFilter: string = '';
   selectedVersionFilter: string = 'all';
+  
+  // Sorting options
+  sortColumn: 'date' | 'type' | 'status' | 'email' | null = 'date';
+  sortDirection: 'asc' | 'desc' = 'desc'; // Default to newest first
   
   // Computed filter data
   uniqueAppVersions: string[] = [];
@@ -254,7 +264,68 @@ export class AdminPage implements OnInit, OnDestroy {
       filtered = filtered.filter(entry => entry.feedback?.appVersion === this.selectedVersionFilter);
     }
 
+    // Apply sorting
+    filtered = this.applySorting(filtered);
+
     this.filteredFeedbackEntries = filtered;
+  }
+
+  private applySorting(entries: FeedbackWithAccount[]): FeedbackWithAccount[] {
+    if (!this.sortColumn) return entries;
+
+    return entries.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (this.sortColumn) {
+        case 'date':
+          aValue = new Date(a.feedback?.createdDateUtc || 0).getTime();
+          bValue = new Date(b.feedback?.createdDateUtc || 0).getTime();
+          break;
+        case 'type':
+          aValue = a.feedback?.feedbackType || '';
+          bValue = b.feedback?.feedbackType || '';
+          break;
+        case 'status':
+          aValue = a.feedback?.isCompleted ? 'completed' : 'pending';
+          bValue = b.feedback?.isCompleted ? 'completed' : 'pending';
+          break;
+        case 'email':
+          aValue = a.accountEmail || '';
+          bValue = b.accountEmail || '';
+          break;
+        default:
+          return 0;
+      }
+
+      // Handle string comparison
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        const comparison = aValue.localeCompare(bValue);
+        return this.sortDirection === 'asc' ? comparison : -comparison;
+      }
+
+      // Handle numeric comparison
+      if (aValue < bValue) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
+  sortBy(column: 'date' | 'type' | 'status' | 'email') {
+    if (this.sortColumn === column) {
+      // Toggle direction if same column
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      // New column, default to ascending (except date which defaults to descending)
+      this.sortColumn = column;
+      this.sortDirection = column === 'date' ? 'desc' : 'asc';
+    }
+    
+    this.applyFilters(); // Re-apply filters with new sorting
   }
 
     // Feedback actions
@@ -448,5 +519,13 @@ export class AdminPage implements OnInit, OnDestroy {
   // Getter property for template - more efficient than method calls
   get statsEntries(): Array<{key: string, value: number}> {
     return this._cachedStatsEntries;
+  }
+
+  // Helper method for table view
+  getShortenedMessage(message: string | undefined): string {
+    if (!message) return 'No message';
+    const maxLength = 100;
+    if (message.length <= maxLength) return message;
+    return message.substring(0, maxLength) + '...';
   }
 } 

@@ -77,8 +77,38 @@
         <!-- Bug Report Details Panel -->
         <div class="debug-panel bug-details">
           <div class="panel-header">
-            <ion-icon name="bug-outline"></ion-icon>
-            <h3>Bug Report Details</h3>
+            <div class="panel-title">
+              <ion-icon name="bug-outline"></ion-icon>
+              <h3>Bug Report Details</h3>
+            </div>
+            <div class="panel-actions">
+              <ion-button
+                *ngIf="!feedbackWithAccount?.feedback?.isCompleted"
+                size="small"
+                color="success"
+                fill="outline"
+                (click)="markAsComplete()">
+                <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+                Complete
+              </ion-button>
+              <ion-button
+                *ngIf="feedbackWithAccount?.feedback?.isCompleted"
+                size="small"
+                color="warning"
+                fill="outline"
+                (click)="markAsIncomplete()">
+                <ion-icon name="refresh-outline" slot="start"></ion-icon>
+                Reopen
+              </ion-button>
+              <ion-button
+                size="small"
+                color="danger"
+                fill="outline"
+                (click)="deleteFeedback()">
+                <ion-icon name="trash-outline" slot="start"></ion-icon>
+                Delete
+              </ion-button>
+            </div>
           </div>
           <div class="panel-content">
             <div class="detail-grid">
@@ -124,8 +154,10 @@
         <!-- User Profile Panel -->
         <div class="debug-panel user-profile">
           <div class="panel-header">
-            <ion-icon name="person-outline"></ion-icon>
-            <h3>User Profile</h3>
+            <div class="panel-title">
+              <ion-icon name="person-outline"></ion-icon>
+              <h3>User Profile</h3>
+            </div>
           </div>
           <div class="panel-content">
             <div class="profile-grid">
@@ -159,8 +191,10 @@
         <!-- Daily Targets Panel -->
         <div class="debug-panel daily-targets">
           <div class="panel-header">
-            <ion-icon name="radio-button-on-outline"></ion-icon>
-            <h3>Daily Targets</h3>
+            <div class="panel-title">
+              <ion-icon name="radio-button-on-outline"></ion-icon>
+              <h3>Daily Targets</h3>
+            </div>
           </div>
           <div class="panel-content">
             <div *ngIf="!userDailyTargets" class="no-data">
@@ -175,8 +209,10 @@
         <!-- System Logs Panel -->
         <div class="debug-panel system-logs">
           <div class="panel-header">
-            <ion-icon name="terminal-outline"></ion-icon>
-            <h3>System Logs</h3>
+            <div class="panel-title">
+              <ion-icon name="terminal-outline"></ion-icon>
+              <h3>System Logs</h3>
+            </div>
           </div>
           <div class="panel-content">
             <div class="logs-container">

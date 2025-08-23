@@ -260,126 +260,87 @@
             <p>No feedback entries match the current filters.</p>
           </div>
 
-          <!-- Feedback Table/Cards -->
-          <div class="feedback-entries">
-            <div *ngFor="let feedbackWithAccount of filteredFeedbackEntries" class="feedback-entry">
-              <div class="feedback-header">
-                <div class="feedback-meta">
-                  <ion-badge [color]="getTypeColor(feedbackWithAccount.feedback?.feedbackType!)" class="type-badge">
-                    <ion-icon [name]="getTypeIcon(feedbackWithAccount.feedback?.feedbackType!)"></ion-icon>
-                    {{ feedbackWithAccount.feedback?.feedbackType | titlecase }}
-                  </ion-badge>
-                  
-                  <ion-badge [color]="feedbackWithAccount.feedback?.isCompleted ? 'success' : 'warning'" class="status-badge">
-                    {{ feedbackWithAccount.feedback?.isCompleted ? 'Completed' : 'Pending' }}
-                  </ion-badge>
-                  
-                  <!-- User info badge -->
-                  <ion-badge color="tertiary" class="user-badge">
-                    <ion-icon name="person-outline"></ion-icon>
+          <!-- Feedback Table -->
+          <div class="feedback-table-container">
+            <table class="feedback-table">
+              <thead>
+                <tr>
+                  <th class="sortable-header" (click)="sortBy('type')">
+                    Type
+                    <ion-icon 
+                      *ngIf="sortColumn === 'type'" 
+                      [name]="sortDirection === 'asc' ? 'chevron-up-outline' : 'chevron-down-outline'"
+                      class="sort-icon">
+                    </ion-icon>
+                  </th>
+                  <th class="sortable-header" (click)="sortBy('status')">
+                    Status
+                    <ion-icon 
+                      *ngIf="sortColumn === 'status'" 
+                      [name]="sortDirection === 'asc' ? 'chevron-up-outline' : 'chevron-down-outline'"
+                      class="sort-icon">
+                    </ion-icon>
+                  </th>
+                  <th class="sortable-header" (click)="sortBy('email')">
+                    User Email
+                    <ion-icon 
+                      *ngIf="sortColumn === 'email'" 
+                      [name]="sortDirection === 'asc' ? 'chevron-up-outline' : 'chevron-down-outline'"
+                      class="sort-icon">
+                    </ion-icon>
+                  </th>
+                  <th>Message</th>
+                  <th class="sortable-header" (click)="sortBy('date')">
+                    Date
+                    <ion-icon 
+                      *ngIf="sortColumn === 'date'" 
+                      [name]="sortDirection === 'asc' ? 'chevron-up-outline' : 'chevron-down-outline'"
+                      class="sort-icon">
+                    </ion-icon>
+                  </th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let feedbackWithAccount of filteredFeedbackEntries" class="feedback-row">
+                  <td>
+                    <ion-badge [color]="getTypeColor(feedbackWithAccount.feedback?.feedbackType!)" class="type-badge">
+                      <ion-icon [name]="getTypeIcon(feedbackWithAccount.feedback?.feedbackType!)"></ion-icon>
+                      {{ feedbackWithAccount.feedback?.feedbackType | titlecase }}
+                    </ion-badge>
+                  </td>
+                  <td>
+                    <ion-badge [color]="feedbackWithAccount.feedback?.isCompleted ? 'success' : 'warning'" class="status-badge">
+                      {{ feedbackWithAccount.feedback?.isCompleted ? 'Completed' : 'Pending' }}
+                    </ion-badge>
+                  </td>
+                  <td class="email-cell">
                     {{ feedbackWithAccount.accountEmail || 'Unknown User' }}
-                  </ion-badge>
-                  
-                  <!-- App version if available -->
-                  <ion-badge *ngIf="feedbackWithAccount.feedback?.appVersion" color="medium" class="version-badge">
-                    <ion-icon name="phone-portrait-outline"></ion-icon>
-                    v{{ feedbackWithAccount.feedback?.appVersion }}
-                  </ion-badge>
-                  
-                  <span class="date-info">
+                  </td>
+                  <td class="message-cell">
+                    {{ getShortenedMessage(feedbackWithAccount.feedback?.message) }}
+                  </td>
+                  <td class="date-cell">
                     {{ formatDate(feedbackWithAccount.feedback?.createdDateUtc?.toString()) }}
-                  </span>
-                </div>
-
-                <div class="feedback-actions">
-                  <ion-button
-                    *ngIf="!feedbackWithAccount.feedback?.isCompleted"
-                    size="small"
-                    color="success"
-                    fill="outline"
-                    (click)="markAsComplete(feedbackWithAccount)">
-                    <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-                    Complete
-                  </ion-button>
-
-                  <ion-button
-                    *ngIf="feedbackWithAccount.feedback?.isCompleted"
-                    size="small"
-                    color="warning"
-                    fill="outline"
-                    (click)="markAsIncomplete(feedbackWithAccount)">
-                    <ion-icon name="refresh-outline" slot="start"></ion-icon>
-                    Reopen
-                  </ion-button>
-
-                  <ion-button
-                    size="small"
-                    color="tertiary"
-                    fill="outline"
-                    (click)="viewUserContext(feedbackWithAccount)">
-                    <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
-                    View Context
-                  </ion-button>
-
-                  <ion-button
-                    size="small"
-                    color="danger"
-                    fill="outline"
-                    (click)="deleteFeedback(feedbackWithAccount)">
-                    <ion-icon name="trash-outline" slot="start"></ion-icon>
-                    Delete
-                  </ion-button>
-                </div>
-              </div>
-
-              <div class="feedback-body">
-                <div class="feedback-main">
-                  <div class="feedback-message">
-                    <h4>Message</h4>
-                    <p>{{ feedbackWithAccount.feedback?.message }}</p>
-                  </div>
-
-                  <div *ngIf="feedbackWithAccount.feedback?.context" class="feedback-context">
-                    <h4>Context</h4>
-                    <p>{{ feedbackWithAccount.feedback?.context }}</p>
-                  </div>
-
-                  <!-- Account information section -->
-                  <div class="account-info">
-                    <h4>Account Information</h4>
-                    <div class="info-grid">
-                      <div class="info-item">
-                        <strong>User ID:</strong> 
-                        <code>{{ feedbackWithAccount.accountId }}</code>
-                      </div>
-                      <div class="info-item">
-                        <strong>Email:</strong> 
-                        {{ feedbackWithAccount.accountEmail || 'N/A' }}
-                      </div>
-                      <div class="info-item" *ngIf="feedbackWithAccount.accountCreatedDate">
-                        <strong>Account Created:</strong> 
-                        {{ formatDate(feedbackWithAccount.accountCreatedDate?.toString()) }}
-                      </div>
-                      <div class="info-item" *ngIf="feedbackWithAccount.feedback?.appVersion">
-                        <strong>App Version:</strong> 
-                        {{ feedbackWithAccount.feedback?.appVersion }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div *ngIf="feedbackWithAccount.feedback?.isCompleted && feedbackWithAccount.feedback?.completionNote" class="completion-section">
-                  <h4>Admin Note</h4>
-                  <p>{{ feedbackWithAccount.feedback?.completionNote }}</p>
-                  <small *ngIf="feedbackWithAccount.feedback?.completedDateUtc">
-                    Completed: {{ formatDate(feedbackWithAccount.feedback?.completedDateUtc?.toString()) }}
-                  </small>
-                </div>
-              </div>
-            </div>
+                  </td>
+                  <td class="actions-cell">
+                    <ion-button
+                      size="small"
+                      color="primary"
+                      fill="outline"
+                      (click)="viewUserContext(feedbackWithAccount)">
+                      <ion-icon name="eye-outline" slot="start"></ion-icon>
+                      View
+                    </ion-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
+
+
     </div>
   </div>
 </ion-content> 

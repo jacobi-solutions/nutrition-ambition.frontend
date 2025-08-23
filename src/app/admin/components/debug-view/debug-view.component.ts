@@ -1,7 +1,8 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { IonicModule, ModalController, AlertController } from '@ionic/angular';
 import { Subject, takeUntil } from 'rxjs';
+import { Router } from '@angular/router';
 import { 
   FeedbackWithAccount, 
   ChatMessage,
@@ -10,6 +11,7 @@ import {
 import { AdminService } from '../../services/admin.service';
 import { ChatService } from '../../../services/chat.service';
 import { DateService } from '../../../services/date.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-debug-view',
@@ -46,7 +48,10 @@ export class DebugViewComponent implements OnInit, OnDestroy {
     private modalController: ModalController,
     private adminService: AdminService,
     private chatService: ChatService,
-    private dateService: DateService
+    private dateService: DateService,
+    private alertController: AlertController,
+    private toastService: ToastService,
+    private router: Router
   ) {
     this.selectedDate = this.dateService.getSelectedDateUtc();
   }
@@ -198,5 +203,133 @@ export class DebugViewComponent implements OnInit, OnDestroy {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     }
+  }
+
+  // Feedback action methods
+  async markAsComplete() {
+    const feedbackEntry = this.feedbackWithAccount?.feedback;
+    if (!feedbackEntry) return;
+
+    const alert = await this.alertController.create({
+      header: 'Mark as Complete',
+      message: 'Add a completion note (optional):',
+      inputs: [
+        {
+          name: 'completionNote',
+          type: 'textarea',
+          placeholder: 'Describe what was done to resolve this feedback...',
+          value: feedbackEntry.completionNote || ''
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Mark Complete',
+          handler: async (data) => {
+            try {
+              await this.adminService.completeFeedback(
+                feedbackEntry.id!, 
+                true, 
+                data.completionNote
+              );
+              await this.showToast('Feedback marked as complete', 'success');
+              // Update local state
+              if (this.feedbackWithAccount?.feedback) {
+                this.feedbackWithAccount.feedback.isCompleted = true;
+                this.feedbackWithAccount.feedback.completionNote = data.completionNote;
+              }
+            } catch (error) {
+              console.error('[DebugView] Error marking feedback as complete:', error);
+              await this.showToast('Error marking feedback as complete', 'danger');
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async markAsIncomplete() {
+    const feedbackEntry = this.feedbackWithAccount?.feedback;
+    if (!feedbackEntry) return;
+
+    const alert = await this.alertController.create({
+      header: 'Mark as Incomplete',
+      message: 'Are you sure you want to mark this feedback as incomplete?',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Mark Incomplete',
+          handler: async () => {
+            try {
+              await this.adminService.completeFeedback(feedbackEntry.id!, false);
+              await this.showToast('Feedback marked as incomplete', 'success');
+              // Update local state
+              if (this.feedbackWithAccount?.feedback) {
+                this.feedbackWithAccount.feedback.isCompleted = false;
+                this.feedbackWithAccount.feedback.completionNote = undefined;
+              }
+            } catch (error) {
+              console.error('[DebugView] Error marking feedback as incomplete:', error);
+              await this.showToast('Error marking feedback as incomplete', 'danger');
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async deleteFeedback() {
+    const feedbackEntry = this.feedbackWithAccount?.feedback;
+    if (!feedbackEntry) return;
+
+    const alert = await this.alertController.create({
+      header: 'Delete Feedback',
+      message: 'Are you sure you want to permanently delete this feedback entry?',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              const response = await this.adminService.deleteFeedback(feedbackEntry.id!);
+              if (response.isSuccess) {
+                await this.showToast('Feedback deleted successfully', 'success');
+                // Navigate back to admin page
+                await this.router.navigate(['/admin']);
+              } else {
+                await this.showToast('Error deleting feedback', 'danger');
+              }
+            } catch (error) {
+              console.error('[DebugView] Error deleting feedback:', error);
+              await this.showToast('Error deleting feedback', 'danger');
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  private async showToast(message: string, color: 'success' | 'danger' | 'warning' | 'medium' = 'medium') {
+    await this.toastService.showToast({
+      message,
+      duration: 3000,
+      color: 'medium'
+    });
   }
 }
