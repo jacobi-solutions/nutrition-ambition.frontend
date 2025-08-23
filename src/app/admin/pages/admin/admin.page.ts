@@ -203,17 +203,8 @@ export class AdminPage implements OnInit, OnDestroy {
     // Update cached stats entries when stats change
     this._cachedStatsEntries = Object.entries(this.feedbackStats.byType).map(([key, value]) => ({key, value}));
     
-    // Compute unique app versions for filtering
-    const versions = new Set<string>();
-    this.feedbackEntries.forEach(entry => {
-      if (entry.feedback?.appVersion) {
-        versions.add(entry.feedback.appVersion);
-      }
-    });
-    this.uniqueAppVersions = Array.from(versions).sort((a, b) => {
-      // Sort versions in reverse order (newest first)
-      return b.localeCompare(a, undefined, { numeric: true });
-    });
+    // Note: App version filtering removed since appVersion is not available on FeedbackEntry
+    this.uniqueAppVersions = [];
     
     console.log('[AdminPage] Stats updated:', this.feedbackStats);
     console.log('[AdminPage] Unique app versions:', this.uniqueAppVersions);
@@ -259,10 +250,7 @@ export class AdminPage implements OnInit, OnDestroy {
       );
     }
 
-    // Filter by app version
-    if (this.selectedVersionFilter !== 'all') {
-      filtered = filtered.filter(entry => entry.feedback?.appVersion === this.selectedVersionFilter);
-    }
+    // Note: App version filtering removed since appVersion is not available on FeedbackEntry
 
     // Apply sorting
     filtered = this.applySorting(filtered);

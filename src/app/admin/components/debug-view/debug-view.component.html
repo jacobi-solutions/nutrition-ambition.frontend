@@ -6,8 +6,8 @@
           <ion-icon name="phone-portrait-outline"></ion-icon>
           User's App View - {{ feedbackWithAccount?.accountEmail }}
         </div>
-        <div class="replica-version" *ngIf="feedbackWithAccount?.feedback?.appVersion">
-          v{{ feedbackWithAccount?.feedback?.appVersion }}
+        <div class="replica-version" *ngIf="feedbackWithAccount?.feedback?.createdDateUtc">
+          {{ formatDate(feedbackWithAccount?.feedback?.createdDateUtc) }}
         </div>
       </div>
       
@@ -33,8 +33,8 @@
                 {{ message.role | titlecase }}
               </strong>
               <span class="message-time">{{ formatTime(message.createdDateUtc) }}</span>
-              <span *ngIf="message.frontendAppVersion" class="app-version-tag">
-                v{{ message.frontendAppVersion }}
+              <span *ngIf="message.totalTokens" class="token-tag">
+                {{ message.totalTokens }} tokens
               </span>
             </div>
             
@@ -147,8 +147,8 @@
                 <span>{{ formatDate(feedbackWithAccount?.feedback?.createdDateUtc) }}</span>
               </div>
               <div class="detail-item">
-                <label>App Version:</label>
-                <code>{{ feedbackWithAccount?.feedback?.appVersion || 'Unknown' }}</code>
+                <label>Feedback ID:</label>
+                <code>{{ feedbackWithAccount?.feedback?.id || 'Unknown' }}</code>
               </div>
             </div>
             
@@ -157,9 +157,16 @@
               <div class="message-box">{{ feedbackWithAccount?.feedback?.message }}</div>
             </div>
             
-            <div *ngIf="feedbackWithAccount?.feedback?.context" class="feedback-context">
+            <div *ngIf="feedbackWithAccount?.feedback?.clientContext || feedbackWithAccount?.feedback?.serverContext" class="feedback-context">
               <h4>Context</h4>
-              <div class="context-box">{{ feedbackWithAccount?.feedback?.context }}</div>
+              <div class="context-box">
+                <div *ngIf="feedbackWithAccount?.feedback?.clientContext">
+                  <strong>Client Context:</strong> {{ feedbackWithAccount?.feedback?.clientContext | json }}
+                </div>
+                <div *ngIf="feedbackWithAccount?.feedback?.serverContext">
+                  <strong>Server Context:</strong> {{ feedbackWithAccount?.feedback?.serverContext | json }}
+                </div>
+              </div>
             </div>
             
             <div *ngIf="feedbackWithAccount?.feedback?.completionNote" class="completion-note">
@@ -231,13 +238,37 @@
               <ion-icon name="terminal-outline"></ion-icon>
               <h3>System Logs</h3>
             </div>
+            <div class="panel-actions">
+              <ion-button
+                size="small"
+                fill="outline"
+                (click)="loadSystemLogs()">
+                <ion-icon name="refresh-outline" slot="start"></ion-icon>
+                Refresh
+              </ion-button>
+            </div>
           </div>
           <div class="panel-content">
-            <div class="logs-container">
-              <div class="log-entry" *ngFor="let log of mockLogs">
-                <span class="log-time">{{ log.timestamp }}</span>
-                <span class="log-level" [ngClass]="'level-' + log.level">{{ log.level }}</span>
+            <div *ngIf="logsLoading" class="loading-logs">
+              <ion-spinner></ion-spinner>
+              <p>Loading system logs...</p>
+            </div>
+            
+            <div *ngIf="!logsLoading && systemLogs.length === 0" class="no-logs">
+              <ion-icon name="document-text-outline"></ion-icon>
+              <p>No system logs found for this user in the last hour</p>
+            </div>
+            
+            <div *ngIf="!logsLoading && systemLogs.length > 0" class="logs-container">
+              <div class="log-entry" *ngFor="let log of systemLogs">
+                <span class="log-time">{{ formatTime(log.timestampUtc) }}</span>
+                <span class="log-level" [ngClass]="'level-' + log.severity?.toLowerCase()">{{ log.severity }}</span>
                 <span class="log-message">{{ log.message }}</span>
+                <div *ngIf="log.accountId || log.email || log.traceId" class="log-meta">
+                  <span *ngIf="log.accountId" class="meta-item">Account: {{ log.accountId }}</span>
+                  <span *ngIf="log.email" class="meta-item">Email: {{ log.email }}</span>
+                  <span *ngIf="log.traceId" class="meta-item">Trace: {{ log.traceId }}</span>
+                </div>
               </div>
             </div>
           </div>

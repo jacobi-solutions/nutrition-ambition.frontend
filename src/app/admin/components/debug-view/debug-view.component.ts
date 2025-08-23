@@ -6,7 +6,8 @@ import { Router } from '@angular/router';
 import { 
   FeedbackWithAccount, 
   ChatMessage,
-  Account 
+  Account,
+  LogEntryDto 
 } from '../../../services/nutrition-ambition-api.service';
 import { AdminService } from '../../services/admin.service';
 import { ChatService } from '../../../services/chat.service';
@@ -27,20 +28,14 @@ export class DebugViewComponent implements OnInit, OnDestroy {
   userProfile?: any; // TODO: Add UserProfile type when available
   userDailyTargets?: any; // TODO: Add DailyTarget type when available
   selectedDate: Date;
+  systemLogs: LogEntryDto[] = [];
+  logsLoading = false;
   
   // Resizing state
   leftPanelWidth = 30; // Percentage
   isResizing = false;
   startX = 0;
   startWidth = 0;
-  mockLogs = [
-    { timestamp: '09:31:42', level: 'info', message: 'User submitted feedback: food logging issue' },
-    { timestamp: '09:31:40', level: 'debug', message: 'Chat message received from user' },
-    { timestamp: '09:31:35', level: 'info', message: 'Food search performed: "chicken breast"' },
-    { timestamp: '09:31:30', level: 'debug', message: 'User navigated to food entry page' },
-    { timestamp: '09:30:15', level: 'info', message: 'User logged in successfully' },
-    { timestamp: '09:30:12', level: 'debug', message: 'Authentication token validated' }
-  ];
 
   private destroy$ = new Subject<void>();
 
@@ -58,6 +53,7 @@ export class DebugViewComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadUserChatMessages();
+    this.loadSystemLogs();
     // TODO: Load user profile and daily targets
     
     // Initialize the CSS custom property
@@ -94,6 +90,48 @@ export class DebugViewComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('[DebugView] Error loading chat messages:', error);
+    }
+  }
+
+  async loadSystemLogs() {
+    if (!this.feedbackWithAccount?.accountId) return;
+
+    try {
+      this.logsLoading = true;
+      
+      // Calculate time window based on feedback creation time
+      let minutesBack = 60; // Default to 1 hour
+      
+      if (this.feedbackWithAccount.feedback?.createdDateUtc) {
+        const feedbackTime = new Date(this.feedbackWithAccount.feedback.createdDateUtc);
+        const now = new Date();
+        const timeDiffMinutes = Math.floor((now.getTime() - feedbackTime.getTime()) / (1000 * 60));
+        
+        // Look from 30 minutes before feedback to 30 minutes after (or now if recent)
+        const lookBackWindow = timeDiffMinutes + 30;
+        minutesBack = Math.min(Math.max(lookBackWindow, 60), 60 * 24 * 7); // Cap at 7 days
+        
+        console.log('[DebugView] Feedback submitted', timeDiffMinutes, 'minutes ago, looking back', minutesBack, 'minutes');
+      }
+
+      const response = await this.adminService.searchLogs({
+        accountId: this.feedbackWithAccount.accountId,
+        email: this.feedbackWithAccount.accountEmail,
+        minutesBack: minutesBack,
+        pageSize: 50,
+        severity: 'INFO' // Get info level and above
+      });
+
+      if (response.isSuccess && response.items) {
+        this.systemLogs = response.items;
+        console.log('[DebugView] Loaded', this.systemLogs.length, 'log entries');
+      } else {
+        console.error('[DebugView] Failed to load logs:', response.errors);
+      }
+    } catch (error) {
+      console.error('[DebugView] Error loading system logs:', error);
+    } finally {
+      this.logsLoading = false;
     }
   }
 

@@ -2,23 +2,20 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { 
   NutritionAmbitionApiService,
-  GetFeedbackRequest,
-  GetFeedbackResponse,
   GetFeedbackWithAccountInfoRequest,
   GetFeedbackWithAccountInfoResponse,
   GetUserChatMessagesRequest,
   GetUserChatMessagesResponse,
   FeedbackWithAccount,
-  SubmitUserFeedbackRequest,
-  SubmitUserFeedbackResponse,
-  UpdateFeedbackRequest,
-  UpdateFeedbackResponse,
   DeleteFeedbackRequest,
   DeleteFeedbackResponse,
   CompleteFeedbackRequest,
   CompleteFeedbackResponse,
   FeedbackEntry,
-  ChatMessage
+  ChatMessage,
+  SearchLogsRequest,
+  SearchLogsResponse,
+  LogEntryDto
 } from '../../services/nutrition-ambition-api.service';
 
 @Injectable({
@@ -78,28 +75,16 @@ export class AdminService {
   }
 
   /**
-   * Get a specific feedback entry by ID
+   * Get a specific feedback entry by ID from current entries
    */
-  async getFeedbackById(feedbackId: string): Promise<FeedbackEntry | null> {
+  getFeedbackById(feedbackId: string): FeedbackEntry | null {
     try {
-      console.log('[AdminService] Loading feedback by ID:', feedbackId);
-
-      const request = new GetFeedbackRequest({
-        feedbackId: feedbackId,
-        includeAllAccounts: true
-      });
-
-      const response = await firstValueFrom(this.apiService.getFeedback(request));
+      console.log('[AdminService] Finding feedback by ID:', feedbackId);
       
-      if (response.isSuccess && response.feedbackEntry) {
-        console.log('[AdminService] Loaded feedback entry:', response.feedbackEntry);
-        return response.feedbackEntry;
-      } else {
-        console.error('[AdminService] Failed to load feedback:', response.errors);
-        return null;
-      }
+      const feedbackWithAccount = this.currentFeedbackEntries.find(f => f.feedback?.id === feedbackId);
+      return feedbackWithAccount?.feedback || null;
     } catch (error) {
-      console.error('[AdminService] Error loading feedback by ID:', error);
+      console.error('[AdminService] Error finding feedback by ID:', error);
       return null;
     }
   }
@@ -134,40 +119,8 @@ export class AdminService {
     }
   }
 
-  /**
-   * Update feedback entry (for admin edits)
-   */
-  async updateFeedback(feedbackId: string, updates: {
-    feedbackType?: string;
-    message?: string;
-    context?: string;
-  }): Promise<UpdateFeedbackResponse> {
-    try {
-      console.log('[AdminService] Updating feedback:', { feedbackId, updates });
-
-      const request = new UpdateFeedbackRequest({
-        feedbackId: feedbackId,
-        feedbackType: updates.feedbackType,
-        message: updates.message,
-        context: updates.context
-      });
-
-      const response = await firstValueFrom(this.apiService.updateFeedback(request));
-      
-      if (response.isSuccess && response.feedbackEntry) {
-        console.log('[AdminService] Feedback updated successfully');
-        // Update the local list
-        await this.refreshCurrentFeedbackList();
-      } else {
-        console.error('[AdminService] Failed to update feedback:', response.errors);
-      }
-
-      return response;
-    } catch (error) {
-      console.error('[AdminService] Error updating feedback:', error);
-      throw error;
-    }
-  }
+  // Note: Update feedback functionality not implemented in backend yet
+  // async updateFeedback(...) would go here when backend support is added
 
   /**
    * Delete feedback entry
@@ -312,6 +265,48 @@ export class AdminService {
       return response;
     } catch (error) {
       console.error('[AdminService] Error getting chat messages:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search system logs
+   */
+  async searchLogs(filters?: {
+    accountId?: string;
+    email?: string;
+    contains?: string;
+    severity?: string;
+    traceId?: string;
+    minutesBack?: number;
+    pageSize?: number;
+    pageToken?: string;
+  }): Promise<SearchLogsResponse> {
+    try {
+      console.log('[AdminService] Searching logs with filters:', filters);
+
+      const request = new SearchLogsRequest({
+        accountId: filters?.accountId,
+        email: filters?.email,
+        contains: filters?.contains,
+        severity: filters?.severity,
+        traceId: filters?.traceId,
+        minutesBack: filters?.minutesBack,
+        pageSize: filters?.pageSize,
+        pageToken: filters?.pageToken
+      });
+
+      const response = await firstValueFrom(this.apiService.searchLogs(request));
+      
+      if (response.isSuccess && response.items) {
+        console.log('[AdminService] Retrieved', response.items.length, 'log entries');
+      } else {
+        console.error('[AdminService] Failed to search logs:', response.errors);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('[AdminService] Error searching logs:', error);
       throw error;
     }
   }

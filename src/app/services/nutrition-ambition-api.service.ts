@@ -50,6 +50,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    searchLogs(body: SearchLogsRequest | undefined): Observable<SearchLogsResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
@@ -71,36 +76,6 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     getDetailedSummary(body: GetDetailedSummaryRequest | undefined): Observable<GetDetailedSummaryResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    submitFeedback(body: SubmitUserFeedbackRequest | undefined): Observable<SubmitUserFeedbackResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    getFeedback(body: GetFeedbackRequest | undefined): Observable<GetFeedbackResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    updateFeedback(body: UpdateFeedbackRequest | undefined): Observable<UpdateFeedbackResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    deleteFeedback2(body: DeleteFeedbackRequest | undefined): Observable<DeleteFeedbackResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    getAllFeedback(body: GetFeedbackRequest | undefined): Observable<GetFeedbackResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    completeFeedback2(body: CompleteFeedbackRequest | undefined): Observable<CompleteFeedbackResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -488,6 +463,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
+    searchLogs(body: SearchLogsRequest | undefined): Observable<SearchLogsResponse> {
+        let url_ = this.baseUrl + "/api/Admin/SearchLogs";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchLogs(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchLogs(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SearchLogsResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SearchLogsResponse>;
+        }));
+    }
+
+    protected processSearchLogs(response: HttpResponseBase): Observable<SearchLogsResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SearchLogsResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SearchLogsResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/Conversation/GetChatMessages";
         url_ = url_.replace(/[?&]$/, "");
@@ -762,342 +793,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<GetDetailedSummaryResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    submitFeedback(body: SubmitUserFeedbackRequest | undefined): Observable<SubmitUserFeedbackResponse> {
-        let url_ = this.baseUrl + "/api/Feedback/SubmitFeedback";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processSubmitFeedback(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processSubmitFeedback(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<SubmitUserFeedbackResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<SubmitUserFeedbackResponse>;
-        }));
-    }
-
-    protected processSubmitFeedback(response: HttpResponseBase): Observable<SubmitUserFeedbackResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = SubmitUserFeedbackResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<SubmitUserFeedbackResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    getFeedback(body: GetFeedbackRequest | undefined): Observable<GetFeedbackResponse> {
-        let url_ = this.baseUrl + "/api/Feedback/GetFeedback";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetFeedback(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetFeedback(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<GetFeedbackResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<GetFeedbackResponse>;
-        }));
-    }
-
-    protected processGetFeedback(response: HttpResponseBase): Observable<GetFeedbackResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = GetFeedbackResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<GetFeedbackResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    updateFeedback(body: UpdateFeedbackRequest | undefined): Observable<UpdateFeedbackResponse> {
-        let url_ = this.baseUrl + "/api/Feedback/UpdateFeedback";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processUpdateFeedback(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processUpdateFeedback(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<UpdateFeedbackResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<UpdateFeedbackResponse>;
-        }));
-    }
-
-    protected processUpdateFeedback(response: HttpResponseBase): Observable<UpdateFeedbackResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = UpdateFeedbackResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<UpdateFeedbackResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    deleteFeedback2(body: DeleteFeedbackRequest | undefined): Observable<DeleteFeedbackResponse> {
-        let url_ = this.baseUrl + "/api/Feedback/DeleteFeedback";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processDeleteFeedback2(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processDeleteFeedback2(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<DeleteFeedbackResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<DeleteFeedbackResponse>;
-        }));
-    }
-
-    protected processDeleteFeedback2(response: HttpResponseBase): Observable<DeleteFeedbackResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = DeleteFeedbackResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<DeleteFeedbackResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    getAllFeedback(body: GetFeedbackRequest | undefined): Observable<GetFeedbackResponse> {
-        let url_ = this.baseUrl + "/api/Feedback/GetAllFeedback";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processGetAllFeedback(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processGetAllFeedback(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<GetFeedbackResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<GetFeedbackResponse>;
-        }));
-    }
-
-    protected processGetAllFeedback(response: HttpResponseBase): Observable<GetFeedbackResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = GetFeedbackResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<GetFeedbackResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    completeFeedback2(body: CompleteFeedbackRequest | undefined): Observable<CompleteFeedbackResponse> {
-        let url_ = this.baseUrl + "/api/Feedback/CompleteFeedback";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processCompleteFeedback2(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processCompleteFeedback2(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<CompleteFeedbackResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<CompleteFeedbackResponse>;
-        }));
-    }
-
-    protected processCompleteFeedback2(response: HttpResponseBase): Observable<CompleteFeedbackResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = CompleteFeedbackResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<CompleteFeedbackResponse>(null as any);
     }
 
     /**
@@ -1618,6 +1313,46 @@ export enum AssistantModeTypes {
     UserFeedback = "UserFeedback",
 }
 
+export class BuildStamp implements IBuildStamp {
+    appVersion?: string | undefined;
+    commitHash?: string | undefined;
+
+    constructor(data?: IBuildStamp) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.appVersion = _data["appVersion"];
+            this.commitHash = _data["commitHash"];
+        }
+    }
+
+    static fromJS(data: any): BuildStamp {
+        data = typeof data === 'object' ? data : {};
+        let result = new BuildStamp();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["appVersion"] = this.appVersion;
+        data["commitHash"] = this.commitHash;
+        return data;
+    }
+}
+
+export interface IBuildStamp {
+    appVersion?: string | undefined;
+    commitHash?: string | undefined;
+}
+
 export class CancelEditSelectionRequest implements ICancelEditSelectionRequest {
     pendingMessageId?: string | undefined;
     loggedDateUtc?: Date;
@@ -1755,7 +1490,6 @@ export class ChatMessage implements IChatMessage {
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
     totalTokens?: number | undefined;
-    frontendAppVersion?: string | undefined;
 
     constructor(data?: IChatMessage) {
         if (data) {
@@ -1788,7 +1522,6 @@ export class ChatMessage implements IChatMessage {
             this.promptTokens = _data["promptTokens"];
             this.completionTokens = _data["completionTokens"];
             this.totalTokens = _data["totalTokens"];
-            this.frontendAppVersion = _data["frontendAppVersion"];
         }
     }
 
@@ -1821,7 +1554,6 @@ export class ChatMessage implements IChatMessage {
         data["promptTokens"] = this.promptTokens;
         data["completionTokens"] = this.completionTokens;
         data["totalTokens"] = this.totalTokens;
-        data["frontendAppVersion"] = this.frontendAppVersion;
         return data;
     }
 }
@@ -1847,7 +1579,6 @@ export interface IChatMessage {
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
     totalTokens?: number | undefined;
-    frontendAppVersion?: string | undefined;
 }
 
 export class ChatMessagesResponse implements IChatMessagesResponse {
@@ -2589,8 +2320,8 @@ export class FeedbackEntry implements IFeedbackEntry {
     accountId?: string | undefined;
     feedbackType?: string | undefined;
     message?: string | undefined;
-    context?: string | undefined;
-    appVersion?: string | undefined;
+    clientContext?: TelemetryContext;
+    serverContext?: TelemetryContext;
     isCompleted?: boolean;
     completedDateUtc?: Date | undefined;
     completionNote?: string | undefined;
@@ -2615,8 +2346,8 @@ export class FeedbackEntry implements IFeedbackEntry {
             this.accountId = _data["accountId"];
             this.feedbackType = _data["feedbackType"];
             this.message = _data["message"];
-            this.context = _data["context"];
-            this.appVersion = _data["appVersion"];
+            this.clientContext = _data["clientContext"] ? TelemetryContext.fromJS(_data["clientContext"]) : <any>undefined;
+            this.serverContext = _data["serverContext"] ? TelemetryContext.fromJS(_data["serverContext"]) : <any>undefined;
             this.isCompleted = _data["isCompleted"];
             this.completedDateUtc = _data["completedDateUtc"] ? new Date(_data["completedDateUtc"].toString()) : <any>undefined;
             this.completionNote = _data["completionNote"];
@@ -2641,8 +2372,8 @@ export class FeedbackEntry implements IFeedbackEntry {
         data["accountId"] = this.accountId;
         data["feedbackType"] = this.feedbackType;
         data["message"] = this.message;
-        data["context"] = this.context;
-        data["appVersion"] = this.appVersion;
+        data["clientContext"] = this.clientContext ? this.clientContext.toJSON() : <any>undefined;
+        data["serverContext"] = this.serverContext ? this.serverContext.toJSON() : <any>undefined;
         data["isCompleted"] = this.isCompleted;
         data["completedDateUtc"] = this.completedDateUtc ? this.completedDateUtc.toISOString() : <any>undefined;
         data["completionNote"] = this.completionNote;
@@ -2660,8 +2391,8 @@ export interface IFeedbackEntry {
     accountId?: string | undefined;
     feedbackType?: string | undefined;
     message?: string | undefined;
-    context?: string | undefined;
-    appVersion?: string | undefined;
+    clientContext?: TelemetryContext;
+    serverContext?: TelemetryContext;
     isCompleted?: boolean;
     completedDateUtc?: Date | undefined;
     completionNote?: string | undefined;
@@ -3098,150 +2829,6 @@ export interface IGetDetailedSummaryResponse {
     foodEntries?: FoodEntryBreakdown[] | undefined;
 }
 
-export class GetFeedbackRequest implements IGetFeedbackRequest {
-    feedbackId?: string | undefined;
-    feedbackType?: string | undefined;
-    includeAllAccounts?: boolean;
-    isCompleted?: boolean | undefined;
-    completedOnly?: boolean;
-    incompleteOnly?: boolean;
-
-    constructor(data?: IGetFeedbackRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.feedbackId = _data["feedbackId"];
-            this.feedbackType = _data["feedbackType"];
-            this.includeAllAccounts = _data["includeAllAccounts"];
-            this.isCompleted = _data["isCompleted"];
-            this.completedOnly = _data["completedOnly"];
-            this.incompleteOnly = _data["incompleteOnly"];
-        }
-    }
-
-    static fromJS(data: any): GetFeedbackRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new GetFeedbackRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["feedbackId"] = this.feedbackId;
-        data["feedbackType"] = this.feedbackType;
-        data["includeAllAccounts"] = this.includeAllAccounts;
-        data["isCompleted"] = this.isCompleted;
-        data["completedOnly"] = this.completedOnly;
-        data["incompleteOnly"] = this.incompleteOnly;
-        return data;
-    }
-}
-
-export interface IGetFeedbackRequest {
-    feedbackId?: string | undefined;
-    feedbackType?: string | undefined;
-    includeAllAccounts?: boolean;
-    isCompleted?: boolean | undefined;
-    completedOnly?: boolean;
-    incompleteOnly?: boolean;
-}
-
-export class GetFeedbackResponse implements IGetFeedbackResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    feedbackEntries?: FeedbackEntry[] | undefined;
-    feedbackEntry?: FeedbackEntry;
-    feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
-
-    constructor(data?: IGetFeedbackResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            if (Array.isArray(_data["feedbackEntries"])) {
-                this.feedbackEntries = [] as any;
-                for (let item of _data["feedbackEntries"])
-                    this.feedbackEntries!.push(FeedbackEntry.fromJS(item));
-            }
-            this.feedbackEntry = _data["feedbackEntry"] ? FeedbackEntry.fromJS(_data["feedbackEntry"]) : <any>undefined;
-            if (Array.isArray(_data["feedbackWithAccounts"])) {
-                this.feedbackWithAccounts = [] as any;
-                for (let item of _data["feedbackWithAccounts"])
-                    this.feedbackWithAccounts!.push(FeedbackWithAccount.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): GetFeedbackResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new GetFeedbackResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        if (Array.isArray(this.feedbackEntries)) {
-            data["feedbackEntries"] = [];
-            for (let item of this.feedbackEntries)
-                data["feedbackEntries"].push(item.toJSON());
-        }
-        data["feedbackEntry"] = this.feedbackEntry ? this.feedbackEntry.toJSON() : <any>undefined;
-        if (Array.isArray(this.feedbackWithAccounts)) {
-            data["feedbackWithAccounts"] = [];
-            for (let item of this.feedbackWithAccounts)
-                data["feedbackWithAccounts"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface IGetFeedbackResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    feedbackEntries?: FeedbackEntry[] | undefined;
-    feedbackEntry?: FeedbackEntry;
-    feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
-}
-
 export class GetFeedbackWithAccountInfoRequest implements IGetFeedbackWithAccountInfoRequest {
     feedbackType?: string | undefined;
     accountId?: string | undefined;
@@ -3524,6 +3111,82 @@ export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
 export interface ILearnMoreAboutRequest {
     topic?: string | undefined;
     loggedDateUtc?: Date | undefined;
+}
+
+export class LogEntryDto implements ILogEntryDto {
+    timestampUtc?: Date;
+    severity?: string | undefined;
+    message?: string | undefined;
+    accountId?: string | undefined;
+    email?: string | undefined;
+    traceId?: string | undefined;
+    sourceService?: string | undefined;
+    extra?: { [key: string]: string; } | undefined;
+
+    constructor(data?: ILogEntryDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.timestampUtc = _data["timestampUtc"] ? new Date(_data["timestampUtc"].toString()) : <any>undefined;
+            this.severity = _data["severity"];
+            this.message = _data["message"];
+            this.accountId = _data["accountId"];
+            this.email = _data["email"];
+            this.traceId = _data["traceId"];
+            this.sourceService = _data["sourceService"];
+            if (_data["extra"]) {
+                this.extra = {} as any;
+                for (let key in _data["extra"]) {
+                    if (_data["extra"].hasOwnProperty(key))
+                        (<any>this.extra)![key] = _data["extra"][key];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): LogEntryDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new LogEntryDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["timestampUtc"] = this.timestampUtc ? this.timestampUtc.toISOString() : <any>undefined;
+        data["severity"] = this.severity;
+        data["message"] = this.message;
+        data["accountId"] = this.accountId;
+        data["email"] = this.email;
+        data["traceId"] = this.traceId;
+        data["sourceService"] = this.sourceService;
+        if (this.extra) {
+            data["extra"] = {};
+            for (let key in this.extra) {
+                if (this.extra.hasOwnProperty(key))
+                    (<any>data["extra"])[key] = (<any>this.extra)[key];
+            }
+        }
+        return data;
+    }
+}
+
+export interface ILogEntryDto {
+    timestampUtc?: Date;
+    severity?: string | undefined;
+    message?: string | undefined;
+    accountId?: string | undefined;
+    email?: string | undefined;
+    traceId?: string | undefined;
+    sourceService?: string | undefined;
+    extra?: { [key: string]: string; } | undefined;
 }
 
 export class LogMealToolResponse implements ILogMealToolResponse {
@@ -3836,7 +3499,6 @@ export interface IResponse {
 export class RunChatRequest implements IRunChatRequest {
     message?: string | undefined;
     loggedDateUtc?: Date | undefined;
-    frontendAppVersion?: string | undefined;
 
     constructor(data?: IRunChatRequest) {
         if (data) {
@@ -3851,7 +3513,6 @@ export class RunChatRequest implements IRunChatRequest {
         if (_data) {
             this.message = _data["message"];
             this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
-            this.frontendAppVersion = _data["frontendAppVersion"];
         }
     }
 
@@ -3866,7 +3527,6 @@ export class RunChatRequest implements IRunChatRequest {
         data = typeof data === 'object' ? data : {};
         data["message"] = this.message;
         data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
-        data["frontendAppVersion"] = this.frontendAppVersion;
         return data;
     }
 }
@@ -3874,7 +3534,146 @@ export class RunChatRequest implements IRunChatRequest {
 export interface IRunChatRequest {
     message?: string | undefined;
     loggedDateUtc?: Date | undefined;
-    frontendAppVersion?: string | undefined;
+}
+
+export class SearchLogsRequest implements ISearchLogsRequest {
+    accountId?: string | undefined;
+    email?: string | undefined;
+    contains?: string | undefined;
+    severity?: string | undefined;
+    traceId?: string | undefined;
+    minutesBack?: number | undefined;
+    pageSize?: number | undefined;
+    pageToken?: string | undefined;
+
+    constructor(data?: ISearchLogsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+            this.email = _data["email"];
+            this.contains = _data["contains"];
+            this.severity = _data["severity"];
+            this.traceId = _data["traceId"];
+            this.minutesBack = _data["minutesBack"];
+            this.pageSize = _data["pageSize"];
+            this.pageToken = _data["pageToken"];
+        }
+    }
+
+    static fromJS(data: any): SearchLogsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchLogsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["email"] = this.email;
+        data["contains"] = this.contains;
+        data["severity"] = this.severity;
+        data["traceId"] = this.traceId;
+        data["minutesBack"] = this.minutesBack;
+        data["pageSize"] = this.pageSize;
+        data["pageToken"] = this.pageToken;
+        return data;
+    }
+}
+
+export interface ISearchLogsRequest {
+    accountId?: string | undefined;
+    email?: string | undefined;
+    contains?: string | undefined;
+    severity?: string | undefined;
+    traceId?: string | undefined;
+    minutesBack?: number | undefined;
+    pageSize?: number | undefined;
+    pageToken?: string | undefined;
+}
+
+export class SearchLogsResponse implements ISearchLogsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    items?: LogEntryDto[] | undefined;
+    nextPageToken?: string | undefined;
+
+    constructor(data?: ISearchLogsResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(LogEntryDto.fromJS(item));
+            }
+            this.nextPageToken = _data["nextPageToken"];
+        }
+    }
+
+    static fromJS(data: any): SearchLogsResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchLogsResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        data["nextPageToken"] = this.nextPageToken;
+        return data;
+    }
+}
+
+export interface ISearchLogsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    items?: LogEntryDto[] | undefined;
+    nextPageToken?: string | undefined;
 }
 
 export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {
@@ -3993,13 +3792,13 @@ export interface ISubmitServingSelectionRequest {
     selections?: UserSelectedServing[] | undefined;
 }
 
-export class SubmitUserFeedbackRequest implements ISubmitUserFeedbackRequest {
-    feedbackType?: string | undefined;
-    message?: string | undefined;
-    context?: string | undefined;
-    appVersion?: string | undefined;
+export class TelemetryContext implements ITelemetryContext {
+    buildStamp?: BuildStamp;
+    environment?: string | undefined;
+    userAgent?: string | undefined;
+    extras?: { [key: string]: string; } | undefined;
 
-    constructor(data?: ISubmitUserFeedbackRequest) {
+    constructor(data?: ITelemetryContext) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -4010,217 +3809,53 @@ export class SubmitUserFeedbackRequest implements ISubmitUserFeedbackRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.feedbackType = _data["feedbackType"];
-            this.message = _data["message"];
-            this.context = _data["context"];
-            this.appVersion = _data["appVersion"];
+            this.buildStamp = _data["buildStamp"] ? BuildStamp.fromJS(_data["buildStamp"]) : <any>undefined;
+            this.environment = _data["environment"];
+            this.userAgent = _data["userAgent"];
+            if (_data["extras"]) {
+                this.extras = {} as any;
+                for (let key in _data["extras"]) {
+                    if (_data["extras"].hasOwnProperty(key))
+                        (<any>this.extras)![key] = _data["extras"][key];
+                }
+            }
         }
     }
 
-    static fromJS(data: any): SubmitUserFeedbackRequest {
+    static fromJS(data: any): TelemetryContext {
         data = typeof data === 'object' ? data : {};
-        let result = new SubmitUserFeedbackRequest();
+        let result = new TelemetryContext();
         result.init(data);
         return result;
     }
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["feedbackType"] = this.feedbackType;
-        data["message"] = this.message;
-        data["context"] = this.context;
-        data["appVersion"] = this.appVersion;
+        data["buildStamp"] = this.buildStamp ? this.buildStamp.toJSON() : <any>undefined;
+        data["environment"] = this.environment;
+        data["userAgent"] = this.userAgent;
+        if (this.extras) {
+            data["extras"] = {};
+            for (let key in this.extras) {
+                if (this.extras.hasOwnProperty(key))
+                    (<any>data["extras"])[key] = (<any>this.extras)[key];
+            }
+        }
         return data;
     }
 }
 
-export interface ISubmitUserFeedbackRequest {
-    feedbackType?: string | undefined;
-    message?: string | undefined;
-    context?: string | undefined;
-    appVersion?: string | undefined;
-}
-
-export class SubmitUserFeedbackResponse implements ISubmitUserFeedbackResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    feedbackEntry?: FeedbackEntry;
-
-    constructor(data?: ISubmitUserFeedbackResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.feedbackEntry = _data["feedbackEntry"] ? FeedbackEntry.fromJS(_data["feedbackEntry"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): SubmitUserFeedbackResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new SubmitUserFeedbackResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["feedbackEntry"] = this.feedbackEntry ? this.feedbackEntry.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface ISubmitUserFeedbackResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    feedbackEntry?: FeedbackEntry;
+export interface ITelemetryContext {
+    buildStamp?: BuildStamp;
+    environment?: string | undefined;
+    userAgent?: string | undefined;
+    extras?: { [key: string]: string; } | undefined;
 }
 
 export enum UnitKind {
     Weight = "Weight",
     Volume = "Volume",
     Count = "Count",
-}
-
-export class UpdateFeedbackRequest implements IUpdateFeedbackRequest {
-    feedbackId?: string | undefined;
-    feedbackType?: string | undefined;
-    message?: string | undefined;
-    context?: string | undefined;
-
-    constructor(data?: IUpdateFeedbackRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.feedbackId = _data["feedbackId"];
-            this.feedbackType = _data["feedbackType"];
-            this.message = _data["message"];
-            this.context = _data["context"];
-        }
-    }
-
-    static fromJS(data: any): UpdateFeedbackRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new UpdateFeedbackRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["feedbackId"] = this.feedbackId;
-        data["feedbackType"] = this.feedbackType;
-        data["message"] = this.message;
-        data["context"] = this.context;
-        return data;
-    }
-}
-
-export interface IUpdateFeedbackRequest {
-    feedbackId?: string | undefined;
-    feedbackType?: string | undefined;
-    message?: string | undefined;
-    context?: string | undefined;
-}
-
-export class UpdateFeedbackResponse implements IUpdateFeedbackResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    feedbackEntry?: FeedbackEntry;
-
-    constructor(data?: IUpdateFeedbackResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.feedbackEntry = _data["feedbackEntry"] ? FeedbackEntry.fromJS(_data["feedbackEntry"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): UpdateFeedbackResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new UpdateFeedbackResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["feedbackEntry"] = this.feedbackEntry ? this.feedbackEntry.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IUpdateFeedbackResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    feedbackEntry?: FeedbackEntry;
 }
 
 export class UserSelectedServing implements IUserSelectedServing {
