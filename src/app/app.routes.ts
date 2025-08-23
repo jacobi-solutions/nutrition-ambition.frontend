@@ -9,11 +9,11 @@ export const routes: Routes = [
     path: 'login',
     component: LoginPage
   },
-  // {
-  //   path: 'signup',
-  //   component: SignupPage,
-  //   // Note: AuthGuard might need adjustment if registration is public
-  // },
+  {
+    path: 'signup',
+    component: SignupPage,
+    // Note: AuthGuard might need adjustment if registration is public
+  },
   {
     path: 'legal',
     loadComponent: () => import('./pages/legal/legal.page').then(m => m.LegalPage)

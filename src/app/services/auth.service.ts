@@ -4,7 +4,7 @@ import { setPersistence, indexedDBLocalPersistence, sendPasswordResetEmail, conf
 import { Observable, BehaviorSubject, first } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
-import { NutritionAmbitionApiService, ChangePasswordRequest } from './nutrition-ambition-api.service';
+import { NutritionAmbitionApiService, ChangePasswordRequest, RegisterAccountRequest } from './nutrition-ambition-api.service';
 import { AnalyticsService } from './analytics.service';
 
 @Injectable({
@@ -124,8 +124,8 @@ export class AuthService {
         console.log('Email/password account created successfully');
       }
       
-      // Backend registration no longer needed as it will happen automatically
-      // via the ID token in subsequent API calls
+      // NOW CREATE THE BACKEND ACCOUNT EXPLICITLY
+      await this.createBackendAccount(email, false);
       
       // Firebase Analytics: Track successful registration/login
       this._analytics.trackAuthEvent('login');
@@ -294,6 +294,28 @@ export class AuthService {
     return message;
   }
 
+  private async createBackendAccount(email: string | null, isAnonymous: boolean): Promise<void> {
+    try {
+      const request = new RegisterAccountRequest({
+        email: email || '',
+        timeZoneId: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        isAnonymous: isAnonymous
+      });
+      
+      const response = await this._apiService.registerAccount(request).toPromise();
+      
+      if (!response?.isSuccess) {
+        const errorMessage = response?.errors?.[0]?.errorMessage || 'Failed to create backend account';
+        throw new Error(errorMessage);
+      }
+      
+      console.log('Backend account created successfully');
+    } catch (error) {
+      console.error('Failed to create backend account:', error);
+      throw error;
+    }
+  }
+
   // DEPRECATED as an automatic pathway. Call startAnonymousSession() only from explicit user intent (e.g., "Continue as guest").
   async ensureAnonymousSession(): Promise<void> {
     return this.startAnonymousSession();
@@ -338,6 +360,10 @@ export class AuthService {
           // eslint-disable-next-line no-console
           console.debug('startAnonymousSession: anonymous session established. uid:', credential.user.uid);
         }
+        
+        // NOW CREATE THE BACKEND ACCOUNT FOR ANONYMOUS USER
+        await this.createBackendAccount(null, true);
+        
         this._authRequired$.next(false);
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -354,13 +380,27 @@ export class AuthService {
   async signInWithGoogle(): Promise<void> {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(this.authInstance, provider);
+      const result = await signInWithPopup(this.authInstance, provider);
       console.log('Google sign-in successful');
+      
+      // For Google sign-in, we need to create backend account if it's a new user
+      // Note: Google sign-in could be either login or signup, so we'll try to create
+      // the account and handle the "user already exists" gracefully
+      try {
+        await this.createBackendAccount(result.user.email, false);
+      } catch (error: any) {
+        // If account already exists, that's fine - user is just logging in
+        if (!error?.message?.includes('already exists')) {
+          throw error; // Re-throw if it's a different error
+        }
+        console.log('Account already exists - user is logging in');
+      }
       
       // Firebase Analytics: Track successful login
       this._analytics.trackAuthEvent('login');
     } catch (error) {
       console.error('Google sign-in failed:', error);
+      throw error;
     }
   }
 

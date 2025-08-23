@@ -20,6 +20,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    registerAccount(body: RegisterAccountRequest | undefined): Observable<AccountResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getAccount(body: Request | undefined): Observable<AccountResponse>;
     /**
      * @param body (optional) 
@@ -136,6 +141,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
         this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    registerAccount(body: RegisterAccountRequest | undefined): Observable<AccountResponse> {
+        let url_ = this.baseUrl + "/api/Accounts/RegisterAccount";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRegisterAccount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRegisterAccount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountResponse>;
+        }));
+    }
+
+    protected processRegisterAccount(response: HttpResponseBase): Observable<AccountResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AccountResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<AccountResponse>(null as any);
     }
 
     /**
@@ -3933,6 +3994,50 @@ export interface INutrientContribution {
     amount?: number;
     unit?: string | undefined;
     originalUnit?: string | undefined;
+}
+
+export class RegisterAccountRequest implements IRegisterAccountRequest {
+    email?: string | undefined;
+    timeZoneId?: string | undefined;
+    isAnonymous?: boolean;
+
+    constructor(data?: IRegisterAccountRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.email = _data["email"];
+            this.timeZoneId = _data["timeZoneId"];
+            this.isAnonymous = _data["isAnonymous"];
+        }
+    }
+
+    static fromJS(data: any): RegisterAccountRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RegisterAccountRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["email"] = this.email;
+        data["timeZoneId"] = this.timeZoneId;
+        data["isAnonymous"] = this.isAnonymous;
+        return data;
+    }
+}
+
+export interface IRegisterAccountRequest {
+    email?: string | undefined;
+    timeZoneId?: string | undefined;
+    isAnonymous?: boolean;
 }
 
 export class Request implements IRequest {
