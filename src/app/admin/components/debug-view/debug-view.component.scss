@@ -139,6 +139,72 @@
     font-size: 0.75em;
   }
 
+  .food-selection-details {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--ion-color-light-tint);
+    border-radius: 8px;
+    border-left: 3px solid var(--ion-color-success);
+
+    h5 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+    }
+
+    .food-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .food-item {
+      padding: 8px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid var(--ion-color-light-shade);
+
+      .food-header {
+        margin-bottom: 4px;
+        font-size: 13px;
+        color: var(--ion-color-medium);
+      }
+
+      .food-details {
+        margin-bottom: 4px;
+        
+        .food-name {
+          font-weight: 600;
+          color: var(--ion-color-dark);
+          font-size: 14px;
+        }
+        
+        .brand-name {
+          margin-left: 6px;
+          color: var(--ion-color-medium);
+          font-size: 13px;
+          font-style: italic;
+        }
+      }
+
+      .serving-info {
+        display: flex;
+        gap: 4px;
+        font-size: 13px;
+        
+        .quantity {
+          font-weight: 600;
+          color: var(--ion-color-primary);
+        }
+        
+        .unit {
+          color: var(--ion-color-medium);
+        }
+      }
+    }
+  }
+
   .no-messages {
     text-align: center;
     padding: 40px 20px;

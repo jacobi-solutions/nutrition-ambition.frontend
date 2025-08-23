@@ -332,4 +332,41 @@ export class DebugViewComponent implements OnInit, OnDestroy {
       color: 'medium'
     });
   }
+
+  // Food selection methods
+  isFoodSelectionMessage(role: string | undefined): boolean {
+    return role === 'CompletedFoodSelection' || role === 'CompletedEditFoodSelection';
+  }
+
+  getFoodSelectionItems(logMealToolResponse: any): any[] {
+    if (!logMealToolResponse?.componentMatches) {
+      return [];
+    }
+
+    const items: any[] = [];
+    
+    // Iterate through each component match
+    Object.keys(logMealToolResponse.componentMatches).forEach(originalText => {
+      const matches = logMealToolResponse.componentMatches[originalText];
+      
+      if (matches && matches.length > 0) {
+        const firstMatch = matches[0]; // Get the first/best match
+        const selectedServing = firstMatch.servings?.find((serving: any) => 
+          serving.fatSecretServingId === firstMatch.selectedServingId
+        );
+
+        if (selectedServing) {
+          items.push({
+            originalText: firstMatch.originalText || originalText,
+            displayName: firstMatch.displayName,
+            brandName: firstMatch.brandName,
+            displayQuantity: selectedServing.displayQuantity,
+            displayUnit: selectedServing.displayUnit
+          });
+        }
+      }
+    });
+
+    return items;
+  }
 }

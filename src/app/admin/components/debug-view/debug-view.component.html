@@ -41,6 +41,24 @@
             <div class="message-content">
               <p [innerHTML]="formatMessageContent(message.content)"></p>
             </div>
+
+            <!-- Food Selection Details -->
+            <div *ngIf="isFoodSelectionMessage(message.role) && message.logMealToolResponse" class="food-selection-details">
+              <h5>Food Selection Details:</h5>
+                <div *ngFor="let foodItem of getFoodSelectionItems(message.logMealToolResponse)" class="food-item">
+                  <div class="food-header">
+                    <strong>{{ foodItem.originalText }}</strong>
+                  </div>
+                  <div class="food-details">
+                    <span class="food-name">{{ foodItem.displayName }}</span>
+                    <span *ngIf="foodItem.brandName" class="brand-name">({{ foodItem.brandName }})</span>
+                  </div>
+                  <div class="serving-info">
+                    <span class="quantity">{{ foodItem.displayQuantity }}</span>
+                    <span class="unit">{{ foodItem.displayUnit }}</span>
+                  </div>
+                </div>
+            </div>
             
             <div *ngIf="message.totalTokens" class="message-meta">
               <small>{{ message.totalTokens }} tokens</small>
