@@ -95,8 +95,7 @@ export class EntryActionMenuComponent {
       this.toastService.showToast({
         message: 'Feature not implemented yet. Check back soon!',
         duration: 3000,
-        color: 'medium',
-        position: 'top'
+        color: 'medium'
       });
       
       // Still emit the event so the popover dismisses

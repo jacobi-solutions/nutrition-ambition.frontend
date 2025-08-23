@@ -537,8 +537,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             console.log('[DEBUG] No messages returned in response');
           }
           
-          // Focus the input after response is processed
-          setTimeout(() => this.focusInput(), 300);
+          // Only focus the input if response doesn't contain pending food selection messages
+          // This prevents mobile keyboard from opening when user needs to interact with food selection cards
+          if (!this.containsPendingFoodSelection(response.messages)) {
+            setTimeout(() => this.focusInput(), 300);
+          }
         } else {
           console.warn('Message sending failed:', response.errors);
           this.messages.push({
@@ -688,8 +691,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         this.toastService.showToast({
           message: 'Photo capture not implemented yet. Check back soon!',
           duration: 3000,
-          color: 'medium',
-          position: 'top'
+          color: 'medium'
         });
         break;
       case 'barcode':
@@ -700,8 +702,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         this.toastService.showToast({
           message: 'Barcode scanner not implemented yet. Check back soon!',
           duration: 3000,
-          color: 'medium',
-          position: 'top'
+          color: 'medium'
         });
         break;
       case 'edit':
@@ -727,6 +728,18 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         this.messageInput.nativeElement.focus();
       }
     }, 350); // Slightly longer than scroll animation (300ms)
+  }
+
+  // Check if the response contains pending food selection messages
+  private containsPendingFoodSelection(messages: ChatMessage[] | undefined): boolean {
+    if (!messages || messages.length === 0) {
+      return false;
+    }
+    
+    return messages.some(msg => 
+      msg.role === MessageRoleTypes.PendingFoodSelection || 
+      msg.role === MessageRoleTypes.PendingEditFoodSelection
+    );
   }
 
   private async showErrorToast(message: string) {
