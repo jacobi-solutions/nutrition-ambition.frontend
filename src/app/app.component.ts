@@ -5,9 +5,9 @@ import { RouterOutlet } from '@angular/router';
 import { AccountsService } from './services/accounts.service';
 import { AuthService } from './services/auth.service';
 import { AnalyticsService } from './services/analytics.service';
+import { AppUpdateService } from './services/app-update.service';
 import { take } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { SwUpdate } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
@@ -21,32 +21,19 @@ export class AppComponent implements OnInit {
 
   private authService = inject(AuthService);
   private analyticsService = inject(AnalyticsService);
+  private appUpdateService = inject(AppUpdateService);
 
   constructor(
-    private accountsService: AccountsService,
-    private swUpdate: SwUpdate
+    private accountsService: AccountsService
   ) {}
   
-  async ngOnInit() {
+    async ngOnInit() {
     // 🔹 Track PWA standalone mode usage
     this.trackStandaloneModeIfApplicable();
 
-    // 🔹 Service Worker Update Check
-    if (this.swUpdate.isEnabled) {
-      try {
-        await this.swUpdate.checkForUpdate();
-      } catch (err) {
-        console.warn('SW update check failed:', err);
-      }
-  
-      this.swUpdate.versionUpdates.subscribe(event => {
-        if (event.type === 'VERSION_READY') {
-          console.log('🚀 New version available. Reloading...');
-          document.location.reload();
-        }
-      });
-    }
-  
+    // 🔹 Initialize app update service
+    this.appUpdateService.initAutoUpdateListeners();
+
     // 🔹 Auth / Accounts init
     this.authService.authReady$.pipe(take(1)).subscribe({
       next: async () => {

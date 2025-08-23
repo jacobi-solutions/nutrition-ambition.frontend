@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, Input } from '@angular/core';
+import { Component, Output, EventEmitter, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   IonList,
@@ -13,9 +13,11 @@ import {
   logOut, 
   download,
   informationCircle,
-  key
+  key,
+  refresh
 } from 'ionicons/icons';
 import { APP_VERSION } from '../../../environments/version';
+import { AppUpdateService } from '../../services/app-update.service';
 
 @Component({
   selector: 'app-settings-popover',
@@ -37,6 +39,11 @@ export class SettingsPopoverComponent {
   
   // Expose the app version
   readonly appVersion = APP_VERSION;
+  
+  // Track refresh state
+  isRefreshing = false;
+
+  private appUpdateService = inject(AppUpdateService);
 
   constructor(private popoverCtrl: PopoverController) {
     // Add the icons explicitly to the library
@@ -44,13 +51,27 @@ export class SettingsPopoverComponent {
       logOut, 
       download,
       informationCircle,
-      key
+      key,
+      refresh
     });
   }
 
-  onAction(action: string, event?: Event) {
+  async onAction(action: string, event?: Event) {
     this.settingsAction.emit({ action, event });
     this.dismiss();
+  }
+
+  async onRefreshToLatest() {
+    if (this.isRefreshing) return;
+    
+    this.isRefreshing = true;
+    try {
+      await this.appUpdateService.forceReloadToLatest();
+    } catch (e) {
+      console.warn('[Settings] Failed to refresh to latest:', e);
+      this.isRefreshing = false;
+    }
+    // Note: Page will reload if update is successful, so isRefreshing will reset naturally
   }
 
   onNavigateToResetPassword() {
