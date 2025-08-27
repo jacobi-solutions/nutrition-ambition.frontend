@@ -107,6 +107,7 @@ export class AdminPage implements OnInit, OnDestroy {
   accountDataCounts: { [accountId: string]: any } = {};
   loadingAccountCounts = new Set<string>();
   lastDeletionAudit: any = null;
+  lastClearAudit: any = null;
 
   constructor(
     private accountsService: AccountsService,
@@ -243,6 +244,7 @@ export class AdminPage implements OnInit, OnDestroy {
       • All food entries
       • All daily targets
       • All user profiles
+      • All daily summaries
       
       This action cannot be undone.`,
       buttons: [
@@ -275,6 +277,61 @@ export class AdminPage implements OnInit, OnDestroy {
             } catch (error) {
               console.error('[AdminPage] Error deleting account:', error);
               await this.showToast('Error deleting account', 'danger');
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async clearAccountData(account: Account) {
+    const alert = await this.alertController.create({
+      header: 'Clear Account Data',
+      message: `Are you sure you want to clear all data for "${account.email}"? This will permanently delete all associated data while keeping the account:
+      
+      • All feedback entries
+      • All chat messages
+      • All food entries
+      • All daily targets
+      • All user profiles
+      • All daily summaries
+      
+      The account itself will be preserved but reset to a clean state. This action cannot be undone.`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Clear Data',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              const response = await this.adminService.clearAccountData(account.id!, true);
+              if (response.isSuccess) {
+                // Store clear audit for display
+                this.lastClearAudit = {
+                  accountEmail: account.email,
+                  accountName: account.name,
+                  totalRecordsDeleted: response.totalRecordsDeleted,
+                  deletedRecordsByType: response.deletedRecordsByType,
+                  clearedAt: new Date()
+                };
+                
+                await this.showClearAudit();
+                // Refresh account data counts if expanded
+                if (this.expandedAccountIds.has(account.id!)) {
+                  await this.loadAccountDataCounts(account.id!);
+                }
+              } else {
+                console.error('[AdminPage] Failed to clear account data:', response.errors);
+                await this.showToast('Error clearing account data', 'danger');
+              }
+            } catch (error) {
+              console.error('[AdminPage] Error clearing account data:', error);
+              await this.showToast('Error clearing account data', 'danger');
             }
           }
         }
@@ -347,6 +404,9 @@ export class AdminPage implements OnInit, OnDestroy {
       if (dataCounts.UserProfiles > 0) {
         breakdown.push({ label: 'User Profiles', count: dataCounts.UserProfiles, icon: 'person-circle-outline' });
       }
+      if (dataCounts.DailySummaries > 0) {
+        breakdown.push({ label: 'Daily Summaries', count: dataCounts.DailySummaries, icon: 'calendar-outline' });
+      }
     }
     
     return breakdown;
@@ -400,6 +460,43 @@ export class AdminPage implements OnInit, OnDestroy {
     await alert.present();
   }
 
+  async showClearAudit() {
+    if (!this.lastClearAudit) return;
+
+    const audit = this.lastClearAudit;
+    
+    // Create a clean, readable message
+    let message = `Data for account "${audit.accountEmail}" has been successfully cleared.\n\n`;
+    message += `Total Records Deleted: ${audit.totalRecordsDeleted}\n\n`;
+    
+    if (audit.deletedRecordsByType && audit.totalRecordsDeleted > 0) {
+      message += `Breakdown by Type:\n`;
+      Object.entries(audit.deletedRecordsByType).forEach(([type, count]: [string, any]) => {
+        if (count > 0) {
+          message += `• ${type}: ${count}\n`;
+        }
+      });
+      message += `\nThe account has been preserved and reset to a clean state.`;
+    } else if (audit.totalRecordsDeleted === 0) {
+      message += `No user data was found for this account. The account remains unchanged.`;
+    }
+
+    const alert = await this.alertController.create({
+      header: 'Data Clear Complete',
+      message: message,
+      buttons: [
+        {
+          text: 'OK',
+          role: 'confirm',
+          cssClass: 'alert-button-confirm'
+        }
+      ],
+      cssClass: 'clear-audit-alert'
+    });
+
+    await alert.present();
+  }
+
   getDataTypeIcon(type: string): string {
     switch (type) {
       case 'Feedback': return '💬';
@@ -407,6 +504,7 @@ export class AdminPage implements OnInit, OnDestroy {
       case 'DailyTargets': return '🎯';
       case 'FoodEntries': return '🍽️';
       case 'UserProfiles': return '👤';
+      case 'DailySummaries': return '📊';
       default: return '📄';
     }
   }

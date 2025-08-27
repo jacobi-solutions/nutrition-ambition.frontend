@@ -70,6 +70,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    clearAccountData(body: ClearAccountDataRequest | undefined): Observable<ClearAccountDataResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getAccountDataCounts(body: GetAccountDataCountsRequest | undefined): Observable<GetAccountDataCountsResponse>;
     /**
      * @param body (optional) 
@@ -701,6 +706,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<DeleteAccountResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    clearAccountData(body: ClearAccountDataRequest | undefined): Observable<ClearAccountDataResponse> {
+        let url_ = this.baseUrl + "/api/Admin/ClearAccountData";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processClearAccountData(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processClearAccountData(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ClearAccountDataResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ClearAccountDataResponse>;
+        }));
+    }
+
+    protected processClearAccountData(response: HttpResponseBase): Observable<ClearAccountDataResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ClearAccountDataResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ClearAccountDataResponse>(null as any);
     }
 
     /**
@@ -1432,6 +1493,8 @@ export class Account implements IAccount {
     timeZoneId?: string | undefined;
     isOwner?: boolean;
     hasUnacknowledgedFeedbackResponses?: boolean;
+    canDelete?: boolean;
+    canClear?: boolean;
 
     constructor(data?: IAccount) {
         if (data) {
@@ -1452,6 +1515,8 @@ export class Account implements IAccount {
             this.timeZoneId = _data["timeZoneId"];
             this.isOwner = _data["isOwner"];
             this.hasUnacknowledgedFeedbackResponses = _data["hasUnacknowledgedFeedbackResponses"];
+            this.canDelete = _data["canDelete"];
+            this.canClear = _data["canClear"];
         }
     }
 
@@ -1472,6 +1537,8 @@ export class Account implements IAccount {
         data["timeZoneId"] = this.timeZoneId;
         data["isOwner"] = this.isOwner;
         data["hasUnacknowledgedFeedbackResponses"] = this.hasUnacknowledgedFeedbackResponses;
+        data["canDelete"] = this.canDelete;
+        data["canClear"] = this.canClear;
         return data;
     }
 }
@@ -1485,6 +1552,8 @@ export interface IAccount {
     timeZoneId?: string | undefined;
     isOwner?: boolean;
     hasUnacknowledgedFeedbackResponses?: boolean;
+    canDelete?: boolean;
+    canClear?: boolean;
 }
 
 export class AccountResponse implements IAccountResponse {
@@ -1895,6 +1964,134 @@ export interface IChatMessagesResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     messages?: ChatMessage[] | undefined;
+}
+
+export class ClearAccountDataRequest implements IClearAccountDataRequest {
+    accountId?: string | undefined;
+    confirmClear?: boolean;
+
+    constructor(data?: IClearAccountDataRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+            this.confirmClear = _data["confirmClear"];
+        }
+    }
+
+    static fromJS(data: any): ClearAccountDataRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ClearAccountDataRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["confirmClear"] = this.confirmClear;
+        return data;
+    }
+}
+
+export interface IClearAccountDataRequest {
+    accountId?: string | undefined;
+    confirmClear?: boolean;
+}
+
+export class ClearAccountDataResponse implements IClearAccountDataResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    dataCleared?: boolean;
+    clearedAccountId?: string | undefined;
+    totalRecordsDeleted?: number;
+    deletedRecordsByType?: { [key: string]: number; } | undefined;
+
+    constructor(data?: IClearAccountDataResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.dataCleared = _data["dataCleared"];
+            this.clearedAccountId = _data["clearedAccountId"];
+            this.totalRecordsDeleted = _data["totalRecordsDeleted"];
+            if (_data["deletedRecordsByType"]) {
+                this.deletedRecordsByType = {} as any;
+                for (let key in _data["deletedRecordsByType"]) {
+                    if (_data["deletedRecordsByType"].hasOwnProperty(key))
+                        (<any>this.deletedRecordsByType)![key] = _data["deletedRecordsByType"][key];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): ClearAccountDataResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ClearAccountDataResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["dataCleared"] = this.dataCleared;
+        data["clearedAccountId"] = this.clearedAccountId;
+        data["totalRecordsDeleted"] = this.totalRecordsDeleted;
+        if (this.deletedRecordsByType) {
+            data["deletedRecordsByType"] = {};
+            for (let key in this.deletedRecordsByType) {
+                if (this.deletedRecordsByType.hasOwnProperty(key))
+                    (<any>data["deletedRecordsByType"])[key] = (<any>this.deletedRecordsByType)[key];
+            }
+        }
+        return data;
+    }
+}
+
+export interface IClearAccountDataResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    dataCleared?: boolean;
+    clearedAccountId?: string | undefined;
+    totalRecordsDeleted?: number;
+    deletedRecordsByType?: { [key: string]: number; } | undefined;
 }
 
 export class ClearChatMessagesRequest implements IClearChatMessagesRequest {

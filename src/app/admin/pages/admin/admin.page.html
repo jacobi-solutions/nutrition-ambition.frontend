@@ -445,12 +445,21 @@
                   <td class="actions-cell">
                     <ion-button
                       size="small"
+                      color="warning"
+                      fill="outline"
+                      [disabled]="!account.canClear"
+                      (click)="clearAccountData(account); $event.stopPropagation()">
+                      <ion-icon name="refresh-outline" slot="start"></ion-icon>
+                      {{ account.canClear ? 'Clear' : 'Protected' }}
+                    </ion-button>
+                    <ion-button
+                      size="small"
                       color="danger"
                       fill="outline"
-                      [disabled]="account.isOwner"
+                      [disabled]="!account.canDelete"
                       (click)="deleteAccount(account); $event.stopPropagation()">
                       <ion-icon name="trash-outline" slot="start"></ion-icon>
-                      {{ account.isOwner ? 'Protected' : 'Delete' }}
+                      {{ account.canDelete ? 'Delete' : 'Protected' }}
                     </ion-button>
                     <ion-button
                       size="small"

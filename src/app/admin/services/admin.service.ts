@@ -20,6 +20,8 @@ import {
   GetAllAccountsResponse,
   DeleteAccountRequest,
   DeleteAccountResponse,
+  ClearAccountDataRequest,
+  ClearAccountDataResponse,
   GetAccountDataCountsRequest,
   GetAccountDataCountsResponse,
   Account,
@@ -379,6 +381,42 @@ export class AdminService {
         errorResponse.errors = [];
       }
       errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while deleting the account.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Clear all data for an account but keep the account (admin only)
+   */
+  async clearAccountData(accountId: string, confirmClear: boolean = true): Promise<ClearAccountDataResponse> {
+    try {
+      console.log('[AdminService] Clearing account data:', accountId);
+
+      const request = new ClearAccountDataRequest({
+        accountId: accountId,
+        confirmClear: confirmClear
+      });
+
+      const response = await firstValueFrom(this.apiService.clearAccountData(request));
+      
+      if (response.isSuccess) {
+        console.log('[AdminService] Account data cleared successfully:', {
+          accountId: response.clearedAccountId,
+          totalRecordsDeleted: response.totalRecordsDeleted,
+          deletedRecordsByType: response.deletedRecordsByType
+        });
+      } else {
+        console.error('[AdminService] Failed to clear account data:', response.errors);
+      }
+
+      return response;
+    } catch (error) {
+      console.error('[AdminService] Error clearing account data:', error);
+      const errorResponse = new ClearAccountDataResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while clearing the account data.' }));
       return errorResponse;
     }
   }
