@@ -30,15 +30,25 @@ function getAndBumpPackageVersion() {
       throw new Error(`Invalid version format: ${currentVersion}`);
     }
     
-    // Auto-increment patch version (3rd number)
-    versionParts[2] += 1;
-    const newVersion = versionParts.join('.');
+    // Check if this is a fresh version (patch = 0) indicating manual version change
+    // If patch is 0, don't auto-increment - user likely set this intentionally
+    let newVersion;
+    if (versionParts[2] === 0) {
+      // Don't increment, user likely manually set a new minor/major version
+      newVersion = currentVersion;
+      console.log(`📦 Detected fresh version (${currentVersion}), not auto-incrementing`);
+    } else {
+      // Auto-increment patch version (3rd number)
+      versionParts[2] += 1;
+      newVersion = versionParts.join('.');
+      
+      // Update package.json with new version
+      packageJson.version = newVersion;
+      fs.writeFileSync(packageJsonFile, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
+      
+      console.log(`📦 Auto-bumped package.json: ${currentVersion} → ${newVersion}`);
+    }
     
-    // Update package.json with new version
-    packageJson.version = newVersion;
-    fs.writeFileSync(packageJsonFile, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
-    
-    console.log(`📦 Auto-bumped package.json: ${currentVersion} → ${newVersion}`);
     return newVersion;
   } catch (err) {
     console.error("⚠️  Unable to read/update package.json version:", err.message);
