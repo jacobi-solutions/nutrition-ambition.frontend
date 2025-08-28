@@ -4,10 +4,10 @@
       <div class="replica-header">
         <div class="replica-title">
           <ion-icon name="phone-portrait-outline"></ion-icon>
-          User's App View - {{ feedbackWithAccount?.accountEmail }}
+          User's App View - {{ feedbackWithAccount.accountEmail }}
         </div>
         <div class="replica-version" *ngIf="feedbackWithAccount?.feedback?.createdDateUtc">
-          {{ formatDate(feedbackWithAccount?.feedback?.createdDateUtc) }}
+          {{ formatDate(feedbackWithAccount.feedback?.createdDateUtc) }}
         </div>
       </div>
       
@@ -132,46 +132,46 @@
             <div class="detail-grid">
               <div class="detail-item">
                 <label>Type:</label>
-                <ion-badge [color]="getTypeColor(feedbackWithAccount?.feedback?.feedbackType!)">
-                  {{ feedbackWithAccount?.feedback?.feedbackType | titlecase }}
+                <ion-badge [color]="getTypeColor(feedbackWithAccount.feedback?.feedbackType!)">
+                  {{ feedbackWithAccount.feedback?.feedbackType | titlecase }}
                 </ion-badge>
               </div>
               <div class="detail-item">
                 <label>Status:</label>
-                <ion-badge [color]="feedbackWithAccount?.feedback?.isCompleted ? 'success' : 'warning'">
-                  {{ feedbackWithAccount?.feedback?.isCompleted ? 'Completed' : 'Pending' }}
+                <ion-badge [color]="feedbackWithAccount.feedback?.isCompleted ? 'success' : 'warning'">
+                  {{ feedbackWithAccount.feedback?.isCompleted ? 'Completed' : 'Pending' }}
                 </ion-badge>
               </div>
               <div class="detail-item">
                 <label>Submitted:</label>
-                <span>{{ formatDate(feedbackWithAccount?.feedback?.createdDateUtc) }}</span>
+                <span>{{ formatDate(feedbackWithAccount.feedback?.createdDateUtc) }}</span>
               </div>
               <div class="detail-item">
                 <label>Feedback ID:</label>
-                <code>{{ feedbackWithAccount?.feedback?.id || 'Unknown' }}</code>
+                <code>{{ feedbackWithAccount.feedback?.id || 'Unknown' }}</code>
               </div>
             </div>
             
             <div class="feedback-message">
               <h4>User Message</h4>
-              <div class="message-box">{{ feedbackWithAccount?.feedback?.message }}</div>
+              <div class="message-box">{{ feedbackWithAccount.feedback?.message }}</div>
             </div>
             
-            <div *ngIf="feedbackWithAccount?.feedback?.clientContext || feedbackWithAccount?.feedback?.serverContext" class="feedback-context">
+            <div *ngIf="feedbackWithAccount.feedback?.clientContext || feedbackWithAccount.feedback?.serverContext" class="feedback-context">
               <h4>Context</h4>
               <div class="context-box">
-                <div *ngIf="feedbackWithAccount?.feedback?.clientContext">
-                  <strong>Client Context:</strong> {{ feedbackWithAccount?.feedback?.clientContext | json }}
+                <div *ngIf="feedbackWithAccount.feedback?.clientContext">
+                  <strong>Client Context:</strong> {{ feedbackWithAccount.feedback?.clientContext | json }}
                 </div>
-                <div *ngIf="feedbackWithAccount?.feedback?.serverContext">
-                  <strong>Server Context:</strong> {{ feedbackWithAccount?.feedback?.serverContext | json }}
+                <div *ngIf="feedbackWithAccount.feedback?.serverContext">
+                  <strong>Server Context:</strong> {{ feedbackWithAccount.feedback?.serverContext | json }}
                 </div>
               </div>
             </div>
             
-            <div *ngIf="feedbackWithAccount?.feedback?.completionNote" class="completion-note">
+            <div *ngIf="feedbackWithAccount.feedback?.completionNote" class="completion-note">
               <h4>Admin Notes</h4>
-              <div class="note-box">{{ feedbackWithAccount?.feedback?.completionNote }}</div>
+              <div class="note-box">{{ feedbackWithAccount.feedback?.completionNote }}</div>
             </div>
           </div>
         </div>
@@ -188,15 +188,15 @@
             <div class="profile-grid">
               <div class="profile-item">
                 <label>Account ID:</label>
-                <code>{{ feedbackWithAccount?.accountId }}</code>
+                <code>{{ feedbackWithAccount.accountId }}</code>
               </div>
               <div class="profile-item">
                 <label>Email:</label>
-                <span>{{ feedbackWithAccount?.accountEmail }}</span>
+                <span>{{ feedbackWithAccount.accountEmail }}</span>
               </div>
               <div class="profile-item">
                 <label>Account Created:</label>
-                <span>{{ formatDate(feedbackWithAccount?.accountCreatedDate) }}</span>
+                <span>{{ formatDate(feedbackWithAccount.accountCreatedDate) }}</span>
               </div>
             </div>
             

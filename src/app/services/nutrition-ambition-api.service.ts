@@ -1567,7 +1567,7 @@ export enum AssistantModeTypes {
 
 export class BuildStamp implements IBuildStamp {
     appVersion?: string | undefined;
-    commitHash?: string | undefined;
+    previousCommitHash?: string | undefined;
 
     constructor(data?: IBuildStamp) {
         if (data) {
@@ -1581,7 +1581,7 @@ export class BuildStamp implements IBuildStamp {
     init(_data?: any) {
         if (_data) {
             this.appVersion = _data["appVersion"];
-            this.commitHash = _data["commitHash"];
+            this.previousCommitHash = _data["previousCommitHash"];
         }
     }
 
@@ -1595,14 +1595,14 @@ export class BuildStamp implements IBuildStamp {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["appVersion"] = this.appVersion;
-        data["commitHash"] = this.commitHash;
+        data["previousCommitHash"] = this.previousCommitHash;
         return data;
     }
 }
 
 export interface IBuildStamp {
     appVersion?: string | undefined;
-    commitHash?: string | undefined;
+    previousCommitHash?: string | undefined;
 }
 
 export class CancelEditSelectionRequest implements ICancelEditSelectionRequest {
