@@ -2,7 +2,7 @@ import { enableProdMode, ErrorHandler, Injectable, isDevMode } from '@angular/co
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
 import { RouteReuseStrategy } from '@angular/router';
-import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
+import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone'; 
 
 // Firebase and AngularFire imports
 import { initializeApp, provideFirebaseApp, getApp } from '@angular/fire/app';
