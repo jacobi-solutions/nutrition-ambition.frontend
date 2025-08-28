@@ -5,7 +5,7 @@ import { Observable, from, throwError } from 'rxjs';
 import { first, switchMap, catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { environment } from 'src/environments/environment';
-import { APP_VERSION, COMMIT_HASH } from 'src/environments/version';
+import { APP_VERSION, PREVIOUS_COMMIT_HASH } from 'src/environments/version';
 
 function isPublicRequest(req: HttpRequest<any>, apiBaseUrl: string): boolean {
   if (!req.url.startsWith(apiBaseUrl)) return true;
@@ -28,7 +28,7 @@ export const ApiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: H
     const headers: { [key: string]: string } = {
       'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
       'X-Client-Version': APP_VERSION,
-      'X-Client-CommitHash': COMMIT_HASH
+      'X-Client-PreviousCommitHash': PREVIOUS_COMMIT_HASH
     };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
