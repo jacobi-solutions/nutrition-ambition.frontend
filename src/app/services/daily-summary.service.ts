@@ -6,6 +6,7 @@ import {
   GetDetailedSummaryResponse,
   NutritionAmbitionApiService
 } from './nutrition-ambition-api.service';
+import { DateService } from './date.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,27 +15,27 @@ export class DailySummaryService {
   private detailedSummaryCache: Map<string, Observable<GetDetailedSummaryResponse>> = new Map();
   
   constructor(
-    private apiService: NutritionAmbitionApiService
+    private apiService: NutritionAmbitionApiService,
+    private dateService: DateService
   ) {}
 
   /**
    * Gets the detailed nutrition summary for a specific date
-   * @param loggedDateUtc The UTC date to get the detailed summary for (from DateService.getSelectedDateUtc())
+   * @param localDateKey The local date key in yyyy-MM-dd format (from DateService.getSelectedDate())
    * @param forceReload Whether to bypass the cache and force a new API request
    * @returns An Observable of the Detailed Summary response
    */
-  getDetailedSummary(loggedDateUtc: Date = new Date(), forceReload: boolean = false): Observable<GetDetailedSummaryResponse> {
-    // Generate a cache key based on the local date (yyyy-MM-dd format)
-    // This ensures cache is tied to local dates, not UTC boundaries
-    const cacheKey = format(loggedDateUtc, 'yyyy-MM-dd');
+  getDetailedSummary(localDateKey: string = this.dateService.getSelectedDate(), forceReload: boolean = false): Observable<GetDetailedSummaryResponse> {
+    // Use the localDateKey directly as the cache key
+    const cacheKey = localDateKey;
     
     // If we're forcing a reload or don't have cached data
     if (forceReload || !this.detailedSummaryCache.has(cacheKey)) {
       console.log(`[DailySummaryService] ${forceReload ? 'Force reloading' : 'Loading'} detailed summary for ${cacheKey}`);
       
-      // Create a GetDetailedSummaryRequest object with the date
+      // Create a GetDetailedSummaryRequest object with the localDateKey
       const request = new GetDetailedSummaryRequest({
-        loggedDateUtc: loggedDateUtc
+        localDateKey: localDateKey
       });
       
       // Make the API call and cache the result
@@ -59,14 +60,12 @@ export class DailySummaryService {
 
   /**
    * Clears the cache for a specific date or all cached data
-   * @param loggedDateUtc Optional UTC date to clear specific cache entry
+   * @param localDateKey Optional local date key to clear specific cache entry
    */
-  clearCache(loggedDateUtc?: Date): void {
-    if (loggedDateUtc) {
-      // Use local date formatting for cache key consistency
-      const cacheKey = format(loggedDateUtc, 'yyyy-MM-dd');
-      this.detailedSummaryCache.delete(cacheKey);
-      console.log(`[DailySummaryService] Cleared cache for ${cacheKey}`);
+  clearCache(localDateKey?: string): void {
+    if (localDateKey) {
+      this.detailedSummaryCache.delete(localDateKey);
+      console.log(`[DailySummaryService] Cleared cache for ${localDateKey}`);
     } else {
       this.detailedSummaryCache.clear();
       console.log(`[DailySummaryService] Cleared all cache`);

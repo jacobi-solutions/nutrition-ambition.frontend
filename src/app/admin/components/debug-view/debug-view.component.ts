@@ -77,8 +77,8 @@ export class DebugViewComponent implements OnInit, OnDestroy {
       const response = await this.adminService.getUserChatMessages(
         this.feedbackWithAccount.accountId,
         {
-          loggedDateUtc: this.feedbackWithAccount.feedback?.createdDateUtc ? 
-            new Date(this.feedbackWithAccount.feedback.createdDateUtc) : undefined,
+          localDateKey: this.feedbackWithAccount.feedback?.createdDateUtc ? 
+            new Date(this.feedbackWithAccount.feedback.createdDateUtc).toISOString().split('T')[0] : undefined,
           limit: 100
         }
       );

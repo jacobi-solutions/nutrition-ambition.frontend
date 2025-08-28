@@ -14,8 +14,8 @@ export class FoodSelectionService {
   ) {}
 
   submitServingSelection(request: SubmitServingSelectionRequest): Observable<ChatMessagesResponse> {
-    // Ensure loggedDateUtc is set
-    request.loggedDateUtc = this.dateService.getSelectedDateUtc();
+    // Ensure localDateKey is set
+    request.localDateKey = this.dateService.getSelectedDate();
 
     return this.apiService.submitServingSelection(request).pipe(
       catchError(err => {
@@ -28,8 +28,8 @@ export class FoodSelectionService {
   }
 
   cancelFoodLogging(request: CancelServingSelectionRequest): Observable<ChatMessagesResponse> {
-    // Ensure loggedDateUtc is set
-    request.loggedDateUtc = this.dateService.getSelectedDateUtc();
+    // Ensure localDateKey is set
+    request.localDateKey = this.dateService.getSelectedDate();
 
     return this.apiService.cancelFoodLogging(request).pipe(
       catchError(err => {
@@ -42,7 +42,7 @@ export class FoodSelectionService {
   }
 
   startEditFoodSelection(req: EditFoodSelectionRequest): Observable<ChatMessagesResponse> {
-    if (!req.loggedDateUtc) req.loggedDateUtc = this.dateService.getSelectedDateUtc();
+    if (!req.localDateKey) req.localDateKey = this.dateService.getSelectedDate();
     return this.apiService.startEditSelection(req).pipe(
       catchError(err => {
         console.error('Failed to start edit selection', err);
@@ -53,8 +53,8 @@ export class FoodSelectionService {
   }
 
   submitEditServingSelection(request: SubmitEditServingSelectionRequest): Observable<ChatMessagesResponse> {
-    // Ensure loggedDateUtc is set
-    request.loggedDateUtc = this.dateService.getSelectedDateUtc();
+    // Ensure localDateKey is set
+    request.localDateKey = this.dateService.getSelectedDate();
 
     return this.apiService.submitEditServingSelection(request).pipe(
       catchError(err => {
@@ -67,8 +67,8 @@ export class FoodSelectionService {
   }
 
   cancelEditSelection(request: CancelEditSelectionRequest): Observable<ChatMessagesResponse> {
-    // Ensure loggedDateUtc is set
-    request.loggedDateUtc = this.dateService.getSelectedDateUtc();
+    // Ensure localDateKey is set
+    request.localDateKey = this.dateService.getSelectedDate();
 
     return this.apiService.cancelEditSelection(request).pipe(
       catchError(err => {

@@ -104,7 +104,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Subscribe to date changes
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this.selectedDate = date;
-      this.loadChatHistory(this.dateService.getSelectedDateUtc());
+      this.loadChatHistory(this.dateService.getSelectedDate());
     });
     
     // Subscribe to context note changes
@@ -300,7 +300,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   // Handle refresh from header
   onRefresh(event?: CustomEvent) {
     console.log('[Chat] Refresh triggered, reloading chat history');
-    this.loadChatHistory(this.dateService.getSelectedDateUtc());
+    this.loadChatHistory(this.dateService.getSelectedDate());
     
     // Complete the refresher if event is provided
     if (event && event.target) {
@@ -310,7 +310,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     }
   }
 
-  async loadChatHistory(date: Date) {
+  async loadChatHistory(localDateKey: string) {
     // Preserve any existing context note
     const existingContextNote = this.messages.find(msg => msg.isContextNote);
     
@@ -322,7 +322,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
     this.hasInitialMessage = false;  // Reset initial message flag
     
-    console.log('[DEBUG] Loading chat history for date:', date);
+    console.log('[DEBUG] Loading chat history for date:', localDateKey);
     
     // Check if user is authenticated via Firebase Auth
     const isAuthenticated = await this.authService.isAuthenticated();
@@ -355,7 +355,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     console.log('[DEBUG] User is authenticated, loading chat history');
     
     // Get message history for the selected date - auth token is added by AuthInterceptor
-    this.chatService.getMessageHistoryByDate(date)
+    this.chatService.getMessageHistoryByDate(localDateKey)
       .pipe(
         catchError(error => {
           console.error('Error loading chat history:', error);
@@ -373,7 +373,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           }
           
           // Show the static welcome message if there are no messages and it's today's date
-          if (this.messages.length === 0 && this.dateService.isToday(date) && !this.hasInitialMessage) {
+          if (this.messages.length === 0 && localDateKey === this.dateService.getSelectedDate() && !this.hasInitialMessage) {
             this.showStaticWelcomeMessage();
           }
           
@@ -886,8 +886,8 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     return;
   }
 
-  // Ensure loggedDateUtc is set (child may or may not provide it)
-  evt.loggedDateUtc = evt.loggedDateUtc ?? this.dateService.getSelectedDateUtc();
+  // Ensure localDateKey is set (child may or may not provide it)
+  evt.localDateKey = evt.localDateKey ?? this.dateService.getSelectedDate();
 
   // Submit and update the chat timeline
   this.foodSelectionService.submitEditServingSelection(evt).subscribe({
@@ -954,7 +954,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       // Handle edit cancellation
       const request = new CancelEditSelectionRequest({
         pendingMessageId: message.id,
-        loggedDateUtc: this.dateService.getSelectedDateUtc()
+        localDateKey: this.dateService.getSelectedDate()
       });
       
       this.foodSelectionService.cancelEditSelection(request).subscribe({
@@ -969,7 +969,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       // Handle regular selection cancellation
       const request = new CancelServingSelectionRequest({
         pendingMessageId: message.id,
-        loggedDateUtc: this.dateService.getSelectedDateUtc()
+        localDateKey: this.dateService.getSelectedDate()
       });
       
       this.foodSelectionService.cancelFoodLogging(request).subscribe({

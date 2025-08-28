@@ -94,6 +94,7 @@ export class DateService {
   }
 
   // Utility method to get the selected date as UTC Date object for backend calls
+  // @deprecated Use getSelectedDate() which returns the localDateKey string instead
   getSelectedDateUtc(): Date {
     const localDate = parseISO(this.selectedDateSubject.value);
     return startOfDay(localDate);

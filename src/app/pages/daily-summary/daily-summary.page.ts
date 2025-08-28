@@ -125,7 +125,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       .pipe(skip(1))
       .subscribe(date => {
         this.selectedDate = date;
-        this.loadDetailedSummary(this.dateService.getSelectedDateUtc());
+        this.loadDetailedSummary(this.dateService.getSelectedDate());
         
         // Firebase Analytics: Track page view when date changes
         this.analytics.trackPageView('DailySummary');
@@ -138,7 +138,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     // Listen for meal logging events from chat service to refresh data
     this.mealLoggedSubscription = this.chatService.mealLogged$.subscribe(() => {
       console.log('🍽️ Meal logged event received, refreshing summary');
-      this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
+      this.loadDetailedSummary(this.dateService.getSelectedDate(), true);
     });
   }
 
@@ -158,7 +158,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     console.log('📊 Summary tab entered, refreshing data for date:', this.selectedDate);
     // Force reload when entering the tab since user might have added food from chat
     this.selectedDate = this.dateService.getSelectedDate();
-    this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
+    this.loadDetailedSummary(this.dateService.getSelectedDate(), true);
   }
 
   onDateChanged(newDate: string) {
@@ -184,7 +184,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   onRefresh(event?: CustomEvent) {
-    this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
+    this.loadDetailedSummary(this.dateService.getSelectedDate(), true);
     
     // Complete the refresher if event is provided
     if (event && event.target) {
@@ -194,15 +194,15 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
-  loadDetailedSummary(date: Date, forceReload: boolean = false) {
-    console.log('🔄 Loading detailed summary for date:', date, forceReload ? '(forced reload)' : '(cached allowed)');
+  loadDetailedSummary(localDateKey: string, forceReload: boolean = false) {
+    console.log('🔄 Loading detailed summary for date:', localDateKey, forceReload ? '(forced reload)' : '(cached allowed)');
     this.detailedLoading = true;
     this.detailedError = null;
     this.detailedData = null;
     this.selectedNutrient = null;
     this.selectedFood = null;
 
-    this.dailySummaryService.getDetailedSummary(date, forceReload)
+    this.dailySummaryService.getDetailedSummary(localDateKey, forceReload)
       .pipe(
         finalize(() => this.detailedLoading = false),
         catchError(err => {
@@ -214,8 +214,8 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       .subscribe(response => {
         if (response) {
           console.log('✅ Detailed summary loaded successfully:', {
-            foodsCount: response.foods?.length || 0,
-            nutrientsCount: response.nutrients?.length || 0
+            foodsCount: response.dailySummary?.foods?.length || 0,
+            nutrientsCount: response.dailySummary?.nutrients?.length || 0
           });
           this.detailedData = response;
         }
@@ -226,13 +226,13 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   get macronutrientList(): NutrientBreakdown[] {
     const order = ['calories', 'protein', 'fat', 'carbohydrate'];
     return order
-      .map(key => this.detailedData?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
+      .map(key => this.detailedData?.dailySummary?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
       .filter((n): n is NutrientBreakdown => !!n);
   }
 
   // Sort micronutrients using sortOrder field (set by backend)
   get micronutrientList(): NutrientBreakdown[] {
-    return this.detailedData?.nutrients
+    return this.detailedData?.dailySummary?.nutrients
       ?.filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
       ?.sort((a, b) => {
         return (a['sortOrder'] ?? 9999) - (b['sortOrder'] ?? 9999);
@@ -322,7 +322,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   navigateToFood(foodName: string) {
     this.viewMode = 'foods';
-    this.selectedFood = this.detailedData?.foods?.find(f => f.name?.toLowerCase() === foodName.toLowerCase()) || null;
+    this.selectedFood = this.detailedData?.dailySummary?.foods?.find(f => f.name?.toLowerCase() === foodName.toLowerCase()) || null;
     this.selectedNutrient = null;
     
     // Scroll to the selected food after DOM updates
@@ -333,7 +333,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   navigateToNutrient(nutrientKey: string) {
     this.viewMode = 'nutrients';
-    this.selectedNutrient = this.detailedData?.nutrients?.find(n => n.nutrientKey === nutrientKey) || null;
+    this.selectedNutrient = this.detailedData?.dailySummary?.nutrients?.find(n => n.nutrientKey === nutrientKey) || null;
     this.selectedFood = null;
     
     // Scroll to the selected nutrient after DOM updates
@@ -458,7 +458,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       foodEntryId: entry.foodEntryId,
       groupId: entry.groupId,
       itemSetId: entry.itemSetId,
-      loggedDateUtc: this.dateService.getSelectedDateUtc()
+      localDateKey: this.dateService.getSelectedDate()
     });
   
     this.foodSelectionService.startEditFoodSelection(req).subscribe({
@@ -534,15 +534,15 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private removeFromUI(entry: any) {
     // Remove from flat list (legacy)
-    if (this.detailedData?.foods) {
+    if (this.detailedData?.dailySummary?.foods) {
       const entryKey = (entry.foodItemIds ?? []).join(',');
-      this.detailedData.foods = this.detailedData.foods
+      this.detailedData.dailySummary.foods = this.detailedData.dailySummary.foods
         .filter(f => (f.foodItemIds ?? []).join(',') !== entryKey);
     }
   
     // Remove from entry card
-    if (this.detailedData?.foodEntries) {
-      const targetEntry = this.detailedData.foodEntries.find(e => e.foodEntryId === entry.foodEntryId);
+    if (this.detailedData?.dailySummary?.foodEntries) {
+      const targetEntry = this.detailedData.dailySummary.foodEntries.find(e => e.foodEntryId === entry.foodEntryId);
       if (targetEntry?.foods) {
         const entryKey = (entry.foodItemIds ?? []).join(',');
         targetEntry.foods = targetEntry.foods
@@ -568,13 +568,13 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   
     // Restore flat list
-    if (this.detailedData?.foods) {
-      this.detailedData.foods.push(removedFood);
+    if (this.detailedData?.dailySummary?.foods) {
+      this.detailedData.dailySummary.foods.push(removedFood);
     }
   
     // Restore entry card
-    if (this.detailedData?.foodEntries) {
-      const targetEntry = this.detailedData.foodEntries.find(e => e.foodEntryId === removedFood.foodEntryId);
+    if (this.detailedData?.dailySummary?.foodEntries) {
+      const targetEntry = this.detailedData.dailySummary.foodEntries.find(e => e.foodEntryId === removedFood.foodEntryId);
       if (targetEntry) {
         targetEntry.foods = targetEntry.foods || [];
         targetEntry.foods.push(removedFood);
@@ -602,7 +602,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
         if (response.isSuccess) {
           console.log('Food successfully deleted from backend');
           // Refresh to get updated data (both foods and nutrients will be recalculated)
-          this.loadDetailedSummary(this.dateService.getSelectedDateUtc(), true);
+          this.loadDetailedSummary(this.dateService.getSelectedDate(), true);
           
         } else {
           console.error('Failed to delete food:', response.errors);
@@ -641,14 +641,14 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private handleLearnMore(entry: any) {
     const topic = this.getEntryTopicName(entry);
-    const date = this.dateService.getSelectedDateUtc();
+    const localDateKey = this.dateService.getSelectedDate();
     
     // Set context note and navigate to chat immediately
     this.chatService.setContextNote(`Learning more about ${topic}`);
     this.router.navigate(['/app/chat']);
     
     // Make API call in background
-    this.chatService.learnMoreAbout(topic, date).subscribe({
+    this.chatService.learnMoreAbout(topic, localDateKey).subscribe({
       next: (response) => {
         if (!response.isSuccess) {
           this.showErrorToast('Failed to get information. Please try again.');
@@ -702,7 +702,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   get hasFoodEntries(): boolean {
-    const entries = this.detailedData?.foodEntries ?? [];
+    const entries = this.detailedData?.dailySummary?.foodEntries ?? [];
     return entries.some(e => (e.foods?.length ?? 0) > 0);
   }
 

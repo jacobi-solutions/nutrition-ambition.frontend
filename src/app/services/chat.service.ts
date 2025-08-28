@@ -4,9 +4,7 @@ import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 import { AuthService } from './auth.service';
 import { 
   GetChatMessagesRequest,
-  ClearChatMessagesRequest,
   ChatMessagesResponse,
-  ClearChatMessagesResponse,
   RunChatRequest,
   LearnMoreAboutRequest,
   SubmitServingSelectionRequest,
@@ -75,7 +73,7 @@ export class ChatService {
     console.log('[DEBUG] Running assistant message:', message.substring(0, 30) + '...');
     const request = new RunChatRequest({
       message: message,
-      loggedDateUtc: this.dateService.getSelectedDateUtc(),
+      localDateKey: this.dateService.getSelectedDate(),
     });
     
     return this.apiService.runResponsesConversation(request).pipe(
@@ -99,36 +97,30 @@ export class ChatService {
     );
   }
 
-  getMessageHistoryByDate(date: Date): Observable<ChatMessagesResponse> {
-    console.log('[DEBUG] Getting message history for date:', date);
+  getMessageHistoryByDate(localDateKey: string): Observable<ChatMessagesResponse> {
+    console.log('[DEBUG] Getting message history for date:', localDateKey);
     const request = new GetChatMessagesRequest({
-      loggedDateUtc: date
+      localDateKey: localDateKey
     });
     return this.apiService.getChatMessages(request);
   }
   
-  getMessageHistory(date: Date): Observable<ChatMessagesResponse> {
+  getMessageHistory(localDateKey: string): Observable<ChatMessagesResponse> {
     const request = new GetChatMessagesRequest({
-      loggedDateUtc: date
+      localDateKey: localDateKey
     });
     return this.apiService.getChatMessages(request);
   }
   
-  clearMessageHistory(date?: Date): Observable<ClearChatMessagesResponse> {
-    const request = new ClearChatMessagesRequest({
-      loggedDateUtc: date
-    });
-    return this.apiService.clearChatMessages(request);
-  }
 
   
   
   // Learn more about a specific topic in chat
-  learnMoreAbout(topic: string, date: Date): Observable<ChatMessagesResponse> {
+  learnMoreAbout(topic: string, localDateKey: string): Observable<ChatMessagesResponse> {
     // Create the request to the backend
     const request = new LearnMoreAboutRequest({
       topic: topic,
-      loggedDateUtc: date
+      localDateKey: localDateKey
     });
     
     // Call the API and handle the response
@@ -209,6 +201,6 @@ export class ChatService {
 
   // Add a method to reload messages for the current date
   loadMessages(): Observable<ChatMessagesResponse> {
-    return this.getMessageHistory(this.dateService.getSelectedDateUtc());
+    return this.getMessageHistory(this.dateService.getSelectedDate());
   }
 } 

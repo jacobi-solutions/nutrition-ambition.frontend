@@ -252,7 +252,7 @@ export class AdminService {
    * Get user chat messages for admin review
    */
   async getUserChatMessages(accountId: string, options?: {
-    loggedDateUtc?: Date;
+    localDateKey?: string;
     limit?: number;
   }): Promise<GetUserChatMessagesResponse> {
     try {
@@ -260,7 +260,7 @@ export class AdminService {
 
       const request = new GetUserChatMessagesRequest({
         accountId: accountId,
-        loggedDateUtc: options?.loggedDateUtc,
+        localDateKey: options?.localDateKey,
         limit: options?.limit
       });
 

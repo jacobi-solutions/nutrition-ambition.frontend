@@ -85,11 +85,6 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    clearChatMessages(body: ClearChatMessagesRequest | undefined): Observable<ClearChatMessagesResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     runResponsesConversation(body: RunChatRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
@@ -880,62 +875,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    clearChatMessages(body: ClearChatMessagesRequest | undefined): Observable<ClearChatMessagesResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/ClearChatMessages";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processClearChatMessages(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processClearChatMessages(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<ClearChatMessagesResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<ClearChatMessagesResponse>;
-        }));
-    }
-
-    protected processClearChatMessages(response: HttpResponseBase): Observable<ClearChatMessagesResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = ClearChatMessagesResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<ClearChatMessagesResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     runResponsesConversation(body: RunChatRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/Conversation/RunResponsesConversation";
         url_ = url_.replace(/[?&]$/, "");
@@ -1668,7 +1607,7 @@ export interface IBuildStamp {
 
 export class CancelEditSelectionRequest implements ICancelEditSelectionRequest {
     pendingMessageId?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
 
     constructor(data?: ICancelEditSelectionRequest) {
         if (data) {
@@ -1682,7 +1621,7 @@ export class CancelEditSelectionRequest implements ICancelEditSelectionRequest {
     init(_data?: any) {
         if (_data) {
             this.pendingMessageId = _data["pendingMessageId"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
         }
     }
 
@@ -1696,19 +1635,19 @@ export class CancelEditSelectionRequest implements ICancelEditSelectionRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["pendingMessageId"] = this.pendingMessageId;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         return data;
     }
 }
 
 export interface ICancelEditSelectionRequest {
     pendingMessageId?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
 }
 
 export class CancelServingSelectionRequest implements ICancelServingSelectionRequest {
     pendingMessageId?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
 
     constructor(data?: ICancelServingSelectionRequest) {
         if (data) {
@@ -1722,7 +1661,7 @@ export class CancelServingSelectionRequest implements ICancelServingSelectionReq
     init(_data?: any) {
         if (_data) {
             this.pendingMessageId = _data["pendingMessageId"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
         }
     }
 
@@ -1736,14 +1675,14 @@ export class CancelServingSelectionRequest implements ICancelServingSelectionReq
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["pendingMessageId"] = this.pendingMessageId;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         return data;
     }
 }
 
 export interface ICancelServingSelectionRequest {
     pendingMessageId?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
 }
 
 export class ChangePasswordRequest implements IChangePasswordRequest {
@@ -1789,7 +1728,7 @@ export class ChatMessage implements IChatMessage {
     accountId?: string | undefined;
     role?: MessageRoleTypes;
     content?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
     foodEntryId?: string | undefined;
     isRead?: boolean;
     toolCallId?: string | undefined;
@@ -1821,7 +1760,7 @@ export class ChatMessage implements IChatMessage {
             this.accountId = _data["accountId"];
             this.role = _data["role"];
             this.content = _data["content"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
             this.foodEntryId = _data["foodEntryId"];
             this.isRead = _data["isRead"];
             this.toolCallId = _data["toolCallId"];
@@ -1853,7 +1792,7 @@ export class ChatMessage implements IChatMessage {
         data["accountId"] = this.accountId;
         data["role"] = this.role;
         data["content"] = this.content;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         data["foodEntryId"] = this.foodEntryId;
         data["isRead"] = this.isRead;
         data["toolCallId"] = this.toolCallId;
@@ -1878,7 +1817,7 @@ export interface IChatMessage {
     accountId?: string | undefined;
     role?: MessageRoleTypes;
     content?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
     foodEntryId?: string | undefined;
     isRead?: boolean;
     toolCallId?: string | undefined;
@@ -2092,110 +2031,6 @@ export interface IClearAccountDataResponse {
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
     deletedRecordsByType?: { [key: string]: number; } | undefined;
-}
-
-export class ClearChatMessagesRequest implements IClearChatMessagesRequest {
-    loggedDateUtc?: Date | undefined;
-
-    constructor(data?: IClearChatMessagesRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): ClearChatMessagesRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new ClearChatMessagesRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IClearChatMessagesRequest {
-    loggedDateUtc?: Date | undefined;
-}
-
-export class ClearChatMessagesResponse implements IClearChatMessagesResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    success?: boolean;
-    messagesDeleted?: number;
-
-    constructor(data?: IClearChatMessagesResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.success = _data["success"];
-            this.messagesDeleted = _data["messagesDeleted"];
-        }
-    }
-
-    static fromJS(data: any): ClearChatMessagesResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new ClearChatMessagesResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["success"] = this.success;
-        data["messagesDeleted"] = this.messagesDeleted;
-        return data;
-    }
-}
-
-export interface IClearChatMessagesResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    success?: boolean;
-    messagesDeleted?: number;
 }
 
 export class CompleteFeedbackRequest implements ICompleteFeedbackRequest {
@@ -2460,6 +2295,94 @@ export interface IComponentServing {
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
     isBestMatch?: boolean;
+}
+
+export class DailySummary implements IDailySummary {
+    id?: string | undefined;
+    createdDateUtc?: Date;
+    lastUpdatedDateUtc?: Date;
+    accountId?: string | undefined;
+    localDateKey?: string | undefined;
+    nutrients?: NutrientBreakdown[] | undefined;
+    foods?: FoodBreakdown[] | undefined;
+    foodEntries?: FoodEntryBreakdown[] | undefined;
+
+    constructor(data?: IDailySummary) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
+            this.lastUpdatedDateUtc = _data["lastUpdatedDateUtc"] ? new Date(_data["lastUpdatedDateUtc"].toString()) : <any>undefined;
+            this.accountId = _data["accountId"];
+            this.localDateKey = _data["localDateKey"];
+            if (Array.isArray(_data["nutrients"])) {
+                this.nutrients = [] as any;
+                for (let item of _data["nutrients"])
+                    this.nutrients!.push(NutrientBreakdown.fromJS(item));
+            }
+            if (Array.isArray(_data["foods"])) {
+                this.foods = [] as any;
+                for (let item of _data["foods"])
+                    this.foods!.push(FoodBreakdown.fromJS(item));
+            }
+            if (Array.isArray(_data["foodEntries"])) {
+                this.foodEntries = [] as any;
+                for (let item of _data["foodEntries"])
+                    this.foodEntries!.push(FoodEntryBreakdown.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): DailySummary {
+        data = typeof data === 'object' ? data : {};
+        let result = new DailySummary();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
+        data["lastUpdatedDateUtc"] = this.lastUpdatedDateUtc ? this.lastUpdatedDateUtc.toISOString() : <any>undefined;
+        data["accountId"] = this.accountId;
+        data["localDateKey"] = this.localDateKey;
+        if (Array.isArray(this.nutrients)) {
+            data["nutrients"] = [];
+            for (let item of this.nutrients)
+                data["nutrients"].push(item.toJSON());
+        }
+        if (Array.isArray(this.foods)) {
+            data["foods"] = [];
+            for (let item of this.foods)
+                data["foods"].push(item.toJSON());
+        }
+        if (Array.isArray(this.foodEntries)) {
+            data["foodEntries"] = [];
+            for (let item of this.foodEntries)
+                data["foodEntries"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IDailySummary {
+    id?: string | undefined;
+    createdDateUtc?: Date;
+    lastUpdatedDateUtc?: Date;
+    accountId?: string | undefined;
+    localDateKey?: string | undefined;
+    nutrients?: NutrientBreakdown[] | undefined;
+    foods?: FoodBreakdown[] | undefined;
+    foodEntries?: FoodEntryBreakdown[] | undefined;
 }
 
 export class DeleteAccountRequest implements IDeleteAccountRequest {
@@ -2798,7 +2721,7 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
     foodEntryId?: string | undefined;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
-    loggedDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
 
     constructor(data?: IEditFoodSelectionRequest) {
         if (data) {
@@ -2814,7 +2737,7 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
             this.foodEntryId = _data["foodEntryId"];
             this.groupId = _data["groupId"];
             this.itemSetId = _data["itemSetId"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
         }
     }
 
@@ -2830,7 +2753,7 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
         data["foodEntryId"] = this.foodEntryId;
         data["groupId"] = this.groupId;
         data["itemSetId"] = this.itemSetId;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         return data;
     }
 }
@@ -2839,7 +2762,7 @@ export interface IEditFoodSelectionRequest {
     foodEntryId?: string | undefined;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
-    loggedDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
 }
 
 export class ErrorDto implements IErrorDto {
@@ -3173,7 +3096,7 @@ export interface IFoodContribution {
 export class FoodEntryBreakdown implements IFoodEntryBreakdown {
     foodEntryId?: string | undefined;
     entryName?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
     createdDateUtc?: Date;
     foods?: FoodBreakdown[] | undefined;
 
@@ -3190,7 +3113,7 @@ export class FoodEntryBreakdown implements IFoodEntryBreakdown {
         if (_data) {
             this.foodEntryId = _data["foodEntryId"];
             this.entryName = _data["entryName"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
             this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
             if (Array.isArray(_data["foods"])) {
                 this.foods = [] as any;
@@ -3211,7 +3134,7 @@ export class FoodEntryBreakdown implements IFoodEntryBreakdown {
         data = typeof data === 'object' ? data : {};
         data["foodEntryId"] = this.foodEntryId;
         data["entryName"] = this.entryName;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
         if (Array.isArray(this.foods)) {
             data["foods"] = [];
@@ -3225,7 +3148,7 @@ export class FoodEntryBreakdown implements IFoodEntryBreakdown {
 export interface IFoodEntryBreakdown {
     foodEntryId?: string | undefined;
     entryName?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
     createdDateUtc?: Date;
     foods?: FoodBreakdown[] | undefined;
 }
@@ -3449,7 +3372,7 @@ export interface IGetAllAccountsResponse {
 }
 
 export class GetChatMessagesRequest implements IGetChatMessagesRequest {
-    loggedDateUtc!: Date;
+    localDateKey!: string;
 
     constructor(data?: IGetChatMessagesRequest) {
         if (data) {
@@ -3462,7 +3385,7 @@ export class GetChatMessagesRequest implements IGetChatMessagesRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
         }
     }
 
@@ -3475,17 +3398,17 @@ export class GetChatMessagesRequest implements IGetChatMessagesRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         return data;
     }
 }
 
 export interface IGetChatMessagesRequest {
-    loggedDateUtc: Date;
+    localDateKey: string;
 }
 
 export class GetDetailedSummaryRequest implements IGetDetailedSummaryRequest {
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
 
     constructor(data?: IGetDetailedSummaryRequest) {
         if (data) {
@@ -3498,7 +3421,7 @@ export class GetDetailedSummaryRequest implements IGetDetailedSummaryRequest {
 
     init(_data?: any) {
         if (_data) {
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
         }
     }
 
@@ -3511,13 +3434,13 @@ export class GetDetailedSummaryRequest implements IGetDetailedSummaryRequest {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         return data;
     }
 }
 
 export interface IGetDetailedSummaryRequest {
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
 }
 
 export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
@@ -3526,9 +3449,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
-    nutrients?: NutrientBreakdown[] | undefined;
-    foods?: FoodBreakdown[] | undefined;
-    foodEntries?: FoodEntryBreakdown[] | undefined;
+    dailySummary?: DailySummary;
 
     constructor(data?: IGetDetailedSummaryResponse) {
         if (data) {
@@ -3550,21 +3471,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
-            if (Array.isArray(_data["nutrients"])) {
-                this.nutrients = [] as any;
-                for (let item of _data["nutrients"])
-                    this.nutrients!.push(NutrientBreakdown.fromJS(item));
-            }
-            if (Array.isArray(_data["foods"])) {
-                this.foods = [] as any;
-                for (let item of _data["foods"])
-                    this.foods!.push(FoodBreakdown.fromJS(item));
-            }
-            if (Array.isArray(_data["foodEntries"])) {
-                this.foodEntries = [] as any;
-                for (let item of _data["foodEntries"])
-                    this.foodEntries!.push(FoodEntryBreakdown.fromJS(item));
-            }
+            this.dailySummary = _data["dailySummary"] ? DailySummary.fromJS(_data["dailySummary"]) : <any>undefined;
         }
     }
 
@@ -3586,21 +3493,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
-        if (Array.isArray(this.nutrients)) {
-            data["nutrients"] = [];
-            for (let item of this.nutrients)
-                data["nutrients"].push(item.toJSON());
-        }
-        if (Array.isArray(this.foods)) {
-            data["foods"] = [];
-            for (let item of this.foods)
-                data["foods"].push(item.toJSON());
-        }
-        if (Array.isArray(this.foodEntries)) {
-            data["foodEntries"] = [];
-            for (let item of this.foodEntries)
-                data["foodEntries"].push(item.toJSON());
-        }
+        data["dailySummary"] = this.dailySummary ? this.dailySummary.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -3611,9 +3504,7 @@ export interface IGetDetailedSummaryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
-    nutrients?: NutrientBreakdown[] | undefined;
-    foods?: FoodBreakdown[] | undefined;
-    foodEntries?: FoodEntryBreakdown[] | undefined;
+    dailySummary?: DailySummary;
 }
 
 export class GetFeedbackWithAccountInfoRequest implements IGetFeedbackWithAccountInfoRequest {
@@ -3742,7 +3633,7 @@ export interface IGetFeedbackWithAccountInfoResponse {
 
 export class GetUserChatMessagesRequest implements IGetUserChatMessagesRequest {
     accountId?: string | undefined;
-    loggedDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
     limit?: number | undefined;
 
     constructor(data?: IGetUserChatMessagesRequest) {
@@ -3757,7 +3648,7 @@ export class GetUserChatMessagesRequest implements IGetUserChatMessagesRequest {
     init(_data?: any) {
         if (_data) {
             this.accountId = _data["accountId"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
             this.limit = _data["limit"];
         }
     }
@@ -3772,7 +3663,7 @@ export class GetUserChatMessagesRequest implements IGetUserChatMessagesRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["accountId"] = this.accountId;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         data["limit"] = this.limit;
         return data;
     }
@@ -3780,7 +3671,7 @@ export class GetUserChatMessagesRequest implements IGetUserChatMessagesRequest {
 
 export interface IGetUserChatMessagesRequest {
     accountId?: string | undefined;
-    loggedDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
     limit?: number | undefined;
 }
 
@@ -3862,7 +3753,7 @@ export interface IGetUserChatMessagesResponse {
 
 export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
     topic?: string | undefined;
-    loggedDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
 
     constructor(data?: ILearnMoreAboutRequest) {
         if (data) {
@@ -3876,7 +3767,7 @@ export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
     init(_data?: any) {
         if (_data) {
             this.topic = _data["topic"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
         }
     }
 
@@ -3890,14 +3781,14 @@ export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["topic"] = this.topic;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         return data;
     }
 }
 
 export interface ILearnMoreAboutRequest {
     topic?: string | undefined;
-    loggedDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
 }
 
 export class LogEntryDto implements ILogEntryDto {
@@ -4064,6 +3955,7 @@ export class NutrientBreakdown implements INutrientBreakdown {
     totalAmount?: number;
     minTarget?: number | undefined;
     maxTarget?: number | undefined;
+    isGoal?: boolean;
     sortOrder?: number;
     readonly percentOfTarget?: number | undefined;
     foods?: FoodContribution[] | undefined;
@@ -4085,6 +3977,7 @@ export class NutrientBreakdown implements INutrientBreakdown {
             this.totalAmount = _data["totalAmount"];
             this.minTarget = _data["minTarget"];
             this.maxTarget = _data["maxTarget"];
+            this.isGoal = _data["isGoal"];
             this.sortOrder = _data["sortOrder"];
             (<any>this).percentOfTarget = _data["percentOfTarget"];
             if (Array.isArray(_data["foods"])) {
@@ -4110,6 +4003,7 @@ export class NutrientBreakdown implements INutrientBreakdown {
         data["totalAmount"] = this.totalAmount;
         data["minTarget"] = this.minTarget;
         data["maxTarget"] = this.maxTarget;
+        data["isGoal"] = this.isGoal;
         data["sortOrder"] = this.sortOrder;
         data["percentOfTarget"] = this.percentOfTarget;
         if (Array.isArray(this.foods)) {
@@ -4128,6 +4022,7 @@ export interface INutrientBreakdown {
     totalAmount?: number;
     minTarget?: number | undefined;
     maxTarget?: number | undefined;
+    isGoal?: boolean;
     sortOrder?: number;
     percentOfTarget?: number | undefined;
     foods?: FoodContribution[] | undefined;
@@ -4329,7 +4224,7 @@ export interface IResponse {
 
 export class RunChatRequest implements IRunChatRequest {
     message?: string | undefined;
-    loggedDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
 
     constructor(data?: IRunChatRequest) {
         if (data) {
@@ -4343,7 +4238,7 @@ export class RunChatRequest implements IRunChatRequest {
     init(_data?: any) {
         if (_data) {
             this.message = _data["message"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
         }
     }
 
@@ -4357,14 +4252,14 @@ export class RunChatRequest implements IRunChatRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["message"] = this.message;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         return data;
     }
 }
 
 export interface IRunChatRequest {
     message?: string | undefined;
-    loggedDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
 }
 
 export class SearchLogsRequest implements ISearchLogsRequest {
@@ -4512,7 +4407,7 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
     foodEntryId?: string | undefined;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
 
     constructor(data?: ISubmitEditServingSelectionRequest) {
@@ -4530,7 +4425,7 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
             this.foodEntryId = _data["foodEntryId"];
             this.groupId = _data["groupId"];
             this.itemSetId = _data["itemSetId"];
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
             if (Array.isArray(_data["selections"])) {
                 this.selections = [] as any;
                 for (let item of _data["selections"])
@@ -4552,7 +4447,7 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
         data["foodEntryId"] = this.foodEntryId;
         data["groupId"] = this.groupId;
         data["itemSetId"] = this.itemSetId;
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         if (Array.isArray(this.selections)) {
             data["selections"] = [];
             for (let item of this.selections)
@@ -4567,12 +4462,12 @@ export interface ISubmitEditServingSelectionRequest {
     foodEntryId?: string | undefined;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
 }
 
 export class SubmitServingSelectionRequest implements ISubmitServingSelectionRequest {
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
     pendingMessageId?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
 
@@ -4587,7 +4482,7 @@ export class SubmitServingSelectionRequest implements ISubmitServingSelectionReq
 
     init(_data?: any) {
         if (_data) {
-            this.loggedDateUtc = _data["loggedDateUtc"] ? new Date(_data["loggedDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
             this.pendingMessageId = _data["pendingMessageId"];
             if (Array.isArray(_data["selections"])) {
                 this.selections = [] as any;
@@ -4606,7 +4501,7 @@ export class SubmitServingSelectionRequest implements ISubmitServingSelectionReq
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["loggedDateUtc"] = this.loggedDateUtc ? this.loggedDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         data["pendingMessageId"] = this.pendingMessageId;
         if (Array.isArray(this.selections)) {
             data["selections"] = [];
@@ -4618,7 +4513,7 @@ export class SubmitServingSelectionRequest implements ISubmitServingSelectionReq
 }
 
 export interface ISubmitServingSelectionRequest {
-    loggedDateUtc?: Date;
+    localDateKey?: string | undefined;
     pendingMessageId?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
 }

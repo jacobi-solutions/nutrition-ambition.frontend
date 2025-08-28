@@ -189,7 +189,7 @@
         <!-- One card per food entry -->
         <ng-container *ngIf="hasFoodEntries">
           <ion-card
-            *ngFor="let entry of detailedData?.foodEntries; trackBy: trackByEntryId"
+            *ngFor="let entry of detailedData?.dailySummary?.foodEntries; trackBy: trackByEntryId"
             [class.expanded]="selectedFood && entryContainsSelectedFood(entry)"
           >
             <!-- Entry Header -->
