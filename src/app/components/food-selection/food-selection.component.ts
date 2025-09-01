@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { createOutline, chevronUpOutline, trashOutline } from 'ionicons/icons';
+import { createOutline, chevronUpOutline, trashOutline, send } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes } from 'src/app/services/nutrition-ambition-api.service';
-import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input/serving-quantity-input.component';
+import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
 
@@ -30,9 +30,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   isSubmitting = false;
   isCanceling = false;
   private cancelTimeout: any = null;
+  editingPhrases: { [phrase: string]: boolean } = {};
+  editingPhraseValues: { [phrase: string]: string } = {};
 
   constructor(private toastService: ToastService, private cdr: ChangeDetectorRef) {
-    addIcons({ createOutline, chevronUpOutline, trashOutline });
+    addIcons({ createOutline, chevronUpOutline, trashOutline, send });
   }
 
   get hasPayload(): boolean {
@@ -508,5 +510,236 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         this.isCanceling = false;
       }
     });
+  }
+
+  async onEditPhrase(phrase: string): Promise<void> {
+    const food = this.getSelectedFood(phrase);
+    if (!food) return;
+
+    const missingInfo = this.getMissingInformation(food);
+    const suggestionMessage = this.generateSuggestionMessage(phrase, missingInfo);
+    
+    // Show suggestion as a positioned tooltip above the phrase input
+    this.showSuggestionTooltip(phrase, suggestionMessage);
+  }
+
+  private showSuggestionTooltip(phrase: string, message: string): void {
+    // Remove any existing tooltip
+    this.removeSuggestionTooltip();
+    
+    // Find the specific phrase container using the data attribute
+    const phraseContainer = document.querySelector(`[data-phrase="${phrase}"]`) as HTMLElement;
+    if (!phraseContainer) {
+      console.log('Could not find phrase container for:', phrase);
+      return;
+    }
+    
+    // Look for textarea first (edit mode), then phrase text (display mode)
+    let targetElement = phraseContainer.querySelector('textarea.phrase-input') as HTMLElement;
+    if (!targetElement) {
+      targetElement = phraseContainer.querySelector('.phrase-text') as HTMLElement;
+    }
+    
+    if (!targetElement) {
+      console.log('Could not find target element in container for:', phrase);
+      return;
+    }
+    
+    // Create tooltip element
+    const tooltip = document.createElement('div');
+    tooltip.className = 'suggestion-tooltip';
+    
+    // Make keywords bold in the message
+    const boldMessage = this.makeSuggestionKeywordsBold(message);
+    
+    tooltip.innerHTML = `
+      <div class="tooltip-content">
+        <p>${boldMessage}</p>
+        <button class="tooltip-close" onmousedown="event.preventDefault(); this.parentElement.parentElement.remove();">Got it</button>
+      </div>
+    `;
+    
+    // Position tooltip above the target element
+    const rect = targetElement.getBoundingClientRect();
+    tooltip.style.position = 'fixed';
+    tooltip.style.left = `${rect.left}px`;
+    tooltip.style.top = `${rect.top - 10}px`;
+    tooltip.style.transform = 'translateY(-100%)';
+    tooltip.style.zIndex = '10000';
+    
+    // Add to document
+    document.body.appendChild(tooltip);
+    
+    // Auto-remove after 8 seconds
+    setTimeout(() => {
+      this.removeSuggestionTooltip();
+    }, 8000);
+  }
+  
+  private removeSuggestionTooltip(): void {
+    const existingTooltip = document.querySelector('.suggestion-tooltip');
+    if (existingTooltip) {
+      existingTooltip.remove();
+    }
+  }
+
+  private makeSuggestionKeywordsBold(message: string): string {
+    // List of keywords to make bold
+    const keywords = [
+      'description',
+      'brand name',
+      'cooking method',
+      'size'
+    ];
+    
+    let boldMessage = message;
+    
+    // Replace each keyword with bold version
+    keywords.forEach(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+      boldMessage = boldMessage.replace(regex, `<strong>${keyword}</strong>`);
+    });
+    
+    return boldMessage;
+  }
+
+  private getMissingInformation(food: ComponentMatch): string[] {
+    const missing: string[] = [];
+    
+    if (!food.description || food.description.trim() === '') {
+      missing.push('description');
+    }
+    
+    if (!food.brandName || food.brandName.trim() === '') {
+      missing.push('brand name');
+    }
+    
+    if (!food.cookingMethod || food.cookingMethod.trim() === '') {
+      missing.push('cooking method');
+    }
+    
+    if (!food.size || food.size.trim() === '') {
+      missing.push('size');
+    }
+    
+    return missing;
+  }
+
+  private generateSuggestionMessage(originalPhrase: string, missingInfo: string[]): string {
+    if (missingInfo.length === 0) {
+      return `Your search looks complete! You can try adding more specific details if you'd like better results.`;
+    }
+
+    let suggestion = ``;
+    
+    if (missingInfo.length === 1) {
+      suggestion += `Try adding a ${missingInfo[0]} for better results.`;
+    } else if (missingInfo.length === 2) {
+      suggestion += `Try adding a ${missingInfo[0]} and/or ${missingInfo[1]} for better results.`;
+    } else {
+      const lastItem = missingInfo.pop();
+      suggestion += `Try adding ${missingInfo.join(', ')}, and/or ${lastItem} for better results.`;
+    }
+    
+    return suggestion;
+  }
+
+  isEditingPhrase(phrase: string): boolean {
+    return !!this.editingPhrases[phrase];
+  }
+
+  async startEditingPhrase(phrase: string): Promise<void> {
+    // First enable editing mode
+    this.editingPhrases[phrase] = true;
+    this.editingPhraseValues[phrase] = phrase;
+    this.cdr.detectChanges();
+    
+    // Then show the suggestion toast and focus the textarea
+    setTimeout(async () => {
+      // Show the suggestion toast
+      await this.onEditPhrase(phrase);
+      
+      // Focus the textarea and ensure proper sizing
+      const textarea = document.querySelector(`textarea.phrase-input`) as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.focus();
+        this.autoResizeTextarea(textarea);
+      }
+    }, 0);
+  }
+
+  getEditingPhraseValue(phrase: string): string {
+    return this.editingPhraseValues[phrase] || phrase;
+  }
+
+
+
+  updateEditingPhrase(phrase: string, event: any): void {
+    this.editingPhraseValues[phrase] = event.target.value;
+    this.autoResizeTextarea(event.target);
+  }
+
+  onPhraseKeyDown(phrase: string, event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      // Enter without shift sends the message
+      event.preventDefault();
+      this.sendUpdatedPhrase(phrase);
+    } else if (event.key === 'Enter' && event.shiftKey) {
+      // Shift+Enter adds a new line (default behavior)
+      // Let the default behavior happen, then resize
+      setTimeout(() => {
+        this.autoResizeTextarea(event.target as HTMLTextAreaElement);
+      }, 0);
+    }
+  }
+
+  private autoResizeTextarea(textarea: HTMLTextAreaElement): void {
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Calculate new height (min 2 rows, max 3 rows)
+    const lineHeight = 24; // Approximate line height
+    const minHeight = lineHeight * 2; // 2 rows minimum (48px)
+    const maxHeight = lineHeight * 3; // 3 rows maximum (72px)
+    
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+    textarea.style.height = newHeight + 'px';
+  }
+
+  hasChanges(phrase: string): boolean {
+    const currentValue = this.editingPhraseValues[phrase];
+    return !!(currentValue && currentValue.trim() !== phrase.trim());
+  }
+
+  sendUpdatedPhrase(phrase: string): void {
+    const newValue = this.editingPhraseValues[phrase];
+    if (newValue && newValue.trim() !== phrase) {
+      console.log(`Sending updated phrase from "${phrase}" to "${newValue}"`);
+      // Here you would emit an event or call a service to update the phrase
+      // For now, just finish editing
+      this.finishEditingPhrase(phrase);
+    }
+  }
+
+  finishEditingPhrase(phrase: string): void {
+    const newValue = this.editingPhraseValues[phrase];
+    if (newValue && newValue.trim() !== phrase) {
+      // Here you could emit an event to update the phrase or trigger a new search
+      console.log(`Phrase changed from "${phrase}" to "${newValue}"`);
+    }
+    
+    // Make the input readonly again
+    const inputElement = document.querySelector(`input[value="${newValue || phrase}"]`) as HTMLInputElement;
+    if (inputElement) {
+      inputElement.setAttribute('readonly', 'true');
+    }
+    
+    this.editingPhrases[phrase] = false;
+    delete this.editingPhraseValues[phrase];
+  }
+
+  cancelEditingPhrase(phrase: string): void {
+    this.editingPhrases[phrase] = false;
+    delete this.editingPhraseValues[phrase];
   }
 }

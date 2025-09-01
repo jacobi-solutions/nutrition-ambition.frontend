@@ -44,7 +44,42 @@
           <div class="drilldown-content">
             <div class="food-item-row">
               <div class="food-name">
-                <label for="foodSelect-{{ phrase }}"><strong>{{ phrase }}</strong></label>
+                <div class="original-phrase-header">
+                  <div class="phrase-edit-container" [attr.data-phrase]="phrase">
+                    <!-- Display mode: Bold text with edit icon -->
+                    <div *ngIf="!isEditingPhrase(phrase)" class="phrase-display-mode">
+                      <strong class="phrase-text">{{ phrase }}</strong>
+                      <ion-icon 
+                        name="create-outline" 
+                        class="edit-phrase-icon" 
+                        (click)="startEditingPhrase(phrase)">
+                      </ion-icon>
+                    </div>
+                    
+                    <!-- Edit mode: Textarea with send button -->
+                    <div *ngIf="isEditingPhrase(phrase)" class="phrase-edit-mode">
+                      <textarea 
+                        #phraseInput
+                        class="phrase-input"
+                        [value]="getEditingPhraseValue(phrase)"
+                        (input)="updateEditingPhrase(phrase, $event)"
+                        (blur)="finishEditingPhrase(phrase)"
+                        (keydown)="onPhraseKeyDown(phrase, $event)"
+                        (keydown.escape)="cancelEditingPhrase(phrase)"
+                        rows="2"
+                        placeholder="Describe your food..."
+                        autoFocus>
+                      </textarea>
+                      <button 
+                        class="send-button"
+                        (click)="sendUpdatedPhrase(phrase)"
+                        [disabled]="!hasChanges(phrase)"
+                        type="button">
+                        <ion-icon name="send"></ion-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <ion-select 
                   interface="popover"
                   [interfaceOptions]="{ cssClass: 'wide-select-popover' }"

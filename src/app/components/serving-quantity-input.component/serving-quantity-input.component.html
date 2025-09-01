@@ -1,0 +1,33 @@
+<div class="quantity-stepper" [class.disabled]="disabled">
+    <button 
+      type="button" 
+      class="step-button step-minus"
+      [disabled]="disabled || value <= min"
+      (click)="decrease()"
+      [attr.aria-label]="'Decrease ' + ariaLabel">
+      −
+    </button>
+    
+    <input 
+      type="number"
+      class="quantity-input"
+      [value]="formatValue(value)"
+      [min]="min"
+      [max]="max"
+      [step]="step"
+      [disabled]="disabled"
+      [attr.aria-label]="ariaLabel"
+      (input)="onInput($event)"
+      (blur)="onBlur($event)"
+      (keydown.enter)="onBlur($event)"
+      (click)="$event.stopPropagation()">
+    
+    <button 
+      type="button" 
+      class="step-button step-plus"
+      [disabled]="disabled || value >= max"
+      (click)="increase()"
+      [attr.aria-label]="'Increase ' + ariaLabel">
+      +
+    </button>
+  </div>

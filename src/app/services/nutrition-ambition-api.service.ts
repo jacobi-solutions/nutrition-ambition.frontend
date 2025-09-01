@@ -2146,6 +2146,9 @@ export class ComponentMatch implements IComponentMatch {
     displayName?: string | undefined;
     brandName?: string | undefined;
     originalText?: string | undefined;
+    description?: string | undefined;
+    cookingMethod?: string | undefined;
+    size?: string | undefined;
     rank?: number;
     selectedServingId?: string | undefined;
     totalGrams?: number;
@@ -2166,6 +2169,9 @@ export class ComponentMatch implements IComponentMatch {
             this.displayName = _data["displayName"];
             this.brandName = _data["brandName"];
             this.originalText = _data["originalText"];
+            this.description = _data["description"];
+            this.cookingMethod = _data["cookingMethod"];
+            this.size = _data["size"];
             this.rank = _data["rank"];
             this.selectedServingId = _data["selectedServingId"];
             this.totalGrams = _data["totalGrams"];
@@ -2190,6 +2196,9 @@ export class ComponentMatch implements IComponentMatch {
         data["displayName"] = this.displayName;
         data["brandName"] = this.brandName;
         data["originalText"] = this.originalText;
+        data["description"] = this.description;
+        data["cookingMethod"] = this.cookingMethod;
+        data["size"] = this.size;
         data["rank"] = this.rank;
         data["selectedServingId"] = this.selectedServingId;
         data["totalGrams"] = this.totalGrams;
@@ -2207,6 +2216,9 @@ export interface IComponentMatch {
     displayName?: string | undefined;
     brandName?: string | undefined;
     originalText?: string | undefined;
+    description?: string | undefined;
+    cookingMethod?: string | undefined;
+    size?: string | undefined;
     rank?: number;
     selectedServingId?: string | undefined;
     totalGrams?: number;
