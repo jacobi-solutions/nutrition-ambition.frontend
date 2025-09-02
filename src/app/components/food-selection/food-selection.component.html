@@ -17,8 +17,9 @@
       </div>
 
       <div *ngIf="hasPayload" class="food-items-list">
-      <ng-container *ngFor="let phrase of payloadKeys">
-        <div class="food-item-row-simple" [id]="'row-' + phrase" [class.searching]="isSearchingPhrase(phrase)">
+      <ng-container *ngFor="let phrase of payloadKeys; let isLast = last">
+        <div class="food-item-container" [class.is-last]="isLast">
+          <div class="food-item-row-simple" [id]="'row-' + phrase" [class.searching]="isSearchingPhrase(phrase)">
           
           <!-- Loading overlay when searching -->
           <div *ngIf="isSearchingPhrase(phrase)" class="search-loading-overlay">
@@ -84,7 +85,6 @@
                         [value]="getEditingPhraseValue(phrase)"
                         (input)="updateEditingPhrase(phrase, $event)"
                         (blur)="onTextareaBlur(phrase, $event)"
-                        rows="2"
                         placeholder="Describe your food..."
                         autoFocus>
                       </textarea>
@@ -156,7 +156,36 @@
             </div>
           </div>
         </div>
+        </div> <!-- Close food-item-container -->
       </ng-container>
+    </div>
+
+    <!-- Add something row -->
+    <div *ngIf="hasPayload && !isReadOnly && !isEditMode" class="add-something-row">
+      <div *ngIf="!isAddingFood" class="add-something-display" (click)="startAddingFood()">
+        <div class="add-something-text">Add something</div>
+        <ion-icon name="add-circle-outline" class="add-something-icon"></ion-icon>
+      </div>
+      
+      <div *ngIf="isAddingFood" class="add-something-edit">
+        <textarea 
+          #addFoodTextarea
+          class="add-food-input"
+          [(ngModel)]="newFoodPhrase"
+          (keydown)="onAddFoodKeyDown($event)"
+          (blur)="onAddFoodBlur($event)"
+          placeholder="What did you eat?"
+          (input)="autoResizeTextarea($any($event.target))">
+        </textarea>
+        <button 
+          class="send-button"
+          (click)="sendNewFood()"
+          (mousedown)="$event.preventDefault()"
+          [disabled]="!newFoodPhrase || !newFoodPhrase.trim()">
+          <ion-icon name="send" *ngIf="!isSubmittingNewFood"></ion-icon>
+          <div *ngIf="isSubmittingNewFood" class="loading-dots">...</div>
+        </button>
+      </div>
     </div>
   </div>
 

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { createOutline, chevronUpOutline, trashOutline, send } from 'ionicons/icons';
+import { createOutline, chevronUpOutline, trashOutline, send, addCircleOutline } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
@@ -38,6 +38,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   editingPhrases: { [phrase: string]: boolean } = {};
   editingPhraseValues: { [phrase: string]: string } = {};
   searchingPhrases: { [phrase: string]: boolean } = {};
+  
+  // Add something functionality
+  isAddingFood = false;
+  newFoodPhrase = '';
+  isSubmittingNewFood = false;
 
   constructor(
     private toastService: ToastService, 
@@ -45,7 +50,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService
   ) {
-    addIcons({ createOutline, chevronUpOutline, trashOutline, send });
+    addIcons({ createOutline, chevronUpOutline, trashOutline, send, addCircleOutline });
   }
 
   get hasPayload(): boolean {
@@ -733,7 +738,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  private autoResizeTextarea(textarea: HTMLTextAreaElement): void {
+  autoResizeTextarea(textarea: HTMLTextAreaElement): void {
     // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
     
@@ -839,6 +844,64 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.cdr.detectChanges();
     
     console.log('Updated food options in place:', newFoodOptions);
+  }
+
+  // Add something functionality methods
+  startAddingFood(): void {
+    this.isAddingFood = true;
+    this.newFoodPhrase = '';
+    this.cdr.detectChanges();
+    
+    // Focus the textarea
+    setTimeout(() => {
+      const textarea = document.querySelector('.add-food-input') as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.focus();
+      }
+    }, 100);
+  }
+
+  onAddFoodKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendNewFood();
+    } else if (event.key === 'Escape') {
+      this.cancelAddingFood();
+    }
+  }
+
+  onAddFoodBlur(event: FocusEvent): void {
+    // Delay canceling to allow send button click to work
+    setTimeout(() => {
+      if (!this.isSubmittingNewFood && this.isAddingFood) {
+        this.cancelAddingFood();
+      }
+    }, 150);
+  }
+
+  cancelAddingFood(): void {
+    this.isAddingFood = false;
+    this.newFoodPhrase = '';
+    this.isSubmittingNewFood = false;
+  }
+
+  sendNewFood(): void {
+    if (!this.newFoodPhrase?.trim() || this.isSubmittingNewFood) {
+      return;
+    }
+
+    this.isSubmittingNewFood = true;
+    this.cdr.detectChanges();
+
+    // Use existing event with special handling for new foods
+    this.phraseEditRequested.emit({
+      originalPhrase: '', // Empty indicates this is a new addition
+      newPhrase: this.newFoodPhrase.trim(),
+      messageId: this.message.id || ''
+    });
+
+    // Reset the form
+    this.cancelAddingFood();
   }
 
   private async showErrorToast(message: string): Promise<void> {

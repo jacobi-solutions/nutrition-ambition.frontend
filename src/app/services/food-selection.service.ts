@@ -93,4 +93,18 @@ export class FoodSelectionService {
       })
     );
   }
+
+  updateFoodPhrase(request: SearchFoodPhraseRequest): Observable<SearchFoodPhraseResponse> {
+    // Ensure localDateKey is set
+    request.localDateKey = request.localDateKey || this.dateService.getSelectedDate();
+
+    return this.apiService.updateFoodPhrase(request).pipe(
+      catchError(err => {
+        console.error('Failed to update food phrase', err);
+        const errorDto = new ErrorDto();
+        errorDto.errorMessage = 'Update failed';
+        return of(new SearchFoodPhraseResponse({ isSuccess: false, errors: [errorDto] }));
+      })
+    );
+  }
 }

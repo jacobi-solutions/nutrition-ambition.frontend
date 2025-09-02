@@ -945,7 +945,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
   // Handle phrase edit request from food-selection component
   async onPhraseEditRequested(event: {originalPhrase: string, newPhrase: string, messageId: string}): Promise<void> {
-    console.log('Phrase edit requested:', event);
+    console.log('Phrase edit/add requested:', event);
     
     // Find the message 
     const messageIndex = this.messages.findIndex(m => m.id === event.messageId);
@@ -955,17 +955,30 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     }
     
     const originalMessage = this.messages[messageIndex];
+    const isAddingNew = !event.originalPhrase; // Empty originalPhrase means adding new food
     
-    // Create a loading message: copy all food options except the one being edited
+    // Create a loading message
     const loadingFoodOptions = { ...originalMessage.foodOptions };
     
-    // Replace the edited phrase with a loading entry
-    loadingFoodOptions[event.originalPhrase] = [{
-      displayName: event.originalPhrase,
-      isEditingPhrase: true,
-      fatSecretFoodId: '',
-      servings: []
-    } as any];
+    if (isAddingNew) {
+      // Add a loading entry for the new phrase
+      loadingFoodOptions[event.newPhrase] = [{
+        displayName: event.newPhrase,
+        isEditingPhrase: true,
+        fatSecretFoodId: '',
+        servings: []
+      } as any];
+      console.log('Adding new food phrase:', event.newPhrase);
+    } else {
+      // Replace the edited phrase with a loading entry
+      loadingFoodOptions[event.originalPhrase] = [{
+        displayName: event.originalPhrase,
+        isEditingPhrase: true,
+        fatSecretFoodId: '',
+        servings: []
+      } as any];
+      console.log('Updating existing food phrase:', event.originalPhrase, '->', event.newPhrase);
+    }
     
     const loadingMessage: DisplayMessage = {
       ...originalMessage,
@@ -977,7 +990,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     this.cdr.detectChanges();
     
     try {
-      // Call the API
+      // Call the appropriate API method based on whether we're adding or updating
       const request = new SearchFoodPhraseRequest({
         searchPhrase: event.newPhrase,
         originalPhrase: event.originalPhrase,
@@ -985,7 +998,12 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         localDateKey: this.dateService.getSelectedDate()
       });
       
-      const response = await this.foodSelectionService.searchFoodPhrase(request).toPromise();
+      let response;
+      if (isAddingNew) {
+        response = await this.foodSelectionService.searchFoodPhrase(request).toPromise();
+      } else {
+        response = await this.foodSelectionService.updateFoodPhrase(request).toPromise();
+      }
       
       if (response?.isSuccess && response.updatedMessage) {
         console.log('SUCCESS: Received updated message');
