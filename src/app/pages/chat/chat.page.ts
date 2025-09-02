@@ -20,7 +20,8 @@ import {
     CancelEditSelectionRequest,
     SubmitEditServingSelectionRequest,
     LogMealToolResponse,
-    UserSelectedServing
+    UserSelectedServing,
+    SearchFoodPhraseRequest
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -918,6 +919,125 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
   
   
 
+
+  // Handle updated message from phrase editing
+  onFoodPhraseUpdated(updatedMessage: DisplayMessage): void {
+    console.log('Received updated message from phrase editing:', updatedMessage);
+    
+    // Find the original message in the array and replace it
+    const messageIndex = this.messages.findIndex(m => m.id === updatedMessage.id);
+    if (messageIndex !== -1) {
+      // Replace the entire message
+      this.messages[messageIndex] = updatedMessage;
+      console.log('Replaced message at index:', messageIndex);
+      
+      // Trigger change detection
+      this.cdr.detectChanges();
+      
+      // Scroll to bottom to show the updated content
+      setTimeout(() => {
+        this.scrollToBottom();
+      }, 100);
+    } else {
+      console.warn('Could not find original message to replace');
+    }
+  }
+
+  // Handle phrase edit request from food-selection component
+  async onPhraseEditRequested(event: {originalPhrase: string, newPhrase: string, messageId: string}): Promise<void> {
+    console.log('Phrase edit requested:', event);
+    
+    // Find the message 
+    const messageIndex = this.messages.findIndex(m => m.id === event.messageId);
+    if (messageIndex === -1) {
+      console.warn('Could not find message to edit');
+      return;
+    }
+    
+    const originalMessage = this.messages[messageIndex];
+    
+    // Create a loading message: copy all food options except the one being edited
+    const loadingFoodOptions = { ...originalMessage.foodOptions };
+    
+    // Replace the edited phrase with a loading entry
+    loadingFoodOptions[event.originalPhrase] = [{
+      displayName: event.originalPhrase,
+      isEditingPhrase: true,
+      fatSecretFoodId: '',
+      servings: []
+    } as any];
+    
+    const loadingMessage: DisplayMessage = {
+      ...originalMessage,
+      foodOptions: loadingFoodOptions
+    };
+    
+    // Replace with loading message
+    this.messages[messageIndex] = loadingMessage;
+    this.cdr.detectChanges();
+    
+    try {
+      // Call the API
+      const request = new SearchFoodPhraseRequest({
+        searchPhrase: event.newPhrase,
+        originalPhrase: event.originalPhrase,
+        messageId: event.messageId,
+        localDateKey: this.dateService.getSelectedDate()
+      });
+      
+      const response = await this.foodSelectionService.searchFoodPhrase(request).toPromise();
+      
+      if (response?.isSuccess && response.updatedMessage) {
+        console.log('SUCCESS: Received updated message');
+        // Convert ChatMessage to DisplayMessage and replace
+        const updatedDisplayMessage = this.convertChatMessageToDisplayMessage(response.updatedMessage);
+        this.messages[messageIndex] = updatedDisplayMessage;
+        this.cdr.detectChanges();
+        
+        setTimeout(() => {
+          this.scrollToBottom();
+        }, 100);
+      } else {
+        console.error('FAILED: API call unsuccessful', response?.errors);
+        // Restore original message
+        this.messages[messageIndex] = originalMessage;
+        this.cdr.detectChanges();
+        this.showErrorToast('Failed to search for food. Please try again.');
+      }
+    } catch (error) {
+      console.error('ERROR: Exception during API call', error);
+      // Restore original message
+      this.messages[messageIndex] = originalMessage;
+      this.cdr.detectChanges();
+      this.showErrorToast('Failed to search for food. Please try again.');
+    }
+  }
+
+
+
+  // Convert ChatMessage to DisplayMessage
+  convertChatMessageToDisplayMessage(chatMessage: ChatMessage): DisplayMessage {
+    return {
+      id: chatMessage.id,
+      text: chatMessage.content || '',
+      isUser: chatMessage.role === MessageRoleTypes.User,
+      timestamp: chatMessage.createdDateUtc || new Date(),
+      foodOptions: chatMessage.logMealToolResponse?.componentMatches || null,
+      mealName: chatMessage.logMealToolResponse?.mealName || null,
+      logMealToolResponse: chatMessage.logMealToolResponse || null,
+      role: chatMessage.role
+    };
+  }
+
+  // Create temporary loading message for phrase editing
+  createPhraseEditingMessage(originalMessage: DisplayMessage, originalPhrase: string, newPhrase: string): DisplayMessage {
+    return {
+      ...originalMessage,
+      isEditingPhrase: true,
+      editingPhrase: originalPhrase,
+      newPhrase: newPhrase
+    };
+  }
 
   // Handle food selection cancellation
   onCancelFoodSelection(message: DisplayMessage): void {

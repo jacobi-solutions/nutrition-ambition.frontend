@@ -127,6 +127,11 @@ export interface INutritionAmbitionApiService {
      */
     cancelEditSelection(body: CancelEditSelectionRequest | undefined): Observable<ChatMessagesResponse>;
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    searchFoodPhrase(body: SearchFoodPhraseRequest | undefined): Observable<SearchFoodPhraseResponse>;
+    /**
      * @return Success
      */
     ip(): Observable<void>;
@@ -1373,6 +1378,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    searchFoodPhrase(body: SearchFoodPhraseRequest | undefined): Observable<SearchFoodPhraseResponse> {
+        let url_ = this.baseUrl + "/api/FoodSelection/SearchFoodPhrase";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchFoodPhrase(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchFoodPhrase(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<SearchFoodPhraseResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<SearchFoodPhraseResponse>;
+        }));
+    }
+
+    protected processSearchFoodPhrase(response: HttpResponseBase): Observable<SearchFoodPhraseResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SearchFoodPhraseResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<SearchFoodPhraseResponse>(null as any);
     }
 
     /**
@@ -4272,6 +4333,142 @@ export class RunChatRequest implements IRunChatRequest {
 export interface IRunChatRequest {
     message?: string | undefined;
     localDateKey?: string | undefined;
+}
+
+export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
+    searchPhrase?: string | undefined;
+    localDateKey?: string | undefined;
+    originalPhrase?: string | undefined;
+    messageId?: string | undefined;
+
+    constructor(data?: ISearchFoodPhraseRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.searchPhrase = _data["searchPhrase"];
+            this.localDateKey = _data["localDateKey"];
+            this.originalPhrase = _data["originalPhrase"];
+            this.messageId = _data["messageId"];
+        }
+    }
+
+    static fromJS(data: any): SearchFoodPhraseRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchFoodPhraseRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["searchPhrase"] = this.searchPhrase;
+        data["localDateKey"] = this.localDateKey;
+        data["originalPhrase"] = this.originalPhrase;
+        data["messageId"] = this.messageId;
+        return data;
+    }
+}
+
+export interface ISearchFoodPhraseRequest {
+    searchPhrase?: string | undefined;
+    localDateKey?: string | undefined;
+    originalPhrase?: string | undefined;
+    messageId?: string | undefined;
+}
+
+export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    searchPhrase?: string | undefined;
+    foodOptions?: { [key: string]: ComponentMatch[]; } | undefined;
+    mealName?: string | undefined;
+    updatedMessage?: ChatMessage;
+
+    constructor(data?: ISearchFoodPhraseResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.searchPhrase = _data["searchPhrase"];
+            if (_data["foodOptions"]) {
+                this.foodOptions = {} as any;
+                for (let key in _data["foodOptions"]) {
+                    if (_data["foodOptions"].hasOwnProperty(key))
+                        (<any>this.foodOptions)![key] = _data["foodOptions"][key] ? _data["foodOptions"][key].map((i: any) => ComponentMatch.fromJS(i)) : <any>undefined;
+                }
+            }
+            this.mealName = _data["mealName"];
+            this.updatedMessage = _data["updatedMessage"] ? ChatMessage.fromJS(_data["updatedMessage"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): SearchFoodPhraseResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchFoodPhraseResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["searchPhrase"] = this.searchPhrase;
+        if (this.foodOptions) {
+            data["foodOptions"] = {};
+            for (let key in this.foodOptions) {
+                if (this.foodOptions.hasOwnProperty(key))
+                    (<any>data["foodOptions"])[key] = (<any>this.foodOptions)[key];
+            }
+        }
+        data["mealName"] = this.mealName;
+        data["updatedMessage"] = this.updatedMessage ? this.updatedMessage.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ISearchFoodPhraseResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    searchPhrase?: string | undefined;
+    foodOptions?: { [key: string]: ComponentMatch[]; } | undefined;
+    mealName?: string | undefined;
+    updatedMessage?: ChatMessage;
 }
 
 export class SearchLogsRequest implements ISearchLogsRequest {

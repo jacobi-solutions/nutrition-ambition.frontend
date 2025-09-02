@@ -56,23 +56,11 @@
       padding: 12px 0;
       position: relative;
       
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background-color: var(--color-olive);
-        z-index: 1;
-      }
-      
-      &:last-child::after {
-        display: none;
-      }
+      border-bottom: 1px solid var(--color-olive);
       
       &:last-child {
         padding-bottom: 0;
+        border-bottom: none;
       }
       
       .row-grid { 
@@ -373,57 +361,7 @@
       }
     }
 
-    .confirm-button {
-      height: 3.25rem;
-      font-weight: 600;
-      font-size: 1rem;
-      margin: 0 0 12px 0;
-      --background: var(--color-salmon);
-      --color: #ffffff;
-      --border-radius: 30px;
-      text-transform: none;
-      transition: background-color 0.3s ease, transform 0.2s ease;
 
-      &:hover {
-        transform: scale(1.02);
-      }
-
-      &:active {
-        transform: scale(0.98);
-      }
-      
-      &[disabled] {
-        opacity: 0.5;
-        transform: none;
-        
-        &:hover {
-          transform: none;
-        }
-      }
-    }
-
-    .cancel-button {
-      height: 3.25rem;
-      font-weight: 600;
-      font-size: 1rem;
-      margin: 0;
-      --color: var(--ion-color-medium);
-      --border-color: #e6e3dd;
-      
-      --border-radius: 30px;
-      text-transform: none;
-      transition: all 0.3s ease, transform 0.2s ease;
-
-      &:hover {
-        --color: #000;
-        --border-color: #000;
-        transform: scale(1.02);
-      }
-
-      &:active {
-        transform: scale(0.98);
-      }
-    }
   }
 }
 
@@ -449,6 +387,58 @@
   color: var(--ion-color-medium);
   // display: inline; /* inline to sit next to serving label if desired */
   margin-left: 8px;
+}
+
+// Button styling (moved to root level for proper specificity)
+.confirm-button {
+  height: 3.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 12px 0;
+  --background: var(--color-salmon);
+  --color: #ffffff;
+  --border-radius: 30px;
+  text-transform: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  &[disabled] {
+    opacity: 0.5;
+    transform: none;
+    
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+.cancel-button {
+  height: 3.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0;
+  --color: var(--ion-color-medium);
+  --border-color: #e6e3dd;
+  --border-radius: 30px;
+  text-transform: none;
+  transition: all 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    --color: #000;
+    --border-color: #000;
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
 // Additional specificity for confirm button text color (matching login button)
@@ -621,11 +611,13 @@
       .confirm-button {
         height: 3rem;
         font-size: 0.9rem;
+        --border-radius: 30px;
       }
 
       .cancel-button {
         height: 3rem;
         font-size: 0.9rem;
+        --border-radius: 30px;
       }
     }
   }
@@ -830,11 +822,17 @@
           opacity: 0.6;
         }
         
-        ion-icon {
-          font-size: 16px;
-        }
+              ion-icon {
+        font-size: 16px;
+      }
+      
+      .loading-dots {
+        font-size: 14px;
+        font-weight: bold;
+        animation: pulse 1s ease-in-out infinite;
       }
     }
+  }
   }
 }
 
@@ -887,5 +885,84 @@
         border-color: rgba(255, 255, 255, 0.5);
       }
     }
+  }
+}
+
+// Editing phrase loading (full component replacement)
+.editing-phrase-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  
+  .loading-content {
+    text-align: center;
+    
+    .loading-dots-large {
+      font-size: 32px;
+      font-weight: bold;
+      color: var(--color-sage);
+      animation: pulse 1s ease-in-out infinite;
+      margin-bottom: 12px;
+    }
+    
+    .loading-text {
+      font-size: 16px;
+      color: var(--ion-color-medium);
+      font-weight: 500;
+    }
+  }
+}
+
+// Search loading overlay (old approach - keeping for compatibility)
+.food-item-row-simple {
+  position: relative;
+  
+  &.searching {
+    min-height: 80px; // Ensure there's enough space for the loading overlay
+  }
+}
+
+.search-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 12px;
+  
+  .loading-content {
+    text-align: center;
+    
+    .loading-dots-large {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--color-sage);
+      animation: pulse 1s ease-in-out infinite;
+      margin-bottom: 8px;
+    }
+    
+    .loading-text {
+      font-size: 14px;
+      color: var(--ion-color-medium);
+      font-weight: 500;
+    }
+  }
+}
+
+// Loading dots animation
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: 0.5; 
   }
 } 

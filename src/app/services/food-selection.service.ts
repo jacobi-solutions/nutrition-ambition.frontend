@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { NutritionAmbitionApiService, SubmitServingSelectionRequest, CancelServingSelectionRequest, ChatMessagesResponse, ErrorDto, EditFoodSelectionRequest, SubmitEditServingSelectionRequest, CancelEditSelectionRequest } from '../services/nutrition-ambition-api.service';
+import { NutritionAmbitionApiService, SubmitServingSelectionRequest, CancelServingSelectionRequest, ChatMessagesResponse, ErrorDto, EditFoodSelectionRequest, SubmitEditServingSelectionRequest, CancelEditSelectionRequest, SearchFoodPhraseRequest, SearchFoodPhraseResponse } from '../services/nutrition-ambition-api.service';
 import { DateService } from './date.service';
 
 @Injectable({
@@ -76,6 +76,20 @@ export class FoodSelectionService {
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Cancel edit failed';
         return of(new ChatMessagesResponse({ isSuccess: false, errors: [errorDto] }));
+      })
+    );
+  }
+
+  searchFoodPhrase(request: SearchFoodPhraseRequest): Observable<SearchFoodPhraseResponse> {
+    // Ensure localDateKey is set
+    request.localDateKey = request.localDateKey || this.dateService.getSelectedDate();
+
+    return this.apiService.searchFoodPhrase(request).pipe(
+      catchError(err => {
+        console.error('Failed to search food phrase', err);
+        const errorDto = new ErrorDto();
+        errorDto.errorMessage = 'Search failed';
+        return of(new SearchFoodPhraseResponse({ isSuccess: false, errors: [errorDto] }));
       })
     );
   }

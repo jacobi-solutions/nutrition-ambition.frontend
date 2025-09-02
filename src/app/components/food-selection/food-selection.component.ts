@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, trashOutline, send } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
+import { DateService } from 'src/app/services/date.service';
 
 @Component({
   selector: 'app-food-selection',
@@ -18,9 +19,13 @@ import { ToastService } from 'src/app/services/toast.service';
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() message!: DisplayMessage;
+  @Input() isEditingPhrase: boolean = false;
   @Output() selectionConfirmed = new EventEmitter<SubmitServingSelectionRequest>();
   @Output() editConfirmed = new EventEmitter<SubmitEditServingSelectionRequest>();
   @Output() cancel = new EventEmitter<void>();
+  @Output() updatedMessage = new EventEmitter<DisplayMessage>();
+  @Output() phraseEditRequested = new EventEmitter<{originalPhrase: string, newPhrase: string, messageId: string}>();
+
   isReadOnly = false;
   isEditMode = false;
 
@@ -32,8 +37,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   private cancelTimeout: any = null;
   editingPhrases: { [phrase: string]: boolean } = {};
   editingPhraseValues: { [phrase: string]: string } = {};
+  searchingPhrases: { [phrase: string]: boolean } = {};
 
-  constructor(private toastService: ToastService, private cdr: ChangeDetectorRef) {
+  constructor(
+    private toastService: ToastService, 
+    private cdr: ChangeDetectorRef,
+    private apiService: NutritionAmbitionApiService,
+    private dateService: DateService
+  ) {
     addIcons({ createOutline, chevronUpOutline, trashOutline, send });
   }
 
@@ -573,7 +584,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Auto-remove after 8 seconds
     setTimeout(() => {
       this.removeSuggestionTooltip();
-    }, 8000);
+    }, 4000);
   }
   
   private removeSuggestionTooltip(): void {
@@ -644,8 +655,37 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return suggestion;
   }
 
-  isEditingPhrase(phrase: string): boolean {
+  isPhraseBeingEdited(phrase: string): boolean {
     return !!this.editingPhrases[phrase];
+  }
+
+  isSearchingPhrase(phrase: string): boolean {
+    // Check if this phrase has a ComponentMatch with isEditingPhrase = true
+    const foods = this.message.foodOptions?.[phrase];
+    if (foods && foods.length > 0 && (foods[0] as any).isEditingPhrase) {
+      return true;
+    }
+    return !!this.searchingPhrases[phrase];
+  }
+
+  clearPhraseSearching(phrase: string): void {
+    this.searchingPhrases[phrase] = false;
+    delete this.searchingPhrases[phrase];
+  }
+
+
+
+  onTextareaBlur(phrase: string, event: FocusEvent): void {
+    // Check if the focus is moving to the send button
+    const relatedTarget = event.relatedTarget as HTMLElement;
+    if (relatedTarget && relatedTarget.classList.contains('send-button')) {
+      return; // Don't close edit mode
+    }
+    
+    // Use a small delay to allow button click to process first
+    setTimeout(() => {
+      this.finishEditingPhrase(phrase);
+    }, 150);
   }
 
   async startEditingPhrase(phrase: string): Promise<void> {
@@ -713,12 +753,26 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   sendUpdatedPhrase(phrase: string): void {
     const newValue = this.editingPhraseValues[phrase];
-    if (newValue && newValue.trim() !== phrase) {
-      console.log(`Sending updated phrase from "${phrase}" to "${newValue}"`);
-      // Here you would emit an event or call a service to update the phrase
-      // For now, just finish editing
-      this.finishEditingPhrase(phrase);
+    
+    if (!newValue || newValue.trim() === phrase) {
+      console.log('No changes detected, not sending');
+      return;
     }
+
+    console.log(`Requesting phrase edit: "${phrase}" → "${newValue}"`);
+    
+    // Set loading state for this specific phrase
+    this.searchingPhrases[phrase] = true;
+    
+    // Emit the phrase edit request to the parent (chat page)
+    this.phraseEditRequested.emit({
+      originalPhrase: phrase,
+      newPhrase: newValue.trim(),
+      messageId: this.message.id || ''
+    });
+    
+    // Clear the editing state since we're now in loading state
+    this.finishEditingPhrase(phrase);
   }
 
   finishEditingPhrase(phrase: string): void {
@@ -741,5 +795,57 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   cancelEditingPhrase(phrase: string): void {
     this.editingPhrases[phrase] = false;
     delete this.editingPhraseValues[phrase];
+  }
+
+  private updateFoodOptionsInPlace(originalPhrase: string, newPhrase: string, newFoodOptions: { [phrase: string]: ComponentMatch[] }, mealName?: string): void {
+    if (!this.message.foodOptions) {
+      return;
+    }
+
+    // Remove the old phrase entry
+    delete this.message.foodOptions[originalPhrase];
+    
+    // Add the new phrase entry with the new food options
+    Object.keys(newFoodOptions).forEach(phrase => {
+      this.message.foodOptions![phrase] = newFoodOptions[phrase];
+    });
+
+    // Update the meal name if provided
+    if (mealName) {
+      this.message.mealName = mealName;
+    }
+
+    // Clear the editing state for the original phrase
+    delete this.editingPhrases[originalPhrase];
+    delete this.editingPhraseValues[originalPhrase];
+
+    // Update selections to point to the new phrase if it exists
+    if (this.selections[originalPhrase]) {
+      const oldSelection = this.selections[originalPhrase];
+      delete this.selections[originalPhrase];
+      
+      // Find the new phrase key and set up selection for it
+      const newPhraseKey = Object.keys(newFoodOptions)[0];
+      if (newPhraseKey && newFoodOptions[newPhraseKey] && newFoodOptions[newPhraseKey].length > 0) {
+        const firstFood = newFoodOptions[newPhraseKey][0];
+        this.selections[newPhraseKey] = {
+          foodId: firstFood.fatSecretFoodId || '',
+          servingId: firstFood.servings?.[0]?.fatSecretServingId
+        };
+      }
+    }
+
+    // Force change detection
+    this.cdr.detectChanges();
+    
+    console.log('Updated food options in place:', newFoodOptions);
+  }
+
+  private async showErrorToast(message: string): Promise<void> {
+    await this.toastService.showToast({
+      message: message,
+      duration: 4000,
+      color: 'danger'
+    });
   }
 }

@@ -1,14 +1,34 @@
 <div class="food-selection-container" [class.read-only]="isReadOnly">
   <div class="food-selection-container-inner">
-    <!-- Food items list -->
-    <div *ngIf="hasPayload" class="card-header">
-      <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Items') | titlecase }}</strong></label>
+    
+    <!-- Loading state when editing phrase -->
+    <div *ngIf="isEditingPhrase" class="editing-phrase-loading">
+      <div class="loading-content">
+        <div class="loading-dots-large">...</div>
+        <div class="loading-text">Searching for better results...</div>
+      </div>
     </div>
 
-    <div *ngIf="hasPayload" class="food-items-list">
+    <!-- Normal content when not editing phrase -->
+    <div *ngIf="!isEditingPhrase">
+      <!-- Food items list -->
+      <div *ngIf="hasPayload" class="card-header">
+        <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Items') | titlecase }}</strong></label>
+      </div>
+
+      <div *ngIf="hasPayload" class="food-items-list">
       <ng-container *ngFor="let phrase of payloadKeys">
-        <div class="food-item-row-simple" [id]="'row-' + phrase">
-          <ion-grid class="row-grid">
+        <div class="food-item-row-simple" [id]="'row-' + phrase" [class.searching]="isSearchingPhrase(phrase)">
+          
+          <!-- Loading overlay when searching -->
+          <div *ngIf="isSearchingPhrase(phrase)" class="search-loading-overlay">
+            <div class="loading-content">
+              <div class="loading-dots-large">...</div>
+              <div class="loading-text">Searching for better results...</div>
+            </div>
+          </div>
+
+          <ion-grid class="row-grid" *ngIf="!isSearchingPhrase(phrase)">
             <ion-row class="top-row" align-items-center>
               <ion-col size="10" class="left">
                 <div class="name-section">
@@ -47,7 +67,7 @@
                 <div class="original-phrase-header">
                   <div class="phrase-edit-container" [attr.data-phrase]="phrase">
                     <!-- Display mode: Bold text with edit icon -->
-                    <div *ngIf="!isEditingPhrase(phrase)" class="phrase-display-mode">
+                    <div *ngIf="!isPhraseBeingEdited(phrase)" class="phrase-display-mode">
                       <strong class="phrase-text">{{ phrase }}</strong>
                       <ion-icon 
                         name="create-outline" 
@@ -57,15 +77,13 @@
                     </div>
                     
                     <!-- Edit mode: Textarea with send button -->
-                    <div *ngIf="isEditingPhrase(phrase)" class="phrase-edit-mode">
+                    <div *ngIf="isPhraseBeingEdited(phrase)" class="phrase-edit-mode">
                       <textarea 
                         #phraseInput
                         class="phrase-input"
                         [value]="getEditingPhraseValue(phrase)"
                         (input)="updateEditingPhrase(phrase, $event)"
-                        (blur)="finishEditingPhrase(phrase)"
-                        (keydown)="onPhraseKeyDown(phrase, $event)"
-                        (keydown.escape)="cancelEditingPhrase(phrase)"
+                        (blur)="onTextareaBlur(phrase, $event)"
                         rows="2"
                         placeholder="Describe your food..."
                         autoFocus>
@@ -73,6 +91,7 @@
                       <button 
                         class="send-button"
                         (click)="sendUpdatedPhrase(phrase)"
+                        (mousedown)="$event.preventDefault()"
                         [disabled]="!hasChanges(phrase)"
                         type="button">
                         <ion-icon name="send"></ion-icon>
@@ -141,6 +160,8 @@
     </div>
   </div>
 
+  </div> <!-- End normal content -->
+
   <!-- Action/status footer -->
   <div class="confirm-section">
     <div *ngIf="(isSubmitting || isCanceling) && !isReadOnly" class="typing-indicator">
@@ -151,8 +172,7 @@
       </div>
     </div>
 
-    <div *ngIf="!isSubmitting && !isCanceling && isReadOnly" class="status-text">{{ statusText }}</div>
-
+    <div *ngIf="!isSubmitting && !isCanceling && isReadOnly" class="status-text">{{ statusText }}    </div>
     <ion-button 
       *ngIf="!isSubmitting && !isCanceling && !isReadOnly"
       expand="block" 
@@ -171,5 +191,10 @@
       class="cancel-button">
       Cancel
     </ion-button>
+
+    
+  
+
+    
   </div>
 </div>

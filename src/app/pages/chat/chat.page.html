@@ -48,9 +48,12 @@
             <app-food-selection
               *ngIf="message?.foodOptions && (message?.role === MessageRoleTypes.PendingFoodSelection || message?.role === MessageRoleTypes.PendingEditFoodSelection || message?.role === MessageRoleTypes.CompletedFoodSelection || message?.role === MessageRoleTypes.CompletedEditFoodSelection)"
               [message]="message"
+              [isEditingPhrase]="message.isEditingPhrase || false"
               (selectionConfirmed)="onFoodSelectionConfirmed($event)"
               (editConfirmed)="onEditFoodSelectionConfirmed($event)"
-              (cancel)="onCancelFoodSelection(message)">
+              (cancel)="onCancelFoodSelection(message)"
+              (updatedMessage)="onFoodPhraseUpdated($event)"
+              (phraseEditRequested)="onPhraseEditRequested($event)">
             </app-food-selection>
 
           </div>

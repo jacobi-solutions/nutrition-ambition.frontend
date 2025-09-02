@@ -14,4 +14,9 @@ export interface DisplayMessage {
     // optional convenience fields
     foodOptions?: Record<string, ComponentMatch[]> | null;
     mealName?: string | null;
+    
+    // phrase editing state
+    isEditingPhrase?: boolean;
+    editingPhrase?: string;
+    newPhrase?: string;
   }
