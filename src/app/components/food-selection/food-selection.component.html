@@ -33,7 +33,8 @@
             <ion-row class="top-row" align-items-center>
               <ion-col size="10" class="left">
                 <div class="name-section">
-                  <span class="name">{{ getSelectedFood(phrase)?.displayName }}</span>
+                  <span class="name">{{ getDisplayNameOrSearchText(phrase) | titlecase}}</span>
+                  <span *ngIf="isInferred(phrase)" class="inferred-badge">(inferred)</span>
                   <span *ngIf="getSelectedFood(phrase)?.brandName" class="brand-name"> – {{ getSelectedFood(phrase)?.brandName }}</span>
                 </div>
                 <div class="serving-line">
@@ -69,7 +70,8 @@
                   <div class="phrase-edit-container" [attr.data-phrase]="phrase">
                     <!-- Display mode: Bold text with edit icon -->
                     <div *ngIf="!isPhraseBeingEdited(phrase)" class="phrase-display-mode">
-                      <strong class="phrase-text">{{ phrase }}</strong>
+                      <strong class="phrase-text">{{ getDisplayNameOrSearchText(phrase) | titlecase}}</strong>
+                      <span *ngIf="isInferred(phrase)" class="inferred-badge">(inferred)</span>
                       <ion-icon 
                         name="create-outline" 
                         class="edit-phrase-icon" 
@@ -128,7 +130,7 @@
                       <!-- Show stepper only for selected row -->
                       <ng-container *ngIf="getSelectedServingId(phrase) === serving.fatSecretServingId && !isReadOnly">
                         <app-serving-quantity-input
-                          [value]="getDisplayQuantity(serving)"
+                          [value]="getEffectiveQuantity(phrase, serving)"
                           [step]="1"
                           [min]="0.1"
                           [max]="999"

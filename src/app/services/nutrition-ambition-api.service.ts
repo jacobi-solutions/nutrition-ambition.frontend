@@ -2275,6 +2275,11 @@ export class ComponentMatch implements IComponentMatch {
     selectedServingId?: string | undefined;
     totalGrams?: number;
     servings?: ComponentServing[] | undefined;
+    effectiveMultiplier?: number;
+    effectiveQuantity?: number;
+    inferred?: boolean;
+    inferredReason?: string | undefined;
+    searchText?: string | undefined;
 
     constructor(data?: IComponentMatch) {
         if (data) {
@@ -2302,6 +2307,11 @@ export class ComponentMatch implements IComponentMatch {
                 for (let item of _data["servings"])
                     this.servings!.push(ComponentServing.fromJS(item));
             }
+            this.effectiveMultiplier = _data["effectiveMultiplier"];
+            this.effectiveQuantity = _data["effectiveQuantity"];
+            this.inferred = _data["inferred"];
+            this.inferredReason = _data["inferredReason"];
+            this.searchText = _data["searchText"];
         }
     }
 
@@ -2329,6 +2339,11 @@ export class ComponentMatch implements IComponentMatch {
             for (let item of this.servings)
                 data["servings"].push(item.toJSON());
         }
+        data["effectiveMultiplier"] = this.effectiveMultiplier;
+        data["effectiveQuantity"] = this.effectiveQuantity;
+        data["inferred"] = this.inferred;
+        data["inferredReason"] = this.inferredReason;
+        data["searchText"] = this.searchText;
         return data;
     }
 }
@@ -2345,6 +2360,11 @@ export interface IComponentMatch {
     selectedServingId?: string | undefined;
     totalGrams?: number;
     servings?: ComponentServing[] | undefined;
+    effectiveMultiplier?: number;
+    effectiveQuantity?: number;
+    inferred?: boolean;
+    inferredReason?: string | undefined;
+    searchText?: string | undefined;
 }
 
 export class ComponentServing implements IComponentServing {

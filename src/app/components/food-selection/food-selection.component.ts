@@ -175,8 +175,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const selectedServing = this.getSelectedServing(phrase);
       
       if (food?.fatSecretFoodId && servingId && selectedServing) {
-        // Get the display quantity from the selected serving
-        const displayQuantity = this.getDisplayQuantity(selectedServing);
+        // Get the effective quantity (prefer effectiveQuantity if available)
+        const displayQuantity = this.getEffectiveQuantity(phrase, selectedServing);
         
         req.selections.push(new UserSelectedServing({
           originalText: phrase,
@@ -205,7 +205,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const selectedServing = this.getSelectedServing(phrase);
   
       if (food?.fatSecretFoodId && servingId && selectedServing) {
-        const displayQuantity = this.getDisplayQuantity(selectedServing);
+        const displayQuantity = this.getEffectiveQuantity(phrase, selectedServing);
         req.selections.push(new UserSelectedServing({
           originalText: phrase,
           fatSecretFoodId: food.fatSecretFoodId,
@@ -248,6 +248,35 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (sq !== undefined && isFinite(sq) && sq > 0) return sq;
     
     return 1;
+  }
+
+  getEffectiveQuantity(phrase: string, serving: ComponentServing | null): number {
+    const food = this.getSelectedFood(phrase);
+    if (food && (food as any).effectiveQuantity && (food as any).effectiveQuantity > 0) {
+      return (food as any).effectiveQuantity;
+    }
+    return this.getDisplayQuantity(serving);
+  }
+
+  getDisplayNameOrSearchText(phrase: string): string {
+    const food = this.getSelectedFood(phrase);
+    if (food && (food as any).inferred && (food as any).searchText) {
+      return (food as any).searchText;
+    }
+    return food?.displayName || '';
+  }
+
+  isInferred(phrase: string): boolean {
+    const food = this.getSelectedFood(phrase);
+    return !!(food && (food as any).inferred === true);
+  }
+
+  getSearchTextOnly(phrase: string): string {
+    const food = this.getSelectedFood(phrase);
+    if (food && (food as any).inferred && (food as any).searchText) {
+      return (food as any).searchText;
+    }
+    return phrase;
   }
 
   getUnitText(s: ComponentServing): string {
@@ -696,7 +725,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   async startEditingPhrase(phrase: string): Promise<void> {
     // First enable editing mode
     this.editingPhrases[phrase] = true;
-    this.editingPhraseValues[phrase] = phrase;
+    this.editingPhraseValues[phrase] = this.getSearchTextOnly(phrase);
     this.cdr.detectChanges();
     
     // Then show the suggestion toast and focus the textarea
@@ -815,10 +844,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.message.foodOptions![phrase] = newFoodOptions[phrase];
     });
 
-    // Update the meal name if provided
-    if (mealName) {
-      this.message.mealName = mealName;
-    }
+    // Don't update the meal name - keep the original title
+    // if (mealName) {
+    //   this.message.mealName = mealName;
+    // }
 
     // Clear the editing state for the original phrase
     delete this.editingPhrases[originalPhrase];

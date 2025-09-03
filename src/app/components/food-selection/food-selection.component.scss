@@ -89,6 +89,12 @@
           color: var(--ion-color-primary);
           line-height: 1.2;
         }
+        
+        .inferred-badge {
+          font-size: 0.75rem;
+          color: #888;
+          margin-left: 4px;
+        }
         margin-bottom: 2px; // tighten space below name
       }
 
