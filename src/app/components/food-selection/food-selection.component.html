@@ -122,7 +122,7 @@
                   [value]="getSelectedServingId(phrase)"
                   (ionChange)="onServingSelected(phrase, $event.detail.value)">
                   <ion-radio 
-                    *ngFor="let serving of getSelectedFood(phrase)?.servings"
+                    *ngFor="let serving of getSelectedFood(phrase)?.servings; trackBy: trackByServingId"
                     [value]="serving.fatSecretServingId"
                     [disabled]="isReadOnly"
                     (click)="onRowClicked(phrase, serving)">

@@ -77,8 +77,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     for (const phrase of Object.keys(this.message.foodOptions)) {
       const foods = this.message.foodOptions[phrase];
       const foodId = foods?.[0]?.fatSecretFoodId;
+      // Ensure we preserve the selectedServingId from the API
       const servingId = foods?.[0]?.selectedServingId;
-      if (foodId) this.selections[phrase] = { foodId, servingId };
+      if (foodId) {
+        this.selections[phrase] = { foodId, servingId };
+      }
       this.expandedSections[phrase] = false;
     }
     this.isReadOnly = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
@@ -122,6 +125,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return food?.servings?.find(s => s.fatSecretServingId === id) || null;
   }
 
+  // Getter to always derive the selected serving for a food match
+  getSelectedServingForFood(match: ComponentMatch): ComponentServing | undefined {
+    return match?.servings?.find(s => s.fatSecretServingId === match.selectedServingId);
+  }
+
+  // TrackBy function to prevent DOM reuse issues
+  trackByServingId(index: number, serving: ComponentServing): string {
+    return serving.fatSecretServingId || `${index}`;
+  }
+
   isWeightUnit(unit: string | undefined): boolean {
     if (!unit) return false;
     const u = unit.toLowerCase();
@@ -135,16 +148,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
   caloriesForServing(s: ComponentServing | null) {
-    return this.scaledMacro(s, ['Calories','calories','energy_kcal','Energy']);
+    return this.scaledMacro(s, ['calories','Calories','energy_kcal','Energy']);
   }
   proteinForServing(s: ComponentServing | null) {
-    return this.scaledMacro(s, ['Protein','protein']);
+    return this.scaledMacro(s, ['protein','Protein']);
   }
   fatForServing(s: ComponentServing | null) {
-    return this.scaledMacro(s, ['Fat','fat','total_fat']);
+    return this.scaledMacro(s, ['fat','Fat','total_fat']);
   }
   carbsForServing(s: ComponentServing | null) {
-    return this.scaledMacro(s, ['Carbohydrate','carbohydrates','carbs']);
+    return this.scaledMacro(s, ['carbohydrate','Carbohydrate','carbohydrates','carbs']);
   }
   
 
@@ -222,39 +235,59 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Format a number nicely for UI (0, 1, 1.5, 1.33, 473.2, etc.)
 
 
-  // Build the user-facing label for a serving row
+  // Build the user-facing label for a serving row - prioritize UI fields
   getServingLabel(s: ComponentServing | null): string {
     if (!s) return '';
   
-    const dq = (s as any).displayQuantity as number | undefined;
-    const du = (s as any).displayUnit as string | undefined;
-    if (dq !== undefined && du) return `${this.fmt(dq)} ${du}`.trim();
+    // Always prioritize displayQuantity/displayUnit for UI display
+    const dq = s.displayQuantity;
+    const du = s.displayUnit;
+    if (dq !== undefined && du && du.trim()) {
+      return `${this.fmt(dq)} ${du}`.trim();
+    }
   
-    const sq = (s as any).scaledQuantity as number | undefined;
-    const su = (s as any).scaledUnit as string | undefined;
-    if (sq !== undefined && su) return `${this.fmt(sq)} ${su}`;
+    // Only fall back to description if displayUnit is missing
+    if (s.description && s.description.trim()) {
+      return s.description;
+    }
   
-    if (s.description) return s.description;
+    // Last resort fallback to scaledQuantity/scaledUnit only if both displayUnit and description are empty
+    const sq = s.scaledQuantity;
+    const su = s.scaledUnit;
+    if (sq !== undefined && su && su.trim()) {
+      return `${this.fmt(sq)} ${su}`;
+    }
+  
     return 'serving';
   }
 
   getDisplayQuantity(s: ComponentServing | null): number {
     if (!s) return 1;
     
-    const dq = (s as any).displayQuantity as number | undefined;
+    // Always prioritize displayQuantity for stepper input
+    const dq = s.displayQuantity;
     if (dq !== undefined && isFinite(dq) && dq > 0) return dq;
     
-    const sq = (s as any).scaledQuantity as number | undefined;
+    // Fall back to scaledQuantity only if displayQuantity is not available
+    const sq = s.scaledQuantity;
     if (sq !== undefined && isFinite(sq) && sq > 0) return sq;
     
     return 1;
   }
 
   getEffectiveQuantity(phrase: string, serving: ComponentServing | null): number {
+    // Always prioritize the serving's displayQuantity for UI display
+    // This ensures the stepper shows the correct UI value (e.g., 0.42 cup instead of 100)
+    if (serving && serving.displayQuantity !== undefined && isFinite(serving.displayQuantity) && serving.displayQuantity > 0) {
+      return serving.displayQuantity;
+    }
+    
+    // Fall back to food's effectiveQuantity only if serving's displayQuantity is not available
     const food = this.getSelectedFood(phrase);
     if (food && (food as any).effectiveQuantity && (food as any).effectiveQuantity > 0) {
       return (food as any).effectiveQuantity;
     }
+    
     return this.getDisplayQuantity(serving);
   }
 
@@ -280,20 +313,22 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getUnitText(s: ComponentServing): string {
-    const disp = (s as any).displayUnit as string | undefined;
+    // Always prioritize displayUnit for stepper/current label
+    const disp = s.displayUnit;
     if (disp && disp.trim().length) return disp.trim();
 
-    const desc = (s as any).description as string | undefined;
-    const md = (s as any).measurementDescription as string | undefined;
-    const mu = (s as any).metricServingUnit as string | undefined;
+    // Only fall back to description parsing if displayUnit is empty
+    const desc = s.description;
+    if (desc && desc.trim().length) {
+      const stripped = this.stripLeadingCount(desc);
+      if (stripped && stripped.trim()) return stripped.trim();
+    }
 
-    // metric rows: use metric unit (g/ml)
-    if (this.isMetricRow(s) && mu) return mu.trim();
+    // Final fallback to scaledUnit only if displayUnit and description are empty
+    const su = s.scaledUnit;
+    if (su && su.trim().length) return su.trim();
 
-    // household rows: strip leading numbers from description/measurementDescription
-    const label = (desc && desc.trim().length ? desc : (md || '')).trim();
-    const stripped = this.stripLeadingCount(label);
-    return stripped || 'serving';
+    return 'serving';
   }
   
 
