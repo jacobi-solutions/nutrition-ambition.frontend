@@ -377,31 +377,33 @@ export class DebugViewComponent implements OnInit, OnDestroy {
   }
 
   getFoodSelectionItems(logMealToolResponse: any): any[] {
-    if (!logMealToolResponse?.componentMatches) {
+    if (!logMealToolResponse?.foods) {
       return [];
     }
 
     const items: any[] = [];
     
-    // Iterate through each component match
-    Object.keys(logMealToolResponse.componentMatches).forEach(originalText => {
-      const matches = logMealToolResponse.componentMatches[originalText];
-      
-      if (matches && matches.length > 0) {
-        const firstMatch = matches[0]; // Get the first/best match
-        const selectedServing = firstMatch.servings?.find((serving: any) => 
-          serving.fatSecretServingId === firstMatch.selectedServingId
-        );
+    // Iterate through foods → components → matches
+    logMealToolResponse.foods.forEach((food: any) => {
+      if (food.components) {
+        food.components.forEach((component: any) => {
+          if (component.matches && component.matches.length > 0) {
+            const firstMatch = component.matches[0]; // Get the first/best match
+            const selectedServing = firstMatch.servings?.find((serving: any) => 
+              serving.fatSecretServingId === firstMatch.selectedServingId
+            );
 
-        if (selectedServing) {
-          items.push({
-            originalText: firstMatch.originalText || originalText,
-            displayName: firstMatch.displayName,
-            brandName: firstMatch.brandName,
-            displayQuantity: selectedServing.displayQuantity,
-            displayUnit: selectedServing.displayUnit
-          });
-        }
+            if (selectedServing) {
+              items.push({
+                originalText: firstMatch.originalText || food.originalPhrase,
+                displayName: firstMatch.displayName,
+                brandName: firstMatch.brandName,
+                displayQuantity: selectedServing.displayQuantity,
+                displayUnit: selectedServing.displayUnit
+              });
+            }
+          }
+        });
       }
     });
 

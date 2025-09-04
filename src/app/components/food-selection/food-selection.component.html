@@ -17,40 +17,40 @@
       </div>
 
       <div *ngIf="hasPayload" class="food-items-list">
-      <ng-container *ngFor="let phrase of payloadKeys; let isLast = last">
+      <ng-container *ngFor="let componentData of availableComponents; let isLast = last">
         <div class="food-item-container" [class.is-last]="isLast">
-          <div class="food-item-row-simple" [id]="'row-' + phrase" [class.searching]="isSearchingPhrase(phrase)">
+          <div class="food-item-row-simple" [id]="'row-' + componentData.componentId" [class.searching]="isSearchingComponent(componentData.componentId)">
           
           <!-- Loading overlay when searching -->
-          <div *ngIf="isSearchingPhrase(phrase)" class="search-loading-overlay">
+          <div *ngIf="isSearchingComponent(componentData.componentId)" class="search-loading-overlay">
             <div class="loading-content">
               <div class="loading-dots-large">...</div>
               <div class="loading-text">Searching for better results...</div>
             </div>
           </div>
 
-          <ion-grid class="row-grid" *ngIf="!isSearchingPhrase(phrase)">
+          <ion-grid class="row-grid" *ngIf="!isSearchingComponent(componentData.componentId)">
             <ion-row class="top-row" align-items-center>
               <ion-col size="10" class="left">
                 <div class="name-section">
-                  <span class="name">{{ getDisplayNameOrSearchText(phrase) | titlecase}}</span>
-                  <span *ngIf="isInferred(phrase)" class="inferred-badge">(inferred)</span>
-                  <span *ngIf="getSelectedFood(phrase)?.brandName" class="brand-name"> – {{ getSelectedFood(phrase)?.brandName }}</span>
+                  <span class="name">{{ getDisplayNameOrSearchText(componentData.componentId) | titlecase}}</span>
+                  <span *ngIf="isInferred(componentData.componentId)" class="inferred-badge">(inferred)</span>
+                  <span *ngIf="getSelectedFood(componentData.componentId)?.brandName" class="brand-name"> – {{ getSelectedFood(componentData.componentId)?.brandName }}</span>
                 </div>
                 <div class="serving-line">
-                  <ng-container *ngIf="getSelectedServing(phrase) as selectedServing">
+                  <ng-container *ngIf="getSelectedServing(componentData.componentId) as selectedServing">
                     <span class="inline-amount">{{ getServingLabel(selectedServing) }}</span>
                   </ng-container>
                 </div>
               </ion-col>
               <ion-col size="2" class="right" *ngIf="!isReadOnly">
                 <div class="action-icons">
-                  <ion-icon [name]="isExpanded(phrase) ? 'chevron-up-outline' : 'create-outline'" class="edit-icon" [class.expanded]="isExpanded(phrase)" (click)="toggleExpansion(phrase)"></ion-icon>
-                  <ion-icon *ngIf="!isEditMode" name="trash-outline" class="delete-icon" (click)="removeItem(phrase)"></ion-icon>
+                  <ion-icon [name]="isExpanded(componentData.componentId) ? 'chevron-up-outline' : 'create-outline'" class="edit-icon" [class.expanded]="isExpanded(componentData.componentId)" (click)="toggleExpansion(componentData.componentId)"></ion-icon>
+                  <ion-icon *ngIf="!isEditMode" name="trash-outline" class="delete-icon" (click)="removeItem(componentData.componentId)"></ion-icon>
                 </div>
               </ion-col>
             </ion-row>
-            <ion-row class="macro-row" *ngIf="!isReadOnly && getSelectedServing(phrase) as selectedServing">
+            <ion-row class="macro-row" *ngIf="!isReadOnly && getSelectedServing(componentData.componentId) as selectedServing">
               <ion-col size="12" class="macro-summary">
                 ({{ caloriesForServing(selectedServing) || 0 | number:'1.0-0' }} cal,
                 {{ proteinForServing(selectedServing) || 0 | number:'1.0-0' }} protein,
@@ -62,39 +62,40 @@
         </div>
 
         <!-- Expanded selection card -->
-        <div *ngIf="!isReadOnly && isExpanded(phrase)" class="expanded-food-selection">
+        <div *ngIf="!isReadOnly && isExpanded(componentData.componentId)" class="expanded-food-selection">
           <div class="drilldown-content">
             <div class="food-item-row">
               <div class="food-name">
                 <div class="original-phrase-header">
-                  <div class="phrase-edit-container" [attr.data-phrase]="phrase">
+                  <div class="phrase-edit-container" [attr.data-component-id]="componentData.componentId">
                     <!-- Display mode: Bold text with edit icon -->
-                    <div *ngIf="!isPhraseBeingEdited(phrase)" class="phrase-display-mode">
-                      <strong class="phrase-text">{{ getDisplayNameOrSearchText(phrase) | titlecase}}</strong>
-                      <span *ngIf="isInferred(phrase)" class="inferred-badge">(inferred)</span>
+                    <div *ngIf="!isComponentBeingEdited(componentData.componentId)" class="phrase-display-mode">
+                      <strong class="phrase-text">{{ getDisplayNameOrSearchText(componentData.componentId) | titlecase}}</strong>
+                      <span *ngIf="isInferred(componentData.componentId)" class="inferred-badge">(inferred)</span>
                       <ion-icon 
                         name="create-outline" 
                         class="edit-phrase-icon" 
-                        (click)="startEditingPhrase(phrase)">
+                        (click)="startEditingComponent(componentData.componentId)">
                       </ion-icon>
                     </div>
                     
                     <!-- Edit mode: Textarea with send button -->
-                    <div *ngIf="isPhraseBeingEdited(phrase)" class="phrase-edit-mode">
+                    <div *ngIf="isComponentBeingEdited(componentData.componentId)" class="phrase-edit-mode">
                       <textarea 
                         #phraseInput
                         class="phrase-input"
-                        [value]="getEditingPhraseValue(phrase)"
-                        (input)="updateEditingPhrase(phrase, $event)"
-                        (blur)="onTextareaBlur(phrase, $event)"
+                        [value]="getEditingComponentValue(componentData.componentId)"
+                        (input)="updateEditingComponent(componentData.componentId, $event)"
+                        (blur)="onTextareaBlur(componentData.componentId, $event)"
+                        (keydown)="onComponentKeyDown(componentData.componentId, $event)"
                         placeholder="Describe your food..."
                         autoFocus>
                       </textarea>
                       <button 
                         class="send-button"
-                        (click)="sendUpdatedPhrase(phrase)"
+                        (click)="sendUpdatedComponent(componentData.componentId)"
                         (mousedown)="$event.preventDefault()"
-                        [disabled]="!hasChanges(phrase)"
+                        [disabled]="!hasChanges(componentData.componentId)"
                         type="button">
                         <ion-icon name="send"></ion-icon>
                       </button>
@@ -104,45 +105,45 @@
                 <ion-select 
                   interface="popover"
                   [interfaceOptions]="{ cssClass: 'wide-select-popover' }"
-                  [value]="getSelectedFood(phrase)?.fatSecretFoodId" 
-                  (ionChange)="onFoodSelected(phrase, $event.detail.value)" 
+                  [value]="getSelectedFood(componentData.componentId)?.fatSecretFoodId" 
+                  (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)" 
                   [disabled]="isReadOnly"
-                  id="foodSelect-{{ phrase }}">
+                  id="foodSelect-{{ componentData.componentId }}">
                   <ion-select-option 
-                    *ngFor="let food of (message.foodOptions?.[phrase] || [])" 
-                    [value]="food.fatSecretFoodId">
-                    {{ food.displayName }}
-                    <span *ngIf="food.brandName" class="brand-name"> – {{ food.brandName }}</span>
+                    *ngFor="let match of (componentData.component.matches || [])" 
+                    [value]="match.fatSecretFoodId">
+                    {{ match.displayName }}
+                    <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
                   </ion-select-option>
                 </ion-select>
               </div>
 
               <div class="serving-options-inline">
                 <ion-radio-group 
-                  [value]="getSelectedServingId(phrase)"
-                  (ionChange)="onServingSelected(phrase, $event.detail.value)">
+                  [value]="getSelectedServingId(componentData.componentId)"
+                  (ionChange)="onServingSelected(componentData.componentId, $event.detail.value)">
                   <ion-radio 
-                    *ngFor="let serving of getSelectedFood(phrase)?.servings; trackBy: trackByServingId"
+                    *ngFor="let serving of getSelectedFood(componentData.componentId)?.servings; trackBy: trackByServingId"
                     [value]="serving.fatSecretServingId"
                     [disabled]="isReadOnly"
-                    (click)="onRowClicked(phrase, serving)">
-                    <div class="serving-row-content" (click)="$event.stopPropagation(); onRowClicked(phrase, serving)">
+                    (click)="onRowClicked(componentData.componentId, serving)">
+                    <div class="serving-row-content" (click)="$event.stopPropagation(); onRowClicked(componentData.componentId, serving)">
                       <!-- Show stepper only for selected row -->
-                      <ng-container *ngIf="getSelectedServingId(phrase) === serving.fatSecretServingId && !isReadOnly">
+                      <ng-container *ngIf="getSelectedServingId(componentData.componentId) === serving.fatSecretServingId && !isReadOnly">
                         <app-serving-quantity-input
-                          [value]="getEffectiveQuantity(phrase, serving)"
+                          [value]="getEffectiveQuantity(componentData.componentId, serving)"
                           [step]="1"
                           [min]="0.1"
                           [max]="999"
                           [disabled]="isReadOnly"
                           [ariaLabel]="'Quantity for ' + getUnitText(serving)"
-                          (click)="$event.stopPropagation(); onRowClicked(phrase, serving)"
-                          (valueChange)="onInlineQtyChanged(phrase, serving, $event)">
+                          (click)="$event.stopPropagation(); onRowClicked(componentData.componentId, serving)"
+                          (valueChange)="onInlineQtyChanged(componentData.componentId, serving, $event)">
                         </app-serving-quantity-input>
                         <span class="unit-label">{{ getUnitText(serving) }}</span>
                       </ng-container>
                       <!-- Show normal label for unselected rows or read-only mode -->
-                      <ng-container *ngIf="getSelectedServingId(phrase) !== serving.fatSecretServingId || isReadOnly">
+                      <ng-container *ngIf="getSelectedServingId(componentData.componentId) !== serving.fatSecretServingId || isReadOnly">
                         <span class="serving-label">{{ getServingLabel(serving) }}</span>
                       </ng-container>
                     </div>

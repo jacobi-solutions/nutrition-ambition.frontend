@@ -12,7 +12,6 @@ export interface DisplayMessage {
     logMealToolResponse?: LogMealToolResponse | null;
   
     // optional convenience fields
-    foodOptions?: Record<string, ComponentMatch[]> | null;
     mealName?: string | null;
     
     // phrase editing state

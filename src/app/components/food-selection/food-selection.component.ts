@@ -24,25 +24,30 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   @Output() editConfirmed = new EventEmitter<SubmitEditServingSelectionRequest>();
   @Output() cancel = new EventEmitter<void>();
   @Output() updatedMessage = new EventEmitter<DisplayMessage>();
-  @Output() phraseEditRequested = new EventEmitter<{originalPhrase: string, newPhrase: string, messageId: string}>();
+  @Output() phraseEditRequested = new EventEmitter<{originalPhrase: string, newPhrase: string, messageId: string, componentId?: string}>();
 
   isReadOnly = false;
   isEditMode = false;
 
-  selections: { [phrase: string]: { foodId: string; servingId?: string } } = {};
-  expandedSections: { [phrase: string]: boolean } = {};
-  removedPhrases: Set<string> = new Set();
+  selections: { [componentId: string]: { foodId: string; servingId?: string } } = {};
+  expandedSections: { [componentId: string]: boolean } = {};
+  removedComponents: Set<string> = new Set();
   isSubmitting = false;
   isCanceling = false;
   private cancelTimeout: any = null;
-  editingPhrases: { [phrase: string]: boolean } = {};
-  editingPhraseValues: { [phrase: string]: string } = {};
-  searchingPhrases: { [phrase: string]: boolean } = {};
+  editingComponents: { [componentId: string]: boolean } = {};
+  editingComponentValues: { [componentId: string]: string } = {};
+  searchingComponents: { [componentId: string]: boolean } = {};
   
   // Add something functionality
   isAddingFood = false;
   newFoodPhrase = '';
   isSubmittingNewFood = false;
+
+  // Cached available components to prevent infinite change detection loops
+  private _availableComponents: Array<{componentId: string, food: any, component: any}> = [];
+  private _lastMessageId: string | undefined = undefined;
+  private _lastRemovedComponentsSize: number = 0;
 
   constructor(
     private toastService: ToastService, 
@@ -54,12 +59,36 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   get hasPayload(): boolean {
-    return !!this.message.foodOptions && Object.keys(this.message.foodOptions).length > 0;
+    return !!this.message.logMealToolResponse?.foods && this.message.logMealToolResponse.foods.length > 0;
   }
 
-  get payloadKeys(): string[] {
-    if (!this.message.foodOptions) return [];
-    return Object.keys(this.message.foodOptions).filter(p => !this.removedPhrases.has(p));
+  get availableComponents(): Array<{componentId: string, food: any, component: any}> {
+    // Only recalculate if the message has changed or components were removed
+    if (this._lastMessageId !== this.message.id || this._lastRemovedComponentsSize !== this.removedComponents.size) {
+      this._lastMessageId = this.message.id;
+      this._lastRemovedComponentsSize = this.removedComponents.size;
+      this._availableComponents = this._calculateAvailableComponents();
+    }
+    
+    return this._availableComponents;
+  }
+
+  private _calculateAvailableComponents(): Array<{componentId: string, food: any, component: any}> {
+    if (!this.message.logMealToolResponse?.foods) return [];
+    
+    const components: Array<{componentId: string, food: any, component: any}> = [];
+    
+    this.message.logMealToolResponse.foods.forEach(food => {
+      if (food.components) {
+        food.components.forEach(component => {
+          if (component.id && !this.removedComponents.has(component.id)) {
+            components.push({ componentId: component.id, food, component });
+          }
+        });
+      }
+    });
+    
+    return components;
   }
 
   get statusText(): string {
@@ -73,17 +102,26 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    if (!this.message.foodOptions) return;
-    for (const phrase of Object.keys(this.message.foodOptions)) {
-      const foods = this.message.foodOptions[phrase];
-      const foodId = foods?.[0]?.fatSecretFoodId;
-      // Ensure we preserve the selectedServingId from the API
-      const servingId = foods?.[0]?.selectedServingId;
-      if (foodId) {
-        this.selections[phrase] = { foodId, servingId };
+    if (!this.message.logMealToolResponse?.foods) return;
+    
+    // Initialize selections for each component
+    this.message.logMealToolResponse.foods.forEach(food => {
+      if (food.components) {
+        food.components.forEach(component => {
+          if (component.id && component.matches && component.matches.length > 0) {
+            const firstMatch = component.matches[0];
+            const foodId = firstMatch?.fatSecretFoodId;
+            const servingId = firstMatch?.selectedServingId;
+            
+            if (foodId) {
+              this.selections[component.id] = { foodId, servingId };
+            }
+            this.expandedSections[component.id] = false;
+          }
+        });
       }
-      this.expandedSections[phrase] = false;
-    }
+    });
+    
     this.isReadOnly = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
     this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
   }
@@ -92,36 +130,56 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (changes['isReadOnly'] && this.isReadOnly) this.isSubmitting = false;
   }
 
-  toggleExpansion(phrase: string): void {
-    this.expandedSections[phrase] = !this.expandedSections[phrase];
+  toggleExpansion(componentId: string): void {
+    this.expandedSections[componentId] = !this.expandedSections[componentId];
   }
 
-  isExpanded(phrase: string): boolean {
-    return !!this.expandedSections[phrase];
+  isExpanded(componentId: string): boolean {
+    return !!this.expandedSections[componentId];
   }
 
-  getSelectedFood(phrase: string): ComponentMatch | null {
-    const selection = this.selections[phrase];
-    return this.message.foodOptions?.[phrase]?.find(f => f.fatSecretFoodId === selection?.foodId) || null;
+  getSelectedFood(componentId: string): ComponentMatch | null {
+    const selection = this.selections[componentId];
+    if (!selection?.foodId) return null;
+    
+    // Find the component by ID and get its matches
+    const component = this.findComponentById(componentId);
+    return component?.matches?.find((match: any) => match.fatSecretFoodId === selection.foodId) || null;
   }
 
-  onFoodSelected(phrase: string, foodId: string): void {
-    const food = this.message.foodOptions?.[phrase]?.find(f => f.fatSecretFoodId === foodId);
+  private findComponentById(componentId: string): any {
+    if (!this.message.logMealToolResponse?.foods) return null;
+    
+    for (const food of this.message.logMealToolResponse.foods) {
+      if (food.components) {
+        for (const component of food.components) {
+          if (component.id === componentId) {
+            return component;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  onFoodSelected(componentId: string, foodId: string): void {
+    const component = this.findComponentById(componentId);
+    const food = component?.matches?.find((match: any) => match.fatSecretFoodId === foodId);
     const defaultServingId = food?.servings?.[0]?.fatSecretServingId;
-    this.selections[phrase] = { foodId, servingId: defaultServingId };
+    this.selections[componentId] = { foodId, servingId: defaultServingId };
   }
 
-  onServingSelected(phrase: string, servingId: string): void {
-    if (this.selections[phrase]) this.selections[phrase].servingId = servingId;
+  onServingSelected(componentId: string, servingId: string): void {
+    if (this.selections[componentId]) this.selections[componentId].servingId = servingId;
   }
 
-  getSelectedServingId(phrase: string): string | undefined {
-    return this.selections[phrase]?.servingId;
+  getSelectedServingId(componentId: string): string | undefined {
+    return this.selections[componentId]?.servingId;
   }
 
-  getSelectedServing(phrase: string): ComponentServing | null {
-    const food = this.getSelectedFood(phrase);
-    const id = this.getSelectedServingId(phrase);
+  getSelectedServing(componentId: string): ComponentServing | null {
+    const food = this.getSelectedFood(componentId);
+    const id = this.getSelectedServingId(componentId);
     return food?.servings?.find(s => s.fatSecretServingId === id) || null;
   }
 
@@ -162,9 +220,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   
 
   isSelectionComplete(): boolean {
-    if (!this.message.foodOptions) return false;
-    return this.payloadKeys.every(phrase => {
-      const sel = this.selections[phrase];
+    if (!this.hasPayload) return false;
+    return this.availableComponents.every(({ componentId }) => {
+      const sel = this.selections[componentId];
       return sel?.foodId && sel?.servingId;
     });
   }
@@ -182,17 +240,18 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     req.pendingMessageId = this.message.id;
     req.selections = [];
 
-    for (const phrase of this.payloadKeys) {
-      const food = this.getSelectedFood(phrase);
-      const servingId = this.getSelectedServingId(phrase);
-      const selectedServing = this.getSelectedServing(phrase);
+    for (const { componentId, component } of this.availableComponents) {
+      const food = this.getSelectedFood(componentId);
+      const servingId = this.getSelectedServingId(componentId);
+      const selectedServing = this.getSelectedServing(componentId);
       
       if (food?.fatSecretFoodId && servingId && selectedServing) {
         // Get the effective quantity (prefer effectiveQuantity if available)
-        const displayQuantity = this.getEffectiveQuantity(phrase, selectedServing);
+        const displayQuantity = this.getEffectiveQuantity(componentId, selectedServing);
         
         req.selections.push(new UserSelectedServing({
-          originalText: phrase,
+          componentId: componentId,
+          originalText: component.key || food.originalText, // Use component key or fallback to originalText
           fatSecretFoodId: food.fatSecretFoodId,
           fatSecretServingId: servingId,
           editedQuantity: displayQuantity
@@ -212,15 +271,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     req.itemSetId = this.message.logMealToolResponse?.itemSetId ?? '';
     req.selections = [];
   
-    for (const phrase of this.payloadKeys) {
-      const food = this.getSelectedFood(phrase);
-      const servingId = this.getSelectedServingId(phrase);
-      const selectedServing = this.getSelectedServing(phrase);
+    for (const { componentId, component } of this.availableComponents) {
+      const food = this.getSelectedFood(componentId);
+      const servingId = this.getSelectedServingId(componentId);
+      const selectedServing = this.getSelectedServing(componentId);
   
       if (food?.fatSecretFoodId && servingId && selectedServing) {
-        const displayQuantity = this.getEffectiveQuantity(phrase, selectedServing);
+        const displayQuantity = this.getEffectiveQuantity(componentId, selectedServing);
         req.selections.push(new UserSelectedServing({
-          originalText: phrase,
+          componentId: componentId,
+          originalText: component.key || food.originalText, // Use component key or fallback to originalText
           fatSecretFoodId: food.fatSecretFoodId,
           fatSecretServingId: servingId,
           editedQuantity: displayQuantity
@@ -275,7 +335,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return 1;
   }
 
-  getEffectiveQuantity(phrase: string, serving: ComponentServing | null): number {
+  getEffectiveQuantity(componentId: string, serving: ComponentServing | null): number {
     // Always prioritize the serving's displayQuantity for UI display
     // This ensures the stepper shows the correct UI value (e.g., 0.42 cup instead of 100)
     if (serving && serving.displayQuantity !== undefined && isFinite(serving.displayQuantity) && serving.displayQuantity > 0) {
@@ -283,7 +343,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
     
     // Fall back to food's effectiveQuantity only if serving's displayQuantity is not available
-    const food = this.getSelectedFood(phrase);
+    const food = this.getSelectedFood(componentId);
     if (food && (food as any).effectiveQuantity && (food as any).effectiveQuantity > 0) {
       return (food as any).effectiveQuantity;
     }
@@ -291,25 +351,27 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return this.getDisplayQuantity(serving);
   }
 
-  getDisplayNameOrSearchText(phrase: string): string {
-    const food = this.getSelectedFood(phrase);
+  getDisplayNameOrSearchText(componentId: string): string {
+    const food = this.getSelectedFood(componentId);
     if (food && (food as any).inferred && (food as any).searchText) {
       return (food as any).searchText;
     }
     return food?.displayName || '';
   }
 
-  isInferred(phrase: string): boolean {
-    const food = this.getSelectedFood(phrase);
+  isInferred(componentId: string): boolean {
+    const food = this.getSelectedFood(componentId);
     return !!(food && (food as any).inferred === true);
   }
 
-  getSearchTextOnly(phrase: string): string {
-    const food = this.getSelectedFood(phrase);
+  getSearchTextOnly(componentId: string): string {
+    const food = this.getSelectedFood(componentId);
     if (food && (food as any).inferred && (food as any).searchText) {
       return (food as any).searchText;
     }
-    return phrase;
+    // Fallback to component key or original phrase
+    const component = this.findComponentById(componentId);
+    return component?.key || '';
   }
 
   getUnitText(s: ComponentServing): string {
@@ -354,15 +416,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
 
-  async removeItem(phrase: string) {
-    const rowElement = document.getElementById(`row-${phrase}`);
+  async removeItem(componentId: string) {
+    const rowElement = document.getElementById(`row-${componentId}`);
     if (rowElement) rowElement.classList.add('removing');
 
     setTimeout(async () => {
-      this.removedPhrases.add(phrase);
+      this.removedComponents.add(componentId);
 
       // Check if this was the last remaining food item
-      const remainingItems = this.payloadKeys; // This will exclude the just-removed item
+      const remainingItems = this.availableComponents; // This will exclude the just-removed item
       const isLastItem = remainingItems.length === 0;
 
       if (isLastItem) {
@@ -371,15 +433,19 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         return;
       }
 
+      const component = this.findComponentById(componentId);
+      const food = this.getSelectedFood(componentId);
+      const itemName = food?.displayName || component?.key || 'item';
+
       await this.toastService.showToast({
-        message: `${this.getSelectedFood(phrase)?.displayName || phrase} removed`,
+        message: `${itemName} removed`,
         duration: 5000,
         color: 'medium',
         buttons: [
           {
             text: 'Undo',
             handler: () => {
-              this.removedPhrases.delete(phrase);
+              this.removedComponents.delete(componentId);
             }
           }
         ]
@@ -423,9 +489,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return looksMetric || mdMetric === 'g' || mdMetric === 'ml';
   }
 
-  private rescaleFromSelected(phrase: string, selected: ComponentServing, editedQty: number): void {
+  private rescaleFromSelected(componentId: string, selected: ComponentServing, editedQty: number): void {
     // 0) guard
-    if (!this.message.foodOptions?.[phrase]) return;
+    const component = this.findComponentById(componentId);
+    if (!component) return;
     
     // 1) compute targetMass in metric (g/ml)
     const selMetricAmt = this.getMetricAmt(selected); // per "one" serving of selected
@@ -444,7 +511,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (!isFinite(targetMass) || targetMass <= 0) return;
 
     // 2) iterate all servings in the selected food and recompute scaledQuantity + display fields
-    const selectedFood = this.getSelectedFood(phrase);
+    const selectedFood = this.getSelectedFood(componentId);
     if (!selectedFood?.servings) return;
 
     // ensure exactly one best match (the edited row)
@@ -497,19 +564,19 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // ensure UI shows the edited row as selected
     if (editedId) {
-      this.onServingSelected(phrase, editedId);
+      this.onServingSelected(componentId, editedId);
     }
   }
 
-  onInlineQtyChanged(phrase: string, s: ComponentServing, newValue: number): void {
+  onInlineQtyChanged(componentId: string, s: ComponentServing, newValue: number): void {
     // clamp
     const v = Math.max(0.1, Math.min(999, Number(newValue) || 0));
     (s as any).displayQuantity = v;
 
     // if this row isn't selected, select it now
-    const currentSelected = this.getSelectedServingId(phrase);
+    const currentSelected = this.getSelectedServingId(componentId);
     if (currentSelected !== s.fatSecretServingId && s.fatSecretServingId) {
-      this.onServingSelected(phrase, s.fatSecretServingId);
+      this.onServingSelected(componentId, s.fatSecretServingId);
     }
 
     // For simple cases like "medium banana", just update scaledQuantity directly
@@ -522,7 +589,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     (s as any).displayUnit = this.getUnitText(s);
     
     // Mark this as the best match
-    const selectedFood = this.getSelectedFood(phrase);
+    const selectedFood = this.getSelectedFood(componentId);
     if (selectedFood?.servings) {
       for (const serving of selectedFood.servings) {
         (serving as any).isBestMatch = serving.fatSecretServingId === s.fatSecretServingId;
@@ -530,16 +597,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
 
     // drive the rescale from the selected row and edited quantity (for other servings)
-    this.rescaleFromSelected(phrase, s, v);
+    this.rescaleFromSelected(componentId, s, v);
     
     // Force change detection to update the UI immediately
     this.cdr.detectChanges();
   }
 
-  onRowClicked(phrase: string, s: ComponentServing): void {
-    const current = this.getSelectedServingId(phrase);
+  onRowClicked(componentId: string, s: ComponentServing): void {
+    const current = this.getSelectedServingId(componentId);
     if (current !== s.fatSecretServingId && s.fatSecretServingId) {
-      this.onServingSelected(phrase, s.fatSecretServingId);
+      this.onServingSelected(componentId, s.fatSecretServingId);
     }
   }
 
@@ -592,36 +659,38 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     });
   }
 
-  async onEditPhrase(phrase: string): Promise<void> {
-    const food = this.getSelectedFood(phrase);
+  async onEditPhrase(componentId: string): Promise<void> {
+    const food = this.getSelectedFood(componentId);
     if (!food) return;
 
     const missingInfo = this.getMissingInformation(food);
-    const suggestionMessage = this.generateSuggestionMessage(phrase, missingInfo);
+    const component = this.findComponentById(componentId);
+    const originalText = component?.key || '';
+    const suggestionMessage = this.generateSuggestionMessage(originalText, missingInfo);
     
     // Show suggestion as a positioned tooltip above the phrase input
-    this.showSuggestionTooltip(phrase, suggestionMessage);
+    this.showSuggestionTooltip(componentId, suggestionMessage);
   }
 
-  private showSuggestionTooltip(phrase: string, message: string): void {
+  private showSuggestionTooltip(componentId: string, message: string): void {
     // Remove any existing tooltip
     this.removeSuggestionTooltip();
     
-    // Find the specific phrase container using the data attribute
-    const phraseContainer = document.querySelector(`[data-phrase="${phrase}"]`) as HTMLElement;
-    if (!phraseContainer) {
-      console.log('Could not find phrase container for:', phrase);
+    // Find the specific component container using the data attribute
+    const componentContainer = document.querySelector(`[data-component-id="${componentId}"]`) as HTMLElement;
+    if (!componentContainer) {
+      console.log('Could not find component container for:', componentId);
       return;
     }
     
     // Look for textarea first (edit mode), then phrase text (display mode)
-    let targetElement = phraseContainer.querySelector('textarea.phrase-input') as HTMLElement;
+    let targetElement = componentContainer.querySelector('textarea.phrase-input') as HTMLElement;
     if (!targetElement) {
-      targetElement = phraseContainer.querySelector('.phrase-text') as HTMLElement;
+      targetElement = componentContainer.querySelector('.phrase-text') as HTMLElement;
     }
     
     if (!targetElement) {
-      console.log('Could not find target element in container for:', phrase);
+      console.log('Could not find target element in container for:', componentId);
       return;
     }
     
@@ -724,27 +793,27 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return suggestion;
   }
 
-  isPhraseBeingEdited(phrase: string): boolean {
-    return !!this.editingPhrases[phrase];
+  isComponentBeingEdited(componentId: string): boolean {
+    return !!this.editingComponents[componentId];
   }
 
-  isSearchingPhrase(phrase: string): boolean {
-    // Check if this phrase has a ComponentMatch with isEditingPhrase = true
-    const foods = this.message.foodOptions?.[phrase];
-    if (foods && foods.length > 0 && (foods[0] as any).isEditingPhrase) {
+  isSearchingComponent(componentId: string): boolean {
+    // Check if this component has a ComponentMatch with isEditingPhrase = true
+    const component = this.findComponentById(componentId);
+    if (component?.matches && component.matches.length > 0 && (component.matches[0] as any).isEditingPhrase) {
       return true;
     }
-    return !!this.searchingPhrases[phrase];
+    return !!this.searchingComponents[componentId];
   }
 
-  clearPhraseSearching(phrase: string): void {
-    this.searchingPhrases[phrase] = false;
-    delete this.searchingPhrases[phrase];
+  clearComponentSearching(componentId: string): void {
+    this.searchingComponents[componentId] = false;
+    delete this.searchingComponents[componentId];
   }
 
 
 
-  onTextareaBlur(phrase: string, event: FocusEvent): void {
+  onTextareaBlur(componentId: string, event: FocusEvent): void {
     // Check if the focus is moving to the send button
     const relatedTarget = event.relatedTarget as HTMLElement;
     if (relatedTarget && relatedTarget.classList.contains('send-button')) {
@@ -753,20 +822,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     
     // Use a small delay to allow button click to process first
     setTimeout(() => {
-      this.finishEditingPhrase(phrase);
+      this.finishEditingComponent(componentId);
     }, 150);
   }
 
-  async startEditingPhrase(phrase: string): Promise<void> {
+  async startEditingComponent(componentId: string): Promise<void> {
     // First enable editing mode
-    this.editingPhrases[phrase] = true;
-    this.editingPhraseValues[phrase] = this.getSearchTextOnly(phrase);
+    this.editingComponents[componentId] = true;
+    this.editingComponentValues[componentId] = this.getSearchTextOnly(componentId);
     this.cdr.detectChanges();
     
     // Then show the suggestion toast and focus the textarea
     setTimeout(async () => {
       // Show the suggestion toast
-      await this.onEditPhrase(phrase);
+      await this.onEditPhrase(componentId);
       
       // Focus the textarea and ensure proper sizing
       const textarea = document.querySelector(`textarea.phrase-input`) as HTMLTextAreaElement;
@@ -777,22 +846,23 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }, 0);
   }
 
-  getEditingPhraseValue(phrase: string): string {
-    return this.editingPhraseValues[phrase] || phrase;
+  getEditingComponentValue(componentId: string): string {
+    const component = this.findComponentById(componentId);
+    return this.editingComponentValues[componentId] || component?.key || '';
   }
 
 
 
-  updateEditingPhrase(phrase: string, event: any): void {
-    this.editingPhraseValues[phrase] = event.target.value;
+  updateEditingComponent(componentId: string, event: any): void {
+    this.editingComponentValues[componentId] = event.target.value;
     this.autoResizeTextarea(event.target);
   }
 
-  onPhraseKeyDown(phrase: string, event: KeyboardEvent): void {
+  onComponentKeyDown(componentId: string, event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       // Enter without shift sends the message
       event.preventDefault();
-      this.sendUpdatedPhrase(phrase);
+      this.sendUpdatedComponent(componentId);
     } else if (event.key === 'Enter' && event.shiftKey) {
       // Shift+Enter adds a new line (default behavior)
       // Let the default behavior happen, then resize
@@ -815,100 +885,60 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     textarea.style.height = newHeight + 'px';
   }
 
-  hasChanges(phrase: string): boolean {
-    const currentValue = this.editingPhraseValues[phrase];
-    return !!(currentValue && currentValue.trim() !== phrase.trim());
+  hasChanges(componentId: string): boolean {
+    const currentValue = this.editingComponentValues[componentId];
+    const component = this.findComponentById(componentId);
+    const originalValue = component?.key || '';
+    return !!(currentValue && currentValue.trim() !== originalValue.trim());
   }
 
-  sendUpdatedPhrase(phrase: string): void {
-    const newValue = this.editingPhraseValues[phrase];
+  sendUpdatedComponent(componentId: string): void {
+    const newValue = this.editingComponentValues[componentId];
+    const component = this.findComponentById(componentId);
+    const originalValue = component?.key || '';
     
-    if (!newValue || newValue.trim() === phrase) {
+    if (!newValue || newValue.trim() === originalValue) {
       console.log('No changes detected, not sending');
       return;
     }
 
-    console.log(`Requesting phrase edit: "${phrase}" → "${newValue}"`);
+    console.log(`Requesting component edit: "${originalValue}" → "${newValue}"`);
     
-    // Set loading state for this specific phrase
-    this.searchingPhrases[phrase] = true;
+    // Set loading state for this specific component
+    this.searchingComponents[componentId] = true;
     
     // Emit the phrase edit request to the parent (chat page)
+    // Note: We need to pass componentId in the request
     this.phraseEditRequested.emit({
-      originalPhrase: phrase,
+      originalPhrase: originalValue,
       newPhrase: newValue.trim(),
-      messageId: this.message.id || ''
+      messageId: this.message.id || '',
+      componentId: componentId // Add componentId to the event
     });
     
     // Clear the editing state since we're now in loading state
-    this.finishEditingPhrase(phrase);
+    this.finishEditingComponent(componentId);
   }
 
-  finishEditingPhrase(phrase: string): void {
-    const newValue = this.editingPhraseValues[phrase];
-    if (newValue && newValue.trim() !== phrase) {
-      // Here you could emit an event to update the phrase or trigger a new search
-      console.log(`Phrase changed from "${phrase}" to "${newValue}"`);
+  finishEditingComponent(componentId: string): void {
+    const newValue = this.editingComponentValues[componentId];
+    const component = this.findComponentById(componentId);
+    const originalValue = component?.key || '';
+    
+    if (newValue && newValue.trim() !== originalValue) {
+      console.log(`Component changed from "${originalValue}" to "${newValue}"`);
     }
     
-    // Make the input readonly again
-    const inputElement = document.querySelector(`input[value="${newValue || phrase}"]`) as HTMLInputElement;
-    if (inputElement) {
-      inputElement.setAttribute('readonly', 'true');
-    }
-    
-    this.editingPhrases[phrase] = false;
-    delete this.editingPhraseValues[phrase];
+    this.editingComponents[componentId] = false;
+    delete this.editingComponentValues[componentId];
   }
 
-  cancelEditingPhrase(phrase: string): void {
-    this.editingPhrases[phrase] = false;
-    delete this.editingPhraseValues[phrase];
+  cancelEditingComponent(componentId: string): void {
+    this.editingComponents[componentId] = false;
+    delete this.editingComponentValues[componentId];
   }
 
-  private updateFoodOptionsInPlace(originalPhrase: string, newPhrase: string, newFoodOptions: { [phrase: string]: ComponentMatch[] }, mealName?: string): void {
-    if (!this.message.foodOptions) {
-      return;
-    }
-
-    // Remove the old phrase entry
-    delete this.message.foodOptions[originalPhrase];
-    
-    // Add the new phrase entry with the new food options
-    Object.keys(newFoodOptions).forEach(phrase => {
-      this.message.foodOptions![phrase] = newFoodOptions[phrase];
-    });
-
-    // Don't update the meal name - keep the original title
-    // if (mealName) {
-    //   this.message.mealName = mealName;
-    // }
-
-    // Clear the editing state for the original phrase
-    delete this.editingPhrases[originalPhrase];
-    delete this.editingPhraseValues[originalPhrase];
-
-    // Update selections to point to the new phrase if it exists
-    if (this.selections[originalPhrase]) {
-      const oldSelection = this.selections[originalPhrase];
-      delete this.selections[originalPhrase];
-      
-      // Find the new phrase key and set up selection for it
-      const newPhraseKey = Object.keys(newFoodOptions)[0];
-      if (newPhraseKey && newFoodOptions[newPhraseKey] && newFoodOptions[newPhraseKey].length > 0) {
-        const firstFood = newFoodOptions[newPhraseKey][0];
-        this.selections[newPhraseKey] = {
-          foodId: firstFood.fatSecretFoodId || '',
-          servingId: firstFood.servings?.[0]?.fatSecretServingId
-        };
-      }
-    }
-
-    // Force change detection
-    this.cdr.detectChanges();
-    
-    console.log('Updated food options in place:', newFoodOptions);
-  }
+  // The backend returns the updated ChatMessage with the new foods structure
 
   // Add something functionality methods
   startAddingFood(): void {
@@ -961,7 +991,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.phraseEditRequested.emit({
       originalPhrase: '', // Empty indicates this is a new addition
       newPhrase: this.newFoodPhrase.trim(),
-      messageId: this.message.id || ''
+      messageId: this.message.id || '',
+      componentId: undefined // No specific component for new additions
     });
 
     // Reset the form

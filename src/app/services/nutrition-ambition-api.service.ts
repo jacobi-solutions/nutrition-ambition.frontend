@@ -2263,6 +2263,62 @@ export interface ICompleteFeedbackResponse {
     feedbackEntry?: FeedbackEntry;
 }
 
+export class Component implements IComponent {
+    id?: string | undefined;
+    key?: string | undefined;
+    selectedComponentId?: string | undefined;
+    matches?: ComponentMatch[] | undefined;
+
+    constructor(data?: IComponent) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.key = _data["key"];
+            this.selectedComponentId = _data["selectedComponentId"];
+            if (Array.isArray(_data["matches"])) {
+                this.matches = [] as any;
+                for (let item of _data["matches"])
+                    this.matches!.push(ComponentMatch.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): Component {
+        data = typeof data === 'object' ? data : {};
+        let result = new Component();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["key"] = this.key;
+        data["selectedComponentId"] = this.selectedComponentId;
+        if (Array.isArray(this.matches)) {
+            data["matches"] = [];
+            for (let item of this.matches)
+                data["matches"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IComponent {
+    id?: string | undefined;
+    key?: string | undefined;
+    selectedComponentId?: string | undefined;
+    matches?: ComponentMatch[] | undefined;
+}
+
 export class ComponentMatch implements IComponentMatch {
     fatSecretFoodId?: string | undefined;
     displayName?: string | undefined;
@@ -3093,6 +3149,78 @@ export interface IFeedbackWithAccount {
     accountEmail?: string | undefined;
     accountId?: string | undefined;
     accountCreatedDate?: Date | undefined;
+}
+
+export class Food implements IFood {
+    id?: string | undefined;
+    name?: string | undefined;
+    quantity?: number;
+    unit?: string | undefined;
+    description?: string | undefined;
+    brand?: string | undefined;
+    originalPhrase?: string | undefined;
+    components?: Component[] | undefined;
+
+    constructor(data?: IFood) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.quantity = _data["quantity"];
+            this.unit = _data["unit"];
+            this.description = _data["description"];
+            this.brand = _data["brand"];
+            this.originalPhrase = _data["originalPhrase"];
+            if (Array.isArray(_data["components"])) {
+                this.components = [] as any;
+                for (let item of _data["components"])
+                    this.components!.push(Component.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): Food {
+        data = typeof data === 'object' ? data : {};
+        let result = new Food();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["quantity"] = this.quantity;
+        data["unit"] = this.unit;
+        data["description"] = this.description;
+        data["brand"] = this.brand;
+        data["originalPhrase"] = this.originalPhrase;
+        if (Array.isArray(this.components)) {
+            data["components"] = [];
+            for (let item of this.components)
+                data["components"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IFood {
+    id?: string | undefined;
+    name?: string | undefined;
+    quantity?: number;
+    unit?: string | undefined;
+    description?: string | undefined;
+    brand?: string | undefined;
+    originalPhrase?: string | undefined;
+    components?: Component[] | undefined;
 }
 
 export class FoodBreakdown implements IFoodBreakdown {
@@ -4024,7 +4152,7 @@ export interface ILogEntryDto {
 export class LogMealToolResponse implements ILogMealToolResponse {
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
-    componentMatches?: { [key: string]: ComponentMatch[]; } | undefined;
+    foods?: Food[] | undefined;
     foodEntryId?: string | undefined;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
@@ -4042,12 +4170,10 @@ export class LogMealToolResponse implements ILogMealToolResponse {
         if (_data) {
             this.mealName = _data["mealName"];
             this.pendingMessageId = _data["pendingMessageId"];
-            if (_data["componentMatches"]) {
-                this.componentMatches = {} as any;
-                for (let key in _data["componentMatches"]) {
-                    if (_data["componentMatches"].hasOwnProperty(key))
-                        (<any>this.componentMatches)![key] = _data["componentMatches"][key] ? _data["componentMatches"][key].map((i: any) => ComponentMatch.fromJS(i)) : <any>undefined;
-                }
+            if (Array.isArray(_data["foods"])) {
+                this.foods = [] as any;
+                for (let item of _data["foods"])
+                    this.foods!.push(Food.fromJS(item));
             }
             this.foodEntryId = _data["foodEntryId"];
             this.groupId = _data["groupId"];
@@ -4066,12 +4192,10 @@ export class LogMealToolResponse implements ILogMealToolResponse {
         data = typeof data === 'object' ? data : {};
         data["mealName"] = this.mealName;
         data["pendingMessageId"] = this.pendingMessageId;
-        if (this.componentMatches) {
-            data["componentMatches"] = {};
-            for (let key in this.componentMatches) {
-                if (this.componentMatches.hasOwnProperty(key))
-                    (<any>data["componentMatches"])[key] = (<any>this.componentMatches)[key];
-            }
+        if (Array.isArray(this.foods)) {
+            data["foods"] = [];
+            for (let item of this.foods)
+                data["foods"].push(item.toJSON());
         }
         data["foodEntryId"] = this.foodEntryId;
         data["groupId"] = this.groupId;
@@ -4083,7 +4207,7 @@ export class LogMealToolResponse implements ILogMealToolResponse {
 export interface ILogMealToolResponse {
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
-    componentMatches?: { [key: string]: ComponentMatch[]; } | undefined;
+    foods?: Food[] | undefined;
     foodEntryId?: string | undefined;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
@@ -4421,6 +4545,7 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
     localDateKey?: string | undefined;
     originalPhrase?: string | undefined;
     messageId?: string | undefined;
+    componentId?: string | undefined;
 
     constructor(data?: ISearchFoodPhraseRequest) {
         if (data) {
@@ -4437,6 +4562,7 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
             this.localDateKey = _data["localDateKey"];
             this.originalPhrase = _data["originalPhrase"];
             this.messageId = _data["messageId"];
+            this.componentId = _data["componentId"];
         }
     }
 
@@ -4453,6 +4579,7 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
         data["localDateKey"] = this.localDateKey;
         data["originalPhrase"] = this.originalPhrase;
         data["messageId"] = this.messageId;
+        data["componentId"] = this.componentId;
         return data;
     }
 }
@@ -4462,6 +4589,7 @@ export interface ISearchFoodPhraseRequest {
     localDateKey?: string | undefined;
     originalPhrase?: string | undefined;
     messageId?: string | undefined;
+    componentId?: string | undefined;
 }
 
 export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
@@ -4471,7 +4599,7 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     searchPhrase?: string | undefined;
-    foodOptions?: { [key: string]: ComponentMatch[]; } | undefined;
+    foodOptions?: Food[] | undefined;
     mealName?: string | undefined;
     updatedMessage?: ChatMessage;
 
@@ -4496,12 +4624,10 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
             this.searchPhrase = _data["searchPhrase"];
-            if (_data["foodOptions"]) {
-                this.foodOptions = {} as any;
-                for (let key in _data["foodOptions"]) {
-                    if (_data["foodOptions"].hasOwnProperty(key))
-                        (<any>this.foodOptions)![key] = _data["foodOptions"][key] ? _data["foodOptions"][key].map((i: any) => ComponentMatch.fromJS(i)) : <any>undefined;
-                }
+            if (Array.isArray(_data["foodOptions"])) {
+                this.foodOptions = [] as any;
+                for (let item of _data["foodOptions"])
+                    this.foodOptions!.push(Food.fromJS(item));
             }
             this.mealName = _data["mealName"];
             this.updatedMessage = _data["updatedMessage"] ? ChatMessage.fromJS(_data["updatedMessage"]) : <any>undefined;
@@ -4527,12 +4653,10 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
         data["searchPhrase"] = this.searchPhrase;
-        if (this.foodOptions) {
-            data["foodOptions"] = {};
-            for (let key in this.foodOptions) {
-                if (this.foodOptions.hasOwnProperty(key))
-                    (<any>data["foodOptions"])[key] = (<any>this.foodOptions)[key];
-            }
+        if (Array.isArray(this.foodOptions)) {
+            data["foodOptions"] = [];
+            for (let item of this.foodOptions)
+                data["foodOptions"].push(item.toJSON());
         }
         data["mealName"] = this.mealName;
         data["updatedMessage"] = this.updatedMessage ? this.updatedMessage.toJSON() : <any>undefined;
@@ -4547,7 +4671,7 @@ export interface ISearchFoodPhraseResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     searchPhrase?: string | undefined;
-    foodOptions?: { [key: string]: ComponentMatch[]; } | undefined;
+    foodOptions?: Food[] | undefined;
     mealName?: string | undefined;
     updatedMessage?: ChatMessage;
 }
@@ -4879,6 +5003,7 @@ export class UserSelectedServing implements IUserSelectedServing {
     fatSecretFoodId?: string | undefined;
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;
+    componentId?: string | undefined;
 
     constructor(data?: IUserSelectedServing) {
         if (data) {
@@ -4895,6 +5020,7 @@ export class UserSelectedServing implements IUserSelectedServing {
             this.fatSecretFoodId = _data["fatSecretFoodId"];
             this.fatSecretServingId = _data["fatSecretServingId"];
             this.editedQuantity = _data["editedQuantity"];
+            this.componentId = _data["componentId"];
         }
     }
 
@@ -4911,6 +5037,7 @@ export class UserSelectedServing implements IUserSelectedServing {
         data["fatSecretFoodId"] = this.fatSecretFoodId;
         data["fatSecretServingId"] = this.fatSecretServingId;
         data["editedQuantity"] = this.editedQuantity;
+        data["componentId"] = this.componentId;
         return data;
     }
 }
@@ -4920,6 +5047,7 @@ export interface IUserSelectedServing {
     fatSecretFoodId?: string | undefined;
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;
+    componentId?: string | undefined;
 }
 
 export class ApiException extends Error {

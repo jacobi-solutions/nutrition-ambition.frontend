@@ -416,7 +416,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
               text: msg.content || '',
               isUser: msg.role === MessageRoleTypes.User,
               timestamp: msg.createdDateUtc || new Date(),
-              foodOptions: msg.logMealToolResponse?.componentMatches || null,
+              // foodOptions removed - use logMealToolResponse.foods instead
               mealName: msg.logMealToolResponse?.mealName || null,
               logMealToolResponse: msg.logMealToolResponse || null,
               role: msg.role
@@ -792,7 +792,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             text: msg.content || '',
             isUser: msg.role === MessageRoleTypes.User,
             timestamp: msg.createdDateUtc || new Date(),
-            foodOptions: msg.logMealToolResponse?.componentMatches || null,
+            // foodOptions removed - use logMealToolResponse.foods instead
             mealName: msg.logMealToolResponse?.mealName || null,
             logMealToolResponse: msg.logMealToolResponse || null,
             role: msg.role
@@ -944,7 +944,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
   }
 
   // Handle phrase edit request from food-selection component
-  async onPhraseEditRequested(event: {originalPhrase: string, newPhrase: string, messageId: string}): Promise<void> {
+  async onPhraseEditRequested(event: {originalPhrase: string, newPhrase: string, messageId: string, componentId?: string}): Promise<void> {
     console.log('Phrase edit/add requested:', event);
     
     // Find the message 
@@ -957,32 +957,12 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     const originalMessage = this.messages[messageIndex];
     const isAddingNew = !event.originalPhrase; // Empty originalPhrase means adding new food
     
-    // Create a loading message
-    const loadingFoodOptions = { ...originalMessage.foodOptions };
-    
-    if (isAddingNew) {
-      // Add a loading entry for the new phrase
-      loadingFoodOptions[event.newPhrase] = [{
-        displayName: event.newPhrase,
-        isEditingPhrase: true,
-        fatSecretFoodId: '',
-        servings: []
-      } as any];
-      console.log('Adding new food phrase:', event.newPhrase);
-    } else {
-      // Replace the edited phrase with a loading entry
-      loadingFoodOptions[event.originalPhrase] = [{
-        displayName: event.originalPhrase,
-        isEditingPhrase: true,
-        fatSecretFoodId: '',
-        servings: []
-      } as any];
-      console.log('Updating existing food phrase:', event.originalPhrase, '->', event.newPhrase);
-    }
-    
+    // Create a loading message - note that the backend will handle the actual loading state
+    // through logMealToolResponse.foods structure
     const loadingMessage: DisplayMessage = {
       ...originalMessage,
-      foodOptions: loadingFoodOptions
+      // Keep the existing structure for now, but add a loading indicator
+      // The actual response will come back with the new foods structure
     };
     
     // Replace with loading message
@@ -995,6 +975,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         searchPhrase: event.newPhrase,
         originalPhrase: event.originalPhrase,
         messageId: event.messageId,
+        componentId: event.componentId, // Include componentId in the request
         localDateKey: this.dateService.getSelectedDate()
       });
       
@@ -1040,7 +1021,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       text: chatMessage.content || '',
       isUser: chatMessage.role === MessageRoleTypes.User,
       timestamp: chatMessage.createdDateUtc || new Date(),
-      foodOptions: chatMessage.logMealToolResponse?.componentMatches || null,
+      // foodOptions removed - use logMealToolResponse.foods instead
       mealName: chatMessage.logMealToolResponse?.mealName || null,
       logMealToolResponse: chatMessage.logMealToolResponse || null,
       role: chatMessage.role
