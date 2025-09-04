@@ -17,8 +17,218 @@
       </div>
 
       <div *ngIf="hasPayload" class="food-items-list">
-      <ng-container *ngFor="let componentData of availableComponents; let isLast = last">
-        <div class="food-item-container" [class.is-last]="isLast">
+      <!-- Loop over foods instead of flattened components -->
+      <ng-container *ngFor="let food of (message.logMealToolResponse?.foods || []); let foodIndex = index; let isLast = last">
+        <div class="food-item-container" [class.is-last]="isLast" *ngIf="getComponentsForFood(food).length > 0">
+          
+          <!-- Multi-component food: Show as component-style item -->
+          <ng-container *ngIf="getComponentsForFood(food).length > 1">
+            <!-- Food header row (styled like component items) -->
+            <div class="component-item-container">
+              <div class="food-item-row-simple">
+                <ion-grid class="row-grid">
+                  <ion-row class="top-row" align-items-center>
+                    <ion-col size="10" class="left">
+                      <div class="name-section">
+                        <span class="name">{{ food.name | titlecase }}</span>
+                      </div>
+                      <div class="serving-line">
+                        <!-- Show quantity stepper when expanded -->
+                        <ng-container *ngIf="isFoodEditingExpanded(foodIndex) && !isReadOnly">
+                          <app-serving-quantity-input
+                            [value]="editingFoodQuantities[foodIndex] || food.quantity || 1"
+                            [step]="1"
+                            [min]="1"
+                            [max]="999"
+                            [disabled]="isReadOnly"
+                            [ariaLabel]="'Quantity for ' + food.name"
+                            (valueChange)="onFoodQuantityChange(foodIndex, $event)">
+                          </app-serving-quantity-input>
+                          <span class="unit-label">{{ food.unit || 'servings' }}</span>
+                        </ng-container>
+                        <!-- Show normal label when collapsed or read-only -->
+                        <ng-container *ngIf="!isFoodEditingExpanded(foodIndex) || isReadOnly">
+                          <span class="inline-amount">{{ getFoodServingLabel(food) }}</span>
+                        </ng-container>
+                      </div>
+                    </ion-col>
+                    <ion-col size="2" class="right" *ngIf="!isReadOnly">
+                      <div class="action-icons">
+                        <ion-icon 
+                          [name]="isFoodEditingExpanded(foodIndex) ? 'chevron-up-outline' : 'create-outline'" 
+                          class="edit-icon" 
+                          [class.expanded]="isFoodEditingExpanded(foodIndex)" 
+                          (click)="toggleFoodEditing(foodIndex)">
+                        </ion-icon>
+                        <ion-icon name="trash-outline" class="delete-icon"></ion-icon>
+                      </div>
+                    </ion-col>
+                  </ion-row>
+                  <ion-row class="macro-row" *ngIf="!isReadOnly">
+                    <ion-col size="12" class="macro-summary">
+                      ({{ getFoodTotalCalories(food) | number:'1.0-0' }} cal,
+                      {{ getFoodTotalProtein(food) | number:'1.0-0' }} protein,
+                      {{ getFoodTotalFat(food) | number:'1.0-0' }} fat,
+                      {{ getFoodTotalCarbs(food) | number:'1.0-0' }} carbs)
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </div>
+            </div>
+
+            <!-- Expanded food editing (quantity + components) -->
+            <div *ngIf="!isReadOnly && isFoodEditingExpanded(foodIndex)" class="expanded-food-components">
+            <ng-container *ngFor="let componentData of getComponentsForFood(food)">
+              <div class="component-item-container">
+                <div class="food-item-row-simple" [id]="'row-' + componentData.componentId" [class.searching]="isSearchingComponent(componentData.componentId)">
+                
+                <!-- Loading overlay when searching -->
+                <div *ngIf="isSearchingComponent(componentData.componentId)" class="search-loading-overlay">
+                  <div class="loading-content">
+                    <div class="loading-dots-large">...</div>
+                    <div class="loading-text">Searching for better results...</div>
+                  </div>
+                </div>
+
+                <ion-grid class="row-grid" *ngIf="!isSearchingComponent(componentData.componentId)">
+                  <ion-row class="top-row" align-items-center>
+                    <ion-col size="10" class="left">
+                      <div class="name-section">
+                        <span class="name">{{ getDisplayNameOrSearchText(componentData.componentId) | titlecase}}</span>
+                        <span *ngIf="isInferred(componentData.componentId)" class="inferred-badge">(inferred)</span>
+                        <span *ngIf="getSelectedFood(componentData.componentId)?.brandName" class="brand-name"> – {{ getSelectedFood(componentData.componentId)?.brandName }}</span>
+                      </div>
+                      <div class="serving-line">
+                        <ng-container *ngIf="getSelectedServing(componentData.componentId) as selectedServing">
+                          <span class="inline-amount">{{ getServingLabel(selectedServing) }}</span>
+                        </ng-container>
+                      </div>
+                    </ion-col>
+                    <ion-col size="2" class="right" *ngIf="!isReadOnly">
+                      <div class="action-icons">
+                        <ion-icon [name]="isExpanded(componentData.componentId) ? 'chevron-up-outline' : 'create-outline'" class="edit-icon" [class.expanded]="isExpanded(componentData.componentId)" (click)="toggleExpansion(componentData.componentId)"></ion-icon>
+                        <ion-icon *ngIf="!isEditMode" name="trash-outline" class="delete-icon" (click)="removeItem(componentData.componentId)"></ion-icon>
+                      </div>
+                    </ion-col>
+                  </ion-row>
+                  <ion-row class="macro-row" *ngIf="!isReadOnly && getSelectedServing(componentData.componentId) as selectedServing">
+                    <ion-col size="12" class="macro-summary">
+                      ({{ caloriesForServing(selectedServing) || 0 | number:'1.0-0' }} cal,
+                      {{ proteinForServing(selectedServing) || 0 | number:'1.0-0' }} protein,
+                      {{ fatForServing(selectedServing) || 0 | number:'1.0-0' }} fat,
+                      {{ carbsForServing(selectedServing) || 0 | number:'1.0-0' }} carbs)
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </div>
+
+              <!-- Expanded component selection card -->
+              <div *ngIf="!isReadOnly && isExpanded(componentData.componentId)" class="expanded-food-selection">
+                <div class="drilldown-content">
+                  <div class="food-item-row">
+                    <div class="food-name">
+                      <div class="original-phrase-header">
+                        <div class="phrase-edit-container" [attr.data-component-id]="componentData.componentId">
+                          <!-- Display mode: Bold text with edit icon -->
+                          <div *ngIf="!isComponentBeingEdited(componentData.componentId)" class="phrase-display-mode">
+                            <strong class="phrase-text">{{ getDisplayNameOrSearchText(componentData.componentId) | titlecase}}</strong>
+                            <span *ngIf="isInferred(componentData.componentId)" class="inferred-badge">(inferred)</span>
+                            <ion-icon 
+                              name="create-outline" 
+                              class="edit-phrase-icon" 
+                              (click)="startEditingComponent(componentData.componentId)">
+                            </ion-icon>
+                          </div>
+                          
+                          <!-- Edit mode: Textarea with send button -->
+                          <div *ngIf="isComponentBeingEdited(componentData.componentId)" class="phrase-edit-mode">
+                            <textarea 
+                              #phraseInput
+                              class="phrase-input"
+                              [value]="getEditingComponentValue(componentData.componentId)"
+                              (input)="updateEditingComponent(componentData.componentId, $event)"
+                              (blur)="onTextareaBlur(componentData.componentId, $event)"
+                              (keydown)="onComponentKeyDown(componentData.componentId, $event)"
+                              placeholder="Describe your food..."
+                              autoFocus>
+                            </textarea>
+                            <button 
+                              class="send-button"
+                              (click)="sendUpdatedComponent(componentData.componentId)"
+                              (mousedown)="$event.preventDefault()"
+                              [disabled]="!hasChanges(componentData.componentId)"
+                              type="button">
+                              <ion-icon name="send"></ion-icon>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <ion-select 
+                        interface="popover"
+                        [interfaceOptions]="{ cssClass: 'wide-select-popover' }"
+                        [value]="getSelectedFood(componentData.componentId)?.fatSecretFoodId" 
+                        (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)" 
+                        [disabled]="isReadOnly"
+                        id="foodSelect-{{ componentData.componentId }}">
+                        <ion-select-option 
+                          *ngFor="let match of (componentData.component.matches || [])" 
+                          [value]="match.fatSecretFoodId">
+                          {{ match.displayName }}
+                          <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
+                        </ion-select-option>
+                      </ion-select>
+                    </div>
+
+                    <div class="serving-options-inline">
+                      <ion-radio-group 
+                        [value]="getSelectedServingId(componentData.componentId)"
+                        (ionChange)="onServingSelected(componentData.componentId, $event.detail.value)">
+                        <ion-radio 
+                          *ngFor="let serving of getSelectedFood(componentData.componentId)?.servings; trackBy: trackByServingId"
+                          [value]="serving.fatSecretServingId"
+                          [disabled]="isReadOnly"
+                          (click)="onRowClicked(componentData.componentId, serving)">
+                          <div class="serving-row-content" (click)="$event.stopPropagation(); onRowClicked(componentData.componentId, serving)">
+                            <!-- Show stepper only for selected row -->
+                            <ng-container *ngIf="getSelectedServingId(componentData.componentId) === serving.fatSecretServingId && !isReadOnly">
+                              <app-serving-quantity-input
+                                [value]="getEffectiveQuantity(componentData.componentId, serving)"
+                                [step]="1"
+                                [min]="0.1"
+                                [max]="999"
+                                [disabled]="isReadOnly"
+                                [ariaLabel]="'Quantity for ' + getUnitText(serving)"
+                                (click)="$event.stopPropagation(); onRowClicked(componentData.componentId, serving)"
+                                (valueChange)="onInlineQtyChanged(componentData.componentId, serving, $event)">
+                              </app-serving-quantity-input>
+                              <span class="unit-label">{{ getUnitText(serving) }}</span>
+                            </ng-container>
+                            <!-- Show normal label for unselected rows or read-only mode -->
+                            <ng-container *ngIf="getSelectedServingId(componentData.componentId) !== serving.fatSecretServingId || isReadOnly">
+                              <span class="serving-label">{{ getServingLabel(serving) }}</span>
+                            </ng-container>
+                          </div>
+                          <div class="macro-inline-servings">
+                            ({{ caloriesForServing(serving) || 0 | number:'1.0-0' }} cal, 
+                            {{ proteinForServing(serving) || 0 | number:'1.0-0' }} protein, 
+                            {{ fatForServing(serving) || 0 | number:'1.0-0' }} fat, 
+                            {{ carbsForServing(serving) || 0 | number:'1.0-0' }} carbs)
+                          </div>
+                        </ion-radio>
+                      </ion-radio-group>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              </div> <!-- Close component-item-container -->
+            </ng-container>
+            
+          </div> <!-- Close expanded-food-components -->
+          </ng-container> <!-- Close multi-component food -->
+
+          <!-- Single-component food: Display directly as component -->
+          <ng-container *ngIf="getComponentsForFood(food).length === 1">
+            <div *ngFor="let componentData of getComponentsForFood(food)" class="component-item-container">
           <div class="food-item-row-simple" [id]="'row-' + componentData.componentId" [class.searching]="isSearchingComponent(componentData.componentId)">
           
           <!-- Loading overlay when searching -->
@@ -61,7 +271,7 @@
           </ion-grid>
         </div>
 
-        <!-- Expanded selection card -->
+              <!-- Expanded component selection card for single foods -->
         <div *ngIf="!isReadOnly && isExpanded(componentData.componentId)" class="expanded-food-selection">
           <div class="drilldown-content">
             <div class="food-item-row">
@@ -159,6 +369,9 @@
             </div>
           </div>
         </div>
+            </div> <!-- Close div for single component -->
+          </ng-container> <!-- Close single-component food -->
+
         </div> <!-- Close food-item-container -->
       </ng-container>
     </div>

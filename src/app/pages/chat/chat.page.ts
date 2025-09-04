@@ -1059,6 +1059,9 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       this.cancelledMessageIds.add(message.id);
       console.log('Added message to cancelled list:', message.id);
       
+      // Show thinking dots while waiting for assistant response
+      this.isLoading = true;
+      
       // Force change detection to ensure UI updates immediately
       this.cdr.detectChanges();
       

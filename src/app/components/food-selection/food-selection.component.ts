@@ -31,6 +31,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   selections: { [componentId: string]: { foodId: string; servingId?: string } } = {};
   expandedSections: { [componentId: string]: boolean } = {};
+  expandedFoods: { [foodIndex: number]: boolean } = {}; // Track food-level expansion
   removedComponents: Set<string> = new Set();
   isSubmitting = false;
   isCanceling = false;
@@ -48,6 +49,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   private _availableComponents: Array<{componentId: string, food: any, component: any}> = [];
   private _lastMessageId: string | undefined = undefined;
   private _lastRemovedComponentsSize: number = 0;
+  
+  // Cache for food components to prevent infinite change detection loops
+  private _foodComponentsCache: Map<any, Array<{componentId: string, component: any}>> = new Map();
+  private _lastCacheMessageId: string | undefined = undefined;
+  private _lastCacheRemovedSize: number = 0;
+
+  // Food-level expansion state (for editing quantity and components)
+  expandedFoodEditing: { [foodIndex: number]: boolean } = {};
+  editingFoodQuantities: { [foodIndex: number]: number } = {};
 
   constructor(
     private toastService: ToastService, 
@@ -136,6 +146,117 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   isExpanded(componentId: string): boolean {
     return !!this.expandedSections[componentId];
+  }
+
+  // Food-level expansion methods
+  toggleFoodExpansion(foodIndex: number): void {
+    this.expandedFoods[foodIndex] = !this.expandedFoods[foodIndex];
+  }
+
+  isFoodExpanded(foodIndex: number): boolean {
+    return !!this.expandedFoods[foodIndex];
+  }
+
+  // Get components for a specific food (cached to prevent infinite change detection)
+  getComponentsForFood(food: any): Array<{componentId: string, component: any}> {
+    if (!food?.components) return [];
+    
+    // Clear cache if message changed or components were removed
+    if (this._lastCacheMessageId !== this.message.id || this._lastCacheRemovedSize !== this.removedComponents.size) {
+      this._foodComponentsCache.clear();
+      this._lastCacheMessageId = this.message.id;
+      this._lastCacheRemovedSize = this.removedComponents.size;
+    }
+    
+    // Check if we have cached results for this food
+    if (this._foodComponentsCache.has(food)) {
+      return this._foodComponentsCache.get(food)!;
+    }
+    
+    // Calculate and cache the result
+    const components = food.components
+      .filter((component: any) => component.id && !this.removedComponents.has(component.id))
+      .map((component: any) => ({ componentId: component.id, component }));
+    
+    this._foodComponentsCache.set(food, components);
+    return components;
+  }
+
+  // Calculate total macros for a food (sum of all its components)
+  getFoodTotalCalories(food: any): number {
+    const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
+      const selectedServing = this.getSelectedServing(componentId);
+      const calories = this.caloriesForServing(selectedServing);
+      return total + (calories || 0);
+    }, 0);
+    return componentTotal * (food.quantity || 1);
+  }
+
+  getFoodTotalProtein(food: any): number {
+    const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
+      const selectedServing = this.getSelectedServing(componentId);
+      const protein = this.proteinForServing(selectedServing);
+      return total + (protein || 0);
+    }, 0);
+    return componentTotal * (food.quantity || 1);
+  }
+
+  getFoodTotalFat(food: any): number {
+    const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
+      const selectedServing = this.getSelectedServing(componentId);
+      const fat = this.fatForServing(selectedServing);
+      return total + (fat || 0);
+    }, 0);
+    return componentTotal * (food.quantity || 1);
+  }
+
+  getFoodTotalCarbs(food: any): number {
+    const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
+      const selectedServing = this.getSelectedServing(componentId);
+      const carbs = this.carbsForServing(selectedServing);
+      return total + (carbs || 0);
+    }, 0);
+    return componentTotal * (food.quantity || 1);
+  }
+
+  // Food-level expansion management
+  toggleFoodEditing(foodIndex: number): void {
+    this.expandedFoodEditing[foodIndex] = !this.expandedFoodEditing[foodIndex];
+    
+    // Initialize quantity editing value if expanding
+    if (this.expandedFoodEditing[foodIndex]) {
+      const food = this.message.logMealToolResponse?.foods?.[foodIndex];
+      if (food) {
+        this.editingFoodQuantities[foodIndex] = food.quantity || 1;
+      }
+    }
+  }
+
+  isFoodEditingExpanded(foodIndex: number): boolean {
+    return !!this.expandedFoodEditing[foodIndex];
+  }
+
+  getFoodServingLabel(food: any): string {
+    const quantity = food.quantity || 1;
+    const unit = food.unit || 'serving';
+    return quantity === 1 ? `1 ${unit}` : `${quantity} ${unit}s`;
+  }
+
+  updateFoodQuantity(foodIndex: number): void {
+    const newQuantity = this.editingFoodQuantities[foodIndex];
+    if (newQuantity && newQuantity > 0) {
+      const food = this.message.logMealToolResponse?.foods?.[foodIndex];
+      if (food) {
+        food.quantity = newQuantity;
+        // Force change detection to update the macro displays
+        this.cdr.detectChanges();
+      }
+    }
+  }
+
+  onFoodQuantityChange(foodIndex: number, newQuantity: number): void {
+    this.editingFoodQuantities[foodIndex] = newQuantity;
+    this.updateFoodQuantity(foodIndex);
   }
 
   getSelectedFood(componentId: string): ComponentMatch | null {
@@ -642,7 +763,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       console.log('Food selection: Emitting cancel event after timeout');
       this.cancel.emit();
       this.cancelTimeout = null;
-      this.isCanceling = false;
+      // Note: isCanceling will be reset by parent when API response comes back
     }, 5000);
     
     // Listen for toast dismissal (if user dismisses manually)
@@ -654,7 +775,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         clearTimeout(this.cancelTimeout);
         this.cancel.emit();
         this.cancelTimeout = null;
-        this.isCanceling = false;
+        // Note: isCanceling will be reset by parent when API response comes back
       }
     });
   }
@@ -847,8 +968,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getEditingComponentValue(componentId: string): string {
+    // Check if we have an editing value (including empty string)
+    if (this.editingComponentValues.hasOwnProperty(componentId)) {
+      return this.editingComponentValues[componentId];
+    }
+    // Fall back to original component key only if no editing value exists
     const component = this.findComponentById(componentId);
-    return this.editingComponentValues[componentId] || component?.key || '';
+    return component?.key || '';
   }
 
 
@@ -886,10 +1012,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   hasChanges(componentId: string): boolean {
+    // Check if we have an editing value (including empty string)
+    if (!this.editingComponentValues.hasOwnProperty(componentId)) {
+      return false;
+    }
     const currentValue = this.editingComponentValues[componentId];
     const component = this.findComponentById(componentId);
     const originalValue = component?.key || '';
-    return !!(currentValue && currentValue.trim() !== originalValue.trim());
+    return currentValue.trim() !== originalValue.trim();
   }
 
   sendUpdatedComponent(componentId: string): void {
@@ -897,7 +1027,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const component = this.findComponentById(componentId);
     const originalValue = component?.key || '';
     
-    if (!newValue || newValue.trim() === originalValue) {
+    if (newValue.trim() === originalValue.trim()) {
       console.log('No changes detected, not sending');
       return;
     }

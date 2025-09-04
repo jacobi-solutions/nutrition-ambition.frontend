@@ -47,6 +47,53 @@
       }
     }
   }
+
+  // Food header styling (for grouped foods only)
+  .food-header-row {
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: var(--color-light-smoke);
+    }
+    
+    .food-name {
+      font-weight: 600;
+      color: var(--color-olive);
+      font-size: 1.1rem;
+    }
+    
+    .expand-icon {
+      color: var(--color-olive);
+      font-size: 1.25rem;
+    }
+    
+    .macro-summary {
+      color: var(--color-medium-gray);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+  }
+
+  // Expanded food components container (for multi-component foods)
+  .expanded-food-components {
+    padding-left: 16px;
+    border-left: 2px solid var(--color-light-smoke);
+    margin-bottom: 16px;
+    
+    .component-item-container {
+      margin-bottom: 8px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+
+  // Single component styling - restore original appearance
+  // No special styling needed - let the existing food-item-row-simple styles handle it
   
   // Food items list styling
   .food-items-list {
@@ -100,6 +147,10 @@
 
       .serving-line {
         margin-top: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
         .inline-amount {
           margin-left: 0;
           font-family: 'Poppins', sans-serif;
@@ -107,6 +158,19 @@
           font-size: 0.875rem;
           color: var(--ion-color-medium);
           line-height: 1.2;
+        }
+        
+        app-serving-quantity-input {
+          flex-shrink: 0;
+        }
+        
+        .unit-label {
+          font-family: 'Poppins', sans-serif;
+          font-weight: 500;
+          font-size: 0.875rem;
+          color: var(--ion-color-medium);
+          line-height: 1.2;
+          flex-shrink: 0;
         }
       }
 
@@ -160,7 +224,6 @@
       .drilldown-content {
         width: 100%;
         margin-bottom: 1rem;
-        margin-top: 1rem;
         padding: 1rem; 
         background-color: rgba(78, 110, 93, 0.2);
         border-radius: 1rem;
@@ -393,8 +456,58 @@
   font-size: 0.75rem !important;
   font-weight: 500;
   color: var(--ion-color-medium);
-  // display: inline; /* inline to sit next to serving label if desired */
-  margin-left: 8px;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: visible;
+  text-align: left !important;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  justify-content: flex-start !important;
+  display: block !important;
+}
+
+/* Ensure ion-radio elements and their containers have enough space for macro text */
+.food-selection-container .serving-options-inline {
+  text-align: left !important;
+  
+  ion-radio-group {
+    width: 100%;
+    text-align: left !important;
+    display: block !important;
+  }
+  
+  ion-radio {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    
+    .serving-row-content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+      width: 100%;
+      min-width: 0;
+      text-align: left !important;
+    }
+    
+    .radio-inner,
+    .radio-wrapper {
+      text-align: left !important;
+      justify-content: flex-start !important;
+    }
+    
+    // Target the macro text specifically within radio buttons
+    .macro-inline-servings {
+      text-align: left !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      justify-content: flex-start !important;
+      align-self: flex-start !important;
+    }
+  }
 }
 
 // Add something row styling
@@ -675,7 +788,6 @@
     }
     
     .expanded-food-selection {
-      margin-top: 10px;
       padding: 12px;
       
       .food-item-row {
