@@ -1041,37 +1041,47 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
   // Create a loading message by replacing the target component with a loading placeholder
   createLoadingMessageForComponent(originalMessage: DisplayMessage, componentId?: string, isAddingNew: boolean = false): DisplayMessage {
-    // For adding new foods, use global loading
-    if (isAddingNew) {
-      return {
-        ...originalMessage,
-        isEditingPhrase: true
-      };
-    }
-
-    // For component edits, clone the message and replace the specific component
-    if (!componentId || !originalMessage.logMealToolResponse?.foods) {
+    if (!originalMessage.logMealToolResponse?.foods) {
       return originalMessage;
     }
 
-    // Deep clone the message structure and create loading placeholder
+    // Deep clone the message structure
     const clonedResponse = JSON.parse(JSON.stringify(originalMessage.logMealToolResponse));
     
-    // Find and replace the target component with loading placeholder
-    if (clonedResponse.foods) {
-      for (const food of clonedResponse.foods) {
-        if (food.components) {
-          for (const component of food.components) {
-            if (component.id === componentId) {
-              // Replace this component's matches with a loading placeholder
-              component.matches = [{
-                fatSecretFoodId: 'loading',
-                displayName: 'Searching for better results...',
-                isEditingPhrase: true,
-                servings: [],
-                rank: 0
-              }];
-              break;
+    if (isAddingNew) {
+      // For adding new foods, add a new loading component to the foods array
+      const loadingFood = {
+        id: 'loading-' + Date.now(),
+        name: '',
+        components: [{
+          id: 'loading-component',
+          matches: [{
+            fatSecretFoodId: 'loading',
+            displayName: 'Searching for better results...',
+            isEditingPhrase: true,
+            servings: [],
+            rank: 0
+          }]
+        }]
+      };
+      clonedResponse.foods.push(loadingFood);
+    } else if (componentId) {
+      // For component edits, find and replace the specific component
+      if (clonedResponse.foods) {
+        for (const food of clonedResponse.foods) {
+          if (food.components) {
+            for (const component of food.components) {
+              if (component.id === componentId) {
+                // Replace this component's matches with a loading placeholder
+                component.matches = [{
+                  fatSecretFoodId: 'loading',
+                  displayName: 'Searching for better results...',
+                  isEditingPhrase: true,
+                  servings: [],
+                  rank: 0
+                }];
+                break;
+              }
             }
           }
         }

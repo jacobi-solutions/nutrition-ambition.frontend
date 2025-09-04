@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { createOutline, chevronUpOutline, trashOutline, send, addCircleOutline } from 'ionicons/icons';
+import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
@@ -69,7 +69,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService
   ) {
-    addIcons({ createOutline, chevronUpOutline, trashOutline, send, addCircleOutline });
+    addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline });
   }
 
   get hasPayload(): boolean {
@@ -249,6 +249,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   isFoodEditingExpanded(foodIndex: number): boolean {
+    // Auto-expand if any component in this food is being edited
+    const food = this.message.logMealToolResponse?.foods?.[foodIndex];
+    if (food?.components) {
+      for (const component of food.components) {
+        if (component.matches && component.matches.length > 0 && (component.matches[0] as any).isEditingPhrase) {
+          return true;
+        }
+      }
+    }
+    
+    // Otherwise use manual expansion state
     return !!this.expandedFoodEditing[foodIndex];
   }
 
@@ -256,6 +267,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const quantity = food.quantity || 1;
     const unit = food.unit || 'serving';
     return quantity === 1 ? `1 ${unit}` : `${quantity} ${unit}s`;
+  }
+
+  getFoodNameWithIngredientCount(food: any): string {
+    const componentCount = this.getComponentsForFood(food).length;
+    if (componentCount > 1) {
+      return `${food.name} - ${componentCount} ingredients`;
+    }
+    return food.name;
   }
 
   updateFoodQuantity(foodIndex: number): void {
