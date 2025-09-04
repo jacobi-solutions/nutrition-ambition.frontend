@@ -60,7 +60,7 @@
                           [class.expanded]="isFoodEditingExpanded(foodIndex)" 
                           (click)="toggleFoodEditing(foodIndex)">
                         </ion-icon>
-                        <ion-icon name="trash-outline" class="delete-icon"></ion-icon>
+                        <ion-icon name="trash-outline" class="delete-icon" (click)="food.id && removeFood(food.id)"></ion-icon>
                       </div>
                     </ion-col>
                   </ion-row>

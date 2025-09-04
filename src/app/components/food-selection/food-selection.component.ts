@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, trashOutline, send, addCircleOutline } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
@@ -59,6 +59,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   expandedFoodEditing: { [foodIndex: number]: boolean } = {};
   editingFoodQuantities: { [foodIndex: number]: number } = {};
 
+  // Track edit operations for the new backend structure
+  editOperations: UserEditOperation[] = [];
+  removedFoods: Set<string> = new Set(); // Track foods removed via RemoveFood operation
+
   constructor(
     private toastService: ToastService, 
     private cdr: ChangeDetectorRef,
@@ -73,8 +77,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   get availableComponents(): Array<{componentId: string, food: any, component: any}> {
-    // Only recalculate if the message has changed or components were removed
-    if (this._lastMessageId !== this.message.id || this._lastRemovedComponentsSize !== this.removedComponents.size) {
+    // Only recalculate if the message has changed or components/foods were removed
+    if (this._lastMessageId !== this.message.id || 
+        this._lastRemovedComponentsSize !== this.removedComponents.size ||
+        this.removedFoods.size > 0) {
       this._lastMessageId = this.message.id;
       this._lastRemovedComponentsSize = this.removedComponents.size;
       this._availableComponents = this._calculateAvailableComponents();
@@ -89,6 +95,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const components: Array<{componentId: string, food: any, component: any}> = [];
     
     this.message.logMealToolResponse.foods.forEach(food => {
+      // Skip foods that have been removed
+      if (food.id && this.removedFoods.has(food.id)) {
+        return;
+      }
+      
       if (food.components) {
         food.components.forEach(component => {
           if (component.id && !this.removedComponents.has(component.id)) {
@@ -160,6 +171,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Get components for a specific food (cached to prevent infinite change detection)
   getComponentsForFood(food: any): Array<{componentId: string, component: any}> {
     if (!food?.components) return [];
+    
+    // Return empty if the food has been removed
+    if (food.id && this.removedFoods.has(food.id)) {
+      return [];
+    }
     
     // Clear cache if message changed or components were removed
     if (this._lastCacheMessageId !== this.message.id || this._lastCacheRemovedSize !== this.removedComponents.size) {
@@ -247,7 +263,18 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (newQuantity && newQuantity > 0) {
       const food = this.message.logMealToolResponse?.foods?.[foodIndex];
       if (food) {
-        food.quantity = newQuantity;
+        // In edit mode, track the operation instead of directly updating
+        if (this.isEditMode && food.id) {
+          this.addEditOperation(new UserEditOperation({
+            action: EditFoodSelectionType.UpdateParentQuantity,
+            groupId: food.id,
+            newParentQuantity: newQuantity,
+            newParentUnit: food.unit || 'serving'
+          }));
+        } else {
+          // In normal mode, update directly for UI display
+          food.quantity = newQuantity;
+        }
         // Force change detection to update the macro displays
         this.cdr.detectChanges();
       }
@@ -257,6 +284,22 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   onFoodQuantityChange(foodIndex: number, newQuantity: number): void {
     this.editingFoodQuantities[foodIndex] = newQuantity;
     this.updateFoodQuantity(foodIndex);
+  }
+
+  // Add a helper method to manage edit operations
+  private addEditOperation(operation: UserEditOperation): void {
+    // Remove any existing operation with the same action and target
+    if (operation.action === EditFoodSelectionType.UpdateParentQuantity && operation.groupId) {
+      this.editOperations = this.editOperations.filter(op => 
+        !(op.action === EditFoodSelectionType.UpdateParentQuantity && op.groupId === operation.groupId)
+      );
+    } else if (operation.action === EditFoodSelectionType.UpdateServing && operation.componentId) {
+      this.editOperations = this.editOperations.filter(op => 
+        !(op.action === EditFoodSelectionType.UpdateServing && op.componentId === operation.componentId)
+      );
+    }
+    
+    this.editOperations.push(operation);
   }
 
   getSelectedFood(componentId: string): ComponentMatch | null {
@@ -283,15 +326,66 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
 
+  private findFoodByComponentId(componentId: string): any {
+    if (!this.message.logMealToolResponse?.foods) return null;
+    
+    for (const food of this.message.logMealToolResponse.foods) {
+      if (food.components) {
+        for (const component of food.components) {
+          if (component.id === componentId) {
+            return food;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private findFoodById(foodId: string): any {
+    if (!this.message.logMealToolResponse?.foods) return null;
+    
+    for (const food of this.message.logMealToolResponse.foods) {
+      if (food.id === foodId) {
+        return food;
+      }
+    }
+    return null;
+  }
+
   onFoodSelected(componentId: string, foodId: string): void {
     const component = this.findComponentById(componentId);
     const food = component?.matches?.find((match: any) => match.fatSecretFoodId === foodId);
     const defaultServingId = food?.servings?.[0]?.fatSecretServingId;
     this.selections[componentId] = { foodId, servingId: defaultServingId };
+
+    // In edit mode, track the operation
+    if (this.isEditMode) {
+      this.addEditOperation(new UserEditOperation({
+        action: EditFoodSelectionType.UpdateServing,
+        componentId: componentId,
+        fatSecretFoodId: foodId,
+        fatSecretServingId: defaultServingId
+      }));
+    }
   }
 
   onServingSelected(componentId: string, servingId: string): void {
-    if (this.selections[componentId]) this.selections[componentId].servingId = servingId;
+    if (this.selections[componentId]) {
+      this.selections[componentId].servingId = servingId;
+
+      // In edit mode, track the operation
+      if (this.isEditMode) {
+        const selectedFood = this.getSelectedFood(componentId);
+        if (selectedFood) {
+          this.addEditOperation(new UserEditOperation({
+            action: EditFoodSelectionType.UpdateServing,
+            componentId: componentId,
+            fatSecretFoodId: selectedFood.fatSecretFoodId,
+            fatSecretServingId: servingId
+          }));
+        }
+      }
+    }
   }
 
   getSelectedServingId(componentId: string): string | undefined {
@@ -386,28 +480,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   private confirmEditSelections(): void {
     const req = new SubmitEditServingSelectionRequest();
-    req.pendingMessageId = this.message.id;
+    req.pendingMessageId = this.message.id || '';
     req.foodEntryId = this.message.logMealToolResponse?.foodEntryId ?? '';
     req.groupId = this.message.logMealToolResponse?.groupId ?? '';
     req.itemSetId = this.message.logMealToolResponse?.itemSetId ?? '';
-    req.selections = [];
-  
-    for (const { componentId, component } of this.availableComponents) {
-      const food = this.getSelectedFood(componentId);
-      const servingId = this.getSelectedServingId(componentId);
-      const selectedServing = this.getSelectedServing(componentId);
-  
-      if (food?.fatSecretFoodId && servingId && selectedServing) {
-        const displayQuantity = this.getEffectiveQuantity(componentId, selectedServing);
-        req.selections.push(new UserSelectedServing({
-          componentId: componentId,
-          originalText: component.key || food.originalText, // Use component key or fallback to originalText
-          fatSecretFoodId: food.fatSecretFoodId,
-          fatSecretServingId: servingId,
-          editedQuantity: displayQuantity
-        }));
-      }
-    }
+    req.localDateKey = this.dateService.getSelectedDate() || undefined;
+    req.operations = [...this.editOperations]; // Use the tracked edit operations
   
     this.isSubmitting = true;
     this.editConfirmed.emit(req);
@@ -542,6 +620,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (rowElement) rowElement.classList.add('removing');
 
     setTimeout(async () => {
+      // In edit mode, track the operation instead of just hiding UI
+      if (this.isEditMode) {
+        this.addEditOperation(new UserEditOperation({
+          action: EditFoodSelectionType.RemoveComponent,
+          componentId: componentId
+        }));
+      }
+
       this.removedComponents.add(componentId);
 
       // Check if this was the last remaining food item
@@ -567,11 +653,65 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             text: 'Undo',
             handler: () => {
               this.removedComponents.delete(componentId);
+              
+              // In edit mode, also remove the operation
+              if (this.isEditMode) {
+                this.editOperations = this.editOperations.filter(op => 
+                  !(op.action === EditFoodSelectionType.RemoveComponent && op.componentId === componentId)
+                );
+              }
             }
           }
         ]
       });
     }, 300);
+  }
+
+  async removeFood(foodId: string) {
+    const food = this.findFoodById(foodId);
+    if (!food) return;
+
+    // In edit mode, track the operation
+    if (this.isEditMode) {
+      this.addEditOperation(new UserEditOperation({
+        action: EditFoodSelectionType.RemoveFood,
+        groupId: foodId
+      }));
+    }
+
+    this.removedFoods.add(foodId);
+
+    // Check if this was the last remaining food item
+    const remainingItems = this.availableComponents;
+    const isLastItem = remainingItems.length === 0;
+
+    if (isLastItem) {
+      this.cancelSelection();
+      return;
+    }
+
+    const foodName = food.name || 'food item';
+
+    await this.toastService.showToast({
+      message: `${foodName} removed`,
+      duration: 5000,
+      color: 'medium',
+      buttons: [
+        {
+          text: 'Undo',
+          handler: () => {
+            this.removedFoods.delete(foodId);
+            
+            // In edit mode, also remove the operation
+            if (this.isEditMode) {
+              this.editOperations = this.editOperations.filter(op => 
+                !(op.action === EditFoodSelectionType.RemoveFood && op.groupId === foodId)
+              );
+            }
+          }
+        }
+      ]
+    });
   }
 
   // Rescaling helper methods
@@ -708,6 +848,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const units = this.getNumberOfUnits(s);
     (s as any).displayQuantity = v;
     (s as any).displayUnit = this.getUnitText(s);
+
+    // In edit mode, track the operation
+    if (this.isEditMode) {
+      const selectedFood = this.getSelectedFood(componentId);
+      if (selectedFood && s.fatSecretServingId) {
+        this.addEditOperation(new UserEditOperation({
+          action: EditFoodSelectionType.UpdateServing,
+          componentId: componentId,
+          fatSecretFoodId: selectedFood.fatSecretFoodId,
+          fatSecretServingId: s.fatSecretServingId,
+          editedQuantity: v
+        }));
+      }
+    }
     
     // Mark this as the best match
     const selectedFood = this.getSelectedFood(componentId);
@@ -924,6 +1078,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (component?.matches && component.matches.length > 0 && (component.matches[0] as any).isEditingPhrase) {
       return true;
     }
+    // Fallback to local state for compatibility
     return !!this.searchingComponents[componentId];
   }
 
@@ -1034,16 +1189,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     console.log(`Requesting component edit: "${originalValue}" → "${newValue}"`);
     
-    // Set loading state for this specific component
-    this.searchingComponents[componentId] = true;
-    
     // Emit the phrase edit request to the parent (chat page)
-    // Note: We need to pass componentId in the request
+    // The parent will handle showing loading by replacing the component
     this.phraseEditRequested.emit({
       originalPhrase: originalValue,
       newPhrase: newValue.trim(),
       messageId: this.message.id || '',
-      componentId: componentId // Add componentId to the event
+      componentId: componentId
     });
     
     // Clear the editing state since we're now in loading state

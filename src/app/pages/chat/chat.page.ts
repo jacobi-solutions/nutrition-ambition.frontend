@@ -957,15 +957,8 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     const originalMessage = this.messages[messageIndex];
     const isAddingNew = !event.originalPhrase; // Empty originalPhrase means adding new food
     
-    // Create a loading message - note that the backend will handle the actual loading state
-    // through logMealToolResponse.foods structure
-    const loadingMessage: DisplayMessage = {
-      ...originalMessage,
-      // Keep the existing structure for now, but add a loading indicator
-      // The actual response will come back with the new foods structure
-    };
-    
-    // Replace with loading message
+    // Create a loading message by replacing the target component with a loading placeholder
+    const loadingMessage = this.createLoadingMessageForComponent(originalMessage, event.componentId, isAddingNew);
     this.messages[messageIndex] = loadingMessage;
     this.cdr.detectChanges();
     
@@ -990,6 +983,8 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         console.log('SUCCESS: Received updated message');
         // Convert ChatMessage to DisplayMessage and replace
         const updatedDisplayMessage = this.convertChatMessageToDisplayMessage(response.updatedMessage);
+        // Clear loading state (this will clear both global and component-specific loading)
+        updatedDisplayMessage.isEditingPhrase = false;
         this.messages[messageIndex] = updatedDisplayMessage;
         this.cdr.detectChanges();
         
@@ -998,15 +993,21 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         }, 100);
       } else {
         console.error('FAILED: API call unsuccessful', response?.errors);
-        // Restore original message
-        this.messages[messageIndex] = originalMessage;
+        // Restore original message and clear any loading state
+        this.messages[messageIndex] = {
+          ...originalMessage,
+          isEditingPhrase: false
+        };
         this.cdr.detectChanges();
         this.showErrorToast('Failed to search for food. Please try again.');
       }
     } catch (error) {
       console.error('ERROR: Exception during API call', error);
-      // Restore original message
-      this.messages[messageIndex] = originalMessage;
+      // Restore original message and clear any loading state
+      this.messages[messageIndex] = {
+        ...originalMessage,
+        isEditingPhrase: false
+      };
       this.cdr.detectChanges();
       this.showErrorToast('Failed to search for food. Please try again.');
     }
@@ -1036,6 +1037,53 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       editingPhrase: originalPhrase,
       newPhrase: newPhrase
     };
+  }
+
+  // Create a loading message by replacing the target component with a loading placeholder
+  createLoadingMessageForComponent(originalMessage: DisplayMessage, componentId?: string, isAddingNew: boolean = false): DisplayMessage {
+    // For adding new foods, use global loading
+    if (isAddingNew) {
+      return {
+        ...originalMessage,
+        isEditingPhrase: true
+      };
+    }
+
+    // For component edits, clone the message and replace the specific component
+    if (!componentId || !originalMessage.logMealToolResponse?.foods) {
+      return originalMessage;
+    }
+
+    // Deep clone the message structure and create loading placeholder
+    const clonedResponse = JSON.parse(JSON.stringify(originalMessage.logMealToolResponse));
+    
+    // Find and replace the target component with loading placeholder
+    if (clonedResponse.foods) {
+      for (const food of clonedResponse.foods) {
+        if (food.components) {
+          for (const component of food.components) {
+            if (component.id === componentId) {
+              // Replace this component's matches with a loading placeholder
+              component.matches = [{
+                fatSecretFoodId: 'loading',
+                displayName: 'Searching for better results...',
+                isEditingPhrase: true,
+                servings: [],
+                rank: 0
+              }];
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    const loadingMessage: DisplayMessage = {
+      ...originalMessage,
+      logMealToolResponse: clonedResponse
+    };
+
+    return loadingMessage;
   }
 
   // Handle food selection cancellation
