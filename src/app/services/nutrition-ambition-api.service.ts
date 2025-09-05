@@ -2319,6 +2319,74 @@ export interface IComponent {
     matches?: ComponentMatch[] | undefined;
 }
 
+export class ComponentBreakdown implements IComponentBreakdown {
+    componentId?: string | undefined;
+    componentKey?: string | undefined;
+    name?: string | undefined;
+    brandName?: string | undefined;
+    totalAmount?: number;
+    unit?: string | undefined;
+    nutrients?: NutrientContribution[] | undefined;
+
+    constructor(data?: IComponentBreakdown) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.componentId = _data["componentId"];
+            this.componentKey = _data["componentKey"];
+            this.name = _data["name"];
+            this.brandName = _data["brandName"];
+            this.totalAmount = _data["totalAmount"];
+            this.unit = _data["unit"];
+            if (Array.isArray(_data["nutrients"])) {
+                this.nutrients = [] as any;
+                for (let item of _data["nutrients"])
+                    this.nutrients!.push(NutrientContribution.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ComponentBreakdown {
+        data = typeof data === 'object' ? data : {};
+        let result = new ComponentBreakdown();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["componentId"] = this.componentId;
+        data["componentKey"] = this.componentKey;
+        data["name"] = this.name;
+        data["brandName"] = this.brandName;
+        data["totalAmount"] = this.totalAmount;
+        data["unit"] = this.unit;
+        if (Array.isArray(this.nutrients)) {
+            data["nutrients"] = [];
+            for (let item of this.nutrients)
+                data["nutrients"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IComponentBreakdown {
+    componentId?: string | undefined;
+    componentKey?: string | undefined;
+    name?: string | undefined;
+    brandName?: string | undefined;
+    totalAmount?: number;
+    unit?: string | undefined;
+    nutrients?: NutrientContribution[] | undefined;
+}
+
 export class ComponentMatch implements IComponentMatch {
     fatSecretFoodId?: string | undefined;
     displayName?: string | undefined;
@@ -3240,6 +3308,8 @@ export class FoodBreakdown implements IFoodBreakdown {
     totalAmount?: number;
     unit?: string | undefined;
     nutrients?: NutrientContribution[] | undefined;
+    components?: ComponentBreakdown[] | undefined;
+    componentCount?: number;
 
     constructor(data?: IFoodBreakdown) {
         if (data) {
@@ -3269,6 +3339,12 @@ export class FoodBreakdown implements IFoodBreakdown {
                 for (let item of _data["nutrients"])
                     this.nutrients!.push(NutrientContribution.fromJS(item));
             }
+            if (Array.isArray(_data["components"])) {
+                this.components = [] as any;
+                for (let item of _data["components"])
+                    this.components!.push(ComponentBreakdown.fromJS(item));
+            }
+            this.componentCount = _data["componentCount"];
         }
     }
 
@@ -3298,6 +3374,12 @@ export class FoodBreakdown implements IFoodBreakdown {
             for (let item of this.nutrients)
                 data["nutrients"].push(item.toJSON());
         }
+        if (Array.isArray(this.components)) {
+            data["components"] = [];
+            for (let item of this.components)
+                data["components"].push(item.toJSON());
+        }
+        data["componentCount"] = this.componentCount;
         return data;
     }
 }
@@ -3312,6 +3394,8 @@ export interface IFoodBreakdown {
     totalAmount?: number;
     unit?: string | undefined;
     nutrients?: NutrientContribution[] | undefined;
+    components?: ComponentBreakdown[] | undefined;
+    componentCount?: number;
 }
 
 export class FoodContribution implements IFoodContribution {

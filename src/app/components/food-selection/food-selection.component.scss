@@ -78,7 +78,8 @@
 
   // Expanded food components container (for multi-component foods)
   .expanded-food-components {
-    padding-left: 16px;
+    padding-left: .5rem;
+    margin-left: .5rem;
     border-left: 2px solid var(--color-light-smoke);
     margin-bottom: 16px;
     

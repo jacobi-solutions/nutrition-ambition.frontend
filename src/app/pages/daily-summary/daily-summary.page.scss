@@ -91,7 +91,78 @@
   padding: 24px;
 }
 
-// Header Bar Adjustments
+// Fix conflicting selected backgrounds - disable Ionic's default selected styling
+ion-item.selected {
+  --background: transparent !important;
+  --background-activated: transparent !important;
+  --background-focused: transparent !important;
+  --background-hover: transparent !important;
+  
+  // Remove the ::after pseudo-element that creates the inner background
+  &::after {
+    display: none !important;
+  }
+}
+
+  // Component container with sidebar styling
+  .components-container {
+    position: relative;
+    padding-left: 2rem;
+    margin-left: 1.25rem;
+    &::before {
+      content: '';
+      position: absolute;
+      left: 16px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: var(--ion-color-medium);
+      border-radius: 1px;
+    }
+    
+   
+    
+    .component-item {
+      margin-left: 0 !important;
+      padding-left: 0 !important;
+      cursor: pointer;
+      --background: transparent;
+      --background-hover: transparent;
+      --background-activated: transparent;
+      --background-focused: transparent;
+      --border-style: none;
+      --inner-border-width: 0;
+      --min-height: auto;
+      
+      .component-name-container {
+        display: flex;
+        align-items: center;
+        
+        .brand-name {
+          color: var(--ion-color-danger);
+          font-weight: 500;
+        }
+        
+        .component-name {
+          color: var(--ion-color-dark);
+        }
+      }
+      
+      .component-serving {
+        color: var(--ion-color-medium);
+        font-size: 0.9em;
+      }
+    }
+    .component-item::part(native) {
+      padding-left: 0 !important;
+    }
+  }
+  .component-drilldown {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  // Header Bar Adjustments
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -243,7 +314,7 @@ ion-card {
       margin-right: 1rem;
       padding-top: .25rem;
       padding-bottom: .25rem;
-      padding-left: .5rem;
+      padding-left: .25rem;
       padding-right: .25rem;
       border-radius: 0.75rem;
       --padding-start: 16px;
@@ -352,7 +423,6 @@ ion-card {
 
 .drilldown-row.nutrient-drilldown .drilldown-content {
   margin-bottom: 1rem;
-  margin-top: 1rem;
   padding: 1rem; 
   background-color: rgba(78, 110, 93, 0.2);
   border-radius: 1rem;
@@ -360,7 +430,6 @@ ion-card {
 
 .drilldown-row.food-drilldown .drilldown-content {
   margin-bottom: 1rem;
-  margin-top: 1rem;
   padding: 1rem; 
   background-color: rgba(78, 110, 93, 0.2);
   border-radius: 1rem;
@@ -674,9 +743,17 @@ ion-item {
   .primary-info {
     width: 100%;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
+    flex-direction: column; /* Stack vertically like nutrients */
+    align-items: flex-start;
+    
+    .name {
+      margin-bottom: 4px; /* Add spacing between title and extra info */
+    }
+    
+    .amount {
+      color: var(--ion-color-medium);
+      font-size: 0.9em;
+    }
   }
 }
 

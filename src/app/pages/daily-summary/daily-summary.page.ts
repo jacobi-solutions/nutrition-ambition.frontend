@@ -11,6 +11,7 @@ import {
   NutrientBreakdown,
   FoodBreakdown,
   FoodContribution,
+  ComponentBreakdown,
   NutritionAmbitionApiService,
   EditFoodSelectionRequest
 } from '../../services/nutrition-ambition-api.service';
@@ -74,6 +75,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   viewMode: 'nutrients' | 'foods' = 'nutrients';
   selectedNutrient: NutrientBreakdown | null = null;
   selectedFood: FoodBreakdown | null = null;
+  selectedComponent: ComponentBreakdown | null = null;
   detailedLoading = false;
   detailedError: string | null = null;
   // Local date only — uses 'yyyy-MM-dd' format
@@ -292,30 +294,72 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     return rounded.toString();
   }
 
+  // Check if a food has only one component
+  isSingleComponentFood(food: FoodBreakdown): boolean {
+    return food.componentCount === 1 || (food.components?.length === 1);
+  }
+
+  // Check if a food has multiple components
+  isMultiComponentFood(food: FoodBreakdown): boolean {
+    return (food.componentCount || 0) > 1 || (food.components?.length || 0) > 1;
+  }
+
+  // Get the display name for a food (with ingredient count for multi-component foods)
+  getFoodDisplayName(food: FoodBreakdown): string {
+    const baseName = food.name || 'Unknown Food';
+    
+    // For multi-component foods, append ingredient count
+    if (this.isMultiComponentFood(food)) {
+      const componentCount = food.componentCount || food.components?.length || 0;
+      return `${baseName} - ${componentCount} ingredients`;
+    }
+    
+    // For single-component foods, just return the name
+    return baseName;
+  }
+
+  // Get the display text for a food's serving information
+  getFoodServingDisplay(food: FoodBreakdown): string {
+    // For single-component foods, show the component's serving info
+    if (this.isSingleComponentFood(food) && food.components?.[0]) {
+      const component = food.components[0];
+      const quantity = this.formatQuantity(component.totalAmount);
+      const unit = component.unit || 'serving';
+      return `${quantity} ${unit}`;
+    }
+    
+    // For multi-component foods, show the food-level info
+    const quantity = this.formatQuantity(food.totalAmount);
+    const unit = food.unit || 'serving';
+    return `${quantity} ${unit}`;
+  }
+
   selectNutrient(nutrient: NutrientBreakdown) {
     const isAlreadySelected = this.selectedNutrient?.nutrientKey === nutrient.nutrientKey;
     this.selectedNutrient = isAlreadySelected ? null : nutrient;
     this.selectedFood = null;
     
-    // If we're expanding a nutrient, scroll to it after DOM updates
-    if (!isAlreadySelected && nutrient && nutrient.nutrientKey) {
-      setTimeout(() => {
-        this.scrollToSelectedItem('nutrient', nutrient.nutrientKey!);
-      }, 150);
-    }
+    // No auto-scroll when opening drilldown in the same tab
   }
 
   selectFood(food: FoodBreakdown) {
     const isAlreadySelected = this.isSameFood(this.selectedFood, food);
     this.selectedFood = isAlreadySelected ? null : food;
     this.selectedNutrient = null;
+    this.selectedComponent = null; // Reset component selection when selecting a food
     
-    // If we're expanding a food, scroll to it after DOM updates
-    if (!isAlreadySelected && food) {
-      setTimeout(() => {
-        this.scrollToSelectedItem('food', food.name || '');
-      }, 150);
-    }
+    // No auto-scroll when opening drilldown in the same tab
+  }
+
+  selectComponent(component: ComponentBreakdown) {
+    const isAlreadySelected = this.isSameComponent(this.selectedComponent, component);
+    this.selectedComponent = isAlreadySelected ? null : component;
+    // Keep the food selected when selecting a component
+  }
+
+  isSameComponent(component1: ComponentBreakdown | null, component2: ComponentBreakdown | null): boolean {
+    if (!component1 || !component2) return false;
+    return component1.componentId === component2.componentId;
   }
 
   
@@ -679,8 +723,26 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     });
   }
 
-  private getFoodDisplayName(food: any): string {
-    return food.brandName ? `${food.brandName} - ${food.name}` : food.name;
+  // private getFoodDisplayName(food: any): string {
+  //   return food.brandName ? `${food.brandName} - ${food.name}` : food.name;
+  // }
+
+  // Computed properties for component nutrient categorization
+  get selectedComponentMacronutrients() {
+    if (!this.selectedComponent?.nutrients) return [];
+    const order = ['calories', 'protein', 'fat', 'carbohydrate'];
+    return order
+      .map(key => this.selectedComponent?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
+      .filter((n): n is any => !!n);
+  }
+
+  get selectedComponentMicronutrients() {
+    if (!this.selectedComponent?.nutrients) return [];
+    return this.selectedComponent.nutrients
+      .filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
+      .sort((a, b) => {
+        return ((a as any)['sortOrder'] ?? 9999) - ((b as any)['sortOrder'] ?? 9999);
+      }) || [];
   }
 
   trackByEntryId(index: number, entry: any): string {
