@@ -2996,7 +2996,7 @@ export interface IDeleteFoodEntryResponse {
 }
 
 export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
-    foodEntryId?: string | undefined;
+    foodEntryId!: string;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
     localDateKey?: string | undefined;
@@ -3037,7 +3037,7 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
 }
 
 export interface IEditFoodSelectionRequest {
-    foodEntryId?: string | undefined;
+    foodEntryId: string;
     groupId?: string | undefined;
     itemSetId?: string | undefined;
     localDateKey?: string | undefined;

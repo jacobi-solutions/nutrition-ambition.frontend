@@ -500,8 +500,8 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   
     const req = new EditFoodSelectionRequest({
       foodEntryId: entry.foodEntryId,
-      groupId: entry.groupId,
-      itemSetId: entry.itemSetId,
+      groupId: entry.groupId || '',
+      itemSetId: entry.itemSetId || '',
       localDateKey: this.dateService.getSelectedDate()
     });
   

@@ -946,6 +946,8 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
   // Handle phrase edit request from food-selection component
   async onPhraseEditRequested(event: {originalPhrase: string, newPhrase: string, messageId: string, componentId?: string}): Promise<void> {
     console.log('Phrase edit/add requested:', event);
+    console.log(`[DEBUG] originalPhrase: "${event.originalPhrase}"`);
+    console.log(`[DEBUG] componentId: "${event.componentId}"`);
     
     // Find the message 
     const messageIndex = this.messages.findIndex(m => m.id === event.messageId);
@@ -956,6 +958,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     
     const originalMessage = this.messages[messageIndex];
     const isAddingNew = !event.originalPhrase; // Empty originalPhrase means adding new food
+    console.log(`[DEBUG] isAddingNew: ${isAddingNew}`);
     
     // Create a loading message by replacing the target component with a loading placeholder
     const loadingMessage = this.createLoadingMessageForComponent(originalMessage, event.componentId, isAddingNew);

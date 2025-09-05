@@ -345,6 +345,21 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
 
+  private getFoodForComponent(componentId: string): any {
+    if (!this.message.logMealToolResponse?.foods) return null;
+    
+    for (const food of this.message.logMealToolResponse.foods) {
+      if (food.components) {
+        for (const component of food.components) {
+          if (component.id === componentId) {
+            return food;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   private findFoodByComponentId(componentId: string): any {
     if (!this.message.logMealToolResponse?.foods) return null;
     
@@ -584,10 +599,24 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   getSearchTextOnly(componentId: string): string {
     const food = this.getSelectedFood(componentId);
+    
+    // First try to get the original text from the selected food match
+    if (food && (food as any).originalText) {
+      return (food as any).originalText;
+    }
+    
+    // Then try searchText for inferred foods
     if (food && (food as any).inferred && (food as any).searchText) {
       return (food as any).searchText;
     }
-    // Fallback to component key or original phrase
+    
+    // Look for OriginalPhrase at the food level (from backend Food model)
+    const foodData = this.getFoodForComponent(componentId);
+    if (foodData && (foodData as any).originalPhrase) {
+      return (foodData as any).originalPhrase;
+    }
+    
+    // Fallback to component key
     const component = this.findComponentById(componentId);
     return component?.key || '';
   }
@@ -1199,7 +1228,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   sendUpdatedComponent(componentId: string): void {
     const newValue = this.editingComponentValues[componentId];
     const component = this.findComponentById(componentId);
-    const originalValue = component?.key || '';
+    
+    // Use getSearchTextOnly to get the proper original phrase, fallback to component key
+    const originalValue = this.getSearchTextOnly(componentId) || component?.key || '';
+    
+    console.log(`[DEBUG] Component edit - ComponentId: ${componentId}`);
+    console.log(`[DEBUG] Component object:`, component);
+    console.log(`[DEBUG] Original value from getSearchTextOnly: "${this.getSearchTextOnly(componentId)}"`);
+    console.log(`[DEBUG] Original value from component.key: "${component?.key}"`);
+    console.log(`[DEBUG] Final originalValue: "${originalValue}"`);
+    console.log(`[DEBUG] New value: "${newValue}"`);
     
     if (newValue.trim() === originalValue.trim()) {
       console.log('No changes detected, not sending');
