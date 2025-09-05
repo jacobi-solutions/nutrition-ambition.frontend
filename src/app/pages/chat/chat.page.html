@@ -34,7 +34,7 @@
       <!-- Messages container -->
       <div class="chat-container">
         <!-- Loop through each message in chronological order and render appropriately -->
-        <ng-container *ngFor="let message of messages">
+        <ng-container *ngFor="let message of messages; trackBy: trackMessage">
           <!-- Context note message with enhanced edit loading states -->
           <div *ngIf="message.isContextNote" class="context-note-inline">
             <div class="context-note-text">

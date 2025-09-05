@@ -69,6 +69,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   userEmail: string | null = null;
   contextNote: string | null = null;
   private dateSubscription: Subscription;
+
+  // Track messages by ID to preserve component instances during updates
+  trackMessage(index: number, message: DisplayMessage): string {
+    return message.id || `${index}`;
+  }
   private contextNoteSubscription: Subscription;
   private learnMoreAboutSubscription: Subscription;
   private editFoodSelectionStartedSubscription: Subscription;
@@ -944,10 +949,10 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
   }
 
   // Handle phrase edit request from food-selection component
-  async onPhraseEditRequested(event: {originalPhrase: string, newPhrase: string, messageId: string, componentId?: string}): Promise<void> {
+  async onPhraseEditRequested(event: {originalPhrase: string, newPhrase: string, messageId: string, componentId?: string, expansionState?: any}): Promise<void> {
     console.log('Phrase edit/add requested:', event);
-    console.log(`[DEBUG] originalPhrase: "${event.originalPhrase}"`);
-    console.log(`[DEBUG] componentId: "${event.componentId}"`);
+    
+    // Note: No need to store expansion state - trackBy will preserve component instance
     
     // Find the message 
     const messageIndex = this.messages.findIndex(m => m.id === event.messageId);
@@ -957,8 +962,9 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     }
     
     const originalMessage = this.messages[messageIndex];
-    const isAddingNew = !event.originalPhrase; // Empty originalPhrase means adding new food
-    console.log(`[DEBUG] isAddingNew: ${isAddingNew}`);
+    // If we have a componentId, it's ALWAYS an update, never an addition
+    const isAddingNew = !event.componentId;
+    console.log(`[DEBUG] componentId: "${event.componentId}" → isAddingNew: ${isAddingNew}`);
     
     // Create a loading message by replacing the target component with a loading placeholder
     const loadingMessage = this.createLoadingMessageForComponent(originalMessage, event.componentId, isAddingNew);
@@ -988,12 +994,17 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         const updatedDisplayMessage = this.convertChatMessageToDisplayMessage(response.updatedMessage);
         // Clear loading state (this will clear both global and component-specific loading)
         updatedDisplayMessage.isEditingPhrase = false;
+        
+        // IMPORTANT: Preserve the original message ID so trackBy keeps the component instance
+        const originalMessage = this.messages[messageIndex];
+        updatedDisplayMessage.id = originalMessage.id;
+        
         this.messages[messageIndex] = updatedDisplayMessage;
         this.cdr.detectChanges();
         
-        setTimeout(() => {
-          this.scrollToBottom();
-        }, 100);
+        // setTimeout(() => {
+        //   this.scrollToBottom();
+        // }, 100);
       } else {
         console.error('FAILED: API call unsuccessful', response?.errors);
         // Restore original message and clear any loading state

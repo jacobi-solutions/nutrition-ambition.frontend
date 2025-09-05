@@ -62,6 +62,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Track edit operations for the new backend structure
   editOperations: UserEditOperation[] = [];
   removedFoods: Set<string> = new Set(); // Track foods removed via RemoveFood operation
+  
+  // Track which component was being edited to re-expand it after update
+  private editingComponentId: string | null = null;
 
   constructor(
     private toastService: ToastService, 
@@ -123,32 +126,57 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    if (!this.message.logMealToolResponse?.foods) return;
-    
-    // Initialize selections for each component
-    this.message.logMealToolResponse.foods.forEach(food => {
-      if (food.components) {
-        food.components.forEach(component => {
-          if (component.id && component.matches && component.matches.length > 0) {
-            const firstMatch = component.matches[0];
-            const foodId = firstMatch?.fatSecretFoodId;
-            const servingId = firstMatch?.selectedServingId;
-            
-            if (foodId) {
-              this.selections[component.id] = { foodId, servingId };
-            }
-            this.expandedSections[component.id] = false;
-          }
-        });
-      }
-    });
+    this.rebuildSelectionsFromMessage();
     
     this.isReadOnly = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
     this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+   
+    if (changes['message']) {
+      
+      this.rebuildSelectionsFromMessage();
+    }
+    
     if (changes['isReadOnly'] && this.isReadOnly) this.isSubmitting = false;
+  }
+
+
+  private rebuildSelectionsFromMessage(): void {
+    this.selections = {};
+    if (!this.message?.logMealToolResponse?.foods) return;
+
+    for (const food of this.message.logMealToolResponse.foods) {
+      if (!food?.components) continue;
+      for (const component of food.components) {
+        const compId = component?.id;
+        if (!compId) continue;
+
+        const matches = component.matches || [];
+        const best: any = matches.find((m: any) => (m as any).isBestMatch) ?? matches[0];
+
+        const foodId = best?.fatSecretFoodId;
+        const servingId = best?.selectedServingId ?? best?.servings?.[0]?.fatSecretServingId;
+
+        if (foodId) {
+          this.selections[compId] = { foodId, servingId };
+        }
+
+        // reset transient UI state for fresh data
+        this.editingComponents[compId] = false;
+        this.searchingComponents[compId] = false;
+      }
+    }
+
+    // hard-invalidate caches (we keep message.id stable for trackBy)
+    this._availableComponents = [];
+    this._lastMessageId = undefined;
+    this._foodComponentsCache.clear();
+    this._lastCacheMessageId = undefined;
+    this._lastCacheRemovedSize = this.removedComponents.size;
+
+    this.cdr.detectChanges();
   }
 
   toggleExpansion(componentId: string): void {
@@ -322,12 +350,18 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getSelectedFood(componentId: string): ComponentMatch | null {
-    const selection = this.selections[componentId];
-    if (!selection?.foodId) return null;
-    
-    // Find the component by ID and get its matches
     const component = this.findComponentById(componentId);
-    return component?.matches?.find((match: any) => match.fatSecretFoodId === selection.foodId) || null;
+    const matches: any[] = component?.matches || [];
+    if (!matches.length) return null;
+
+    const selection = this.selections[componentId];
+    if (selection?.foodId) {
+      const byId = matches.find((m: any) => m.fatSecretFoodId === selection.foodId);
+      if (byId) return byId;
+    }
+
+    // fallback to best/first match
+    return (matches.find((m: any) => (m as any).isBestMatch) ?? matches[0]) || null;
   }
 
   private findComponentById(componentId: string): any {
@@ -423,7 +457,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getSelectedServingId(componentId: string): string | undefined {
-    return this.selections[componentId]?.servingId;
+    return (
+      this.selections[componentId]?.servingId ??
+      (this.getSelectedFood(componentId) as any)?.selectedServingId ??
+      (this.getSelectedFood(componentId) as any)?.servings?.[0]?.fatSecretServingId
+    );
   }
 
   getSelectedServing(componentId: string): ComponentServing | null {
@@ -586,10 +624,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   getDisplayNameOrSearchText(componentId: string): string {
     const food = this.getSelectedFood(componentId);
-    if (food && (food as any).inferred && (food as any).searchText) {
-      return (food as any).searchText;
-    }
-    return food?.displayName || '';
+    if (food && (food as any).inferred && (food as any).searchText) return (food as any).searchText;
+    if (food?.displayName) return food.displayName;
+
+    const comp = this.findComponentById(componentId);
+    return comp?.key || '';
   }
 
   isInferred(componentId: string): boolean {
@@ -1226,38 +1265,28 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   sendUpdatedComponent(componentId: string): void {
+    this.toggleExpansion(componentId);
     const newValue = this.editingComponentValues[componentId];
-    const component = this.findComponentById(componentId);
     
-    // Use getSearchTextOnly to get the proper original phrase, fallback to component key
-    const originalValue = this.getSearchTextOnly(componentId) || component?.key || '';
-    
-    console.log(`[DEBUG] Component edit - ComponentId: ${componentId}`);
-    console.log(`[DEBUG] Component object:`, component);
-    console.log(`[DEBUG] Original value from getSearchTextOnly: "${this.getSearchTextOnly(componentId)}"`);
-    console.log(`[DEBUG] Original value from component.key: "${component?.key}"`);
-    console.log(`[DEBUG] Final originalValue: "${originalValue}"`);
-    console.log(`[DEBUG] New value: "${newValue}"`);
-    
-    if (newValue.trim() === originalValue.trim()) {
-      console.log('No changes detected, not sending');
+    if (!newValue || !newValue.trim()) {
+      console.log('No new value entered, not sending');
       return;
     }
 
-    console.log(`Requesting component edit: "${originalValue}" → "${newValue}"`);
+    console.log(`Requesting component edit for componentId: ${componentId} → "${newValue}"`);
     
-    // Emit the phrase edit request to the parent (chat page)
-    // The parent will handle showing loading by replacing the component
+    // Close the edit mode completely first
+    this.finishEditingComponent(componentId);
+    
+    // Then send the request
     this.phraseEditRequested.emit({
-      originalPhrase: originalValue,
+      originalPhrase: 'UPDATE', // Non-empty value to indicate this is an update
       newPhrase: newValue.trim(),
       messageId: this.message.id || '',
       componentId: componentId
     });
-    
-    // Clear the editing state since we're now in loading state
-    this.finishEditingComponent(componentId);
   }
+
 
   finishEditingComponent(componentId: string): void {
     const newValue = this.editingComponentValues[componentId];
