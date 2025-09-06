@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
@@ -55,6 +55,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Track which component was being edited to re-expand it after update
   private editingComponentId: string | null = null;
 
+  // Hot-path caches to avoid repeated deep scans
+  private componentById: Map<string, any> = new Map();
+  private foodForComponentId: Map<string, any> = new Map();
+  private selectedFoodByComponentId: Map<string, ComponentMatch> = new Map();
+  private selectedServingIdByComponentId: Map<string, string> = new Map();
+
   constructor(
     private toastService: ToastService, 
     private cdr: ChangeDetectorRef,
@@ -81,9 +87,22 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.isReadOnly = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
     this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
+    this.rebuildLookupCaches();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['message'] && changes['message'].currentValue) {
+      // Update readonly state when message role changes
+      const newReadOnlyState = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
+      if (newReadOnlyState !== this.isReadOnly) {
+        this.isReadOnly = newReadOnlyState;
+        if (this.isReadOnly) {
+          this.isSubmitting = false;
+          this.isCanceling = false;
+        }
+      }
+      this.rebuildLookupCaches();
+    }
     if (changes['isReadOnly'] && this.isReadOnly) this.isSubmitting = false;
   }
 
@@ -121,6 +140,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       .map((component: any) => ({ componentId: component.id, component }));
   }
 
+  // All remaining components across foods (excludes removed foods/components)
+  get availableComponents(): Array<{componentId: string, component: any}> {
+    if (!this.message?.logMealToolResponse?.foods) return [];
+    const result: Array<{componentId: string, component: any}> = [];
+    for (const food of this.message.logMealToolResponse.foods) {
+      const comps = this.getComponentsForFood(food);
+      for (const c of comps) result.push(c);
+    }
+    return result;
+  }
+
   // Calculate total macros for a food (sum of all its components)
   getFoodTotalCalories(food: any): number {
     const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
@@ -151,6 +181,43 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   getFoodTotalCarbs(food: any): number {
     const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
+      const selectedServing = this.getSelectedServing(componentId);
+      const carbs = this.carbsForServing(selectedServing);
+      return total + (carbs || 0);
+    }, 0);
+    return componentTotal * (food.quantity || 1);
+  }
+
+  // Optimized totals using pre-calculated components (passed from template)
+  getFoodTotalCaloriesFromComponents(food: any, foodComponents: Array<{componentId: string, component: any}>): number {
+    const componentTotal = foodComponents.reduce((total, { componentId }) => {
+      const selectedServing = this.getSelectedServing(componentId);
+      const calories = this.caloriesForServing(selectedServing);
+      return total + (calories || 0);
+    }, 0);
+    return componentTotal * (food.quantity || 1);
+  }
+
+  getFoodTotalProteinFromComponents(food: any, foodComponents: Array<{componentId: string, component: any}>): number {
+    const componentTotal = foodComponents.reduce((total, { componentId }) => {
+      const selectedServing = this.getSelectedServing(componentId);
+      const protein = this.proteinForServing(selectedServing);
+      return total + (protein || 0);
+    }, 0);
+    return componentTotal * (food.quantity || 1);
+  }
+
+  getFoodTotalFatFromComponents(food: any, foodComponents: Array<{componentId: string, component: any}>): number {
+    const componentTotal = foodComponents.reduce((total, { componentId }) => {
+      const selectedServing = this.getSelectedServing(componentId);
+      const fat = this.fatForServing(selectedServing);
+      return total + (fat || 0);
+    }, 0);
+    return componentTotal * (food.quantity || 1);
+  }
+
+  getFoodTotalCarbsFromComponents(food: any, foodComponents: Array<{componentId: string, component: any}>): number {
+    const componentTotal = foodComponents.reduce((total, { componentId }) => {
       const selectedServing = this.getSelectedServing(componentId);
       const carbs = this.carbsForServing(selectedServing);
       return total + (carbs || 0);
@@ -245,42 +312,24 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getSelectedFood(componentId: string): ComponentMatch | null {
+    const cached = this.selectedFoodByComponentId.get(componentId);
+    if (cached) return cached;
     const component = this.findComponentById(componentId);
     const matches: any[] = component?.matches || [];
     if (!matches.length) return null;
-
-    // Return the match marked as best, or fall back to first match
-    return matches.find((m: any) => (m as any).isBestMatch) ?? matches[0];
+    const selected = (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
+    this.selectedFoodByComponentId.set(componentId, selected);
+    const sid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.fatSecretServingId;
+    if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
+    return selected;
   }
 
   private findComponentById(componentId: string): any {
-    if (!this.message.logMealToolResponse?.foods) return null;
-    
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.components) {
-        for (const component of food.components) {
-          if (component.id === componentId) {
-            return component;
-          }
-        }
-      }
-    }
-    return null;
+    return this.componentById.get(componentId) || null;
   }
 
   private getFoodForComponent(componentId: string): any {
-    if (!this.message.logMealToolResponse?.foods) return null;
-    
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.components) {
-        for (const component of food.components) {
-          if (component.id === componentId) {
-            return food;
-          }
-        }
-      }
-    }
-    return null;
+    return this.foodForComponentId.get(componentId) || null;
   }
 
   private findFoodByComponentId(componentId: string): any {
@@ -332,6 +381,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         fatSecretServingId: (selectedMatch as any)?.selectedServingId
       }));
     }
+
+    // Update caches for this component
+    const selectedMatch = component.matches.find((match: any) => match.fatSecretFoodId === foodId) as ComponentMatch | undefined;
+    if (selectedMatch) {
+      this.selectedFoodByComponentId.set(componentId, selectedMatch);
+      const sid = (selectedMatch as any)?.selectedServingId ?? selectedMatch.servings?.[0]?.fatSecretServingId;
+      if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
+    }
   }
 
   onServingSelected(componentId: string, servingId: string): void {
@@ -339,6 +396,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (selectedFood) {
       // Update selectedServingId directly on the selected match
       (selectedFood as any).selectedServingId = servingId;
+
+      // Keep cache in sync
+      this.selectedServingIdByComponentId.set(componentId, servingId);
 
       // In edit mode, track the operation
       if (this.isEditMode) {
@@ -353,8 +413,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getSelectedServingId(componentId: string): string | undefined {
+    const cached = this.selectedServingIdByComponentId.get(componentId);
+    if (cached) return cached;
     const selectedFood = this.getSelectedFood(componentId);
-    return (selectedFood as any)?.selectedServingId ?? (selectedFood as any)?.servings?.[0]?.fatSecretServingId;
+    const sid = (selectedFood as any)?.selectedServingId ?? (selectedFood as any)?.servings?.[0]?.fatSecretServingId;
+    if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
+    return sid;
   }
 
   getSelectedServing(componentId: string): ComponentServing | null {
@@ -371,6 +435,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // TrackBy function to prevent DOM reuse issues
   trackByServingId(index: number, serving: ComponentServing): string {
     return serving.fatSecretServingId || `${index}`;
+  }
+
+  // TrackBy helpers for larger lists
+  trackByMeal(index: number, meal: LogMealToolResponse): string {
+    // Meal responses may not have stable ids; use mealName + index as stable-enough key
+    return (meal as any)?.mealName ? `${(meal as any).mealName}-${index}` : `${index}`;
+  }
+
+  trackByFood(index: number, food: any): string {
+    return food?.id || `${index}`;
+  }
+
+  trackByComponentId(index: number, componentData: { componentId: string }): string {
+    return componentData?.componentId || `${index}`;
   }
 
   isWeightUnit(unit: string | undefined): boolean {
@@ -637,6 +715,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
 
       this.removedComponents.add(componentId);
+      // Evict caches for this component
+      this.componentById.delete(componentId);
+      this.foodForComponentId.delete(componentId);
+      this.selectedFoodByComponentId.delete(componentId);
+      this.selectedServingIdByComponentId.delete(componentId);
 
       // Check if this was the last remaining food item
       const remainingItems = this.availableComponents; // This will exclude the just-removed item
@@ -688,6 +771,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
 
     this.removedFoods.add(foodId);
+
+    // Evict all cached entries for components within this food
+    const comps = (food.components || []) as any[];
+    for (const c of comps) {
+      const cid = c?.id;
+      if (!cid) continue;
+      this.componentById.delete(cid);
+      this.foodForComponentId.delete(cid);
+      this.selectedFoodByComponentId.delete(cid);
+      this.selectedServingIdByComponentId.delete(cid);
+    }
 
     // Check if this was the last remaining food item
     const remainingItems = this.availableComponents;
@@ -1262,6 +1356,32 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }, 150);
   }
 
+  // Build quick-lookup caches from the current message payload
+  private rebuildLookupCaches(): void {
+    this.componentById.clear();
+    this.foodForComponentId.clear();
+    this.selectedFoodByComponentId.clear();
+    this.selectedServingIdByComponentId.clear();
+
+    const foods = this.message?.logMealToolResponse?.foods || [];
+    for (const food of foods) {
+      const components = food.components || [];
+      for (const component of components) {
+        const cid = component?.id;
+        if (!cid) continue;
+        this.componentById.set(cid, component);
+        this.foodForComponentId.set(cid, food);
+
+        const matches: any[] = component?.matches || [];
+        if (matches.length) {
+          const selected: ComponentMatch = (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
+          this.selectedFoodByComponentId.set(cid, selected);
+          const sid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.fatSecretServingId;
+          if (sid) this.selectedServingIdByComponentId.set(cid, sid);
+        }
+      }
+    }
+  }
   cancelAddingFood(): void {
     this.isAddingFood = false;
     this.newFoodPhrase = '';

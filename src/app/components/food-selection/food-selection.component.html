@@ -18,11 +18,13 @@
 
       <div *ngIf="hasPayload" class="food-items-list">
       <!-- Loop over foods instead of flattened components -->
-      <ng-container *ngFor="let food of (message.logMealToolResponse?.foods || []); let foodIndex = index; let isLast = last">
+      <ng-container *ngFor="let food of (message.logMealToolResponse?.foods || []); let foodIndex = index; let isLast = last; trackBy: trackByFood">
         <div class="food-item-container" [class.is-last]="isLast" *ngIf="getComponentsForFood(food).length > 0">
           
+          <!-- Cache components per food to avoid repeated calls -->
+          <ng-container *ngIf="getComponentsForFood(food) as foodComponents">
           <!-- Multi-component food: Show as component-style item -->
-          <ng-container *ngIf="getComponentsForFood(food).length > 1">
+          <ng-container *ngIf="foodComponents.length > 1">
             <!-- Food header row (styled like component items) -->
             <div class="component-item-container">
               <div class="food-item-row-simple">
@@ -66,10 +68,10 @@
                   </ion-row>
                   <ion-row class="macro-row" *ngIf="!isReadOnly">
                     <ion-col size="12" class="macro-summary">
-                      ({{ getFoodTotalCalories(food) | number:'1.0-0' }} cal,
-                      {{ getFoodTotalProtein(food) | number:'1.0-0' }} protein,
-                      {{ getFoodTotalFat(food) | number:'1.0-0' }} fat,
-                      {{ getFoodTotalCarbs(food) | number:'1.0-0' }} carbs)
+                      ({{ getFoodTotalCaloriesFromComponents(food, foodComponents) | number:'1.0-0' }} cal,
+                      {{ getFoodTotalProteinFromComponents(food, foodComponents) | number:'1.0-0' }} protein,
+                      {{ getFoodTotalFatFromComponents(food, foodComponents) | number:'1.0-0' }} fat,
+                      {{ getFoodTotalCarbsFromComponents(food, foodComponents) | number:'1.0-0' }} carbs)
                     </ion-col>
                   </ion-row>
                 </ion-grid>
@@ -78,7 +80,7 @@
 
             <!-- Expanded food editing (quantity + components) -->
             <div *ngIf="!isReadOnly && isFoodEditingExpanded(foodIndex)" class="expanded-food-components">
-            <ng-container *ngFor="let componentData of getComponentsForFood(food)">
+            <ng-container *ngFor="let componentData of foodComponents; trackBy: trackByComponentId">
               <div class="component-item-container">
                 <div class="food-item-row-simple" [id]="'row-' + componentData.componentId" [class.searching]="isSearchingComponent(componentData.componentId)">
                 
@@ -227,8 +229,8 @@
           </ng-container> <!-- Close multi-component food -->
 
           <!-- Single-component food: Display directly as component -->
-          <ng-container *ngIf="getComponentsForFood(food).length === 1">
-            <div *ngFor="let componentData of getComponentsForFood(food)" class="component-item-container">
+          <ng-container *ngIf="foodComponents.length === 1">
+            <div *ngFor="let componentData of foodComponents; trackBy: trackByComponentId" class="component-item-container">
           <div class="food-item-row-simple" [id]="'row-' + componentData.componentId" [class.searching]="isSearchingComponent(componentData.componentId)">
           
           <!-- Loading overlay when searching -->
@@ -371,6 +373,7 @@
         </div>
             </div> <!-- Close div for single component -->
           </ng-container> <!-- Close single-component food -->
+          </ng-container> <!-- Close cached components container -->
 
         </div> <!-- Close food-item-container -->
       </ng-container>
