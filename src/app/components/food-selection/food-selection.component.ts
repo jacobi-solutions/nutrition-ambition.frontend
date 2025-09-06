@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
@@ -65,7 +65,45 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   get hasPayload(): boolean {
-    return !!this.message.logMealToolResponse?.foods && this.message.logMealToolResponse.foods.length > 0;
+    // Check both single meal response (legacy) and multiple meal responses
+    const singleMealHasFood = !!this.message.logMealToolResponse?.foods && this.message.logMealToolResponse.foods.length > 0;
+    const multipleMealsHaveFood = !!this.message.logMealToolResponses && this.message.logMealToolResponses.length > 0 && 
+      this.message.logMealToolResponses.some(meal => meal.foods && meal.foods.length > 0);
+    return singleMealHasFood || multipleMealsHaveFood;
+  }
+
+  // Get all meals from either single or multiple responses
+  get allMeals(): LogMealToolResponse[] {
+    if (this.message.logMealToolResponses && this.message.logMealToolResponses.length > 0) {
+      return this.message.logMealToolResponses;
+    } else if (this.message.logMealToolResponse) {
+      return [this.message.logMealToolResponse];
+    }
+    return [];
+  }
+
+  // Get available components across all meals (used for checking if items remain after removal)
+  get availableComponents(): Array<{componentId: string, component: any}> {
+    const components: Array<{componentId: string, component: any}> = [];
+    
+    const allMeals = this.allMeals;
+    for (const meal of allMeals) {
+      if (meal.foods) {
+        for (const food of meal.foods) {
+          if (food.id && this.removedFoods.has(food.id)) continue;
+          
+          if (food.components) {
+            for (const component of food.components) {
+              if (component.id && !this.removedComponents.has(component.id)) {
+                components.push({ componentId: component.id, component });
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return components;
   }
 
   get statusText(): string {
@@ -85,6 +123,24 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isReadOnly'] && this.isReadOnly) this.isSubmitting = false;
+    
+    // Update readonly state when message role changes
+    if (changes['message'] && changes['message'].currentValue) {
+      const newRole = changes['message'].currentValue.role;
+      const newIsReadOnly = newRole === MessageRoleTypes.CompletedFoodSelection || newRole === MessageRoleTypes.CompletedEditFoodSelection;
+      
+      if (this.isReadOnly !== newIsReadOnly) {
+        this.isReadOnly = newIsReadOnly;
+        this.isEditMode = newRole === MessageRoleTypes.PendingEditFoodSelection;
+        
+        if (this.isReadOnly) {
+          this.isSubmitting = false;
+        }
+        
+        // Trigger change detection to update the UI
+        this.cdr.detectChanges();
+      }
+    }
   }
 
 
@@ -254,13 +310,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private findComponentById(componentId: string): any {
-    if (!this.message.logMealToolResponse?.foods) return null;
+    const allMeals = this.allMeals;
     
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.components) {
-        for (const component of food.components) {
-          if (component.id === componentId) {
-            return component;
+    for (const meal of allMeals) {
+      if (meal.foods) {
+        for (const food of meal.foods) {
+          if (food.components) {
+            for (const component of food.components) {
+              if (component.id === componentId) {
+                return component;
+              }
+            }
           }
         }
       }
@@ -269,13 +329,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private getFoodForComponent(componentId: string): any {
-    if (!this.message.logMealToolResponse?.foods) return null;
+    const allMeals = this.allMeals;
     
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.components) {
-        for (const component of food.components) {
-          if (component.id === componentId) {
-            return food;
+    for (const meal of allMeals) {
+      if (meal.foods) {
+        for (const food of meal.foods) {
+          if (food.components) {
+            for (const component of food.components) {
+              if (component.id === componentId) {
+                return food;
+              }
+            }
           }
         }
       }
@@ -284,13 +348,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private findFoodByComponentId(componentId: string): any {
-    if (!this.message.logMealToolResponse?.foods) return null;
+    const allMeals = this.allMeals;
     
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.components) {
-        for (const component of food.components) {
-          if (component.id === componentId) {
-            return food;
+    for (const meal of allMeals) {
+      if (meal.foods) {
+        for (const food of meal.foods) {
+          if (food.components) {
+            for (const component of food.components) {
+              if (component.id === componentId) {
+                return food;
+              }
+            }
           }
         }
       }
@@ -299,11 +367,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private findFoodById(foodId: string): any {
-    if (!this.message.logMealToolResponse?.foods) return null;
+    const allMeals = this.allMeals;
     
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.id === foodId) {
-        return food;
+    for (const meal of allMeals) {
+      if (meal.foods) {
+        for (const food of meal.foods) {
+          if (food.id === foodId) {
+            return food;
+          }
+        }
       }
     }
     return null;
@@ -402,20 +474,24 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   isSelectionComplete(): boolean {
     if (!this.hasPayload) return false;
     
-    // Check if all non-removed components have valid selections
-    if (this.message.logMealToolResponse?.foods) {
-      for (const food of this.message.logMealToolResponse.foods) {
-        if (food.id && this.removedFoods.has(food.id)) continue;
-        
-        if (food.components) {
-          for (const component of food.components) {
-            if (!component.id || this.removedComponents.has(component.id)) continue;
-            
-            const selectedFood = this.getSelectedFood(component.id);
-            const servingId = this.getSelectedServingId(component.id);
-            
-            if (!selectedFood?.fatSecretFoodId || !servingId) {
-              return false;
+    // Check if all non-removed components have valid selections across all meals
+    const allMeals = this.allMeals;
+    
+    for (const meal of allMeals) {
+      if (meal.foods) {
+        for (const food of meal.foods) {
+          if (food.id && this.removedFoods.has(food.id)) continue;
+          
+          if (food.components) {
+            for (const component of food.components) {
+              if (!component.id || this.removedComponents.has(component.id)) continue;
+              
+              const selectedFood = this.getSelectedFood(component.id);
+              const servingId = this.getSelectedServingId(component.id);
+              
+              if (!selectedFood?.fatSecretFoodId || !servingId) {
+                return false;
+              }
             }
           }
         }
@@ -438,29 +514,33 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     req.pendingMessageId = this.message.id;
     req.selections = [];
 
-    // Iterate through all foods and components directly
-    if (this.message.logMealToolResponse?.foods) {
-      for (const food of this.message.logMealToolResponse.foods) {
-        if (food.id && this.removedFoods.has(food.id)) continue;
-        
-        if (food.components) {
-          for (const component of food.components) {
-            if (!component.id || this.removedComponents.has(component.id)) continue;
-            
-            const selectedFood = this.getSelectedFood(component.id);
-            const servingId = this.getSelectedServingId(component.id);
-            const selectedServing = this.getSelectedServing(component.id);
-            
-            if (selectedFood?.fatSecretFoodId && servingId && selectedServing) {
-              const displayQuantity = this.getEffectiveQuantity(component.id, selectedServing);
+    // Iterate through all meals, foods and components
+    const allMeals = this.allMeals;
+    
+    for (const meal of allMeals) {
+      if (meal.foods) {
+        for (const food of meal.foods) {
+          if (food.id && this.removedFoods.has(food.id)) continue;
+          
+          if (food.components) {
+            for (const component of food.components) {
+              if (!component.id || this.removedComponents.has(component.id)) continue;
               
-              req.selections.push(new UserSelectedServing({
-                componentId: component.id,
-                originalText: component.key || selectedFood.originalText,
-                fatSecretFoodId: selectedFood.fatSecretFoodId,
-                fatSecretServingId: servingId,
-                editedQuantity: displayQuantity
-              }));
+              const selectedFood = this.getSelectedFood(component.id);
+              const servingId = this.getSelectedServingId(component.id);
+              const selectedServing = this.getSelectedServing(component.id);
+              
+              if (selectedFood?.fatSecretFoodId && servingId && selectedServing) {
+                const displayQuantity = this.getEffectiveQuantity(component.id, selectedServing);
+                
+                req.selections.push(new UserSelectedServing({
+                  componentId: component.id,
+                  originalText: component.key || selectedFood.originalText,
+                  fatSecretFoodId: selectedFood.fatSecretFoodId,
+                  fatSecretServingId: servingId,
+                  editedQuantity: displayQuantity
+                }));
+              }
             }
           }
         }

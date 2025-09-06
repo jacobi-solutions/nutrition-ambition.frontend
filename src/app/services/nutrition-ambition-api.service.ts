@@ -1860,6 +1860,7 @@ export class ChatMessage implements IChatMessage {
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
     logMealToolResponse?: LogMealToolResponse;
+    logMealToolResponses?: LogMealToolResponse[] | undefined;
     modelUsed?: string | undefined;
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
@@ -1892,6 +1893,11 @@ export class ChatMessage implements IChatMessage {
             this.assistantMode = _data["assistantMode"];
             this.assistantPhase = _data["assistantPhase"];
             this.logMealToolResponse = _data["logMealToolResponse"] ? LogMealToolResponse.fromJS(_data["logMealToolResponse"]) : <any>undefined;
+            if (Array.isArray(_data["logMealToolResponses"])) {
+                this.logMealToolResponses = [] as any;
+                for (let item of _data["logMealToolResponses"])
+                    this.logMealToolResponses!.push(LogMealToolResponse.fromJS(item));
+            }
             this.modelUsed = _data["modelUsed"];
             this.promptTokens = _data["promptTokens"];
             this.completionTokens = _data["completionTokens"];
@@ -1924,6 +1930,11 @@ export class ChatMessage implements IChatMessage {
         data["assistantMode"] = this.assistantMode;
         data["assistantPhase"] = this.assistantPhase;
         data["logMealToolResponse"] = this.logMealToolResponse ? this.logMealToolResponse.toJSON() : <any>undefined;
+        if (Array.isArray(this.logMealToolResponses)) {
+            data["logMealToolResponses"] = [];
+            for (let item of this.logMealToolResponses)
+                data["logMealToolResponses"].push(item.toJSON());
+        }
         data["modelUsed"] = this.modelUsed;
         data["promptTokens"] = this.promptTokens;
         data["completionTokens"] = this.completionTokens;
@@ -1949,6 +1960,7 @@ export interface IChatMessage {
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
     logMealToolResponse?: LogMealToolResponse;
+    logMealToolResponses?: LogMealToolResponse[] | undefined;
     modelUsed?: string | undefined;
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;

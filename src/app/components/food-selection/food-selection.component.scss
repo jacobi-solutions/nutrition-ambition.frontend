@@ -96,6 +96,25 @@
   // Single component styling - restore original appearance
   // No special styling needed - let the existing food-item-row-simple styles handle it
   
+  // Meal header styling (for multiple meals)
+  .meal-header {
+    margin: 16px 0 12px 0;
+    padding: 8px 12px;
+    background-color: var(--color-light-smoke);
+    border-radius: 8px;
+    
+    h3 {
+      margin: 0;
+      color: var(--color-olive);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
   // Food items list styling
   .food-items-list {
     .food-item-container {

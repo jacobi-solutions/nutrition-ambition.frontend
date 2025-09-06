@@ -8,8 +8,11 @@ export interface DisplayMessage {
     timestamp: Date;
     role?: MessageRoleTypes;
   
-    // keep full payload from backend
+    // keep full payload from backend - single meal (legacy)
     logMealToolResponse?: LogMealToolResponse | null;
+    
+    // support for multiple meals
+    logMealToolResponses?: LogMealToolResponse[] | null;
   
     // optional convenience fields
     mealName?: string | null;

@@ -797,9 +797,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             text: msg.content || '',
             isUser: msg.role === MessageRoleTypes.User,
             timestamp: msg.createdDateUtc || new Date(),
-            // foodOptions removed - use logMealToolResponse.foods instead
+            // Support both single meal (legacy) and multiple meals
             mealName: msg.logMealToolResponse?.mealName || null,
             logMealToolResponse: msg.logMealToolResponse || null,
+            logMealToolResponses: msg.logMealToolResponses || null,
             role: msg.role
           };
         }

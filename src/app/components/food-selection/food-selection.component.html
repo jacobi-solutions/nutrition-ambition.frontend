@@ -13,12 +13,19 @@
     <div *ngIf="!isEditingPhrase">
       <!-- Food items list -->
       <div *ngIf="hasPayload" class="card-header">
-        <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Items') | titlecase }}</strong></label>
+        <label><strong>{{ allMeals.length === 1 ? ((allMeals[0].mealName && allMeals[0].mealName.trim().length > 0) ? allMeals[0].mealName : 'Food Items') : 'Food Items' | titlecase }}</strong></label>
       </div>
 
       <div *ngIf="hasPayload" class="food-items-list">
-      <!-- Loop over foods instead of flattened components -->
-      <ng-container *ngFor="let food of (message.logMealToolResponse?.foods || []); let foodIndex = index; let isLast = last">
+        <!-- Loop over all meals -->
+        <ng-container *ngFor="let meal of allMeals; let mealIndex = index">
+          <!-- Meal header (only show if multiple meals) -->
+          <div *ngIf="allMeals.length > 1" class="meal-header">
+            <h3>{{ (meal.mealName && meal.mealName.trim().length > 0) ? (meal.mealName | titlecase) : ('Meal ' + (mealIndex + 1)) }}</h3>
+          </div>
+          
+          <!-- Loop over foods in this meal -->
+          <ng-container *ngFor="let food of (meal.foods || []); let foodIndex = index; let isLast = last">
         <div class="food-item-container" [class.is-last]="isLast" *ngIf="getComponentsForFood(food).length > 0">
           
           <!-- Multi-component food: Show as component-style item -->
@@ -373,8 +380,9 @@
           </ng-container> <!-- Close single-component food -->
 
         </div> <!-- Close food-item-container -->
-      </ng-container>
-    </div>
+          </ng-container> <!-- Close foods loop -->
+        </ng-container> <!-- Close meals loop -->
+      </div>
 
     <!-- Add something row -->
     <div *ngIf="hasPayload && !isReadOnly && !isEditMode" class="add-something-row">
