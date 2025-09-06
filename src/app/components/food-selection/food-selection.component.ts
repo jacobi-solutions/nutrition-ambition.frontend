@@ -64,12 +64,19 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline });
   }
 
+  private _cachedHasPayload?: boolean;
+  private _lastMessageChangeDetection?: any;
+  
   get hasPayload(): boolean {
-    // Check both single meal response (legacy) and multiple meal responses
-    const singleMealHasFood = !!this.message.logMealToolResponse?.foods && this.message.logMealToolResponse.foods.length > 0;
-    const multipleMealsHaveFood = !!this.message.logMealToolResponses && this.message.logMealToolResponses.length > 0 && 
-      this.message.logMealToolResponses.some(meal => meal.foods && meal.foods.length > 0);
-    return singleMealHasFood || multipleMealsHaveFood;
+    // Cache the result to avoid expensive recalculation on every change detection
+    if (this._lastMessageChangeDetection !== this.message || this._cachedHasPayload === undefined) {
+      const singleMealHasFood = !!this.message.logMealToolResponse?.foods && this.message.logMealToolResponse.foods.length > 0;
+      const multipleMealsHaveFood = !!this.message.logMealToolResponses && this.message.logMealToolResponses.length > 0 && 
+        this.message.logMealToolResponses.some(meal => meal.foods && meal.foods.length > 0);
+      this._cachedHasPayload = singleMealHasFood || multipleMealsHaveFood;
+      this._lastMessageChangeDetection = this.message;
+    }
+    return this._cachedHasPayload;
   }
 
   // Get all meals from either single or multiple responses
@@ -82,28 +89,46 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return [];
   }
 
+  private _cachedAvailableComponents?: Array<{componentId: string, component: any}>;
+  private _lastRemovedComponentsState?: string;
+  private _lastRemovedFoodsState?: string;
+  
   // Get available components across all meals (used for checking if items remain after removal)
   get availableComponents(): Array<{componentId: string, component: any}> {
-    const components: Array<{componentId: string, component: any}> = [];
+    // Cache this expensive calculation to prevent performance issues
+    const currentRemovedComponentsState = Array.from(this.removedComponents).sort().join(',');
+    const currentRemovedFoodsState = Array.from(this.removedFoods).sort().join(',');
     
-    const allMeals = this.allMeals;
-    for (const meal of allMeals) {
-      if (meal.foods) {
-        for (const food of meal.foods) {
-          if (food.id && this.removedFoods.has(food.id)) continue;
-          
-          if (food.components) {
-            for (const component of food.components) {
-              if (component.id && !this.removedComponents.has(component.id)) {
-                components.push({ componentId: component.id, component });
+    if (this._lastMessageChangeDetection !== this.message || 
+        this._lastRemovedComponentsState !== currentRemovedComponentsState ||
+        this._lastRemovedFoodsState !== currentRemovedFoodsState ||
+        this._cachedAvailableComponents === undefined) {
+      
+      const components: Array<{componentId: string, component: any}> = [];
+      
+      const allMeals = this.allMeals;
+      for (const meal of allMeals) {
+        if (meal.foods) {
+          for (const food of meal.foods) {
+            if (food.id && this.removedFoods.has(food.id)) continue;
+            
+            if (food.components) {
+              for (const component of food.components) {
+                if (component.id && !this.removedComponents.has(component.id)) {
+                  components.push({ componentId: component.id, component });
+                }
               }
             }
           }
         }
       }
+      
+      this._cachedAvailableComponents = components;
+      this._lastRemovedComponentsState = currentRemovedComponentsState;
+      this._lastRemovedFoodsState = currentRemovedFoodsState;
     }
     
-    return components;
+    return this._cachedAvailableComponents;
   }
 
   get statusText(): string {

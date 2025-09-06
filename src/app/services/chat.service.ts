@@ -70,6 +70,7 @@ export class ChatService {
   
   // Run assistant message
   runAssistantMessage(message: string): Observable<ChatMessagesResponse> {
+
     console.log('[DEBUG] Running assistant message:', message.substring(0, 30) + '...');
     const request = new RunChatRequest({
       message: message,
@@ -102,6 +103,7 @@ export class ChatService {
     const request = new GetChatMessagesRequest({
       localDateKey: localDateKey
     });
+    debugger;
     return this.apiService.getChatMessages(request);
   }
   
@@ -109,6 +111,7 @@ export class ChatService {
     const request = new GetChatMessagesRequest({
       localDateKey: localDateKey
     });
+    debugger;
     return this.apiService.getChatMessages(request);
   }
   
@@ -178,12 +181,7 @@ export class ChatService {
     this.pendingEditSubject.next(null);
   }
 
-  // Check if there's a completed pending edit
-  public hasPendingEditMessages(): boolean {
-    const current = this.pendingEditSubject.value;
-    return !!(current && !current.isLoading && current.messages?.length);
-  }
-
+  
   // Get pending edit messages and clear them
   public consumePendingEditMessages(): ChatMessage[] | null {
     const current = this.pendingEditSubject.value;
@@ -194,13 +192,4 @@ export class ChatService {
     return null;
   }
 
-  // Emit an event when edit food selection is started (keeping for backward compatibility)
-  public notifyEditFoodSelectionStarted(messages?: ChatMessage[]) {
-    this.completePendingEdit(messages);
-  }
-
-  // Add a method to reload messages for the current date
-  loadMessages(): Observable<ChatMessagesResponse> {
-    return this.getMessageHistory(this.dateService.getSelectedDate());
-  }
 } 

@@ -26,10 +26,12 @@
           
           <!-- Loop over foods in this meal -->
           <ng-container *ngFor="let food of (meal.foods || []); let foodIndex = index; let isLast = last">
-        <div class="food-item-container" [class.is-last]="isLast" *ngIf="getComponentsForFood(food).length > 0">
+            <!-- Cache the components to avoid multiple expensive calls -->
+            <ng-container *ngIf="getComponentsForFood(food) as foodComponents">
+        <div class="food-item-container" [class.is-last]="isLast" *ngIf="foodComponents.length > 0">
           
           <!-- Multi-component food: Show as component-style item -->
-          <ng-container *ngIf="getComponentsForFood(food).length > 1">
+          <ng-container *ngIf="foodComponents.length > 1">
             <!-- Food header row (styled like component items) -->
             <div class="component-item-container">
               <div class="food-item-row-simple">
@@ -85,7 +87,7 @@
 
             <!-- Expanded food editing (quantity + components) -->
             <div *ngIf="!isReadOnly && isFoodEditingExpanded(foodIndex)" class="expanded-food-components">
-            <ng-container *ngFor="let componentData of getComponentsForFood(food)">
+            <ng-container *ngFor="let componentData of foodComponents">
               <div class="component-item-container">
                 <div class="food-item-row-simple" [id]="'row-' + componentData.componentId" [class.searching]="isSearchingComponent(componentData.componentId)">
                 
@@ -234,8 +236,8 @@
           </ng-container> <!-- Close multi-component food -->
 
           <!-- Single-component food: Display directly as component -->
-          <ng-container *ngIf="getComponentsForFood(food).length === 1">
-            <div *ngFor="let componentData of getComponentsForFood(food)" class="component-item-container">
+          <ng-container *ngIf="foodComponents.length === 1">
+            <div *ngFor="let componentData of foodComponents" class="component-item-container">
           <div class="food-item-row-simple" [id]="'row-' + componentData.componentId" [class.searching]="isSearchingComponent(componentData.componentId)">
           
           <!-- Loading overlay when searching -->
@@ -380,6 +382,7 @@
           </ng-container> <!-- Close single-component food -->
 
         </div> <!-- Close food-item-container -->
+            </ng-container> <!-- Close foodComponents cache -->
           </ng-container> <!-- Close foods loop -->
         </ng-container> <!-- Close meals loop -->
       </div>

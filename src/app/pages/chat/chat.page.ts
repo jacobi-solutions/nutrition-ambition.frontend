@@ -359,7 +359,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
     // If user is authenticated, load chat history
     console.log('[DEBUG] User is authenticated, loading chat history');
-    
+    debugger;
     // Get message history for the selected date - auth token is added by AuthInterceptor
     this.chatService.getMessageHistoryByDate(localDateKey)
       .pipe(
@@ -422,8 +422,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
               isUser: msg.role === MessageRoleTypes.User,
               timestamp: msg.createdDateUtc || new Date(),
               // foodOptions removed - use logMealToolResponse.foods instead
-              mealName: msg.logMealToolResponse?.mealName || null,
-              logMealToolResponse: msg.logMealToolResponse || null,
+              mealName: msg.logMealToolResponses?.[0]?.mealName || null,
+              logMealToolResponse: msg.logMealToolResponses?.[0] || null, // For backward compatibility in DisplayMessage
+              logMealToolResponses: msg.logMealToolResponses || null,
               role: msg.role
             }));
             
@@ -798,8 +799,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             isUser: msg.role === MessageRoleTypes.User,
             timestamp: msg.createdDateUtc || new Date(),
             // Support both single meal (legacy) and multiple meals
-            mealName: msg.logMealToolResponse?.mealName || null,
-            logMealToolResponse: msg.logMealToolResponse || null,
+            mealName: msg.logMealToolResponses?.[0]?.mealName || null,
+            logMealToolResponse: msg.logMealToolResponses?.[0] || null, // For backward compatibility in DisplayMessage
             logMealToolResponses: msg.logMealToolResponses || null,
             role: msg.role
           };
@@ -857,12 +858,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           // Look for a completed food selection message with food entry details
           const completedMessage = response.messages.find(msg => 
             msg.role === MessageRoleTypes.CompletedFoodSelection && 
-            msg.logMealToolResponse?.foodEntryId
+            msg.logMealToolResponses?.[0]?.foodEntryId
           );
           
-          if (completedMessage?.logMealToolResponse) {
-            const entryId = completedMessage.logMealToolResponse.foodEntryId || 'unknown';
-            const mealName = completedMessage.logMealToolResponse.mealName || 'unknown';
+          if (completedMessage?.logMealToolResponses?.[0]) {
+            const entryId = completedMessage.logMealToolResponses[0].foodEntryId || 'unknown';
+            const mealName = completedMessage.logMealToolResponses[0].mealName || 'unknown';
             this.analytics.trackFoodEntryAdded(entryId, mealName);
           }
         }
@@ -1038,8 +1039,9 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       isUser: chatMessage.role === MessageRoleTypes.User,
       timestamp: chatMessage.createdDateUtc || new Date(),
       // foodOptions removed - use logMealToolResponse.foods instead
-      mealName: chatMessage.logMealToolResponse?.mealName || null,
-      logMealToolResponse: chatMessage.logMealToolResponse || null,
+      mealName: chatMessage.logMealToolResponses?.[0]?.mealName || null,
+      logMealToolResponse: chatMessage.logMealToolResponses?.[0] || null, // For backward compatibility in DisplayMessage
+      logMealToolResponses: chatMessage.logMealToolResponses || null,
       role: chatMessage.role
     };
   }
@@ -1056,12 +1058,14 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
   // Create a loading message by replacing the target component with a loading placeholder
   createLoadingMessageForComponent(originalMessage: DisplayMessage, componentId?: string, isAddingNew: boolean = false): DisplayMessage {
-    if (!originalMessage.logMealToolResponse?.foods) {
+    // Use the new array structure, but fallback to single response for backward compatibility
+    const mealResponse = originalMessage.logMealToolResponses?.[0] || originalMessage.logMealToolResponse;
+    if (!mealResponse?.foods) {
       return originalMessage;
     }
 
     // Deep clone the message structure
-    const clonedResponse = JSON.parse(JSON.stringify(originalMessage.logMealToolResponse));
+    const clonedResponse = JSON.parse(JSON.stringify(mealResponse));
     
     if (isAddingNew) {
       // For adding new foods, add a new loading component to the foods array
@@ -1105,7 +1109,8 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
     const loadingMessage: DisplayMessage = {
       ...originalMessage,
-      logMealToolResponse: clonedResponse
+      logMealToolResponse: clonedResponse, // For backward compatibility
+      logMealToolResponses: [clonedResponse] // Update the array as well
     };
 
     return loadingMessage;

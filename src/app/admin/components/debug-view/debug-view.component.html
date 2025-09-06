@@ -43,9 +43,11 @@
             </div>
 
             <!-- Food Selection Details -->
-            <div *ngIf="isFoodSelectionMessage(message.role) && message.logMealToolResponse" class="food-selection-details">
+            <div *ngIf="isFoodSelectionMessage(message.role) && message.logMealToolResponses" class="food-selection-details">
               <h5>Food Selection Details:</h5>
-                <div *ngFor="let foodItem of getFoodSelectionItems(message.logMealToolResponse)" class="food-item">
+              <div *ngFor="let mealResponse of message.logMealToolResponses" class="meal-section">
+                <h6 *ngIf="mealResponse.mealName" class="meal-name">{{ mealResponse.mealName }}</h6>
+                <div *ngFor="let foodItem of getFoodSelectionItems(mealResponse)" class="food-item">
                   <div class="food-header">
                     <strong>{{ foodItem.originalText }}</strong>
                   </div>
@@ -58,6 +60,7 @@
                     <span class="unit">{{ foodItem.displayUnit }}</span>
                   </div>
                 </div>
+              </div>
             </div>
             
             <div *ngIf="message.totalTokens" class="message-meta">
