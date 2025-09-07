@@ -2265,7 +2265,6 @@ export interface ICompleteFeedbackResponse {
 
 export class Component implements IComponent {
     id?: string | undefined;
-    key?: string | undefined;
     selectedComponentId?: string | undefined;
     matches?: ComponentMatch[] | undefined;
 
@@ -2281,7 +2280,6 @@ export class Component implements IComponent {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
-            this.key = _data["key"];
             this.selectedComponentId = _data["selectedComponentId"];
             if (Array.isArray(_data["matches"])) {
                 this.matches = [] as any;
@@ -2301,7 +2299,6 @@ export class Component implements IComponent {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
-        data["key"] = this.key;
         data["selectedComponentId"] = this.selectedComponentId;
         if (Array.isArray(this.matches)) {
             data["matches"] = [];
@@ -2314,7 +2311,6 @@ export class Component implements IComponent {
 
 export interface IComponent {
     id?: string | undefined;
-    key?: string | undefined;
     selectedComponentId?: string | undefined;
     matches?: ComponentMatch[] | undefined;
 }
@@ -2388,6 +2384,8 @@ export interface IComponentBreakdown {
 }
 
 export class ComponentMatch implements IComponentMatch {
+    provider?: string | undefined;
+    externalFoodId?: string | undefined;
     fatSecretFoodId?: string | undefined;
     displayName?: string | undefined;
     brandName?: string | undefined;
@@ -2416,6 +2414,8 @@ export class ComponentMatch implements IComponentMatch {
 
     init(_data?: any) {
         if (_data) {
+            this.provider = _data["provider"];
+            this.externalFoodId = _data["externalFoodId"];
             this.fatSecretFoodId = _data["fatSecretFoodId"];
             this.displayName = _data["displayName"];
             this.brandName = _data["brandName"];
@@ -2448,6 +2448,8 @@ export class ComponentMatch implements IComponentMatch {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["provider"] = this.provider;
+        data["externalFoodId"] = this.externalFoodId;
         data["fatSecretFoodId"] = this.fatSecretFoodId;
         data["displayName"] = this.displayName;
         data["brandName"] = this.brandName;
@@ -2473,6 +2475,8 @@ export class ComponentMatch implements IComponentMatch {
 }
 
 export interface IComponentMatch {
+    provider?: string | undefined;
+    externalFoodId?: string | undefined;
     fatSecretFoodId?: string | undefined;
     displayName?: string | undefined;
     brandName?: string | undefined;
@@ -2492,6 +2496,7 @@ export interface IComponentMatch {
 }
 
 export class ComponentServing implements IComponentServing {
+    externalServingId?: string | undefined;
     fatSecretServingId?: string | undefined;
     description?: string | undefined;
     displayQuantity?: number;
@@ -2514,6 +2519,7 @@ export class ComponentServing implements IComponentServing {
 
     init(_data?: any) {
         if (_data) {
+            this.externalServingId = _data["externalServingId"];
             this.fatSecretServingId = _data["fatSecretServingId"];
             this.description = _data["description"];
             this.displayQuantity = _data["displayQuantity"];
@@ -2542,6 +2548,7 @@ export class ComponentServing implements IComponentServing {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["externalServingId"] = this.externalServingId;
         data["fatSecretServingId"] = this.fatSecretServingId;
         data["description"] = this.description;
         data["displayQuantity"] = this.displayQuantity;
@@ -2563,6 +2570,7 @@ export class ComponentServing implements IComponentServing {
 }
 
 export interface IComponentServing {
+    externalServingId?: string | undefined;
     fatSecretServingId?: string | undefined;
     description?: string | undefined;
     displayQuantity?: number;
@@ -5093,7 +5101,9 @@ export class UserEditOperation implements IUserEditOperation {
     action!: EditFoodSelectionType;
     groupId?: string | undefined;
     componentId?: string | undefined;
+    externalFoodId?: string | undefined;
     fatSecretFoodId?: string | undefined;
+    externalServingId?: string | undefined;
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;
     newParentQuantity?: number | undefined;
@@ -5113,7 +5123,9 @@ export class UserEditOperation implements IUserEditOperation {
             this.action = _data["action"];
             this.groupId = _data["groupId"];
             this.componentId = _data["componentId"];
+            this.externalFoodId = _data["externalFoodId"];
             this.fatSecretFoodId = _data["fatSecretFoodId"];
+            this.externalServingId = _data["externalServingId"];
             this.fatSecretServingId = _data["fatSecretServingId"];
             this.editedQuantity = _data["editedQuantity"];
             this.newParentQuantity = _data["newParentQuantity"];
@@ -5133,7 +5145,9 @@ export class UserEditOperation implements IUserEditOperation {
         data["action"] = this.action;
         data["groupId"] = this.groupId;
         data["componentId"] = this.componentId;
+        data["externalFoodId"] = this.externalFoodId;
         data["fatSecretFoodId"] = this.fatSecretFoodId;
+        data["externalServingId"] = this.externalServingId;
         data["fatSecretServingId"] = this.fatSecretServingId;
         data["editedQuantity"] = this.editedQuantity;
         data["newParentQuantity"] = this.newParentQuantity;
@@ -5146,7 +5160,9 @@ export interface IUserEditOperation {
     action: EditFoodSelectionType;
     groupId?: string | undefined;
     componentId?: string | undefined;
+    externalFoodId?: string | undefined;
     fatSecretFoodId?: string | undefined;
+    externalServingId?: string | undefined;
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;
     newParentQuantity?: number | undefined;
@@ -5155,6 +5171,9 @@ export interface IUserEditOperation {
 
 export class UserSelectedServing implements IUserSelectedServing {
     originalText?: string | undefined;
+    provider?: string | undefined;
+    externalFoodId?: string | undefined;
+    externalServingId?: string | undefined;
     fatSecretFoodId?: string | undefined;
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;
@@ -5172,6 +5191,9 @@ export class UserSelectedServing implements IUserSelectedServing {
     init(_data?: any) {
         if (_data) {
             this.originalText = _data["originalText"];
+            this.provider = _data["provider"];
+            this.externalFoodId = _data["externalFoodId"];
+            this.externalServingId = _data["externalServingId"];
             this.fatSecretFoodId = _data["fatSecretFoodId"];
             this.fatSecretServingId = _data["fatSecretServingId"];
             this.editedQuantity = _data["editedQuantity"];
@@ -5189,6 +5211,9 @@ export class UserSelectedServing implements IUserSelectedServing {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["originalText"] = this.originalText;
+        data["provider"] = this.provider;
+        data["externalFoodId"] = this.externalFoodId;
+        data["externalServingId"] = this.externalServingId;
         data["fatSecretFoodId"] = this.fatSecretFoodId;
         data["fatSecretServingId"] = this.fatSecretServingId;
         data["editedQuantity"] = this.editedQuantity;
@@ -5199,6 +5224,9 @@ export class UserSelectedServing implements IUserSelectedServing {
 
 export interface IUserSelectedServing {
     originalText?: string | undefined;
+    provider?: string | undefined;
+    externalFoodId?: string | undefined;
+    externalServingId?: string | undefined;
     fatSecretFoodId?: string | undefined;
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;

@@ -405,8 +405,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         this.addEditOperation(new UserEditOperation({
           action: EditFoodSelectionType.UpdateServing,
           componentId: componentId,
-          fatSecretFoodId: selectedFood.fatSecretFoodId,
-          fatSecretServingId: servingId
+          externalFoodId: (selectedFood as any)?.externalFoodId ?? (selectedFood as any)?.fatSecretFoodId,
+          fatSecretFoodId: (selectedFood as any)?.fatSecretFoodId, // back-compat
+          externalServingId: servingId,
+          fatSecretServingId: servingId // back-compat
         }));
       }
     }
@@ -416,7 +418,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const cached = this.selectedServingIdByComponentId.get(componentId);
     if (cached) return cached;
     const selectedFood = this.getSelectedFood(componentId);
-    const sid = (selectedFood as any)?.selectedServingId ?? (selectedFood as any)?.servings?.[0]?.fatSecretServingId;
+    const firstServingId = (sf: any) => (sf?.servings?.[0]?.externalServingId ?? sf?.servings?.[0]?.fatSecretServingId);
+    const sid = (selectedFood as any)?.selectedServingId ?? firstServingId(selectedFood);
     if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
     return sid;
   }
@@ -424,17 +427,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   getSelectedServing(componentId: string): ComponentServing | null {
     const food = this.getSelectedFood(componentId);
     const id = this.getSelectedServingId(componentId);
-    return food?.servings?.find(s => s.fatSecretServingId === id) || null;
+    return food?.servings?.find((s: any) => s?.externalServingId === id || s?.fatSecretServingId === id) || null;
   }
 
   // Getter to always derive the selected serving for a food match
   getSelectedServingForFood(match: ComponentMatch): ComponentServing | undefined {
-    return match?.servings?.find(s => s.fatSecretServingId === match.selectedServingId);
+    return match?.servings?.find((s: any) => s?.externalServingId === (match as any)?.selectedServingId || s?.fatSecretServingId === (match as any)?.selectedServingId);
   }
 
   // TrackBy function to prevent DOM reuse issues
   trackByServingId(index: number, serving: ComponentServing): string {
-    return serving.fatSecretServingId || `${index}`;
+    return (serving as any).externalServingId || (serving as any).fatSecretServingId || `${index}`;
   }
 
   // TrackBy helpers for larger lists
@@ -492,7 +495,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             const selectedFood = this.getSelectedFood(component.id);
             const servingId = this.getSelectedServingId(component.id);
             
-            if (!selectedFood?.fatSecretFoodId || !servingId) {
+            if (!(selectedFood as any)?.externalFoodId && !(selectedFood as any)?.fatSecretFoodId || !servingId) {
               return false;
             }
           }
@@ -529,13 +532,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             const servingId = this.getSelectedServingId(component.id);
             const selectedServing = this.getSelectedServing(component.id);
             
-            if (selectedFood?.fatSecretFoodId && servingId && selectedServing) {
+            if (((selectedFood as any)?.externalFoodId || (selectedFood as any)?.fatSecretFoodId) && servingId && selectedServing) {
               const displayQuantity = this.getEffectiveQuantity(component.id, selectedServing);
               
               req.selections.push(new UserSelectedServing({
                 componentId: component.id,
-                originalText: component.key || selectedFood.originalText,
-                fatSecretFoodId: selectedFood.fatSecretFoodId,
+                originalText: (((component as any)?.key) ?? (selectedFood as any)?.originalText) || '',
+                provider: (selectedFood as any)?.provider ?? 'nutritionix',
+                externalFoodId: (selectedFood as any)?.externalFoodId ?? (selectedFood as any)?.fatSecretFoodId,
+                externalServingId: servingId,
+                fatSecretFoodId: (selectedFood as any)?.fatSecretFoodId,
                 fatSecretServingId: servingId,
                 editedQuantity: displayQuantity
               }));
@@ -922,7 +928,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       (s as any).displayUnit = (uiUnit || '').trim();
 
       // mark best match
-      (s as any).isBestMatch = s.fatSecretServingId === editedId;
+      (s as any).isBestMatch = ((s as any).externalServingId === editedId) || ((s as any).fatSecretServingId === editedId);
     }
 
     // ensure UI shows the edited row as selected
@@ -938,8 +944,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // if this row isn't selected, select it now
     const currentSelected = this.getSelectedServingId(componentId);
-    if (currentSelected !== s.fatSecretServingId && s.fatSecretServingId) {
-      this.onServingSelected(componentId, s.fatSecretServingId);
+    const sid = (s as any).externalServingId ?? (s as any).fatSecretServingId;
+    if (currentSelected !== sid && sid) {
+      this.onServingSelected(componentId, sid);
     }
 
     // For simple cases like "medium banana", just update scaledQuantity directly
@@ -954,12 +961,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // In edit mode, track the operation
     if (this.isEditMode) {
       const selectedFood = this.getSelectedFood(componentId);
-      if (selectedFood && s.fatSecretServingId) {
+      const sid = (s as any).externalServingId ?? (s as any).fatSecretServingId;
+      if (selectedFood && sid) {
         this.addEditOperation(new UserEditOperation({
           action: EditFoodSelectionType.UpdateServing,
           componentId: componentId,
-          fatSecretFoodId: selectedFood.fatSecretFoodId,
-          fatSecretServingId: s.fatSecretServingId,
+          externalFoodId: (selectedFood as any)?.externalFoodId ?? (selectedFood as any)?.fatSecretFoodId,
+          fatSecretFoodId: (selectedFood as any)?.fatSecretFoodId,
+          externalServingId: sid,
+          fatSecretServingId: sid,
           editedQuantity: v
         }));
       }
@@ -969,7 +979,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const selectedFood = this.getSelectedFood(componentId);
     if (selectedFood?.servings) {
       for (const serving of selectedFood.servings) {
-        (serving as any).isBestMatch = serving.fatSecretServingId === s.fatSecretServingId;
+        (serving as any).isBestMatch = ((serving as any).externalServingId === ((s as any).externalServingId)) || (serving as any).fatSecretServingId === (s as any).fatSecretServingId;
       }
     }
 
@@ -982,8 +992,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   onRowClicked(componentId: string, s: ComponentServing): void {
     const current = this.getSelectedServingId(componentId);
-    if (current !== s.fatSecretServingId && s.fatSecretServingId) {
-      this.onServingSelected(componentId, s.fatSecretServingId);
+    const sid2 = (s as any).externalServingId ?? (s as any).fatSecretServingId;
+    if (current !== sid2 && sid2) {
+      this.onServingSelected(componentId, sid2);
     }
   }
 
