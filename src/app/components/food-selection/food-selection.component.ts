@@ -847,6 +847,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       canonicalServing: { displayQuantity: canonicalServing.displayQuantity, displayUnit: canonicalServing.displayUnit }
     });
 
+    // Check if both options have the same unit - if so, only show one option
+    const userUnit = (userServing.displayUnit || '').trim().toLowerCase();
+    const canonicalUnit = (canonicalServing.displayUnit || '').trim().toLowerCase();
+    
+    if (userUnit === canonicalUnit && userUnit !== '') {
+      console.log('Both servings have same unit:', userUnit, '- showing only user serving');
+      // Return only the user serving when units are identical
+      return [userServing];
+    }
+
     // Return user serving first so it's pre-selected by default
     return [userServing, canonicalServing];
   }
