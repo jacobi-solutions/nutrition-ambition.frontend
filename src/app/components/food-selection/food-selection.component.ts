@@ -959,14 +959,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.onServingSelected(componentId, sid);
     }
 
-    // For simple cases like "medium banana", just update scaledQuantity directly
-    // This is a simpler approach that works for household servings
-    (s as any).scaledQuantity = v;
-    
-    // Also update display values for this serving
-    const units = this.getNumberOfUnits(s);
-    (s as any).displayQuantity = v;
-    (s as any).displayUnit = this.getUnitText(s);
+    // Recompute scaled quantities for all rows based on the edited row
+    // This ensures metric rows (g/ml) scale by grams/ml, not by count of servings
+    this.rescaleFromSelected(componentId, s, v);
 
     // In edit mode, track the operation
     if (this.isEditMode) {
