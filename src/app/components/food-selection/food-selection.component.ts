@@ -255,8 +255,18 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   getFoodServingLabel(food: any): string {
     const quantity = food.quantity || 1;
-    const unit = food.unit || 'serving';
-    return quantity === 1 ? `1 ${unit}` : `${quantity} ${unit}s`;
+    // Prefer explicit singular/plural from API if provided
+    const hasPlural = typeof food.pluralUnit === 'string' && food.pluralUnit.trim().length > 0;
+    const hasSingular = typeof food.singularUnit === 'string' && food.singularUnit.trim().length > 0;
+    const unitBase = (food.unit || '').trim();
+
+    if (quantity === 1) {
+      const label = hasSingular ? (food.singularUnit as string).trim() : (unitBase || 'serving');
+      return `1 ${label}`;
+    }
+
+    const label = hasPlural ? (food.pluralUnit as string).trim() : (unitBase ? `${unitBase}s` : 'servings');
+    return `${quantity} ${label}`;
   }
 
   getFoodNameWithIngredientCount(food: any): string {
