@@ -488,7 +488,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       // Store the virtual serving selection for display purposes
       (selectedFood as any).selectedVirtualServingId = servingId;
 
-      // Recompute display values for this component
+      // Immediately update the precomputed selection state to ensure UI updates
       this.computeDisplayValues(componentId);
 
       // In edit mode, track the operation
@@ -1383,17 +1383,22 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   onInlineQtyChanged(componentId: string, s: ComponentServing, newValue: number): void {
-    console.log('onInlineQtyChanged called:', { componentId, newValue, servingId: s.fatSecretServingId });
+    const servingId = s.fatSecretServingId || '';
+    console.log('=== onInlineQtyChanged START ===', { componentId, newValue, servingId });
+    console.log('Current selection before change:', this.getSelectedServingId(componentId));
     
     // clamp
     const v = Math.max(0.1, Math.min(999, Number(newValue) || 0));
     (s as any).displayQuantity = v;
     console.log('Updated displayQuantity:', v);
 
-    // if this row isn't selected, select it now
+    // Ensure this row is selected and get the correct selection state
     const currentSelected = this.getSelectedServingId(componentId);
     const sid = (s as any).externalServingId ?? (s as any).fatSecretServingId;
+    
+    // If this row isn't selected, select it now and wait for the selection to be processed
     if (currentSelected !== sid && sid) {
+      console.log('Switching selection from', currentSelected, 'to', sid);
       this.onServingSelected(componentId, sid);
     }
 
@@ -1409,7 +1414,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         isUserServing: servingId.includes('::user'),
         isCanonicalServing: servingId.includes('::canonical'),
         virtualServingUnit: s.displayUnit,
-        originalServingUnit: (originalServing as any).displayUnit
+        originalServingUnit: (originalServing as any).displayUnit,
+        currentSelectedAfterUpdate: this.getSelectedServingId(componentId)
       });
       
       // Determine which virtual serving is being edited and apply appropriate scaling
@@ -1458,19 +1464,26 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           newPrimaryQuantity
         });
       }
-      
-      // Recompute display values after scaling
-      this.computeDisplayValues(componentId);
     }
 
-    // Ensure the virtual serving ID is set to user-anchored serving for proper display
+    // Ensure the virtual serving ID is set to what the user is currently editing
     if (currentFood) {
       const originalSid = (currentFood as any)?.selectedServingId;
       if (originalSid) {
-        (currentFood as any).selectedVirtualServingId = originalSid + '::user';
-        console.log('Set selectedVirtualServingId to:', originalSid + '::user');
+        // Set the selection to match the row being edited (servingId already has ::user or ::canonical)
+        (currentFood as any).selectedVirtualServingId = servingId;
+        console.log('Setting selection to edited row:', servingId);
       }
+      
+      // Recompute display values AFTER setting the correct selection state
+      this.computeDisplayValues(componentId);
+    } else {
+      // If no currentFood, still try to compute display values
+      this.computeDisplayValues(componentId);
     }
+    
+    console.log('=== onInlineQtyChanged END ===');
+    console.log('Final selection after change:', this.getSelectedServingId(componentId));
 
     // In edit mode, track the operation
     if (this.isEditMode) {
