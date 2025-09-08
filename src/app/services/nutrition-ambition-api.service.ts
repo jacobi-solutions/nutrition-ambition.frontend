@@ -2564,10 +2564,13 @@ export class ComponentServing implements IComponentServing {
     displayUnit?: string | undefined;
     scaledQuantity?: number;
     scaledUnit?: string | undefined;
+    metricServingAmount?: number | undefined;
+    metricServingUnit?: string | undefined;
+    numberOfUnits?: number | undefined;
+    measurementDescription?: string | undefined;
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
-    isBestMatch?: boolean;
 
     constructor(data?: IComponentServing) {
         if (data) {
@@ -2587,6 +2590,10 @@ export class ComponentServing implements IComponentServing {
             this.displayUnit = _data["displayUnit"];
             this.scaledQuantity = _data["scaledQuantity"];
             this.scaledUnit = _data["scaledUnit"];
+            this.metricServingAmount = _data["metricServingAmount"];
+            this.metricServingUnit = _data["metricServingUnit"];
+            this.numberOfUnits = _data["numberOfUnits"];
+            this.measurementDescription = _data["measurementDescription"];
             this.weightGramsPerUnit = _data["weightGramsPerUnit"];
             if (_data["nutrients"]) {
                 this.nutrients = {} as any;
@@ -2596,7 +2603,6 @@ export class ComponentServing implements IComponentServing {
                 }
             }
             this.apiServingKind = _data["apiServingKind"];
-            this.isBestMatch = _data["isBestMatch"];
         }
     }
 
@@ -2616,6 +2622,10 @@ export class ComponentServing implements IComponentServing {
         data["displayUnit"] = this.displayUnit;
         data["scaledQuantity"] = this.scaledQuantity;
         data["scaledUnit"] = this.scaledUnit;
+        data["metricServingAmount"] = this.metricServingAmount;
+        data["metricServingUnit"] = this.metricServingUnit;
+        data["numberOfUnits"] = this.numberOfUnits;
+        data["measurementDescription"] = this.measurementDescription;
         data["weightGramsPerUnit"] = this.weightGramsPerUnit;
         if (this.nutrients) {
             data["nutrients"] = {};
@@ -2625,7 +2635,6 @@ export class ComponentServing implements IComponentServing {
             }
         }
         data["apiServingKind"] = this.apiServingKind;
-        data["isBestMatch"] = this.isBestMatch;
         return data;
     }
 }
@@ -2638,10 +2647,13 @@ export interface IComponentServing {
     displayUnit?: string | undefined;
     scaledQuantity?: number;
     scaledUnit?: string | undefined;
+    metricServingAmount?: number | undefined;
+    metricServingUnit?: string | undefined;
+    numberOfUnits?: number | undefined;
+    measurementDescription?: string | undefined;
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
-    isBestMatch?: boolean;
 }
 
 export class DailySummary implements IDailySummary {

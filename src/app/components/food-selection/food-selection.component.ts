@@ -60,6 +60,33 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   private foodForComponentId: Map<string, any> = new Map();
   private selectedFoodByComponentId: Map<string, ComponentMatch> = new Map();
   private selectedServingIdByComponentId: Map<string, string> = new Map();
+  
+  // Precomputed display values for performance (avoid method calls in templates)
+  private computedServingLabels = new Map<string, string>();
+  private computedCalories = new Map<string, number | null>();
+  private computedDisplayQuantities = new Map<string, number>();
+  private computedDisplayUnits = new Map<string, string>();
+  private computedSelectedFoodIds = new Map<string, string>();
+  private computedBrandNames = new Map<string, string>();
+  private computedDualServingOptions = new Map<string, ComponentServing[]>();
+  private computedSelectedServingIds = new Map<string, string>();
+  private computedServingLabelsByServing = new Map<string, Map<string, string>>(); // componentId -> servingId -> label
+  private computedUnitTexts = new Map<string, Map<string, string>>(); // componentId -> servingId -> unitText
+  private computedEffectiveQuantities = new Map<string, Map<string, number>>(); // componentId -> servingId -> quantity
+  
+  // Component state precomputed values
+  private computedDisplayNames = new Map<string, string>(); // componentId -> display name
+  private computedIsInferred = new Map<string, boolean>(); // componentId -> is inferred
+  private computedIsExpanded = new Map<string, boolean>(); // componentId -> is expanded
+  private computedIsSearching = new Map<string, boolean>(); // componentId -> is searching
+  private computedIsComponentEditing = new Map<string, boolean>(); // componentId -> is editing
+  private computedEditingValues = new Map<string, string>(); // componentId -> editing value
+  private computedHasChanges = new Map<string, boolean>(); // componentId -> has changes
+  private computedIsServingSelected = new Map<string, Map<string, boolean>>(); // componentId -> servingId -> is selected
+  
+  // Food level precomputed values
+  private computedFoodNames = new Map<number, string>(); // foodIndex -> food name
+  private computedIsFoodEditingExpanded = new Map<number, boolean>(); // foodIndex -> is expanded
 
   constructor(
     private toastService: ToastService, 
@@ -88,6 +115,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.isReadOnly = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
     this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
     this.rebuildLookupCaches();
+    this.initializeComputedValues();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -110,6 +138,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   toggleExpansion(componentId: string): void {
     this.expandedSections[componentId] = !this.expandedSections[componentId];
+    // Update computed value
+    this.computedIsExpanded.set(componentId, this.isExpanded(componentId));
   }
 
   isExpanded(componentId: string): boolean {
@@ -228,6 +258,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Food-level expansion management
   toggleFoodEditing(foodIndex: number): void {
     this.expandedFoodEditing[foodIndex] = !this.expandedFoodEditing[foodIndex];
+    // Update computed value
+    this.computedIsFoodEditingExpanded.set(foodIndex, this.isFoodEditingExpanded(foodIndex));
     
     // Initialize quantity editing value if expanding
     if (this.expandedFoodEditing[foodIndex]) {
@@ -254,6 +286,27 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getFoodServingLabel(food: any): string {
+    // For multi-component foods, get the serving label from the first component's selected serving
+    if (food.components && food.components.length > 0) {
+      const firstComponent = food.components[0];
+      const selectedServing = this.getSelectedServing(firstComponent.id);
+      if (selectedServing) {
+        const quantity = selectedServing.displayQuantity || 1;
+        const unit = this.getUnitText(selectedServing);
+        console.log('getFoodServingLabel debug:', {
+          quantity,
+          unit,
+          selectedServing: {
+            displayQuantity: selectedServing.displayQuantity,
+            displayUnit: selectedServing.displayUnit,
+            description: (selectedServing as any).description
+          }
+        });
+        return `${quantity} ${unit}`;
+      }
+    }
+    
+    // Fallback to old logic for single-component foods
     const quantity = food.quantity || 1;
     // Prefer explicit singular/plural from API if provided
     const hasPlural = typeof food.pluralUnit === 'string' && food.pluralUnit.trim().length > 0;
@@ -329,8 +382,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (!matches.length) return null;
     const selected = (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
     this.selectedFoodByComponentId.set(componentId, selected);
-    const sid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.fatSecretServingId;
-    if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
+    const originalSid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.fatSecretServingId;
+    if (originalSid) {
+      // Set the original serving ID for backend operations
+      (selected as any).selectedServingId = originalSid;
+      this.selectedServingIdByComponentId.set(componentId, originalSid);
+      
+      // Set the user virtual serving ID as default for display
+      const userVirtualSid = originalSid + '::user';
+      (selected as any).selectedVirtualServingId = userVirtualSid;
+    }
     return selected;
   }
 
@@ -378,6 +439,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       if ((match as any).isBestMatch) {
         // Set default serving on the selected match
         (match as any).selectedServingId = match.servings?.[0]?.fatSecretServingId;
+        // Set the user virtual serving ID as default for display (preselects user's preferred units)
+        const originalSid = match.servings?.[0]?.fatSecretServingId;
+        if (originalSid) {
+          (match as any).selectedVirtualServingId = originalSid + '::user';
+        }
       }
     });
 
@@ -398,17 +464,32 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.selectedFoodByComponentId.set(componentId, selectedMatch);
       const sid = (selectedMatch as any)?.selectedServingId ?? selectedMatch.servings?.[0]?.fatSecretServingId;
       if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
+      
+      // Recompute display values for this component
+      this.computeDisplayValues(componentId);
     }
   }
 
   onServingSelected(componentId: string, servingId: string): void {
     const selectedFood = this.getSelectedFood(componentId);
     if (selectedFood) {
-      // Update selectedServingId directly on the selected match
-      (selectedFood as any).selectedServingId = servingId;
+      // Handle virtual serving IDs (::user or ::canonical)
+      // Map them back to the original serving ID for backend compatibility
+      const originalServingId = servingId.includes('::') 
+        ? servingId.split('::')[0] 
+        : servingId;
 
-      // Keep cache in sync
-      this.selectedServingIdByComponentId.set(componentId, servingId);
+      // Update selectedServingId directly on the selected match
+      (selectedFood as any).selectedServingId = originalServingId;
+
+      // Keep cache in sync with the original serving ID
+      this.selectedServingIdByComponentId.set(componentId, originalServingId);
+
+      // Store the virtual serving selection for display purposes
+      (selectedFood as any).selectedVirtualServingId = servingId;
+
+      // Recompute display values for this component
+      this.computeDisplayValues(componentId);
 
       // In edit mode, track the operation
       if (this.isEditMode) {
@@ -425,18 +506,58 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getSelectedServingId(componentId: string): string | undefined {
+    const selectedFood = this.getSelectedFood(componentId);
+    if (selectedFood) {
+      // Return virtual serving ID for display purposes
+      const virtualServingId = (selectedFood as any)?.selectedVirtualServingId;
+      console.log('getSelectedServingId:', { componentId, virtualServingId, selectedFood: !!selectedFood });
+      if (virtualServingId) return virtualServingId;
+    }
+    
+    // Fallback to original logic for backward compatibility
     const cached = this.selectedServingIdByComponentId.get(componentId);
     if (cached) return cached;
-    const selectedFood = this.getSelectedFood(componentId);
     const firstServingId = (sf: any) => (sf?.servings?.[0]?.externalServingId ?? sf?.servings?.[0]?.fatSecretServingId);
     const sid = (selectedFood as any)?.selectedServingId ?? firstServingId(selectedFood);
     if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
     return sid;
   }
 
+  /**
+   * Gets the original serving ID (without ::user or ::canonical suffix) for backend operations
+   */
+  getOriginalServingId(componentId: string): string | undefined {
+    const selectedFood = this.getSelectedFood(componentId);
+    if (selectedFood) {
+      const originalServingId = (selectedFood as any)?.selectedServingId;
+      if (originalServingId) return originalServingId;
+    }
+    
+    // Fallback to cached value
+    const cached = this.selectedServingIdByComponentId.get(componentId);
+    if (cached) return cached;
+    
+    // Final fallback to first serving
+    const firstServingId = (sf: any) => (sf?.servings?.[0]?.externalServingId ?? sf?.servings?.[0]?.fatSecretServingId);
+    return firstServingId(selectedFood);
+  }
+
   getSelectedServing(componentId: string): ComponentServing | null {
     const food = this.getSelectedFood(componentId);
-    const id = this.getSelectedServingId(componentId);
+    const virtualServingId = this.getSelectedServingId(componentId);
+    
+    console.log('getSelectedServing called:', { componentId, virtualServingId, hasFood: !!food, hasServings: !!food?.servings?.[0] });
+    
+    if (virtualServingId && food?.servings?.[0]) {
+      // Get the dual serving options and find the selected virtual serving
+      const dualOptions = this.getDualServingOptions(food.servings[0]);
+      const selected = dualOptions.find(s => s.fatSecretServingId === virtualServingId) || null;
+      console.log('Found selected serving:', { selected, displayQuantity: selected?.displayQuantity, displayUnit: selected?.displayUnit });
+      return selected;
+    }
+    
+    // Fallback to original logic
+    const id = this.getOriginalServingId(componentId);
     return food?.servings?.find((s: any) => s?.externalServingId === id || s?.fatSecretServingId === id) || null;
   }
 
@@ -503,7 +624,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             if (!component.id || this.removedComponents.has(component.id)) continue;
             
             const selectedFood = this.getSelectedFood(component.id);
-            const servingId = this.getSelectedServingId(component.id);
+            const servingId = this.getOriginalServingId(component.id);
             
             if (!(selectedFood as any)?.externalFoodId && !(selectedFood as any)?.fatSecretFoodId || !servingId) {
               return false;
@@ -539,7 +660,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             if (!component.id || this.removedComponents.has(component.id)) continue;
             
             const selectedFood = this.getSelectedFood(component.id);
-            const servingId = this.getSelectedServingId(component.id);
+            const servingId = this.getOriginalServingId(component.id);
             const selectedServing = this.getSelectedServing(component.id);
             
             if (((selectedFood as any)?.externalFoodId || (selectedFood as any)?.fatSecretFoodId) && servingId && selectedServing) {
@@ -589,7 +710,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const dq = s.displayQuantity;
     const du = s.displayUnit;
     if (dq !== undefined && du && du.trim()) {
-      return `${this.fmt(dq)} ${du}`.trim();
+      return `${this.formatQuantity(dq)} ${du}`.trim();
     }
   
     // Only fall back to description if displayUnit is missing
@@ -675,6 +796,61 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return component?.key || '';
   }
 
+  /**
+   * Creates dual serving options from a single ComponentServing that contains both user and canonical data
+   * Returns an array of virtual serving objects for display purposes
+   */
+  getDualServingOptions(serving: ComponentServing | null): ComponentServing[] {
+    if (!serving) return [];
+
+    console.log('getDualServingOptions called with serving:', { 
+      displayQuantity: serving.displayQuantity, 
+      displayUnit: serving.displayUnit,
+      scaledQuantity: serving.scaledQuantity,
+      scaledUnit: serving.scaledUnit,
+      calories: serving.nutrients?.['calories'] || serving.nutrients?.['Calories'] || serving.nutrients?.['energy_kcal'] || serving.nutrients?.['Energy'],
+      metricServingAmount: (serving as any).metricServingAmount,
+      metricServingUnit: (serving as any).metricServingUnit,
+      allOriginalKeys: Object.keys(serving)
+    });
+
+    // Create user-anchored serving (user's exact input) - this should be pre-selected
+    const userServing = new ComponentServing({
+      ...serving,
+      fatSecretServingId: serving.fatSecretServingId + '::user',
+      externalServingId: serving.externalServingId + '::user',
+      displayQuantity: serving.displayQuantity, // User's exact quantity (e.g., 100)
+      displayUnit: serving.displayUnit,         // User's exact unit (e.g., "g")
+      description: `${serving.displayQuantity} ${serving.displayUnit}`,
+      // Keep the same nutrients and scaling info
+      nutrients: serving.nutrients,
+      scaledQuantity: serving.scaledQuantity,
+      scaledUnit: serving.scaledUnit
+    });
+
+    // Create canonical serving (equivalent in canonical unit)
+    const canonicalServing = new ComponentServing({
+      ...serving,
+      fatSecretServingId: serving.fatSecretServingId + '::canonical',
+      externalServingId: serving.externalServingId + '::canonical',
+      displayQuantity: serving.scaledQuantity,  // Canonical equivalent quantity (e.g., 0.42)
+      displayUnit: serving.scaledUnit,          // Canonical unit (e.g., "cup")
+      description: `${serving.scaledQuantity} ${serving.scaledUnit}`,
+      // Keep the same nutrients and scaling info
+      nutrients: serving.nutrients,
+      scaledQuantity: serving.scaledQuantity,
+      scaledUnit: serving.scaledUnit
+    });
+
+    console.log('Created dual options:', {
+      userServing: { displayQuantity: userServing.displayQuantity, displayUnit: userServing.displayUnit },
+      canonicalServing: { displayQuantity: canonicalServing.displayQuantity, displayUnit: canonicalServing.displayUnit }
+    });
+
+    // Return user serving first so it's pre-selected by default
+    return [userServing, canonicalServing];
+  }
+
   getUnitText(s: ComponentServing): string {
     // Always prioritize displayUnit for stepper/current label
     const disp = s.displayUnit;
@@ -693,12 +869,225 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     return 'serving';
   }
+
+  // Debug method to check if serving is selected
+  isServingSelected(componentId: string, serving: ComponentServing): boolean {
+    const selectedId = this.getSelectedServingId(componentId);
+    const servingId = serving.fatSecretServingId;
+    const isSelected = selectedId === servingId;
+    console.log('isServingSelected check:', { componentId, selectedId, servingId, isSelected });
+    return isSelected;
+  }
+
+  // Compute and cache display values for a component
+  private computeDisplayValues(componentId: string): void {
+    const selectedFood = this.getSelectedFood(componentId);
+    const selectedServing = this.getSelectedServing(componentId);
+    
+    // Compute selected food ID
+    this.computedSelectedFoodIds.set(componentId, selectedFood?.fatSecretFoodId || '');
+    
+    // Compute brand name
+    this.computedBrandNames.set(componentId, selectedFood?.brandName || '');
+    
+    // Compute selected serving ID
+    this.computedSelectedServingIds.set(componentId, this.getSelectedServingId(componentId) || '');
+    
+    // Compute dual serving options
+    const dualOptions = this.getDualServingOptions(selectedFood?.servings?.[0] || null);
+    this.computedDualServingOptions.set(componentId, dualOptions);
+    
+    // Compute per-serving values
+    const servingLabels = new Map<string, string>();
+    const unitTexts = new Map<string, string>();
+    const effectiveQuantities = new Map<string, number>();
+    
+    for (const serving of dualOptions) {
+      const servingId = serving.fatSecretServingId;
+      if (servingId) {
+        servingLabels.set(servingId, this.getServingLabel(serving));
+        unitTexts.set(servingId, this.getUnitText(serving));
+        effectiveQuantities.set(servingId, this.getEffectiveQuantity(componentId, serving));
+      }
+    }
+    
+    this.computedServingLabelsByServing.set(componentId, servingLabels);
+    this.computedUnitTexts.set(componentId, unitTexts);
+    this.computedEffectiveQuantities.set(componentId, effectiveQuantities);
+    
+    if (!selectedServing) {
+      this.computedServingLabels.set(componentId, '');
+      this.computedCalories.set(componentId, null);
+      this.computedDisplayQuantities.set(componentId, 0);
+      this.computedDisplayUnits.set(componentId, '');
+      return;
+    }
+
+    // Compute serving label - create a simple label directly from the serving
+    const rawQuantity = selectedServing.displayQuantity || 1;
+    // Format quantity to remove floating point precision issues and limit decimal places
+    const quantity = this.formatQuantity(rawQuantity);
+    const unit = this.getUnitText(selectedServing);
+    const servingLabel = `${quantity} ${unit}`;
+    this.computedServingLabels.set(componentId, servingLabel);
+
+    // Compute calories
+    const calories = this.caloriesForServing(selectedServing);
+    this.computedCalories.set(componentId, calories);
+
+    // Compute display quantity and unit
+    this.computedDisplayQuantities.set(componentId, selectedServing.displayQuantity || 0);
+    this.computedDisplayUnits.set(componentId, selectedServing.displayUnit || '');
+    
+    // Compute component state values
+    this.computedDisplayNames.set(componentId, this.getDisplayNameOrSearchText(componentId));
+    this.computedIsInferred.set(componentId, this.isInferred(componentId));
+    this.computedIsExpanded.set(componentId, this.isExpanded(componentId));
+    this.computedIsSearching.set(componentId, this.isSearchingComponent(componentId));
+    this.computedIsComponentEditing.set(componentId, this.isComponentBeingEdited(componentId));
+    this.computedEditingValues.set(componentId, this.getEditingComponentValue(componentId));
+    this.computedHasChanges.set(componentId, this.hasChanges(componentId));
+    
+    // Compute per-serving selection state
+    const servingSelections = new Map<string, boolean>();
+    for (const serving of dualOptions) {
+      const servingId = serving.fatSecretServingId;
+      if (servingId) {
+        servingSelections.set(servingId, this.isServingSelected(componentId, serving));
+      }
+    }
+    this.computedIsServingSelected.set(componentId, servingSelections);
+  }
+
+  // Get precomputed values (for template use)
+  getComputedServingLabel(componentId: string): string {
+    return this.computedServingLabels.get(componentId) || '';
+  }
+
+  getComputedCalories(componentId: string): number | null {
+    return this.computedCalories.get(componentId) || null;
+  }
+
+  getComputedDisplayQuantity(componentId: string): number {
+    return this.computedDisplayQuantities.get(componentId) || 0;
+  }
+
+  getComputedDisplayUnit(componentId: string): string {
+    return this.computedDisplayUnits.get(componentId) || '';
+  }
+
+  getComputedSelectedFoodId(componentId: string): string {
+    return this.computedSelectedFoodIds.get(componentId) || '';
+  }
+
+  getComputedBrandName(componentId: string): string {
+    return this.computedBrandNames.get(componentId) || '';
+  }
+
+  getComputedDualServingOptions(componentId: string): ComponentServing[] {
+    return this.computedDualServingOptions.get(componentId) || [];
+  }
+
+  getComputedSelectedServingId(componentId: string): string {
+    return this.computedSelectedServingIds.get(componentId) || '';
+  }
+
+  getComputedServingLabelForServing(componentId: string, servingId: string): string {
+    return this.computedServingLabelsByServing.get(componentId)?.get(servingId) || '';
+  }
+
+  getComputedUnitTextForServing(componentId: string, servingId: string): string {
+    return this.computedUnitTexts.get(componentId)?.get(servingId) || '';
+  }
+
+  getComputedEffectiveQuantityForServing(componentId: string, servingId: string): number {
+    return this.computedEffectiveQuantities.get(componentId)?.get(servingId) || 0;
+  }
+
+  // Component state getters
+  getComputedDisplayName(componentId: string): string {
+    return this.computedDisplayNames.get(componentId) || '';
+  }
+
+  getComputedIsInferred(componentId: string): boolean {
+    return this.computedIsInferred.get(componentId) || false;
+  }
+
+  getComputedIsExpanded(componentId: string): boolean {
+    return this.computedIsExpanded.get(componentId) || false;
+  }
+
+  getComputedIsSearching(componentId: string): boolean {
+    return this.computedIsSearching.get(componentId) || false;
+  }
+
+  getComputedIsComponentEditing(componentId: string): boolean {
+    return this.computedIsComponentEditing.get(componentId) || false;
+  }
+
+  getComputedEditingValue(componentId: string): string {
+    return this.computedEditingValues.get(componentId) || '';
+  }
+
+  getComputedHasChanges(componentId: string): boolean {
+    return this.computedHasChanges.get(componentId) || false;
+  }
+
+  getComputedIsServingSelected(componentId: string, servingId: string): boolean {
+    return this.computedIsServingSelected.get(componentId)?.get(servingId) || false;
+  }
+
+  // Food level getters
+  getComputedFoodName(foodIndex: number): string {
+    return this.computedFoodNames.get(foodIndex) || '';
+  }
+
+  getComputedIsFoodEditingExpanded(foodIndex: number): boolean {
+    return this.computedIsFoodEditingExpanded.get(foodIndex) || false;
+  }
+
+  // Initialize computed values for all components
+  private initializeComputedValues(): void {
+    const foods = this.message?.logMealToolResponse?.foods || [];
+    for (let foodIndex = 0; foodIndex < foods.length; foodIndex++) {
+      const food = foods[foodIndex];
+      
+      // Compute food-level values
+      this.computedFoodNames.set(foodIndex, this.getFoodNameWithIngredientCount(food));
+      this.computedIsFoodEditingExpanded.set(foodIndex, this.isFoodEditingExpanded(foodIndex));
+      
+      for (const component of food.components || []) {
+        const componentId = component.id;
+        if (componentId) {
+          this.computeDisplayValues(componentId);
+        }
+      }
+    }
+  }
   
 
   private nf = new Intl.NumberFormat(undefined, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
+
+  /**
+   * Format quantity to remove floating point precision issues and limit decimal places
+   */
+  private formatQuantity(value: number): string {
+    if (!isFinite(value) || value === 0) return '0';
+    
+    // Round to 3 decimal places to avoid floating point precision issues
+    const rounded = Math.round(value * 1000) / 1000;
+    
+    // For whole numbers, show no decimals
+    if (rounded === Math.floor(rounded)) {
+      return rounded.toString();
+    }
+    
+    // For decimals, show up to 2 decimal places, removing trailing zeros
+    return rounded.toFixed(2).replace(/\.?0+$/, '');
+  }
   
   private fmt(n: number): string {
     if (!isFinite(n)) return '0';
@@ -712,6 +1101,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const base = this.getMacro(s.nutrients, keys);
     if (base == null) return null;
     const q = Number((s as any).scaledQuantity ?? 1);
+    console.log('scaledMacro calculation:', { 
+      base, 
+      scaledQuantity: q, 
+      result: base * q,
+      servingId: s.fatSecretServingId,
+      keys: keys
+    });
     if (!isFinite(q) || q <= 0) return base; // be forgiving; show per-serving
     return base * q;
   }
@@ -869,14 +1265,30 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private rescaleFromSelected(componentId: string, selected: ComponentServing, editedQty: number): void {
+    console.log('rescaleFromSelected called:', { componentId, editedQty, selectedId: selected.fatSecretServingId });
+    
     // 0) guard
     const component = this.findComponentById(componentId);
-    if (!component) return;
+    if (!component) {
+      console.log('rescaleFromSelected: no component found');
+      return;
+    }
     
     // 1) compute targetMass in metric (g/ml)
     const selMetricAmt = this.getMetricAmt(selected); // per "one" serving of selected
     const selIsMetric = this.isMetricRow(selected);
     let targetMass = NaN;
+    
+    console.log('rescaleFromSelected: initial calculations:', { 
+      selMetricAmt, 
+      selIsMetric, 
+      selectedDisplayUnit: selected.displayUnit,
+      selectedDescription: (selected as any).description,
+      metricServingAmount: (selected as any).metricServingAmount,
+      metricServingUnit: (selected as any).metricServingUnit,
+      measurementDescription: (selected as any).measurementDescription,
+      allProperties: Object.keys(selected)
+    });
     
     if (selIsMetric) {
       // if selected row's unit is already metric, editedQty is the targetMass (e.g., 120 g)
@@ -887,19 +1299,40 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       targetMass = editedQty * (isFinite(selMetricAmt) ? selMetricAmt : NaN);
     }
     
-    if (!isFinite(targetMass) || targetMass <= 0) return;
+    console.log('rescaleFromSelected: targetMass calculated:', targetMass);
+    
+    if (!isFinite(targetMass) || targetMass <= 0) {
+      console.log('rescaleFromSelected: invalid targetMass, returning');
+      return;
+    }
 
     // 2) iterate all servings in the selected food and recompute scaledQuantity + display fields
     const selectedFood = this.getSelectedFood(componentId);
-    if (!selectedFood?.servings) return;
+    if (!selectedFood?.servings) {
+      console.log('rescaleFromSelected: no servings found');
+      return;
+    }
 
     // ensure exactly one best match (the edited row)
     const editedId = selected.fatSecretServingId;
+    console.log('rescaleFromSelected: processing servings for food:', { 
+      servingsCount: selectedFood.servings.length, 
+      editedId 
+    });
 
     for (const s of selectedFood.servings) {
       const mAmt = this.getMetricAmt(s);
       const hasMetric = isFinite(mAmt) && mAmt > 0;
       let scaledQ = (s as any).scaledQuantity;
+      const originalScaledQ = scaledQ;
+
+      console.log('rescaleFromSelected: processing serving:', {
+        servingId: s.fatSecretServingId,
+        originalScaledQ,
+        mAmt,
+        hasMetric,
+        targetMass
+      });
 
       if (hasMetric) {
         // math: scaledQuantity = targetMass / metricServingAmount
@@ -909,6 +1342,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         // fallback if no metric amount; keep existing or default to 1
         if (!isFinite(scaledQ) || scaledQ <= 0) scaledQ = 1;
       }
+
+      console.log('rescaleFromSelected: calculated new scaledQ:', scaledQ);
 
       // Update scaledQuantity used by your macro math
       (s as any).scaledQuantity = scaledQ;
@@ -948,9 +1383,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   onInlineQtyChanged(componentId: string, s: ComponentServing, newValue: number): void {
+    console.log('onInlineQtyChanged called:', { componentId, newValue, servingId: s.fatSecretServingId });
+    
     // clamp
     const v = Math.max(0.1, Math.min(999, Number(newValue) || 0));
     (s as any).displayQuantity = v;
+    console.log('Updated displayQuantity:', v);
 
     // if this row isn't selected, select it now
     const currentSelected = this.getSelectedServingId(componentId);
@@ -959,9 +1397,80 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.onServingSelected(componentId, sid);
     }
 
-    // Recompute scaled quantities for all rows based on the edited row
-    // This ensures metric rows (g/ml) scale by grams/ml, not by count of servings
-    this.rescaleFromSelected(componentId, s, v);
+    // Update the original serving object with the new quantity and scale appropriately
+    const currentFood = this.getSelectedFood(componentId);
+    if (currentFood?.servings?.[0]) {
+      const originalServing = currentFood.servings[0];
+      const servingId = (s as any).fatSecretServingId || '';
+      
+      console.log('onInlineQtyChanged details:', {
+        newValue: v,
+        servingId,
+        isUserServing: servingId.includes('::user'),
+        isCanonicalServing: servingId.includes('::canonical'),
+        virtualServingUnit: s.displayUnit,
+        originalServingUnit: (originalServing as any).displayUnit
+      });
+      
+      // Determine which virtual serving is being edited and apply appropriate scaling
+      const isEditingPrimaryDisplay = servingId.includes('::user');
+      const isEditingEquivalentDisplay = servingId.includes('::canonical');
+      
+      if (isEditingPrimaryDisplay) {
+        // User is editing the primary display quantity (originalServing.displayQuantity)
+        const oldPrimaryQuantity = (originalServing as any).displayQuantity || 1;
+        const scalingFactor = v / oldPrimaryQuantity;
+        
+        // Update the primary quantity
+        (originalServing as any).displayQuantity = v;
+        
+        // Proportionally scale the equivalent quantity
+        const oldEquivalentQuantity = (originalServing as any).scaledQuantity || 1;
+        const newEquivalentQuantity = oldEquivalentQuantity * scalingFactor;
+        (originalServing as any).scaledQuantity = newEquivalentQuantity;
+        
+        console.log('Primary display scaling:', {
+          oldPrimaryQuantity,
+          newPrimaryQuantity: v,
+          scalingFactor,
+          oldEquivalentQuantity,
+          newEquivalentQuantity
+        });
+        
+      } else if (isEditingEquivalentDisplay) {
+        // User is editing the equivalent display quantity (originalServing.scaledQuantity)
+        const oldEquivalentQuantity = (originalServing as any).scaledQuantity || 1;
+        const scalingFactor = v / oldEquivalentQuantity;
+        
+        // Update the equivalent quantity
+        (originalServing as any).scaledQuantity = v;
+        
+        // Proportionally scale the primary quantity
+        const oldPrimaryQuantity = (originalServing as any).displayQuantity || 1;
+        const newPrimaryQuantity = oldPrimaryQuantity * scalingFactor;
+        (originalServing as any).displayQuantity = newPrimaryQuantity;
+        
+        console.log('Equivalent display scaling:', {
+          oldEquivalentQuantity,
+          newEquivalentQuantity: v,
+          scalingFactor,
+          oldPrimaryQuantity,
+          newPrimaryQuantity
+        });
+      }
+      
+      // Recompute display values after scaling
+      this.computeDisplayValues(componentId);
+    }
+
+    // Ensure the virtual serving ID is set to user-anchored serving for proper display
+    if (currentFood) {
+      const originalSid = (currentFood as any)?.selectedServingId;
+      if (originalSid) {
+        (currentFood as any).selectedVirtualServingId = originalSid + '::user';
+        console.log('Set selectedVirtualServingId to:', originalSid + '::user');
+      }
+    }
 
     // In edit mode, track the operation
     if (this.isEditMode) {
@@ -987,12 +1496,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         (serving as any).isBestMatch = ((serving as any).externalServingId === ((s as any).externalServingId)) || (serving as any).fatSecretServingId === (s as any).fatSecretServingId;
       }
     }
-
-    // drive the rescale from the selected row and edited quantity (for other servings)
-    this.rescaleFromSelected(componentId, s, v);
     
-    // Force change detection to update the UI immediately
-    this.cdr.detectChanges();
+           // Recompute display values for this component
+           this.computeDisplayValues(componentId);
+
+           // Force change detection to update the UI immediately
+           this.cdr.detectChanges();
   }
 
   onRowClicked(componentId: string, s: ComponentServing): void {
@@ -1392,8 +1901,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         if (matches.length) {
           const selected: ComponentMatch = (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
           this.selectedFoodByComponentId.set(cid, selected);
-          const sid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.fatSecretServingId;
-          if (sid) this.selectedServingIdByComponentId.set(cid, sid);
+          const originalSid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.fatSecretServingId;
+          if (originalSid) {
+            // Set the original serving ID for backend operations
+            (selected as any).selectedServingId = originalSid;
+            this.selectedServingIdByComponentId.set(cid, originalSid);
+            
+            // Set the user virtual serving ID as default for display
+            const userVirtualSid = originalSid + '::user';
+            (selected as any).selectedVirtualServingId = userVirtualSid;
+          }
         }
       }
     }
