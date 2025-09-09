@@ -1070,7 +1070,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         components: [{
           id: 'loading-component',
           matches: [{
-            fatSecretFoodId: 'loading',
+            providerFoodId: 'loading',
             displayName: 'Searching for better results...',
             isEditingPhrase: true,
             servings: [],
@@ -1088,7 +1088,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
               if (component.id === componentId) {
                 // Replace this component's matches with a loading placeholder
                 component.matches = [{
-                  fatSecretFoodId: 'loading',
+                  providerFoodId: 'loading',
                   displayName: 'Searching for better results...',
                   isEditingPhrase: true,
                   servings: [],

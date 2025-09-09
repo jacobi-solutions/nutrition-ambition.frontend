@@ -173,7 +173,7 @@
                           id="foodSelect-{{ componentData.componentId }}">
                           <ion-select-option 
                             *ngFor="let match of (componentData.component.matches || [])" 
-                            [value]="match.fatSecretFoodId">
+                            [value]="match.providerFoodId">
                             {{ match.displayName }}
                             <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
                           </ion-select-option>
@@ -215,27 +215,27 @@
                         (ionChange)="onServingSelected(componentData.componentId, $event.detail.value)">
                         <ion-radio 
                           *ngFor="let serving of getComputedDualServingOptions(componentData.componentId); trackBy: trackByServingId"
-                          [value]="serving.fatSecretServingId"
+                          [value]="serving.providerServingId"
                           [disabled]="isReadOnly"
                           (click)="onRowClicked(componentData.componentId, serving)">
                           <div class="serving-row-content" (click)="$event.stopPropagation(); onRowClicked(componentData.componentId, serving)">
                             <!-- Show stepper only for selected row -->
-                            <ng-container *ngIf="getComputedIsServingSelected(componentData.componentId, serving.fatSecretServingId || '') && !isReadOnly">
+                            <ng-container *ngIf="getComputedIsServingSelected(componentData.componentId, serving.providerServingId || '') && !isReadOnly">
                               <app-serving-quantity-input
-                                [value]="getComputedEffectiveQuantityForServing(componentData.componentId, serving.fatSecretServingId || '')"
+                                [value]="getComputedEffectiveQuantityForServing(componentData.componentId, serving.providerServingId || '')"
                                 [step]="1"
                                 [min]="0.1"
                                 [max]="999"
                                 [disabled]="isReadOnly"
-                                [ariaLabel]="'Quantity for ' + getComputedUnitTextForServing(componentData.componentId, serving.fatSecretServingId || '')"
+                                [ariaLabel]="'Quantity for ' + getComputedUnitTextForServing(componentData.componentId, serving.providerServingId || '')"
                                 (click)="$event.stopPropagation(); onRowClicked(componentData.componentId, serving)"
                                 (valueChange)="onInlineQtyChanged(componentData.componentId, serving, $event)">
                               </app-serving-quantity-input>
-                              <span class="unit-label">{{ getComputedUnitTextForServing(componentData.componentId, serving.fatSecretServingId || '') }}</span>
+                              <span class="unit-label">{{ getComputedUnitTextForServing(componentData.componentId, serving.providerServingId || '') }}</span>
                             </ng-container>
                             <!-- Show normal label for unselected rows or read-only mode -->
-                            <ng-container *ngIf="!getComputedIsServingSelected(componentData.componentId, serving.fatSecretServingId || '') || isReadOnly">
-                              <span class="serving-label">{{ getComputedServingLabelForServing(componentData.componentId, serving.fatSecretServingId || '') }}</span>
+                            <ng-container *ngIf="!getComputedIsServingSelected(componentData.componentId, serving.providerServingId || '') || isReadOnly">
+                              <span class="serving-label">{{ getComputedServingLabelForServing(componentData.componentId, serving.providerServingId || '') }}</span>
                             </ng-container>
                           </div>
                           <!-- <div class="macro-inline-servings">
@@ -350,7 +350,7 @@
                     id="foodSelect-{{ componentData.componentId }}">
                     <ion-select-option 
                       *ngFor="let match of (componentData.component.matches || [])" 
-                      [value]="match.fatSecretFoodId">
+                      [value]="match.providerFoodId">
                       {{ match.displayName }}
                       <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
                     </ion-select-option>
@@ -392,27 +392,27 @@
                   (ionChange)="onServingSelected(componentData.componentId, $event.detail.value)">
                   <ion-radio 
                     *ngFor="let serving of getComputedDualServingOptions(componentData.componentId); trackBy: trackByServingId"
-                    [value]="serving.fatSecretServingId"
+                    [value]="serving.providerServingId"
                     [disabled]="isReadOnly"
                     (click)="onRowClicked(componentData.componentId, serving)">
                     <div class="serving-row-content" (click)="$event.stopPropagation(); onRowClicked(componentData.componentId, serving)">
                       <!-- Show stepper only for selected row -->
-                      <ng-container *ngIf="getComputedIsServingSelected(componentData.componentId, serving.fatSecretServingId || '') && !isReadOnly">
+                      <ng-container *ngIf="getComputedIsServingSelected(componentData.componentId, serving.providerServingId || '') && !isReadOnly">
                         <app-serving-quantity-input
-                          [value]="getComputedEffectiveQuantityForServing(componentData.componentId, serving.fatSecretServingId || '')"
+                          [value]="getComputedEffectiveQuantityForServing(componentData.componentId, serving.providerServingId || '')"
                           [step]="1"
                           [min]="0.1"
                           [max]="999"
                           [disabled]="isReadOnly"
-                          [ariaLabel]="'Quantity for ' + getComputedUnitTextForServing(componentData.componentId, serving.fatSecretServingId || '')"
+                          [ariaLabel]="'Quantity for ' + getComputedUnitTextForServing(componentData.componentId, serving.providerServingId || '')"
                           (click)="$event.stopPropagation(); onRowClicked(componentData.componentId, serving)"
                           (valueChange)="onInlineQtyChanged(componentData.componentId, serving, $event)">
                         </app-serving-quantity-input>
-                        <span class="unit-label">{{ getComputedUnitTextForServing(componentData.componentId, serving.fatSecretServingId || '') }}</span>
+                        <span class="unit-label">{{ getComputedUnitTextForServing(componentData.componentId, serving.providerServingId || '') }}</span>
                       </ng-container>
                       <!-- Show normal label for unselected rows or read-only mode -->
-                      <ng-container *ngIf="!getComputedIsServingSelected(componentData.componentId, serving.fatSecretServingId || '') || isReadOnly">
-                        <span class="serving-label">{{ getComputedServingLabelForServing(componentData.componentId, serving.fatSecretServingId || '') }}</span>
+                      <ng-container *ngIf="!getComputedIsServingSelected(componentData.componentId, serving.providerServingId || '') || isReadOnly">
+                        <span class="serving-label">{{ getComputedServingLabelForServing(componentData.componentId, serving.providerServingId || '') }}</span>
                       </ng-container>
                     </div>
                     <!-- <div class="macro-inline-servings">

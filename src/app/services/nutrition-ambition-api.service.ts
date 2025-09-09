@@ -2507,8 +2507,7 @@ export interface IComponentBreakdown {
 
 export class ComponentMatch implements IComponentMatch {
     provider?: string | undefined;
-    externalFoodId?: string | undefined;
-    fatSecretFoodId?: string | undefined;
+    providerFoodId?: string | undefined;
     displayName?: string | undefined;
     brandName?: string | undefined;
     originalText?: string | undefined;
@@ -2537,8 +2536,7 @@ export class ComponentMatch implements IComponentMatch {
     init(_data?: any) {
         if (_data) {
             this.provider = _data["provider"];
-            this.externalFoodId = _data["externalFoodId"];
-            this.fatSecretFoodId = _data["fatSecretFoodId"];
+            this.providerFoodId = _data["providerFoodId"];
             this.displayName = _data["displayName"];
             this.brandName = _data["brandName"];
             this.originalText = _data["originalText"];
@@ -2571,8 +2569,7 @@ export class ComponentMatch implements IComponentMatch {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["provider"] = this.provider;
-        data["externalFoodId"] = this.externalFoodId;
-        data["fatSecretFoodId"] = this.fatSecretFoodId;
+        data["providerFoodId"] = this.providerFoodId;
         data["displayName"] = this.displayName;
         data["brandName"] = this.brandName;
         data["originalText"] = this.originalText;
@@ -2598,8 +2595,7 @@ export class ComponentMatch implements IComponentMatch {
 
 export interface IComponentMatch {
     provider?: string | undefined;
-    externalFoodId?: string | undefined;
-    fatSecretFoodId?: string | undefined;
+    providerFoodId?: string | undefined;
     displayName?: string | undefined;
     brandName?: string | undefined;
     originalText?: string | undefined;
@@ -2618,8 +2614,7 @@ export interface IComponentMatch {
 }
 
 export class ComponentServing implements IComponentServing {
-    externalServingId?: string | undefined;
-    fatSecretServingId?: string | undefined;
+    providerServingId?: string | undefined;
     description?: string | undefined;
     displayQuantity?: number;
     displayUnit?: string | undefined;
@@ -2644,8 +2639,7 @@ export class ComponentServing implements IComponentServing {
 
     init(_data?: any) {
         if (_data) {
-            this.externalServingId = _data["externalServingId"];
-            this.fatSecretServingId = _data["fatSecretServingId"];
+            this.providerServingId = _data["providerServingId"];
             this.description = _data["description"];
             this.displayQuantity = _data["displayQuantity"];
             this.displayUnit = _data["displayUnit"];
@@ -2676,8 +2670,7 @@ export class ComponentServing implements IComponentServing {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["externalServingId"] = this.externalServingId;
-        data["fatSecretServingId"] = this.fatSecretServingId;
+        data["providerServingId"] = this.providerServingId;
         data["description"] = this.description;
         data["displayQuantity"] = this.displayQuantity;
         data["displayUnit"] = this.displayUnit;
@@ -2701,8 +2694,7 @@ export class ComponentServing implements IComponentServing {
 }
 
 export interface IComponentServing {
-    externalServingId?: string | undefined;
-    fatSecretServingId?: string | undefined;
+    providerServingId?: string | undefined;
     description?: string | undefined;
     displayQuantity?: number;
     displayUnit?: string | undefined;
@@ -5571,10 +5563,8 @@ export class UserEditOperation implements IUserEditOperation {
     action!: EditFoodSelectionType;
     groupId?: string | undefined;
     componentId?: string | undefined;
-    externalFoodId?: string | undefined;
-    fatSecretFoodId?: string | undefined;
-    externalServingId?: string | undefined;
-    fatSecretServingId?: string | undefined;
+    providerFoodId?: string | undefined;
+    providerServingId?: string | undefined;
     editedQuantity?: number | undefined;
     scaledQuantity?: number | undefined;
     newParentQuantity?: number | undefined;
@@ -5594,10 +5584,8 @@ export class UserEditOperation implements IUserEditOperation {
             this.action = _data["action"];
             this.groupId = _data["groupId"];
             this.componentId = _data["componentId"];
-            this.externalFoodId = _data["externalFoodId"];
-            this.fatSecretFoodId = _data["fatSecretFoodId"];
-            this.externalServingId = _data["externalServingId"];
-            this.fatSecretServingId = _data["fatSecretServingId"];
+            this.providerFoodId = _data["providerFoodId"];
+            this.providerServingId = _data["providerServingId"];
             this.editedQuantity = _data["editedQuantity"];
             this.scaledQuantity = _data["scaledQuantity"];
             this.newParentQuantity = _data["newParentQuantity"];
@@ -5617,10 +5605,8 @@ export class UserEditOperation implements IUserEditOperation {
         data["action"] = this.action;
         data["groupId"] = this.groupId;
         data["componentId"] = this.componentId;
-        data["externalFoodId"] = this.externalFoodId;
-        data["fatSecretFoodId"] = this.fatSecretFoodId;
-        data["externalServingId"] = this.externalServingId;
-        data["fatSecretServingId"] = this.fatSecretServingId;
+        data["providerFoodId"] = this.providerFoodId;
+        data["providerServingId"] = this.providerServingId;
         data["editedQuantity"] = this.editedQuantity;
         data["scaledQuantity"] = this.scaledQuantity;
         data["newParentQuantity"] = this.newParentQuantity;
@@ -5633,10 +5619,8 @@ export interface IUserEditOperation {
     action: EditFoodSelectionType;
     groupId?: string | undefined;
     componentId?: string | undefined;
-    externalFoodId?: string | undefined;
-    fatSecretFoodId?: string | undefined;
-    externalServingId?: string | undefined;
-    fatSecretServingId?: string | undefined;
+    providerFoodId?: string | undefined;
+    providerServingId?: string | undefined;
     editedQuantity?: number | undefined;
     scaledQuantity?: number | undefined;
     newParentQuantity?: number | undefined;
@@ -5646,10 +5630,8 @@ export interface IUserEditOperation {
 export class UserSelectedServing implements IUserSelectedServing {
     originalText?: string | undefined;
     provider?: string | undefined;
-    externalFoodId?: string | undefined;
-    externalServingId?: string | undefined;
-    fatSecretFoodId?: string | undefined;
-    fatSecretServingId?: string | undefined;
+    providerFoodId?: string | undefined;
+    providerServingId?: string | undefined;
     editedQuantity?: number | undefined;
     componentId?: string | undefined;
     scaledQuantity?: number | undefined;
@@ -5667,10 +5649,8 @@ export class UserSelectedServing implements IUserSelectedServing {
         if (_data) {
             this.originalText = _data["originalText"];
             this.provider = _data["provider"];
-            this.externalFoodId = _data["externalFoodId"];
-            this.externalServingId = _data["externalServingId"];
-            this.fatSecretFoodId = _data["fatSecretFoodId"];
-            this.fatSecretServingId = _data["fatSecretServingId"];
+            this.providerFoodId = _data["providerFoodId"];
+            this.providerServingId = _data["providerServingId"];
             this.editedQuantity = _data["editedQuantity"];
             this.componentId = _data["componentId"];
             this.scaledQuantity = _data["scaledQuantity"];
@@ -5688,10 +5668,8 @@ export class UserSelectedServing implements IUserSelectedServing {
         data = typeof data === 'object' ? data : {};
         data["originalText"] = this.originalText;
         data["provider"] = this.provider;
-        data["externalFoodId"] = this.externalFoodId;
-        data["externalServingId"] = this.externalServingId;
-        data["fatSecretFoodId"] = this.fatSecretFoodId;
-        data["fatSecretServingId"] = this.fatSecretServingId;
+        data["providerFoodId"] = this.providerFoodId;
+        data["providerServingId"] = this.providerServingId;
         data["editedQuantity"] = this.editedQuantity;
         data["componentId"] = this.componentId;
         data["scaledQuantity"] = this.scaledQuantity;
@@ -5702,10 +5680,8 @@ export class UserSelectedServing implements IUserSelectedServing {
 export interface IUserSelectedServing {
     originalText?: string | undefined;
     provider?: string | undefined;
-    externalFoodId?: string | undefined;
-    externalServingId?: string | undefined;
-    fatSecretFoodId?: string | undefined;
-    fatSecretServingId?: string | undefined;
+    providerFoodId?: string | undefined;
+    providerServingId?: string | undefined;
     editedQuantity?: number | undefined;
     componentId?: string | undefined;
     scaledQuantity?: number | undefined;

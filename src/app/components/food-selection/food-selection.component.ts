@@ -387,7 +387,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (!matches.length) return null;
     const selected = (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
     this.selectedFoodByComponentId.set(componentId, selected);
-    const originalSid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.fatSecretServingId;
+    const originalSid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.providerServingId;
     if (originalSid) {
       // Set the original serving ID for backend operations
       (selected as any).selectedServingId = originalSid;
@@ -440,12 +440,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // Clear isBestMatch on all matches, then set it on the selected one
     component.matches.forEach((match: any) => {
-      (match as any).isBestMatch = match.fatSecretFoodId === foodId;
+      (match as any).isBestMatch = match.providerFoodId === foodId;
       if ((match as any).isBestMatch) {
         // Set default serving on the selected match
-        (match as any).selectedServingId = match.servings?.[0]?.fatSecretServingId;
+        (match as any).selectedServingId = match.servings?.[0]?.providerServingId;
         // Set the user virtual serving ID as default for display (preselects user's preferred units)
-        const originalSid = match.servings?.[0]?.fatSecretServingId;
+        const originalSid = match.servings?.[0]?.providerServingId;
         if (originalSid) {
           (match as any).selectedVirtualServingId = originalSid + '::user';
         }
@@ -454,20 +454,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // In edit mode, track the operation
     if (this.isEditMode) {
-      const selectedMatch = component.matches.find((match: any) => match.fatSecretFoodId === foodId);
+      const selectedMatch = component.matches.find((match: any) => match.providerFoodId === foodId);
       this.addEditOperation(new UserEditOperation({
         action: EditFoodSelectionType.UpdateServing,
         componentId: componentId,
-        fatSecretFoodId: foodId,
-        fatSecretServingId: (selectedMatch as any)?.selectedServingId
+        providerFoodId: foodId,
+        providerServingId: (selectedMatch as any)?.selectedServingId
       }));
     }
 
     // Update caches for this component
-    const selectedMatch = component.matches.find((match: any) => match.fatSecretFoodId === foodId) as ComponentMatch | undefined;
+    const selectedMatch = component.matches.find((match: any) => match.providerFoodId === foodId) as ComponentMatch | undefined;
     if (selectedMatch) {
       this.selectedFoodByComponentId.set(componentId, selectedMatch);
-      const sid = (selectedMatch as any)?.selectedServingId ?? selectedMatch.servings?.[0]?.fatSecretServingId;
+      const sid = (selectedMatch as any)?.selectedServingId ?? selectedMatch.servings?.[0]?.providerServingId;
       if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
       
       // Recompute display values for this component
@@ -501,10 +501,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         this.addEditOperation(new UserEditOperation({
           action: EditFoodSelectionType.UpdateServing,
           componentId: componentId,
-          externalFoodId: (selectedFood as any)?.externalFoodId ?? (selectedFood as any)?.fatSecretFoodId,
-          fatSecretFoodId: (selectedFood as any)?.fatSecretFoodId, // back-compat
-          externalServingId: servingId,
-          fatSecretServingId: servingId // back-compat
+          providerFoodId: (selectedFood as any)?.providerFoodId,
+          providerServingId: servingId
         }));
       }
     }
@@ -522,7 +520,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Fallback to original logic for backward compatibility
     const cached = this.selectedServingIdByComponentId.get(componentId);
     if (cached) return cached;
-    const firstServingId = (sf: any) => (sf?.servings?.[0]?.externalServingId ?? sf?.servings?.[0]?.fatSecretServingId);
+    const firstServingId = (sf: any) => sf?.servings?.[0]?.providerServingId;
     const sid = (selectedFood as any)?.selectedServingId ?? firstServingId(selectedFood);
     if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
     return sid;
@@ -543,7 +541,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (cached) return cached;
     
     // Final fallback to first serving
-    const firstServingId = (sf: any) => (sf?.servings?.[0]?.externalServingId ?? sf?.servings?.[0]?.fatSecretServingId);
+    const firstServingId = (sf: any) => sf?.servings?.[0]?.providerServingId;
     return firstServingId(selectedFood);
   }
 
@@ -556,24 +554,24 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (virtualServingId && food?.servings?.[0]) {
       // Get the dual serving options and find the selected virtual serving
       const dualOptions = this.getDualServingOptions(food.servings[0]);
-      const selected = dualOptions.find(s => s.fatSecretServingId === virtualServingId) || null;
+      const selected = dualOptions.find(s => s.providerServingId === virtualServingId) || null;
       console.log('Found selected serving:', { selected, displayQuantity: selected?.displayQuantity, displayUnit: selected?.displayUnit });
       return selected;
     }
     
     // Fallback to original logic
     const id = this.getOriginalServingId(componentId);
-    return food?.servings?.find((s: any) => s?.externalServingId === id || s?.fatSecretServingId === id) || null;
+    return food?.servings?.find((s: any) => s?.providerServingId === id) || null;
   }
 
   // Getter to always derive the selected serving for a food match
   getSelectedServingForFood(match: ComponentMatch): ComponentServing | undefined {
-    return match?.servings?.find((s: any) => s?.externalServingId === (match as any)?.selectedServingId || s?.fatSecretServingId === (match as any)?.selectedServingId);
+    return match?.servings?.find((s: any) => s?.providerServingId === (match as any)?.selectedServingId);
   }
 
   // TrackBy function to prevent DOM reuse issues
   trackByServingId(index: number, serving: ComponentServing): string {
-    return (serving as any).externalServingId || (serving as any).fatSecretServingId || `${index}`;
+    return (serving as any).providerServingId || `${index}`;
   }
 
   // TrackBy helpers for larger lists
@@ -631,7 +629,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             const selectedFood = this.getSelectedFood(component.id);
             const servingId = this.getOriginalServingId(component.id);
             
-            if (!(selectedFood as any)?.externalFoodId && !(selectedFood as any)?.fatSecretFoodId || !servingId) {
+            if (!(selectedFood as any)?.providerFoodId || !servingId) {
               return false;
             }
           }
@@ -668,7 +666,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             const servingId = this.getOriginalServingId(component.id);
             const selectedServing = this.getSelectedServing(component.id);
             
-            if (((selectedFood as any)?.externalFoodId || (selectedFood as any)?.fatSecretFoodId) && servingId && selectedServing) {
+            if ((selectedFood as any)?.providerFoodId && servingId && selectedServing) {
               const displayQuantity = this.getEffectiveQuantity(component.id, selectedServing);
               // Use the frontend's calculated scaling - it's already correct!
               const scaledQuantity = selectedServing?.scaledQuantity;
@@ -677,10 +675,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                 componentId: component.id,
                 originalText: (((component as any)?.key) ?? (selectedFood as any)?.originalText) || '',
                 provider: (selectedFood as any)?.provider ?? 'nutritionix',
-                externalFoodId: (selectedFood as any)?.externalFoodId ?? (selectedFood as any)?.fatSecretFoodId,
-                externalServingId: servingId,
-                fatSecretFoodId: (selectedFood as any)?.fatSecretFoodId,
-                fatSecretServingId: servingId,
+                providerFoodId: (selectedFood as any)?.providerFoodId,
+                providerServingId: servingId,
                 editedQuantity: displayQuantity,
                 scaledQuantity: scaledQuantity
               }));
@@ -825,8 +821,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Create user-anchored serving (user's exact input) - this should be pre-selected
     const userServing = new ComponentServing({
       ...serving,
-      fatSecretServingId: serving.fatSecretServingId + '::user',
-      externalServingId: serving.externalServingId + '::user',
+      providerServingId: serving.providerServingId + '::user',
       displayQuantity: serving.displayQuantity, // User's exact quantity (e.g., 100)
       displayUnit: serving.displayUnit,         // User's exact unit (e.g., "g")
       description: `${serving.displayQuantity} ${serving.displayUnit}`,
@@ -839,8 +834,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Create canonical serving (equivalent in canonical unit)
     const canonicalServing = new ComponentServing({
       ...serving,
-      fatSecretServingId: serving.fatSecretServingId + '::canonical',
-      externalServingId: serving.externalServingId + '::canonical',
+      providerServingId: serving.providerServingId + '::canonical',
       displayQuantity: serving.scaledQuantity,  // Canonical equivalent quantity (e.g., 0.42)
       displayUnit: serving.scaledUnit,          // Canonical unit (e.g., "cup")
       description: `${serving.scaledQuantity} ${serving.scaledUnit}`,
@@ -891,7 +885,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Debug method to check if serving is selected
   isServingSelected(componentId: string, serving: ComponentServing): boolean {
     const selectedId = this.getSelectedServingId(componentId);
-    const servingId = serving.fatSecretServingId;
+    const servingId = serving.providerServingId;
     const isSelected = selectedId === servingId;
     console.log('isServingSelected check:', { componentId, selectedId, servingId, isSelected });
     return isSelected;
@@ -903,7 +897,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const selectedServing = this.getSelectedServing(componentId);
     
     // Compute selected food ID
-    this.computedSelectedFoodIds.set(componentId, selectedFood?.fatSecretFoodId || '');
+    this.computedSelectedFoodIds.set(componentId, selectedFood?.providerFoodId || '');
     
     // Compute brand name
     this.computedBrandNames.set(componentId, selectedFood?.brandName || '');
@@ -921,7 +915,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const effectiveQuantities = new Map<string, number>();
     
     for (const serving of dualOptions) {
-      const servingId = serving.fatSecretServingId;
+      const servingId = serving.providerServingId;
       if (servingId) {
         servingLabels.set(servingId, this.getServingLabel(serving));
         unitTexts.set(servingId, this.getUnitText(serving));
@@ -969,7 +963,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Compute per-serving selection state
     const servingSelections = new Map<string, boolean>();
     for (const serving of dualOptions) {
-      const servingId = serving.fatSecretServingId;
+      const servingId = serving.providerServingId;
       if (servingId) {
         servingSelections.set(servingId, this.isServingSelected(componentId, serving));
       }
@@ -1143,7 +1137,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       base, 
       scaledQuantity: q, 
       result: base * q,
-      servingId: s.fatSecretServingId,
+      servingId: s.providerServingId,
       keys: keys
     });
     if (!isFinite(q) || q <= 0) return base; // be forgiving; show per-serving
@@ -1303,7 +1297,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private rescaleFromSelected(componentId: string, selected: ComponentServing, editedQty: number): void {
-    console.log('rescaleFromSelected called:', { componentId, editedQty, selectedId: selected.fatSecretServingId });
+    console.log('rescaleFromSelected called:', { componentId, editedQty, selectedId: selected.providerServingId });
     
     // 0) guard
     const component = this.findComponentById(componentId);
@@ -1352,7 +1346,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
 
     // ensure exactly one best match (the edited row)
-    const editedId = selected.fatSecretServingId;
+    const editedId = selected.providerServingId;
     console.log('rescaleFromSelected: processing servings for food:', { 
       servingsCount: selectedFood.servings.length, 
       editedId 
@@ -1365,7 +1359,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const originalScaledQ = scaledQ;
 
       console.log('rescaleFromSelected: processing serving:', {
-        servingId: s.fatSecretServingId,
+        servingId: s.providerServingId,
         originalScaledQ,
         mAmt,
         hasMetric,
@@ -1411,7 +1405,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       (s as any).displayUnit = (uiUnit || '').trim();
 
       // mark best match
-      (s as any).isBestMatch = ((s as any).externalServingId === editedId) || ((s as any).fatSecretServingId === editedId);
+      (s as any).isBestMatch = (s as any).providerServingId === editedId;
     }
 
     // ensure UI shows the edited row as selected
@@ -1421,7 +1415,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   onInlineQtyChanged(componentId: string, s: ComponentServing, newValue: number): void {
-    const servingId = s.fatSecretServingId || '';
+    const servingId = s.providerServingId || '';
     console.log('=== onInlineQtyChanged START ===', { componentId, newValue, servingId });
     console.log('Current selection before change:', this.getSelectedServingId(componentId));
     
@@ -1432,7 +1426,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // Ensure this row is selected and get the correct selection state
     const currentSelected = this.getSelectedServingId(componentId);
-    const sid = (s as any).externalServingId ?? (s as any).fatSecretServingId;
+    const sid = (s as any).providerServingId;
     
     // If this row isn't selected, select it now and wait for the selection to be processed
     if (currentSelected !== sid && sid) {
@@ -1444,7 +1438,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const currentFood = this.getSelectedFood(componentId);
     if (currentFood?.servings?.[0]) {
       const originalServing = currentFood.servings[0];
-      const servingId = (s as any).fatSecretServingId || '';
+      const servingId = (s as any).providerServingId || '';
       
       console.log('onInlineQtyChanged details:', {
         newValue: v,
@@ -1526,15 +1520,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // In edit mode, track the operation
     if (this.isEditMode) {
       const selectedFood = this.getSelectedFood(componentId);
-      const sid = (s as any).externalServingId ?? (s as any).fatSecretServingId;
+      const sid = (s as any).providerServingId;
       if (selectedFood && sid) {
         this.addEditOperation(new UserEditOperation({
           action: EditFoodSelectionType.UpdateServing,
           componentId: componentId,
-          externalFoodId: (selectedFood as any)?.externalFoodId ?? (selectedFood as any)?.fatSecretFoodId,
-          fatSecretFoodId: (selectedFood as any)?.fatSecretFoodId,
-          externalServingId: sid,
-          fatSecretServingId: sid,
+          providerFoodId: (selectedFood as any)?.providerFoodId,
+          providerServingId: sid,
           editedQuantity: v
         }));
       }
@@ -1544,7 +1536,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const selectedFood = this.getSelectedFood(componentId);
     if (selectedFood?.servings) {
       for (const serving of selectedFood.servings) {
-        (serving as any).isBestMatch = ((serving as any).externalServingId === ((s as any).externalServingId)) || (serving as any).fatSecretServingId === (s as any).fatSecretServingId;
+        (serving as any).isBestMatch = (serving as any).providerServingId === (s as any).providerServingId;
       }
     }
     
@@ -1557,7 +1549,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   onRowClicked(componentId: string, s: ComponentServing): void {
     const current = this.getSelectedServingId(componentId);
-    const sid2 = (s as any).externalServingId ?? (s as any).fatSecretServingId;
+    const sid2 = (s as any).providerServingId;
     if (current !== sid2 && sid2) {
       this.onServingSelected(componentId, sid2);
     }
@@ -1952,7 +1944,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         if (matches.length) {
           const selected: ComponentMatch = (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
           this.selectedFoodByComponentId.set(cid, selected);
-          const originalSid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.fatSecretServingId;
+          const originalSid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.providerServingId;
           if (originalSid) {
             // Set the original serving ID for backend operations
             (selected as any).selectedServingId = originalSid;
@@ -2074,8 +2066,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (!component?.matches) return;
 
     const existingMatch = component.matches.find((m: any) => 
-      m.fatSecretFoodId === alternativeMatch.fatSecretFoodId ||
-      m.externalFoodId === alternativeMatch.externalFoodId
+      m.providerFoodId === alternativeMatch.providerFoodId
     );
 
     if (!existingMatch) {
@@ -2084,7 +2075,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
 
     // Select this food
-    const foodId = alternativeMatch.fatSecretFoodId || alternativeMatch.externalFoodId;
+    const foodId = alternativeMatch.providerFoodId;
     if (foodId) {
       this.onFoodSelected(componentId, foodId);
     }
