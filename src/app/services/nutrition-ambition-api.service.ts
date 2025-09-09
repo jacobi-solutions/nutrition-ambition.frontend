@@ -5557,6 +5557,7 @@ export enum UnitKind {
     Weight = "Weight",
     Volume = "Volume",
     Count = "Count",
+    Unknown = "Unknown",
 }
 
 export class UserEditOperation implements IUserEditOperation {
