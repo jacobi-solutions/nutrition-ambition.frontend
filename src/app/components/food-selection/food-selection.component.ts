@@ -997,6 +997,26 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return this.computedBrandNames.get(componentId) || '';
   }
 
+  getComputedFoodServingLabel(foodIndex: number): string {
+    const food = this.message.logMealToolResponse?.foods?.[foodIndex];
+    if (!food) return '';
+    
+    // For multi-component foods, use the food-level quantity and unit
+    if (food.components && food.components.length > 1) {
+      const quantity = food.quantity || 1;
+      const unit = food.unit || 'serving';
+      return `${quantity} ${unit}`;
+    }
+    
+    // For single-component foods, fall back to the first component's serving label
+    const foodComponents = this.getComponentsForFood(food);
+    if (foodComponents.length > 0) {
+      return this.getComputedServingLabel(foodComponents[0].componentId);
+    }
+    
+    return '';
+  }
+
   getComputedDualServingOptions(componentId: string): ComponentServing[] {
     return this.computedDualServingOptions.get(componentId) || [];
   }

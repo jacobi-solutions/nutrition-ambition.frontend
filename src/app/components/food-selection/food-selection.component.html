@@ -50,7 +50,7 @@
                         </ng-container>
                         <!-- Show normal label when collapsed or read-only -->
                         <ng-container *ngIf="!getComputedIsFoodEditingExpanded(foodIndex) || isReadOnly">
-                          <span class="inline-amount">{{ getComputedServingLabel(foodComponents[0].componentId) }}</span>
+                          <span class="inline-amount">{{ getComputedFoodServingLabel(foodIndex) }}</span>
                         </ng-container>
                       </div>
                     </ion-col>
