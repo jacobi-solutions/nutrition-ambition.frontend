@@ -5387,6 +5387,7 @@ export class UserEditOperation implements IUserEditOperation {
     externalServingId?: string | undefined;
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;
+    scaledQuantity?: number | undefined;
     newParentQuantity?: number | undefined;
     newParentUnit?: string | undefined;
 
@@ -5409,6 +5410,7 @@ export class UserEditOperation implements IUserEditOperation {
             this.externalServingId = _data["externalServingId"];
             this.fatSecretServingId = _data["fatSecretServingId"];
             this.editedQuantity = _data["editedQuantity"];
+            this.scaledQuantity = _data["scaledQuantity"];
             this.newParentQuantity = _data["newParentQuantity"];
             this.newParentUnit = _data["newParentUnit"];
         }
@@ -5431,6 +5433,7 @@ export class UserEditOperation implements IUserEditOperation {
         data["externalServingId"] = this.externalServingId;
         data["fatSecretServingId"] = this.fatSecretServingId;
         data["editedQuantity"] = this.editedQuantity;
+        data["scaledQuantity"] = this.scaledQuantity;
         data["newParentQuantity"] = this.newParentQuantity;
         data["newParentUnit"] = this.newParentUnit;
         return data;
@@ -5446,6 +5449,7 @@ export interface IUserEditOperation {
     externalServingId?: string | undefined;
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;
+    scaledQuantity?: number | undefined;
     newParentQuantity?: number | undefined;
     newParentUnit?: string | undefined;
 }
@@ -5459,6 +5463,7 @@ export class UserSelectedServing implements IUserSelectedServing {
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;
     componentId?: string | undefined;
+    scaledQuantity?: number | undefined;
 
     constructor(data?: IUserSelectedServing) {
         if (data) {
@@ -5479,6 +5484,7 @@ export class UserSelectedServing implements IUserSelectedServing {
             this.fatSecretServingId = _data["fatSecretServingId"];
             this.editedQuantity = _data["editedQuantity"];
             this.componentId = _data["componentId"];
+            this.scaledQuantity = _data["scaledQuantity"];
         }
     }
 
@@ -5499,6 +5505,7 @@ export class UserSelectedServing implements IUserSelectedServing {
         data["fatSecretServingId"] = this.fatSecretServingId;
         data["editedQuantity"] = this.editedQuantity;
         data["componentId"] = this.componentId;
+        data["scaledQuantity"] = this.scaledQuantity;
         return data;
     }
 }
@@ -5512,6 +5519,7 @@ export interface IUserSelectedServing {
     fatSecretServingId?: string | undefined;
     editedQuantity?: number | undefined;
     componentId?: string | undefined;
+    scaledQuantity?: number | undefined;
 }
 
 export class ApiException extends Error {

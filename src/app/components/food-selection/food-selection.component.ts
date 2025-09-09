@@ -665,6 +665,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             
             if (((selectedFood as any)?.externalFoodId || (selectedFood as any)?.fatSecretFoodId) && servingId && selectedServing) {
               const displayQuantity = this.getEffectiveQuantity(component.id, selectedServing);
+              // Use the frontend's calculated scaling - it's already correct!
+              const scaledQuantity = selectedServing?.scaledQuantity;
               
               req.selections.push(new UserSelectedServing({
                 componentId: component.id,
@@ -674,7 +676,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                 externalServingId: servingId,
                 fatSecretFoodId: (selectedFood as any)?.fatSecretFoodId,
                 fatSecretServingId: servingId,
-                editedQuantity: displayQuantity
+                editedQuantity: displayQuantity,
+                scaledQuantity: scaledQuantity
               }));
             }
           }
