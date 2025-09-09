@@ -163,20 +163,50 @@
                           </div>
                         </div>
                       </div>
-                      <ion-select 
-                        interface="popover"
-                        [interfaceOptions]="{ cssClass: 'wide-select-popover' }"
-                        [value]="getComputedSelectedFoodId(componentData.componentId)" 
-                        (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)" 
-                        [disabled]="isReadOnly"
-                        id="foodSelect-{{ componentData.componentId }}">
-                        <ion-select-option 
-                          *ngFor="let match of (componentData.component.matches || [])" 
-                          [value]="match.fatSecretFoodId">
-                          {{ match.displayName }}
-                          <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
-                        </ion-select-option>
-                      </ion-select>
+                      <div class="food-select-container">
+                        <ion-select 
+                          interface="popover"
+                          [interfaceOptions]="{ cssClass: 'wide-select-popover' }"
+                          [value]="getComputedSelectedFoodId(componentData.componentId)" 
+                          (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)" 
+                          [disabled]="isReadOnly"
+                          id="foodSelect-{{ componentData.componentId }}">
+                          <ion-select-option 
+                            *ngFor="let match of (componentData.component.matches || [])" 
+                            [value]="match.fatSecretFoodId">
+                            {{ match.displayName }}
+                            <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
+                          </ion-select-option>
+                        </ion-select>
+                        
+                        <!-- More Options button for common foods -->
+                        <ion-button 
+                          *ngIf="!isReadOnly && isSelectedFoodCommon(componentData.componentId)"
+                          fill="clear" 
+                          size="small"
+                          class="more-options-btn"
+                          (click)="toggleMoreOptions(componentData.componentId)"
+                          [disabled]="loadingMoreOptionsFor[componentData.componentId]">
+                          <ion-icon name="ellipsis-horizontal" *ngIf="!loadingMoreOptionsFor[componentData.componentId]"></ion-icon>
+                          <ion-spinner name="crescent" *ngIf="loadingMoreOptionsFor[componentData.componentId]"></ion-spinner>
+                        </ion-button>
+                      </div>
+
+                      <!-- More options list -->
+                      <div *ngIf="showingMoreOptionsFor[componentData.componentId]" class="more-options-list">
+                        <div class="more-options-header">More options for "{{ getOriginalPhraseForComponent(componentData.componentId) }}":</div>
+                        <ion-list class="more-options-items">
+                          <ion-item 
+                            *ngFor="let alternative of moreOptionsFor[componentData.componentId]" 
+                            button 
+                            (click)="onMoreOptionSelected(componentData.componentId, alternative)">
+                            <ion-label>
+                              <h3>{{ alternative.displayName }}</h3>
+                              <p *ngIf="alternative.brandName">{{ alternative.brandName }}</p>
+                            </ion-label>
+                          </ion-item>
+                        </ion-list>
+                      </div>
                     </div>
 
                     <div class="serving-options-inline">
@@ -310,20 +340,50 @@
                     </div>
                   </div>
                 </div>
-                <ion-select 
-                  interface="popover"
-                  [interfaceOptions]="{ cssClass: 'wide-select-popover' }"
-                  [value]="getComputedSelectedFoodId(componentData.componentId)" 
-                  (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)" 
-                  [disabled]="isReadOnly"
-                  id="foodSelect-{{ componentData.componentId }}">
-                  <ion-select-option 
-                    *ngFor="let match of (componentData.component.matches || [])" 
-                    [value]="match.fatSecretFoodId">
-                    {{ match.displayName }}
-                    <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
-                  </ion-select-option>
-                </ion-select>
+                <div class="food-select-container">
+                  <ion-select 
+                    interface="popover"
+                    [interfaceOptions]="{ cssClass: 'wide-select-popover' }"
+                    [value]="getComputedSelectedFoodId(componentData.componentId)" 
+                    (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)" 
+                    [disabled]="isReadOnly"
+                    id="foodSelect-{{ componentData.componentId }}">
+                    <ion-select-option 
+                      *ngFor="let match of (componentData.component.matches || [])" 
+                      [value]="match.fatSecretFoodId">
+                      {{ match.displayName }}
+                      <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
+                    </ion-select-option>
+                  </ion-select>
+                  
+                  <!-- More Options button for common foods -->
+                  <ion-button 
+                    *ngIf="!isReadOnly && isSelectedFoodCommon(componentData.componentId)"
+                    fill="clear" 
+                    size="small"
+                    class="more-options-btn"
+                    (click)="toggleMoreOptions(componentData.componentId)"
+                    [disabled]="loadingMoreOptionsFor[componentData.componentId]">
+                    <ion-icon name="ellipsis-horizontal" *ngIf="!loadingMoreOptionsFor[componentData.componentId]"></ion-icon>
+                    <ion-spinner name="crescent" *ngIf="loadingMoreOptionsFor[componentData.componentId]"></ion-spinner>
+                  </ion-button>
+                </div>
+
+                <!-- More options list -->
+                <div *ngIf="showingMoreOptionsFor[componentData.componentId]" class="more-options-list">
+                  <div class="more-options-header">More options for "{{ getOriginalPhraseForComponent(componentData.componentId) }}":</div>
+                  <ion-list class="more-options-items">
+                    <ion-item 
+                      *ngFor="let alternative of moreOptionsFor[componentData.componentId]" 
+                      button 
+                      (click)="onMoreOptionSelected(componentData.componentId, alternative)">
+                      <ion-label>
+                        <h3>{{ alternative.displayName }}</h3>
+                        <p *ngIf="alternative.brandName">{{ alternative.brandName }}</p>
+                      </ion-label>
+                    </ion-item>
+                  </ion-list>
+                </div>
               </div>
 
               <div class="serving-options-inline">

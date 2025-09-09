@@ -1,10 +1,10 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
+import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonSpinner, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse } from 'src/app/services/nutrition-ambition-api.service';
+import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
@@ -15,7 +15,7 @@ import { DateService } from 'src/app/services/date.service';
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent]
+  imports: [CommonModule, FormsModule, IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonSpinner, IonList, IonItem, IonLabel, ServingQuantityInputComponent]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() message!: DisplayMessage;
@@ -54,6 +54,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   
   // Track which component was being edited to re-expand it after update
   private editingComponentId: string | null = null;
+
+  // More Options functionality for common foods
+  showingMoreOptionsFor: { [componentId: string]: boolean } = {};
+  loadingMoreOptionsFor: { [componentId: string]: boolean } = {};
+  moreOptionsFor: { [componentId: string]: ComponentMatch[] } = {};
 
   // Hot-path caches to avoid repeated deep scans
   private componentById: Map<string, any> = new Map();
@@ -94,7 +99,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService
   ) {
-    addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline });
+    addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal });
   }
 
   get hasPayload(): boolean {
@@ -1993,5 +1998,98 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       duration: 4000,
       color: 'danger'
     });
+  }
+
+  // Helper to detect if a ComponentMatch represents a common food (no brand name)
+  isCommonFood(match: ComponentMatch): boolean {
+    return !match.brandName || match.brandName.trim().length === 0;
+  }
+
+  // Helper to check if the selected food for a component is common
+  isSelectedFoodCommon(componentId: string): boolean {
+    const selectedFood = this.getSelectedFood(componentId);
+    return selectedFood ? this.isCommonFood(selectedFood) : false;
+  }
+
+  // Get the original phrase for a component to use in the search
+  getOriginalPhraseForComponent(componentId: string): string {
+    const selectedFood = this.getSelectedFood(componentId);
+    return selectedFood?.searchText || selectedFood?.originalText || selectedFood?.displayName || '';
+  }
+
+  // Toggle more options for a component
+  async toggleMoreOptions(componentId: string): Promise<void> {
+    if (this.showingMoreOptionsFor[componentId]) {
+      this.showingMoreOptionsFor[componentId] = false;
+      return;
+    }
+
+    if (this.moreOptionsFor[componentId] && this.moreOptionsFor[componentId].length > 0) {
+      // Already have options, just show them
+      this.showingMoreOptionsFor[componentId] = true;
+      return;
+    }
+
+    // Need to fetch more options
+    await this.fetchMoreOptions(componentId);
+  }
+
+  // Fetch more options from the backend
+  async fetchMoreOptions(componentId: string): Promise<void> {
+    try {
+      this.loadingMoreOptionsFor[componentId] = true;
+      const originalPhrase = this.getOriginalPhraseForComponent(componentId);
+      
+      if (!originalPhrase) {
+        await this.showErrorToast('Could not determine original phrase for more options');
+        return;
+      }
+
+      const request = new GetInstantAlternativesRequest({
+        originalPhrase: originalPhrase,
+        componentId: componentId,
+        localDateKey: this.dateService.getSelectedDate()
+      });
+
+      const response = await this.apiService.getInstantAlternatives(request).toPromise();
+      
+      if (response?.isSuccess && response.alternatives) {
+        this.moreOptionsFor[componentId] = response.alternatives;
+        this.showingMoreOptionsFor[componentId] = true;
+      } else {
+        await this.showErrorToast('No additional options found');
+      }
+    } catch (error) {
+      console.error('Error fetching more options:', error);
+      await this.showErrorToast('Failed to fetch more options');
+    } finally {
+      this.loadingMoreOptionsFor[componentId] = false;
+    }
+  }
+
+  // Select an option from the more options list
+  onMoreOptionSelected(componentId: string, alternativeMatch: ComponentMatch): void {
+    // Add the alternative to the component's matches if not already present
+    const component = this.findComponentById(componentId);
+    if (!component?.matches) return;
+
+    const existingMatch = component.matches.find((m: any) => 
+      m.fatSecretFoodId === alternativeMatch.fatSecretFoodId ||
+      m.externalFoodId === alternativeMatch.externalFoodId
+    );
+
+    if (!existingMatch) {
+      // Add the new match to the component
+      component.matches.push(alternativeMatch);
+    }
+
+    // Select this food
+    const foodId = alternativeMatch.fatSecretFoodId || alternativeMatch.externalFoodId;
+    if (foodId) {
+      this.onFoodSelected(componentId, foodId);
+    }
+
+    // Hide more options
+    this.showingMoreOptionsFor[componentId] = false;
   }
 }

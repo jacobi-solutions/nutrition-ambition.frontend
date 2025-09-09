@@ -142,6 +142,11 @@ export interface INutritionAmbitionApiService {
      */
     searchFoodPhrase(body: SearchFoodPhraseRequest | undefined): Observable<SearchFoodPhraseResponse>;
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getInstantAlternatives(body: GetInstantAlternativesRequest | undefined): Observable<GetInstantAlternativesResponse>;
+    /**
      * @return Success
      */
     ip(): Observable<void>;
@@ -1556,6 +1561,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<SearchFoodPhraseResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getInstantAlternatives(body: GetInstantAlternativesRequest | undefined): Observable<GetInstantAlternativesResponse> {
+        let url_ = this.baseUrl + "/api/FoodSelection/GetInstantAlternatives";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetInstantAlternatives(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetInstantAlternatives(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetInstantAlternativesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetInstantAlternativesResponse>;
+        }));
+    }
+
+    protected processGetInstantAlternatives(response: HttpResponseBase): Observable<GetInstantAlternativesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetInstantAlternativesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetInstantAlternativesResponse>(null as any);
     }
 
     /**
@@ -4291,6 +4352,134 @@ export interface IGetFeedbackWithAccountInfoResponse {
     stackTrace?: string | undefined;
     accountId?: string | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
+}
+
+export class GetInstantAlternativesRequest implements IGetInstantAlternativesRequest {
+    originalPhrase!: string;
+    componentId?: string | undefined;
+    localDateKey!: string;
+
+    constructor(data?: IGetInstantAlternativesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.originalPhrase = _data["originalPhrase"];
+            this.componentId = _data["componentId"];
+            this.localDateKey = _data["localDateKey"];
+        }
+    }
+
+    static fromJS(data: any): GetInstantAlternativesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetInstantAlternativesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["originalPhrase"] = this.originalPhrase;
+        data["componentId"] = this.componentId;
+        data["localDateKey"] = this.localDateKey;
+        return data;
+    }
+}
+
+export interface IGetInstantAlternativesRequest {
+    originalPhrase: string;
+    componentId?: string | undefined;
+    localDateKey: string;
+}
+
+export class GetInstantAlternativesResponse implements IGetInstantAlternativesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    originalPhrase?: string | undefined;
+    componentId?: string | undefined;
+    alternatives?: ComponentMatch[] | undefined;
+    searchMethod?: string | undefined;
+
+    constructor(data?: IGetInstantAlternativesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.originalPhrase = _data["originalPhrase"];
+            this.componentId = _data["componentId"];
+            if (Array.isArray(_data["alternatives"])) {
+                this.alternatives = [] as any;
+                for (let item of _data["alternatives"])
+                    this.alternatives!.push(ComponentMatch.fromJS(item));
+            }
+            this.searchMethod = _data["searchMethod"];
+        }
+    }
+
+    static fromJS(data: any): GetInstantAlternativesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetInstantAlternativesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["originalPhrase"] = this.originalPhrase;
+        data["componentId"] = this.componentId;
+        if (Array.isArray(this.alternatives)) {
+            data["alternatives"] = [];
+            for (let item of this.alternatives)
+                data["alternatives"].push(item.toJSON());
+        }
+        data["searchMethod"] = this.searchMethod;
+        return data;
+    }
+}
+
+export interface IGetInstantAlternativesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    originalPhrase?: string | undefined;
+    componentId?: string | undefined;
+    alternatives?: ComponentMatch[] | undefined;
+    searchMethod?: string | undefined;
 }
 
 export class GetUserChatMessagesRequest implements IGetUserChatMessagesRequest {
