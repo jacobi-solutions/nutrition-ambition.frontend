@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { NutritionAmbitionApiService, SubmitServingSelectionRequest, CancelServingSelectionRequest, ChatMessagesResponse, ErrorDto, EditFoodSelectionRequest, SubmitEditServingSelectionRequest, CancelEditSelectionRequest, SearchFoodPhraseRequest, SearchFoodPhraseResponse } from '../services/nutrition-ambition-api.service';
+import { NutritionAmbitionApiService, SubmitServingSelectionRequest, CancelServingSelectionRequest, ChatMessagesResponse, ErrorDto, EditFoodSelectionRequest, SubmitEditServingSelectionRequest, CancelEditSelectionRequest, SearchFoodPhraseRequest, SearchFoodPhraseResponse, HydrateFoodSelectionRequest, HydrateFoodSelectionResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse } from '../services/nutrition-ambition-api.service';
 import { DateService } from './date.service';
 
 @Injectable({
@@ -104,6 +104,31 @@ export class FoodSelectionService {
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Update failed';
         return of(new SearchFoodPhraseResponse({ isSuccess: false, errors: [errorDto] }));
+      })
+    );
+  }
+
+  hydrateFoodSelection(request: HydrateFoodSelectionRequest): Observable<HydrateFoodSelectionResponse> {
+    return this.apiService.hydrateFoodSelection(request).pipe(
+      catchError(err => {
+        console.error('Failed to hydrate food selection', err);
+        const errorDto = new ErrorDto();
+        errorDto.errorMessage = 'Hydration failed';
+        return of(new HydrateFoodSelectionResponse({ isSuccess: false, errors: [errorDto] }));
+      })
+    );
+  }
+
+  getInstantAlternatives(request: GetInstantAlternativesRequest): Observable<GetInstantAlternativesResponse> {
+    // Ensure localDateKey is set
+    request.localDateKey = request.localDateKey || this.dateService.getSelectedDate();
+
+    return this.apiService.getInstantAlternatives(request).pipe(
+      catchError(err => {
+        console.error('Failed to get instant alternatives', err);
+        const errorDto = new ErrorDto();
+        errorDto.errorMessage = 'Failed to get instant alternatives';
+        return of(new GetInstantAlternativesResponse({ isSuccess: false, errors: [errorDto] }));
       })
     );
   }

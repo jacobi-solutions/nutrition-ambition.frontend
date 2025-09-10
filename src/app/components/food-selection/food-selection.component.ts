@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonSpinner, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse } from 'src/app/services/nutrition-ambition-api.service';
@@ -9,13 +9,14 @@ import { ServingQuantityInputComponent } from 'src/app/components/serving-quanti
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
+import { FoodSelectionService } from 'src/app/services/food-selection.service';
 
 @Component({
   selector: 'app-food-selection',
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonSpinner, IonList, IonItem, IonLabel, ServingQuantityInputComponent]
+  imports: [CommonModule, FormsModule, IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, ServingQuantityInputComponent]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() message!: DisplayMessage;
@@ -59,6 +60,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   showingMoreOptionsFor: { [componentId: string]: boolean } = {};
   loadingMoreOptionsFor: { [componentId: string]: boolean } = {};
   moreOptionsFor: { [componentId: string]: ComponentMatch[] } = {};
+  
+  // Dropdown instant search state
+  loadingInstantOptionsFor: { [componentId: string]: boolean } = {};
 
   // Hot-path caches to avoid repeated deep scans
   private componentById: Map<string, any> = new Map();
@@ -97,7 +101,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     private toastService: ToastService, 
     private cdr: ChangeDetectorRef,
     private apiService: NutritionAmbitionApiService,
-    private dateService: DateService
+    private dateService: DateService,
+    private foodSelectionService: FoodSelectionService
   ) {
     addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal });
   }
@@ -435,6 +440,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   onFoodSelected(componentId: string, foodId: string): void {
+    // Prevent selection of loading indicator
+    if (foodId === 'loading') {
+      return;
+    }
+
     const component = this.findComponentById(componentId);
     if (!component?.matches) return;
 
@@ -1776,6 +1786,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // First enable editing mode
     this.editingComponents[componentId] = true;
     this.editingComponentValues[componentId] = this.getSearchTextOnly(componentId);
+    this.computeDisplayValues(componentId); // Update computed editing state
     this.cdr.detectChanges();
     
     // Then show the suggestion toast and focus the textarea
@@ -1882,11 +1893,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     
     this.editingComponents[componentId] = false;
     delete this.editingComponentValues[componentId];
+    this.computeDisplayValues(componentId); // Update computed editing state
+    this.cdr.detectChanges();
   }
 
   cancelEditingComponent(componentId: string): void {
     this.editingComponents[componentId] = false;
     delete this.editingComponentValues[componentId];
+    this.computeDisplayValues(componentId); // Update computed editing state
+    this.cdr.detectChanges();
   }
 
   // The backend returns the updated ChatMessage with the new foods structure
@@ -2082,5 +2097,112 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // Hide more options
     this.showingMoreOptionsFor[componentId] = false;
+  }
+
+  // Track recent dropdown open calls to prevent multiple triggers
+  private recentDropdownOpens: { [componentId: string]: number } = {};
+
+  // Handle dropdown will open event - this is the ONLY place instant search should be triggered
+  async onDropdownWillOpen(componentId: string): Promise<void> {
+    console.log('onDropdownWillOpen called for componentId:', componentId);
+  
+    // Throttle multiple calls within 500ms
+    const now = Date.now();
+    const lastCall = this.recentDropdownOpens[componentId] || 0;
+    if (now - lastCall < 500) {
+      console.log('Throttling dropdown open call - too recent');
+      return;
+    }
+    this.recentDropdownOpens[componentId] = now;
+  
+    if (!this.moreOptionsFor[componentId] && !this.loadingInstantOptionsFor[componentId]) {
+      const loadingMatch = new ComponentMatch({
+        providerFoodId: 'loading',
+        displayName: 'Loading...',
+        brandName: '',
+        originalText: '',
+        description: '',
+        rank: 999,
+        servings: [],
+        selectedServingId: ''
+      });
+      this.moreOptionsFor[componentId] = [loadingMatch];
+      this.loadingInstantOptionsFor[componentId] = true;
+  
+      // 🚫 don’t force detectChanges here
+      await this.fetchInstantOptions(componentId);
+    }
+  }
+  
+
+  // Get display matches including loading state
+  getDisplayMatches(componentId: string): ComponentMatch[] {
+    const component = this.findComponentById(componentId);
+    if (!component?.matches) return [];
+
+    const baseMatches = component.matches || [];
+    const instantOptions = this.moreOptionsFor[componentId] || [];
+    const allMatches = [...baseMatches];
+    
+    // Add instant options (including loading placeholder)
+    for (const option of instantOptions) {
+      // If it's a loading placeholder, always add it
+      if (option.providerFoodId === 'loading') {
+        allMatches.push(option);
+      } else {
+        // For real options, only add if not already in base matches
+        const exists = baseMatches.some((match: ComponentMatch) => match.providerFoodId === option.providerFoodId);
+        if (!exists) {
+          allMatches.push(option);
+        }
+      }
+    }
+
+    return allMatches;
+  }
+
+  // Fetch instant options when dropdown opens (similar to fetchMoreOptions but for dropdown)
+  async fetchInstantOptions(componentId: string): Promise<void> {
+    try {
+      console.log('fetchInstantOptions starting for componentId:', componentId);
+      this.loadingInstantOptionsFor[componentId] = true;
+      const originalPhrase = this.getOriginalPhraseForComponent(componentId);
+      
+      console.log('Original phrase:', originalPhrase);
+      if (!originalPhrase) {
+        console.log('No original phrase found, returning');
+        return;
+      }
+
+      const request = new GetInstantAlternativesRequest({
+        originalPhrase: originalPhrase,
+        componentId: componentId,
+        localDateKey: this.dateService.getSelectedDate()
+      });
+
+      console.log('Making service call with request:', request);
+      
+      console.log('Calling foodSelectionService.getInstantAlternatives...');
+      const response = await this.foodSelectionService.getInstantAlternatives(request).toPromise();
+      console.log('Service response received successfully:', response);
+      
+      if (response?.isSuccess && response.alternatives) {
+        console.log('Response is successful, replacing loading placeholder with alternatives. Count:', response.alternatives.length);
+        this.moreOptionsFor[componentId] = response.alternatives;
+        console.log('Real alternatives stored, replacing loading placeholder');
+      } else {
+        console.log('No successful response or alternatives, removing loading placeholder');
+        this.moreOptionsFor[componentId] = []; // Remove loading placeholder
+      }
+    } catch (error) {
+      console.error('Error fetching instant options:', error);
+      // Remove loading placeholder on error
+      this.moreOptionsFor[componentId] = [];
+    } finally {
+      console.log('fetchInstantOptions finally block - setting loading to false');
+      this.loadingInstantOptionsFor[componentId] = false;
+      this.cdr.detectChanges();
+      console.log('detectChanges completed - loading state updated');
+    }
   }
 }

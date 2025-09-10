@@ -166,30 +166,23 @@
                       <div class="food-select-container">
                         <ion-select 
                           interface="popover"
-                          [interfaceOptions]="{ cssClass: 'wide-select-popover' }"
+                          [interfaceOptions]="{ cssClass: 'wide-select-popover scrollable-popover' }"
                           [value]="getComputedSelectedFoodId(componentData.componentId)" 
-                          (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)" 
+                          (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)"
+                          (ionFocus)="onDropdownWillOpen(componentData.componentId)"
                           [disabled]="isReadOnly"
                           id="foodSelect-{{ componentData.componentId }}">
                           <ion-select-option 
-                            *ngFor="let match of (componentData.component.matches || [])" 
-                            [value]="match.providerFoodId">
-                            {{ match.displayName }}
-                            <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
+                            *ngFor="let match of getDisplayMatches(componentData.componentId)" 
+                            [value]="match.providerFoodId"
+                            [disabled]="match.providerFoodId === 'loading'">
+                            <span *ngIf="match.providerFoodId === 'loading'" class="loading-dots">...</span>
+                            <span *ngIf="match.providerFoodId !== 'loading'">
+                              {{ match.displayName }}
+                              <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
+                            </span>
                           </ion-select-option>
                         </ion-select>
-                        
-                        <!-- More Options button for common foods -->
-                        <ion-button 
-                          *ngIf="!isReadOnly && isSelectedFoodCommon(componentData.componentId)"
-                          fill="clear" 
-                          size="small"
-                          class="more-options-btn"
-                          (click)="toggleMoreOptions(componentData.componentId)"
-                          [disabled]="loadingMoreOptionsFor[componentData.componentId]">
-                          <ion-icon name="ellipsis-horizontal" *ngIf="!loadingMoreOptionsFor[componentData.componentId]"></ion-icon>
-                          <ion-spinner name="crescent" *ngIf="loadingMoreOptionsFor[componentData.componentId]"></ion-spinner>
-                        </ion-button>
                       </div>
 
                       <!-- More options list -->
@@ -343,30 +336,23 @@
                 <div class="food-select-container">
                   <ion-select 
                     interface="popover"
-                    [interfaceOptions]="{ cssClass: 'wide-select-popover' }"
+                    [interfaceOptions]="{ cssClass: 'wide-select-popover scrollable-popover' }"
                     [value]="getComputedSelectedFoodId(componentData.componentId)" 
-                    (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)" 
+                    (ionChange)="onFoodSelected(componentData.componentId, $event.detail.value)"
+                    (ionFocus)="onDropdownWillOpen(componentData.componentId)"
                     [disabled]="isReadOnly"
                     id="foodSelect-{{ componentData.componentId }}">
                     <ion-select-option 
-                      *ngFor="let match of (componentData.component.matches || [])" 
-                      [value]="match.providerFoodId">
-                      {{ match.displayName }}
-                      <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
+                      *ngFor="let match of getDisplayMatches(componentData.componentId)" 
+                      [value]="match.providerFoodId"
+                      [disabled]="match.providerFoodId === 'loading'">
+                      <span *ngIf="match.providerFoodId === 'loading'" class="loading-dots">...</span>
+                      <span *ngIf="match.providerFoodId !== 'loading'">
+                        {{ match.displayName }}
+                        <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
+                      </span>
                     </ion-select-option>
                   </ion-select>
-                  
-                  <!-- More Options button for common foods -->
-                  <ion-button 
-                    *ngIf="!isReadOnly && isSelectedFoodCommon(componentData.componentId)"
-                    fill="clear" 
-                    size="small"
-                    class="more-options-btn"
-                    (click)="toggleMoreOptions(componentData.componentId)"
-                    [disabled]="loadingMoreOptionsFor[componentData.componentId]">
-                    <ion-icon name="ellipsis-horizontal" *ngIf="!loadingMoreOptionsFor[componentData.componentId]"></ion-icon>
-                    <ion-spinner name="crescent" *ngIf="loadingMoreOptionsFor[componentData.componentId]"></ion-spinner>
-                  </ion-button>
                 </div>
 
                 <!-- More options list -->

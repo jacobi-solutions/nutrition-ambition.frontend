@@ -1291,4 +1291,42 @@
       }
     }
   }
+}
+
+// Enable scrolling in select popover for instant alternatives
+::ng-deep .scrollable-popover .popover-content,
+::ng-deep ion-popover.scrollable-popover .popover-content {
+  max-height: 60vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+// Ensure the radio group inside is scrollable too
+::ng-deep .scrollable-popover ion-radio-group {
+  max-height: 55vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+// Style the scrollbar for better UX
+::ng-deep .scrollable-popover .popover-content::-webkit-scrollbar,
+::ng-deep .scrollable-popover ion-radio-group::-webkit-scrollbar {
+  width: 6px;
+}
+
+::ng-deep .scrollable-popover .popover-content::-webkit-scrollbar-track,
+::ng-deep .scrollable-popover ion-radio-group::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+::ng-deep .scrollable-popover .popover-content::-webkit-scrollbar-thumb,
+::ng-deep .scrollable-popover ion-radio-group::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+::ng-deep .scrollable-popover .popover-content::-webkit-scrollbar-thumb:hover,
+::ng-deep .scrollable-popover ion-radio-group::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
 } 
