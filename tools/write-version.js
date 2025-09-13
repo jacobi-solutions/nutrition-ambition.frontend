@@ -62,20 +62,8 @@ function getGitInfo() {
 }
 
 function buildVersion(packageVersion, { hash, commitCount, branch }) {
-  // Use SemVer format: MAJOR.MINOR.PATCH+BUILD
-  // Examples:
-  // - Production: "1.2.3"
-  // - Development: "1.2.3-dev.45+a1b2c3"
-  // - Feature branch: "1.2.3-feature.45+a1b2c3"
-  
-  if (branch === "main" || branch === "master") {
-    // Production builds: just use package.json version
-    return packageVersion;
-  } else {
-    // Development/feature builds: add build metadata
-    const branchSuffix = branch === "develop" ? "dev" : branch.replace(/[^a-zA-Z0-9]/g, "");
-    return `${packageVersion}-${branchSuffix}.${commitCount}+${hash}`;
-  }
+  // Always use clean semantic version format: MAJOR.MINOR.PATCH
+  return packageVersion;
 }
 
 function writeVersionFile(version, gitInfo) {
