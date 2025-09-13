@@ -6,6 +6,7 @@ import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
+import { FoodComponentItemComponent } from 'src/app/components/food-component-item/food-component-item.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
@@ -16,7 +17,7 @@ import { FoodSelectionService } from 'src/app/services/food-selection.service';
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, ServingQuantityInputComponent]
+  imports: [CommonModule, FormsModule, IonButton, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent, FoodComponentItemComponent]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() message!: DisplayMessage;
@@ -2203,6 +2204,23 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.loadingInstantOptionsFor[componentId] = false;
       this.cdr.detectChanges();
       console.log('detectChanges completed - loading state updated');
+    }
+  }
+
+  // Event handlers for child component integration
+  handleQuantityChange(event: {componentId: string, quantity: number}): void {
+    // Create a mock serving for the quantity change since onInlineQtyChanged expects a ComponentServing
+    // We need to get the current serving and pass it along
+    const currentServing = this.getSelectedServing(event.componentId);
+    if (currentServing) {
+      this.onInlineQtyChanged(event.componentId, currentServing, event.quantity);
+    }
+  }
+
+  handleFoodSelected(event: {componentId: string, food: ComponentMatch}): void {
+    const foodId = event.food.providerFoodId;
+    if (foodId) {
+      this.onFoodSelected(event.componentId, foodId);
     }
   }
 }
