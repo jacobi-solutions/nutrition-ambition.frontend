@@ -5,11 +5,11 @@
       <ion-row class="top-row" align-items-center>
         <ion-col size="10" class="left">
           <div class="name-section">
-            <span class="name">{{ getDisplayName() | titlecase }}</span>
+            <span class="name">{{ displayName | titlecase }}</span>
           </div>
           <div class="serving-line">
             <!-- Show quantity stepper when expanded -->
-            <ng-container *ngIf="shouldShowQuantityInput()">
+            <ng-container *ngIf="computedShouldShowQuantityInput">
               <app-serving-quantity-input
                 [value]="currentQuantity"
                 [step]="1"
@@ -22,8 +22,8 @@
               <span class="unit-label">{{ food?.unit || 'servings' }}</span>
             </ng-container>
             <!-- Show normal label when collapsed or read-only -->
-            <ng-container *ngIf="shouldShowNormalLabel()">
-              <span class="inline-amount">{{ getServingLabel() }}</span>
+            <ng-container *ngIf="computedShouldShowNormalLabel">
+              <span class="inline-amount">{{ servingLabel }}</span>
             </ng-container>
           </div>
         </ion-col>

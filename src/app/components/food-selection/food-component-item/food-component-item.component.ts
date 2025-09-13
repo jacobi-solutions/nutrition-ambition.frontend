@@ -1,10 +1,10 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, UserSelectedServing, GetInstantAlternativesRequest, GetInstantAlternativesResponse } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 
 @Component({
@@ -19,14 +19,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Input() componentIndex: number = 0;
   @Input() isReadOnly: boolean = false;
   @Input() isEditMode: boolean = false;
-  @Input() isExpanded: boolean = false;
-  @Input() isEditing: boolean = false;
-  @Input() editingValue: string = '';
-  @Input() isSearching: boolean = false;
-  @Input() showingMoreOptions: boolean = false;
-  @Input() loadingMoreOptions: boolean = false;
-  @Input() moreOptions: ComponentMatch[] = [];
-  @Input() loadingInstantOptions: boolean = false;
 
   // Precomputed values for performance
   displayName: string = '';
@@ -35,6 +27,40 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   servingLabel: string = '';
   selectedFood: ComponentMatch | null = null;
   selectedServing: ComponentServing | null = null;
+  computedIsNewAddition: boolean = false;
+
+  // Getters for ComponentDisplay flags
+  get isExpanded(): boolean {
+    return this.component?.component?.isExpanded || false;
+  }
+
+  get isEditing(): boolean {
+    return this.component?.component?.isEditing || false;
+  }
+
+  get editingValue(): string {
+    return this.component?.component?.editingValue || '';
+  }
+
+  get isSearching(): boolean {
+    return this.component?.component?.isSearching || false;
+  }
+
+  get showingMoreOptions(): boolean {
+    return this.component?.component?.showingMoreOptions || false;
+  }
+
+  get loadingMoreOptions(): boolean {
+    return this.component?.component?.loadingMoreOptions || false;
+  }
+
+  get moreOptions(): ComponentMatch[] {
+    return this.component?.component?.moreOptions || [];
+  }
+
+  get loadingInstantOptions(): boolean {
+    return this.component?.component?.loadingInstantOptions || false;
+  }
 
   // Output events for parent coordination
   @Output() toggleExpansion = new EventEmitter<string>();
@@ -141,29 +167,12 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     } else {
       this.servingLabel = '';
     }
-  }
 
-  // Helper methods for component display (now using precomputed values)
-  getDisplayName(): string {
-    return this.displayName;
-  }
-
-  getIsInferred(): boolean {
-    return this.isInferred;
-  }
-
-  getBrandName(): string {
-    return this.brandName;
-  }
-
-  getIsNewAddition(): boolean {
+    // Compute isNewAddition flag
     const matches = this.getDisplayMatches();
-    return matches.length > 0 && !!(matches[0] as any).isNewAddition;
+    this.computedIsNewAddition = matches.length > 0 && !!(matches[0] as any).isNewAddition;
   }
 
-  getServingLabel(): string {
-    return this.servingLabel;
-  }
 
   getSelectedFood(): ComponentMatch | null {
     return this.selectedFood;
@@ -259,12 +268,12 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   // Event handlers for expanded functionality
-  onEditingValueChanged(event: any): void {
+  onEditingValueChanged(_event: any): void {
     // This would normally update local state, but for now we'll use input binding
     // In a full implementation, we'd track editing state locally
   }
 
-  onTextareaBlur(event: any): void {
+  onTextareaBlur(_event: any): void {
     // Handle textarea blur - could auto-save or cancel
   }
 
@@ -306,7 +315,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     }
   }
 
-  onServingQuantityChanged(serving: ComponentServing, quantity: number): void {
+  onServingQuantityChanged(_serving: ComponentServing, quantity: number): void {
     this.quantityChanged.emit({componentId: this.component.componentId, quantity});
   }
 

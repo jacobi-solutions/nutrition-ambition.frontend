@@ -11,6 +11,10 @@ export class ComponentDisplay extends Component {
   isEditing?: boolean;
   isExpanded?: boolean;
   editingValue?: string;
+  showingMoreOptions?: boolean;
+  loadingMoreOptions?: boolean;
+  loadingInstantOptions?: boolean;
+  moreOptions?: ComponentMatch[] | undefined;
 
   // Enhanced matches with display flags
   matches?: ComponentMatchDisplay[] | undefined;
@@ -21,6 +25,10 @@ export class ComponentDisplay extends Component {
     this.isEditing = data.isEditing;
     this.isExpanded = data.isExpanded;
     this.editingValue = data.editingValue;
+    this.showingMoreOptions = data.showingMoreOptions;
+    this.loadingMoreOptions = data.loadingMoreOptions;
+    this.loadingInstantOptions = data.loadingInstantOptions;
+    this.moreOptions = data.moreOptions;
     this.matches = data.matches;
   }
 
@@ -31,6 +39,10 @@ export class ComponentDisplay extends Component {
       this.isEditing = _data["isEditing"];
       this.isExpanded = _data["isExpanded"];
       this.editingValue = _data["editingValue"];
+      this.showingMoreOptions = _data["showingMoreOptions"];
+      this.loadingMoreOptions = _data["loadingMoreOptions"];
+      this.loadingInstantOptions = _data["loadingInstantOptions"];
+      this.moreOptions = _data["moreOptions"];
       if (Array.isArray(_data["matches"])) {
         this.matches = [] as any;
         for (let item of _data["matches"])
@@ -45,6 +57,10 @@ export class ComponentDisplay extends Component {
     data["isEditing"] = this.isEditing;
     data["isExpanded"] = this.isExpanded;
     data["editingValue"] = this.editingValue;
+    data["showingMoreOptions"] = this.showingMoreOptions;
+    data["loadingMoreOptions"] = this.loadingMoreOptions;
+    data["loadingInstantOptions"] = this.loadingInstantOptions;
+    data["moreOptions"] = this.moreOptions;
     if (Array.isArray(this.matches)) {
       data["matches"] = [];
       for (let item of this.matches)
@@ -92,6 +108,10 @@ export class FoodDisplay extends Food {
   // Food-level display flags
   isExpanded?: boolean;
   isEditing?: boolean;
+  isEditingExpanded?: boolean;
+
+  // Precomputed data to eliminate method calls in template
+  computedComponents?: Array<{componentId: string, component: ComponentDisplay}>;
 
   // Enhanced components with display flags
   components?: ComponentDisplay[] | undefined;
@@ -100,6 +120,8 @@ export class FoodDisplay extends Food {
     super(data);
     this.isExpanded = data.isExpanded;
     this.isEditing = data.isEditing;
+    this.isEditingExpanded = data.isEditingExpanded;
+    this.computedComponents = data.computedComponents;
     this.components = data.components;
   }
 
@@ -108,6 +130,8 @@ export class FoodDisplay extends Food {
     if (_data) {
       this.isExpanded = _data["isExpanded"];
       this.isEditing = _data["isEditing"];
+      this.isEditingExpanded = _data["isEditingExpanded"];
+      this.computedComponents = _data["computedComponents"];
       if (Array.isArray(_data["components"])) {
         this.components = [] as any;
         for (let item of _data["components"])
@@ -120,6 +144,8 @@ export class FoodDisplay extends Food {
     data = super.toJSON(data);
     data["isExpanded"] = this.isExpanded;
     data["isEditing"] = this.isEditing;
+    data["isEditingExpanded"] = this.isEditingExpanded;
+    data["computedComponents"] = this.computedComponents;
     if (Array.isArray(this.components)) {
       data["components"] = [];
       for (let item of this.components)

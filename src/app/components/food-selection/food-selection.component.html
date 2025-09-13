@@ -9,11 +9,11 @@
 
       <div *ngIf="hasPayload" class="food-items-list">
       <!-- Loop over foods instead of flattened components -->
-      <ng-container *ngFor="let food of (message.logMealToolResponse?.foods || []); let foodIndex = index; let isLast = last; trackBy: trackByFood">
-        <div class="food-item-container" [class.is-last]="isLast" *ngIf="getComponentsForFood(food).length > 0">
+      <ng-container *ngFor="let food of computedFoods; let foodIndex = index; let isLast = last; trackBy: trackByFood">
+        <div class="food-item-container" [class.is-last]="isLast" *ngIf="(food.computedComponents?.length || 0) > 0">
           
           <!-- Cache components per food to avoid repeated calls -->
-          <ng-container *ngIf="getComponentsForFood(food) as foodComponents">
+          <ng-container *ngIf="food.computedComponents as foodComponents">
           <!-- Multi-component food: Show as component-style item -->
           <ng-container *ngIf="foodComponents.length > 1">
             <!-- Food header component -->
@@ -21,7 +21,7 @@
               [food]="food"
               [foodIndex]="foodIndex"
               [isReadOnly]="isReadOnly"
-              [isExpanded]="getComputedIsFoodEditingExpanded(foodIndex)"
+              [isExpanded]="food.isEditingExpanded || false"
               [currentQuantity]="editingFoodQuantities[foodIndex] || food.quantity || 1"
               (toggleExpansion)="toggleFoodEditing($event)"
               (quantityChanged)="onFoodQuantityChange($event.foodIndex, $event.quantity)"
@@ -29,21 +29,13 @@
             </app-food-header>
 
             <!-- Expanded food editing (quantity + components) -->
-            <div *ngIf="!isReadOnly && getComputedIsFoodEditingExpanded(foodIndex)" class="expanded-food-components">
+            <div *ngIf="!isReadOnly && (food.isEditingExpanded || false)" class="expanded-food-components">
             <ng-container *ngFor="let componentData of foodComponents; trackBy: trackByComponentId">
               <app-food-component-item
                 [component]="componentData"
                 [componentIndex]="0"
                 [isReadOnly]="isReadOnly"
                 [isEditMode]="isEditMode"
-                [isExpanded]="expandedSections[componentData.componentId]"
-                [isEditing]="componentData.component.isEditing || false"
-                [editingValue]="componentData.component.editingValue || ''"
-                [isSearching]="componentData.component.isSearching || false"
-                [showingMoreOptions]="showingMoreOptionsFor[componentData.componentId]"
-                [loadingMoreOptions]="loadingMoreOptionsFor[componentData.componentId]"
-                [moreOptions]="moreOptionsFor[componentData.componentId] || []"
-                [loadingInstantOptions]="loadingInstantOptionsFor[componentData.componentId]"
                 (toggleExpansion)="toggleExpansion($event)"
                 (servingSelected)="onServingSelected($event.componentId, $event.servingId)"
                 (quantityChanged)="handleQuantityChange($event)"
@@ -68,14 +60,6 @@
                 [componentIndex]="0"
                 [isReadOnly]="isReadOnly"
                 [isEditMode]="isEditMode"
-                [isExpanded]="expandedSections[componentData.componentId]"
-                [isEditing]="componentData.component.isEditing || false"
-                [editingValue]="componentData.component.editingValue || ''"
-                [isSearching]="componentData.component.isSearching || false"
-                [showingMoreOptions]="showingMoreOptionsFor[componentData.componentId]"
-                [loadingMoreOptions]="loadingMoreOptionsFor[componentData.componentId]"
-                [moreOptions]="moreOptionsFor[componentData.componentId] || []"
-                [loadingInstantOptions]="loadingInstantOptionsFor[componentData.componentId]"
                 (toggleExpansion)="toggleExpansion($event)"
                 (servingSelected)="onServingSelected($event.componentId, $event.servingId)"
                 (quantityChanged)="handleQuantityChange($event)"

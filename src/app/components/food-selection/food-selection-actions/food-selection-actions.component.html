@@ -1,6 +1,6 @@
 <!-- Action/status footer -->
 <div class="confirm-section">
-  <div *ngIf="showTypingIndicator()" class="typing-indicator">
+  <div *ngIf="computedShowTypingIndicator" class="typing-indicator">
     <div class="typing-indicator-dots">
       <div class="dot"></div>
       <div class="dot"></div>
@@ -8,20 +8,20 @@
     </div>
   </div>
 
-  <div *ngIf="showStatusText()" class="status-text">{{ statusText }}</div>
+  <div *ngIf="computedShowStatusText" class="status-text">{{ statusText }}</div>
 
   <ion-button
-    *ngIf="showActionButtons()"
+    *ngIf="computedShowActionButtons"
     expand="block"
     [disabled]="!isSelectionComplete"
     (click)="onConfirmSelection()"
     color="tertiary"
     class="confirm-button">
-    {{ getConfirmButtonText() }}
+    {{ computedConfirmButtonText }}
   </ion-button>
 
   <ion-button
-    *ngIf="showActionButtons()"
+    *ngIf="computedShowActionButtons"
     expand="block"
     (click)="onCancelSelection()"
     fill="outline"

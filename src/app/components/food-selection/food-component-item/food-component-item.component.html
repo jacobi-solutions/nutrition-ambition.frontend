@@ -5,7 +5,7 @@
   <!-- Loading overlay when searching -->
   <div *ngIf="isSearching" class="search-loading-overlay">
     <div class="loading-content">
-      <div class="loading-text">{{ getIsNewAddition() ? 'Searching for results' : 'Searching for better results' }}</div>
+      <div class="loading-text">{{ computedIsNewAddition ? 'Searching for results' : 'Searching for better results' }}</div>
       <div class="typing-indicator-dots">
         <div class="dot"></div>
         <div class="dot"></div>
@@ -18,12 +18,12 @@
     <ion-row class="top-row" align-items-center>
       <ion-col size="10" class="left">
         <div class="name-section">
-          <span class="name">{{ getDisplayName() | titlecase}}</span>
-          <span *ngIf="getIsInferred()" class="inferred-badge">(inferred)</span>
-          <span *ngIf="getBrandName()" class="brand-name"> – {{ getBrandName() }}</span>
+          <span class="name">{{ displayName | titlecase}}</span>
+          <span *ngIf="isInferred" class="inferred-badge">(inferred)</span>
+          <span *ngIf="brandName" class="brand-name"> – {{ brandName }}</span>
         </div>
         <div class="serving-line">
-          <span class="inline-amount">{{ getServingLabel() }}</span>
+          <span class="inline-amount">{{ servingLabel }}</span>
         </div>
       </ion-col>
       <ion-col size="2" class="right" *ngIf="!isReadOnly">
@@ -55,8 +55,8 @@
           <div class="phrase-edit-container" [attr.data-component-id]="component.componentId">
             <!-- Display mode: Bold text with edit icon -->
             <div *ngIf="!isEditing" class="phrase-display-mode">
-              <strong class="phrase-text">{{ getDisplayName() | titlecase}}</strong>
-              <span *ngIf="getIsInferred()" class="inferred-badge">(inferred)</span>
+              <strong class="phrase-text">{{ displayName | titlecase}}</strong>
+              <span *ngIf="isInferred" class="inferred-badge">(inferred)</span>
               <ion-icon
                 name="create-outline"
                 class="edit-phrase-icon"

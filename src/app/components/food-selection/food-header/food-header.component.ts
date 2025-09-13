@@ -26,6 +26,8 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   // Precomputed values for performance
   displayName: string = '';
   servingLabel: string = '';
+  computedShouldShowQuantityInput: boolean = false;
+  computedShouldShowNormalLabel: boolean = false;
 
   constructor() {
     addIcons({ chevronUpOutline, chevronDownOutline, trashOutline });
@@ -36,7 +38,7 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['food'] || changes['currentQuantity'] || changes['isExpanded']) {
+    if (changes['food'] || changes['currentQuantity'] || changes['isExpanded'] || changes['isReadOnly']) {
       this.computeDisplayValues();
     }
   }
@@ -54,6 +56,10 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     } else {
       this.servingLabel = '';
     }
+
+    // Compute visibility flags
+    this.computedShouldShowQuantityInput = this.isExpanded && !this.isReadOnly;
+    this.computedShouldShowNormalLabel = !this.isExpanded || this.isReadOnly;
   }
 
   onToggleExpansion(): void {
@@ -73,20 +79,4 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     }
   }
 
-  // Getter methods for template use
-  getDisplayName(): string {
-    return this.displayName;
-  }
-
-  getServingLabel(): string {
-    return this.servingLabel;
-  }
-
-  shouldShowQuantityInput(): boolean {
-    return this.isExpanded && !this.isReadOnly;
-  }
-
-  shouldShowNormalLabel(): boolean {
-    return !this.isExpanded || this.isReadOnly;
-  }
 }
