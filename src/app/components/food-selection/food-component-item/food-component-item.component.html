@@ -5,8 +5,12 @@
   <!-- Loading overlay when searching -->
   <div *ngIf="isSearching" class="search-loading-overlay">
     <div class="loading-content">
-      <div class="loading-dots-large">...</div>
-      <div class="loading-text">Searching for better results...</div>
+      <div class="loading-text">{{ getIsNewAddition() ? 'Searching for results' : 'Searching for better results' }}</div>
+      <div class="typing-indicator-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
     </div>
   </div>
 
@@ -43,7 +47,7 @@
 </div>
 
 <!-- Expanded component selection card -->
-<div *ngIf="!isReadOnly && isExpanded" class="expanded-food-selection">
+<div *ngIf="!isReadOnly && isExpanded && !isSearching" class="expanded-food-selection">
   <div class="drilldown-content">
     <div class="food-item-row">
       <div class="food-name">

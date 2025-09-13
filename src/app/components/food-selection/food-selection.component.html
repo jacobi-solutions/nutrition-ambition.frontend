@@ -1,16 +1,7 @@
 <div class="food-selection-container" [class.read-only]="isReadOnly">
   <div class="food-selection-container-inner">
     
-    <!-- Loading state when editing phrase -->
-    <div *ngIf="isEditingPhrase" class="editing-phrase-loading"> 
-      <div class="loading-content">
-        <div class="loading-dots-large">...</div>
-        <div class="loading-text">Searching for better results...</div>
-      </div>
-    </div>
-
-    <!-- Normal content when not editing phrase -->
-    <div *ngIf="!isEditingPhrase">
+    <!-- Normal content -->
       <!-- Food items list -->
       <div *ngIf="hasPayload" class="card-header">
         <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Items') | titlecase }}</strong></label>
@@ -46,9 +37,9 @@
                 [isReadOnly]="isReadOnly"
                 [isEditMode]="isEditMode"
                 [isExpanded]="expandedSections[componentData.componentId]"
-                [isEditing]="getComputedIsComponentEditing(componentData.componentId)"
-                [editingValue]="getComputedEditingValue(componentData.componentId)"
-                [isSearching]="getComputedIsSearching(componentData.componentId)"
+                [isEditing]="componentData.component.isEditing || false"
+                [editingValue]="componentData.component.editingValue || ''"
+                [isSearching]="componentData.component.isSearching || false"
                 [showingMoreOptions]="showingMoreOptionsFor[componentData.componentId]"
                 [loadingMoreOptions]="loadingMoreOptionsFor[componentData.componentId]"
                 [moreOptions]="moreOptionsFor[componentData.componentId] || []"
@@ -78,9 +69,9 @@
                 [isReadOnly]="isReadOnly"
                 [isEditMode]="isEditMode"
                 [isExpanded]="expandedSections[componentData.componentId]"
-                [isEditing]="getComputedIsComponentEditing(componentData.componentId)"
-                [editingValue]="getComputedEditingValue(componentData.componentId)"
-                [isSearching]="getComputedIsSearching(componentData.componentId)"
+                [isEditing]="componentData.component.isEditing || false"
+                [editingValue]="componentData.component.editingValue || ''"
+                [isSearching]="componentData.component.isSearching || false"
                 [showingMoreOptions]="showingMoreOptionsFor[componentData.componentId]"
                 [loadingMoreOptions]="loadingMoreOptionsFor[componentData.componentId]"
                 [moreOptions]="moreOptionsFor[componentData.componentId] || []"
@@ -113,7 +104,6 @@
     </app-add-food>
   </div>
 
-  </div> <!-- End normal content -->
 
   <!-- Action/status footer -->
   <app-food-selection-actions

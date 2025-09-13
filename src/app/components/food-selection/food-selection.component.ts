@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
@@ -9,6 +9,7 @@ import { AddFoodComponent } from './add-food/add-food.component';
 import { FoodHeaderComponent } from './food-header/food-header.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { DisplayMessage } from 'src/app/models/display-message';
+import { ComponentDisplay, FoodDisplay, ComponentDataDisplay } from 'src/app/models/food-selection-display';
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
@@ -28,6 +29,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   @Output() cancel = new EventEmitter<void>();
   @Output() updatedMessage = new EventEmitter<DisplayMessage>();
   @Output() phraseEditRequested = new EventEmitter<{originalPhrase: string, newPhrase: string, messageId: string, componentId?: string}>();
+
+  @ViewChild(AddFoodComponent) addFoodComponent?: AddFoodComponent;
 
   isReadOnly = false;
   isEditMode = false;
@@ -81,13 +84,25 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   private computedUnitTexts = new Map<string, Map<string, string>>(); // componentId -> servingId -> unitText
   private computedEffectiveQuantities = new Map<string, Map<string, number>>(); // componentId -> servingId -> quantity
   
-  // Component state precomputed values
+  // Consolidated display data for components - eliminates all function calls from template
+  public componentDisplayData: { [componentId: string]: {
+    displayName: string;
+    isInferred: boolean;
+    isExpanded: boolean;
+    isSearching: boolean;
+    isEditing: boolean;
+    editingValue: string;
+    hasChanges: boolean;
+    servingSelections: { [servingId: string]: boolean };
+  }} = {};
+
+  // Legacy maps kept for backward compatibility during transition
   private computedDisplayNames = new Map<string, string>(); // componentId -> display name
   private computedIsInferred = new Map<string, boolean>(); // componentId -> is inferred
   private computedIsExpanded = new Map<string, boolean>(); // componentId -> is expanded
-  private computedIsSearching = new Map<string, boolean>(); // componentId -> is searching
-  private computedIsComponentEditing = new Map<string, boolean>(); // componentId -> is editing
-  private computedEditingValues = new Map<string, string>(); // componentId -> editing value
+  public computedIsSearching = new Map<string, boolean>(); // componentId -> is searching
+  public computedIsComponentEditing = new Map<string, boolean>(); // componentId -> is editing
+  public computedEditingValues = new Map<string, string>(); // componentId -> editing value
   private computedHasChanges = new Map<string, boolean>(); // componentId -> has changes
   private computedIsServingSelected = new Map<string, Map<string, boolean>>(); // componentId -> servingId -> is selected
   
@@ -137,7 +152,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           this.isCanceling = false;
         }
       }
+
+      // Reset add food component when message updates (after successful food addition)
+      if (this.addFoodComponent) {
+        this.addFoodComponent.resetSubmissionState();
+      }
+
       this.rebuildLookupCaches();
+      this.initializeComputedValues();
     }
     if (changes['isReadOnly'] && this.isReadOnly) this.isSubmitting = false;
   }
@@ -934,7 +956,36 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.computedServingLabelsByServing.set(componentId, servingLabels);
     this.computedUnitTexts.set(componentId, unitTexts);
     this.computedEffectiveQuantities.set(componentId, effectiveQuantities);
-    
+
+    // Compute component state values FIRST (before serving checks) so loading components work
+    this.computedDisplayNames.set(componentId, this.getDisplayNameOrSearchText(componentId));
+    this.computedIsInferred.set(componentId, this.isInferred(componentId));
+    this.computedIsExpanded.set(componentId, this.isExpanded(componentId));
+    this.computedIsSearching.set(componentId, this.isSearchingComponent(componentId));
+    this.computedIsComponentEditing.set(componentId, this.isComponentBeingEdited(componentId));
+    this.computedEditingValues.set(componentId, this.getEditingComponentValue(componentId));
+    this.computedHasChanges.set(componentId, this.hasChanges(componentId));
+
+    // Populate consolidated display data object
+    const servingSelectionsObj: { [servingId: string]: boolean } = {};
+    for (const serving of dualOptions) {
+      const servingId = serving.providerServingId;
+      if (servingId) {
+        servingSelectionsObj[servingId] = this.isServingSelected(componentId, serving);
+      }
+    }
+
+    this.componentDisplayData[componentId] = {
+      displayName: this.getDisplayNameOrSearchText(componentId),
+      isInferred: this.isInferred(componentId),
+      isExpanded: this.isExpanded(componentId),
+      isSearching: this.isSearchingComponent(componentId),
+      isEditing: this.isComponentBeingEdited(componentId),
+      editingValue: this.getEditingComponentValue(componentId),
+      hasChanges: this.hasChanges(componentId),
+      servingSelections: servingSelectionsObj
+    };
+
     if (!selectedServing) {
       this.computedServingLabels.set(componentId, '');
       this.computedCalories.set(componentId, null);
@@ -958,15 +1009,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Compute display quantity and unit
     this.computedDisplayQuantities.set(componentId, selectedServing.displayQuantity || 0);
     this.computedDisplayUnits.set(componentId, selectedServing.displayUnit || '');
-    
-    // Compute component state values
-    this.computedDisplayNames.set(componentId, this.getDisplayNameOrSearchText(componentId));
-    this.computedIsInferred.set(componentId, this.isInferred(componentId));
-    this.computedIsExpanded.set(componentId, this.isExpanded(componentId));
-    this.computedIsSearching.set(componentId, this.isSearchingComponent(componentId));
-    this.computedIsComponentEditing.set(componentId, this.isComponentBeingEdited(componentId));
-    this.computedEditingValues.set(componentId, this.getEditingComponentValue(componentId));
-    this.computedHasChanges.set(componentId, this.hasChanges(componentId));
     
     // Compute per-serving selection state
     const servingSelections = new Map<string, boolean>();
@@ -1065,6 +1107,23 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return this.computedIsComponentEditing.get(componentId) || false;
   }
 
+  // Check if any component is in editing phrase mode (for main loading overlay)
+  getIsEditingPhrase(): boolean {
+    if (!this.message.logMealToolResponse?.foods) return false;
+
+    for (const food of this.message.logMealToolResponse.foods) {
+      if (food.components) {
+        for (const component of food.components) {
+          if (component.matches && component.matches.length > 0 && (component.matches[0] as any).isEditingPhrase) {
+            console.log('Found editing phrase component:', component);
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   getComputedEditingValue(componentId: string): string {
     return this.computedEditingValues.get(componentId) || '';
   }
@@ -1089,13 +1148,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Initialize computed values for all components
   private initializeComputedValues(): void {
     const foods = this.message?.logMealToolResponse?.foods || [];
+
     for (let foodIndex = 0; foodIndex < foods.length; foodIndex++) {
       const food = foods[foodIndex];
-      
+
       // Compute food-level values
       this.computedFoodNames.set(foodIndex, this.getFoodNameWithIngredientCount(food));
       this.computedIsFoodEditingExpanded.set(foodIndex, this.isFoodEditingExpanded(foodIndex));
-      
+
       for (const component of food.components || []) {
         const componentId = component.id;
         if (componentId) {
@@ -1753,7 +1813,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   isSearchingComponent(componentId: string): boolean {
     // Check if this component has a ComponentMatch with isEditingPhrase = true
     const component = this.findComponentById(componentId);
-    if (component?.matches && component.matches.length > 0 && (component.matches[0] as any).isEditingPhrase) {
+    const isSearching = component?.matches && component.matches.length > 0 && (component.matches[0] as any).isEditingPhrase;
+
+    if (isSearching) {
       return true;
     }
     // Fallback to local state for compatibility

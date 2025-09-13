@@ -10,11 +10,11 @@ import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { DateService } from '../../services/date.service';
 import { DisplayMessage } from '../../models/display-message';
-import { 
+import { ComponentDisplay, FoodDisplay, ComponentMatchDisplay } from '../../models/food-selection-display';
+import {
   ChatMessagesResponse,
   ChatMessage,
   MessageRoleTypes,
-  ComponentMatch,
     SubmitServingSelectionRequest,
     CancelServingSelectionRequest,
     CancelEditSelectionRequest,
@@ -1064,20 +1064,21 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     
     if (isAddingNew) {
       // For adding new foods, add a new loading component to the foods array
-      const loadingFood = {
+      const loadingFood: FoodDisplay = new FoodDisplay({
         id: 'loading-' + Date.now(),
         name: '',
-        components: [{
+        components: [new ComponentDisplay({
           id: 'loading-component',
-          matches: [{
+          isSearching: true,  // Direct flag instead of complex detection
+          matches: [new ComponentMatchDisplay({
             providerFoodId: 'loading',
-            displayName: 'Searching for better results...',
-            isEditingPhrase: true,
+            displayName: '',
+            isNewAddition: true,
             servings: [],
             rank: 0
-          }]
-        }]
-      };
+          })]
+        })]
+      });
       clonedResponse.foods.push(loadingFood);
     } else if (componentId) {
       // For component edits, find and replace the specific component
@@ -1086,11 +1087,12 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
           if (food.components) {
             for (const component of food.components) {
               if (component.id === componentId) {
-                // Replace this component's matches with a loading placeholder
+                // Set searching flag and replace matches with loading placeholder
+                (component as ComponentDisplay).isSearching = true;
                 component.matches = [{
                   providerFoodId: 'loading',
-                  displayName: 'Searching for better results...',
-                  isEditingPhrase: true,
+                  displayName: '',
+                  isEditingPhrase: true,  // Keep this for backward compatibility
                   servings: [],
                   rank: 0
                 }];

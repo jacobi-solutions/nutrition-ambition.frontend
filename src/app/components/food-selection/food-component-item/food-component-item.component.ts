@@ -156,6 +156,11 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     return this.brandName;
   }
 
+  getIsNewAddition(): boolean {
+    const matches = this.getDisplayMatches();
+    return matches.length > 0 && !!(matches[0] as any).isNewAddition;
+  }
+
   getServingLabel(): string {
     return this.servingLabel;
   }
