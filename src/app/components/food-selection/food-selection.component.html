@@ -116,38 +116,14 @@
   </div> <!-- End normal content -->
 
   <!-- Action/status footer -->
-  <div class="confirm-section">
-    <div *ngIf="(isSubmitting || isCanceling) && !isReadOnly" class="typing-indicator">
-      <div class="typing-indicator-dots">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-      </div>
-    </div>
-
-    <div *ngIf="!isSubmitting && !isCanceling && isReadOnly" class="status-text">{{ statusText }}    </div>
-    <ion-button 
-      *ngIf="!isSubmitting && !isCanceling && !isReadOnly"
-      expand="block" 
-      [disabled]="!isSelectionComplete()"
-      (click)="confirmSelections()"
-      color="tertiary"
-      class="confirm-button">
-      {{ isEditMode ? 'Confirm Edit' : 'Confirm Selection' }}
-    </ion-button>
-
-    <ion-button 
-      *ngIf="!isSubmitting && !isCanceling && !isReadOnly"
-      expand="block" 
-      (click)="cancelSelection()"
-      fill="outline"
-      class="cancel-button">
-      Cancel
-    </ion-button>
-
-    
-  
-
-    
-  </div>
+  <app-food-selection-actions
+    [isSubmitting]="isSubmitting"
+    [isCanceling]="isCanceling"
+    [isReadOnly]="isReadOnly"
+    [isEditMode]="isEditMode"
+    [statusText]="statusText"
+    [isSelectionComplete]="isSelectionComplete()"
+    (confirmSelection)="confirmSelections()"
+    (cancelSelection)="cancelSelection()">
+  </app-food-selection-actions>
 </div>

@@ -381,59 +381,6 @@
     }
   }
 
-  
-  .confirm-section {
-    padding: 20px 0 0 0;
-    
-    border-top: 1px solid var(--ion-color-light);
-    
-    .bot-message-container {
-      background-color: var(--ion-color-light);
-      padding: 12px 16px;
-      border-radius: 16px;
-      border-bottom-left-radius: 4px;
-      max-width: 80px;
-      animation: fadeIn 0.3s ease-in;
-      margin: 0 auto 12px auto;
-    }
-
-    // Centered non-bubble typing indicator for submit state
-    .typing-indicator {
-      display: flex;
-      justify-content: center;
-      margin: 0 auto 12px auto;
-    }
-
-    .status-text {
-      text-align: center;
-      color: var(--ion-color-medium);
-      font-weight: 600;
-      margin: 0 auto 12px auto;
-      text-transform: lowercase;
-      letter-spacing: 0.02em;
-    }
-
-    .typing-indicator-dots {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      
-      .dot {
-        background-color: var(--ion-color-medium);
-        border-radius: 50%;
-        width: 8px;
-        height: 8px;
-        margin: 0 4px;
-        animation: bounce 1.5s infinite ease-in-out;
-        
-        &:nth-child(1) { animation-delay: 0s; }
-        &:nth-child(2) { animation-delay: 0.2s; }
-        &:nth-child(3) { animation-delay: 0.4s; }
-      }
-    }
-
-
-  }
 }
 
 .food-item-row-simple {
@@ -523,67 +470,6 @@
 }
 
 
-// Button styling (moved to root level for proper specificity)
-.confirm-button {
-  height: 3.25rem;
-  font-weight: 600;
-  font-size: 1rem;
-  margin: 0 0 12px 0;
-  --background: var(--color-salmon);
-  --color: #ffffff;
-  --border-radius: 30px;
-  text-transform: none;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-
-  &:hover {
-    transform: scale(1.02);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-  
-  &[disabled] {
-    opacity: 0.5;
-    transform: none;
-    
-    &:hover {
-      transform: none;
-    }
-  }
-}
-
-.cancel-button {
-  height: 3.25rem;
-  font-weight: 600;
-  font-size: 1rem;
-  margin: 0;
-  --color: var(--ion-color-medium);
-  --border-color: #e6e3dd;
-  --border-radius: 30px;
-  text-transform: none;
-  transition: all 0.3s ease, transform 0.2s ease;
-
-  &:hover {
-    --color: #000;
-    --border-color: #000;
-    transform: scale(1.02);
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-}
-
-// Additional specificity for confirm button text color (matching login button)
-.confirm-button::part(native) {
-  color: #ffffff !important;
-}
-
-@keyframes bounce {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-5px); }
-}
 
 @keyframes fadeIn {
   from { opacity: 0; }

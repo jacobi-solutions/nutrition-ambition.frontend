@@ -1,14 +1,13 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonButton, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse } from 'src/app/services/nutrition-ambition-api.service';
-import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
-import { FoodComponentItemComponent } from 'src/app/components/food-component-item/food-component-item.component';
-import { AddFoodComponent } from 'src/app/components/add-food/add-food.component';
-import { FoodHeaderComponent } from 'src/app/components/food-header/food-header.component';
+import { FoodComponentItemComponent } from './food-component-item/food-component-item.component';
+import { AddFoodComponent } from './add-food/add-food.component';
+import { FoodHeaderComponent } from './food-header/food-header.component';
+import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
@@ -19,7 +18,7 @@ import { FoodSelectionService } from 'src/app/services/food-selection.service';
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonButton, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent, FoodComponentItemComponent, AddFoodComponent, FoodHeaderComponent]
+  imports: [CommonModule, FormsModule, FoodComponentItemComponent, AddFoodComponent, FoodHeaderComponent, FoodSelectionActionsComponent]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() message!: DisplayMessage;
