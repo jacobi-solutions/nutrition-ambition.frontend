@@ -186,18 +186,25 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   // Get components for a specific food
-  getComponentsForFood(food: any): Array<{componentId: string, component: any}> {
+  getComponentsForFood(food: any): Array<{componentId: string, component: ComponentDisplay}> {
     if (!food?.components) return [];
-    
+
     // Return empty if the food has been removed
     if (food.id && this.removedFoods.has(food.id)) {
       return [];
     }
-    
-    // Filter out removed components
+
+    // Filter out removed components and create ComponentDisplay objects with editing state
     return food.components
       .filter((component: any) => component.id && !this.removedComponents.has(component.id))
-      .map((component: any) => ({ componentId: component.id, component }));
+      .map((component: any) => {
+        const componentDisplay = new ComponentDisplay({
+          ...component,
+          isEditing: this.isComponentBeingEdited(component.id),
+          editingValue: this.getEditingComponentValue(component.id)
+        });
+        return { componentId: component.id, component: componentDisplay };
+      });
   }
 
   // All remaining components across foods (excludes removed foods/components)

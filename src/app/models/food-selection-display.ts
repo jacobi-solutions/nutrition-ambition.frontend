@@ -10,6 +10,7 @@ export class ComponentDisplay extends Component {
   isSearching?: boolean;
   isEditing?: boolean;
   isExpanded?: boolean;
+  editingValue?: string;
 
   // Enhanced matches with display flags
   matches?: ComponentMatchDisplay[] | undefined;
@@ -19,6 +20,7 @@ export class ComponentDisplay extends Component {
     this.isSearching = data.isSearching;
     this.isEditing = data.isEditing;
     this.isExpanded = data.isExpanded;
+    this.editingValue = data.editingValue;
     this.matches = data.matches;
   }
 
@@ -28,6 +30,7 @@ export class ComponentDisplay extends Component {
       this.isSearching = _data["isSearching"];
       this.isEditing = _data["isEditing"];
       this.isExpanded = _data["isExpanded"];
+      this.editingValue = _data["editingValue"];
       if (Array.isArray(_data["matches"])) {
         this.matches = [] as any;
         for (let item of _data["matches"])
@@ -41,6 +44,7 @@ export class ComponentDisplay extends Component {
     data["isSearching"] = this.isSearching;
     data["isEditing"] = this.isEditing;
     data["isExpanded"] = this.isExpanded;
+    data["editingValue"] = this.editingValue;
     if (Array.isArray(this.matches)) {
       data["matches"] = [];
       for (let item of this.matches)
