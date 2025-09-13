@@ -8,6 +8,7 @@ import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSe
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { FoodComponentItemComponent } from 'src/app/components/food-component-item/food-component-item.component';
 import { AddFoodComponent } from 'src/app/components/add-food/add-food.component';
+import { FoodHeaderComponent } from 'src/app/components/food-header/food-header.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
@@ -18,7 +19,7 @@ import { FoodSelectionService } from 'src/app/services/food-selection.service';
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonButton, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent, FoodComponentItemComponent, AddFoodComponent]
+  imports: [CommonModule, FormsModule, IonButton, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent, FoodComponentItemComponent, AddFoodComponent, FoodHeaderComponent]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() message!: DisplayMessage;

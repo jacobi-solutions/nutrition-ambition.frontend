@@ -1,0 +1,109 @@
+// Food header component styles (inherits from parent food-selection styles)
+.component-item-container {
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.food-item-row-simple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  position: relative;
+
+  .row-grid {
+    width: 100%;
+    --ion-grid-padding: 0;
+  }
+
+  .row-grid ion-row {
+    --ion-grid-column-padding: 0;
+  }
+
+  .top-row {
+    align-items: center;
+  }
+
+  .left {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .name-section {
+    .name {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--ion-color-dark);
+      line-height: 1.2;
+    }
+    margin-bottom: 2px;
+  }
+
+  .serving-line {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .inline-amount {
+      margin-left: 0;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--ion-color-medium);
+      line-height: 1.2;
+    }
+
+    app-serving-quantity-input {
+      flex-shrink: 0;
+    }
+
+    .unit-label {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--ion-color-medium);
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+  }
+
+  // Group action icons with clear spacing and larger tap targets
+  .action-icons {
+    display: inline-flex;
+    align-items: center;
+
+    ion-icon {
+      padding: 8px;
+      padding-right: 0;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .edit-icon {
+      color: var(--ion-color-primary);
+
+      &:hover {
+        color: var(--color-dark-primary);
+      }
+
+      &.expanded {
+        color: var(--ion-color-primary);
+      }
+    }
+
+    .delete-icon {
+      color: var(--color-smoke);
+
+      &:hover {
+        color: var(--color-error-dark);
+      }
+    }
+  }
+}

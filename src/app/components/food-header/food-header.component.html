@@ -1,0 +1,48 @@
+<!-- Food header row (styled like component items) -->
+<div class="component-item-container">
+  <div class="food-item-row-simple">
+    <ion-grid class="row-grid">
+      <ion-row class="top-row" align-items-center>
+        <ion-col size="10" class="left">
+          <div class="name-section">
+            <span class="name">{{ getDisplayName() | titlecase }}</span>
+          </div>
+          <div class="serving-line">
+            <!-- Show quantity stepper when expanded -->
+            <ng-container *ngIf="shouldShowQuantityInput()">
+              <app-serving-quantity-input
+                [value]="currentQuantity"
+                [step]="1"
+                [min]="1"
+                [max]="999"
+                [disabled]="isReadOnly"
+                [ariaLabel]="'Quantity for ' + food?.name"
+                (valueChange)="onQuantityChange($event)">
+              </app-serving-quantity-input>
+              <span class="unit-label">{{ food?.unit || 'servings' }}</span>
+            </ng-container>
+            <!-- Show normal label when collapsed or read-only -->
+            <ng-container *ngIf="shouldShowNormalLabel()">
+              <span class="inline-amount">{{ getServingLabel() }}</span>
+            </ng-container>
+          </div>
+        </ion-col>
+        <ion-col size="2" class="right" *ngIf="!isReadOnly">
+          <div class="action-icons">
+            <ion-icon
+              [name]="isExpanded ? 'chevron-up-outline' : 'chevron-down-outline'"
+              class="edit-icon"
+              [class.expanded]="isExpanded"
+              (click)="onToggleExpansion()">
+            </ion-icon>
+            <ion-icon
+              name="trash-outline"
+              class="delete-icon"
+              (click)="onRemoveFood()">
+            </ion-icon>
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </div>
+</div>

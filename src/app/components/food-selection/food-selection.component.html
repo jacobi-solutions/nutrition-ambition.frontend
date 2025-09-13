@@ -25,58 +25,17 @@
           <ng-container *ngIf="getComponentsForFood(food) as foodComponents">
           <!-- Multi-component food: Show as component-style item -->
           <ng-container *ngIf="foodComponents.length > 1">
-            <!-- Food header row (styled like component items) -->
-            <div class="component-item-container">
-              <div class="food-item-row-simple">
-                <ion-grid class="row-grid">
-                  <ion-row class="top-row" align-items-center>
-                    <ion-col size="10" class="left">
-                      <div class="name-section">
-                        <span class="name">{{ getComputedFoodName(foodIndex) | titlecase }}</span>
-                      </div>
-                      <div class="serving-line">
-                        <!-- Show quantity stepper when expanded -->
-                        <ng-container *ngIf="getComputedIsFoodEditingExpanded(foodIndex) && !isReadOnly">
-                          <app-serving-quantity-input
-                            [value]="editingFoodQuantities[foodIndex] || food.quantity || 1"
-                            [step]="1"
-                            [min]="1"
-                            [max]="999"
-                            [disabled]="isReadOnly"
-                            [ariaLabel]="'Quantity for ' + food.name"
-                            (valueChange)="onFoodQuantityChange(foodIndex, $event)">
-                          </app-serving-quantity-input>
-                          <span class="unit-label">{{ food.unit || 'servings' }}</span>
-                        </ng-container>
-                        <!-- Show normal label when collapsed or read-only -->
-                        <ng-container *ngIf="!getComputedIsFoodEditingExpanded(foodIndex) || isReadOnly">
-                          <span class="inline-amount">{{ getComputedFoodServingLabel(foodIndex) }}</span>
-                        </ng-container>
-                      </div>
-                    </ion-col>
-                    <ion-col size="2" class="right" *ngIf="!isReadOnly">
-                      <div class="action-icons">
-                        <ion-icon 
-                          [name]="getComputedIsFoodEditingExpanded(foodIndex) ? 'chevron-up-outline' : 'chevron-down-outline'" 
-                          class="edit-icon" 
-                          [class.expanded]="getComputedIsFoodEditingExpanded(foodIndex)" 
-                          (click)="toggleFoodEditing(foodIndex)">
-                        </ion-icon>
-                        <ion-icon name="trash-outline" class="delete-icon" (click)="food.id && removeFood(food.id)"></ion-icon>
-                      </div>
-                    </ion-col>
-                  </ion-row>
-                  <!-- <ion-row class="macro-row" *ngIf="!isReadOnly">
-                    <ion-col size="12" class="macro-summary">
-                      ({{ getFoodTotalCaloriesFromComponents(food, foodComponents) | number:'1.0-0' }} cal,
-                      {{ getFoodTotalProteinFromComponents(food, foodComponents) | number:'1.0-0' }} protein,
-                      {{ getFoodTotalFatFromComponents(food, foodComponents) | number:'1.0-0' }} fat,
-                      {{ getFoodTotalCarbsFromComponents(food, foodComponents) | number:'1.0-0' }} carbs)
-                    </ion-col>
-                  </ion-row> -->
-                </ion-grid>
-              </div>
-            </div>
+            <!-- Food header component -->
+            <app-food-header
+              [food]="food"
+              [foodIndex]="foodIndex"
+              [isReadOnly]="isReadOnly"
+              [isExpanded]="getComputedIsFoodEditingExpanded(foodIndex)"
+              [currentQuantity]="editingFoodQuantities[foodIndex] || food.quantity || 1"
+              (toggleExpansion)="toggleFoodEditing($event)"
+              (quantityChanged)="onFoodQuantityChange($event.foodIndex, $event.quantity)"
+              (removeFood)="removeFood($event)">
+            </app-food-header>
 
             <!-- Expanded food editing (quantity + components) -->
             <div *ngIf="!isReadOnly && getComputedIsFoodEditingExpanded(foodIndex)" class="expanded-food-components">
