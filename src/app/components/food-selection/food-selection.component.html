@@ -146,32 +146,12 @@
     </div>
 
     <!-- Add something row -->
-    <div *ngIf="hasPayload && !isReadOnly && !isEditMode" class="add-something-row">
-      <div *ngIf="!isAddingFood" class="add-something-display" (click)="startAddingFood()">
-        <div class="add-something-text">Add something</div>
-        <ion-icon name="add-circle-outline" class="add-something-icon"></ion-icon>
-      </div>
-      
-      <div *ngIf="isAddingFood" class="add-something-edit">
-        <textarea 
-          #addFoodTextarea
-          class="add-food-input"
-          [(ngModel)]="newFoodPhrase"
-          (keydown)="onAddFoodKeyDown($event)"
-          (blur)="onAddFoodBlur($event)"
-          placeholder="What did you eat?"
-          (input)="autoResizeTextarea($any($event.target))">
-        </textarea>
-        <button 
-          class="send-button"
-          (click)="sendNewFood()"
-          (mousedown)="$event.preventDefault()"
-          [disabled]="!newFoodPhrase || !newFoodPhrase.trim()">
-          <ion-icon name="send" *ngIf="!isSubmittingNewFood"></ion-icon>
-          <div *ngIf="isSubmittingNewFood" class="loading-dots">...</div>
-        </button>
-      </div>
-    </div>
+    <app-add-food
+      [hasPayload]="hasPayload"
+      [isReadOnly]="isReadOnly"
+      [isEditMode]="isEditMode"
+      (foodAdded)="onFoodAdded($event)">
+    </app-add-food>
   </div>
 
   </div> <!-- End normal content -->

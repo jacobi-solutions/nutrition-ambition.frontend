@@ -7,6 +7,7 @@ import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { FoodComponentItemComponent } from 'src/app/components/food-component-item/food-component-item.component';
+import { AddFoodComponent } from 'src/app/components/add-food/add-food.component';
 import { DisplayMessage } from 'src/app/models/display-message';
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
@@ -17,7 +18,7 @@ import { FoodSelectionService } from 'src/app/services/food-selection.service';
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonButton, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent, FoodComponentItemComponent]
+  imports: [CommonModule, FormsModule, IonButton, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent, FoodComponentItemComponent, AddFoodComponent]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() message!: DisplayMessage;
@@ -41,10 +42,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   editingComponentValues: { [componentId: string]: string } = {};
   searchingComponents: { [componentId: string]: boolean } = {};
   
-  // Add something functionality
-  isAddingFood = false;
-  newFoodPhrase = '';
-  isSubmittingNewFood = false;
 
   // Food-level expansion state (for editing quantity and components)
   expandedFoodEditing: { [foodIndex: number]: boolean } = {};
@@ -1907,37 +1904,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   // The backend returns the updated ChatMessage with the new foods structure
 
-  // Add something functionality methods
-  startAddingFood(): void {
-    this.isAddingFood = true;
-    this.newFoodPhrase = '';
-    this.cdr.detectChanges();
-    
-    // Focus the textarea
-    setTimeout(() => {
-      const textarea = document.querySelector('.add-food-input') as HTMLTextAreaElement;
-      if (textarea) {
-        textarea.focus();
-      }
-    }, 100);
-  }
-
-  onAddFoodKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.sendNewFood();
-    } else if (event.key === 'Escape') {
-      this.cancelAddingFood();
-    }
-  }
-
-  onAddFoodBlur(event: FocusEvent): void {
-    // Delay canceling to allow send button click to work
-    setTimeout(() => {
-      if (!this.isSubmittingNewFood && this.isAddingFood) {
-        this.cancelAddingFood();
-      }
-    }, 150);
+  // Handle adding new food from child component
+  onFoodAdded(newPhrase: string): void {
+    this.phraseEditRequested.emit({
+      originalPhrase: '', // Empty indicates this is a new addition
+      newPhrase: newPhrase,
+      messageId: this.message.id || '',
+      componentId: undefined // No specific component for new additions
+    });
   }
 
   // Build quick-lookup caches from the current message payload
@@ -1973,31 +1947,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         }
       }
     }
-  }
-  cancelAddingFood(): void {
-    this.isAddingFood = false;
-    this.newFoodPhrase = '';
-    this.isSubmittingNewFood = false;
-  }
-
-  sendNewFood(): void {
-    if (!this.newFoodPhrase?.trim() || this.isSubmittingNewFood) {
-      return;
-    }
-
-    this.isSubmittingNewFood = true;
-    this.cdr.detectChanges();
-
-    // Use existing event with special handling for new foods
-    this.phraseEditRequested.emit({
-      originalPhrase: '', // Empty indicates this is a new addition
-      newPhrase: this.newFoodPhrase.trim(),
-      messageId: this.message.id || '',
-      componentId: undefined // No specific component for new additions
-    });
-
-    // Reset the form
-    this.cancelAddingFood();
   }
 
   private async showErrorToast(message: string): Promise<void> {

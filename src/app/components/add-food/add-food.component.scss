@@ -1,0 +1,123 @@
+// Add something row styling
+.add-something-row {
+  padding: 12px 0;
+  padding-left: 0.5rem;
+  border-top: 1px solid var(--color-olive);
+  margin-top: 12px;
+
+  .add-something-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 8px 0;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.7;
+    }
+
+    .add-something-text {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+      line-height: 1.4;
+    }
+
+    .add-something-icon {
+      font-size: 1.2rem;
+      color: var(--ion-color-primary);
+    }
+  }
+
+  .add-something-edit {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+
+    .add-food-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid var(--color-sage);
+      border-radius: 8px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+      background: white !important;
+      outline: none;
+      cursor: text;
+      transition: all 0.2s ease;
+      width: 100%;
+      resize: none;
+      min-height: 48px; // 2 rows
+      max-height: 72px; // 3 rows max
+      line-height: 1.4;
+      overflow: hidden; // Remove scrollbar
+      scrollbar-width: none; // Firefox
+      -ms-overflow-style: none; // IE/Edge
+
+      // Hide scrollbar for WebKit browsers
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      &::placeholder {
+        color: var(--ion-color-medium);
+        font-weight: 400;
+      }
+
+      &:focus {
+        border-color: var(--color-sage);
+        box-shadow: 0 0 0 2px rgba(139, 169, 129, 0.1);
+        background: white !important;
+      }
+    }
+
+    .send-button {
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 8px;
+      background: var(--color-sage);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+
+      &:hover:not(:disabled) {
+        background: var(--color-olive);
+        transform: scale(1.05);
+      }
+
+      &:disabled {
+        background: var(--ion-color-medium);
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      ion-icon {
+        font-size: 16px;
+      }
+
+      .loading-dots {
+        font-size: 14px;
+        font-weight: bold;
+        animation: pulse 1s ease-in-out infinite;
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
