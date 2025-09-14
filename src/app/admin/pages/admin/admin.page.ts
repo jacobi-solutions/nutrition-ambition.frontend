@@ -119,14 +119,12 @@ export class AdminPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    console.log('[AdminPage] Initializing admin page');
     
     // Subscribe to account changes
     this.accountsService.account$
       .pipe(takeUntil(this.destroy$))
       .subscribe(account => {
         this.account = account;
-        console.log('[AdminPage] Account updated:', account);
       });
 
     // Subscribe to feedback entries
@@ -136,7 +134,6 @@ export class AdminPage implements OnInit, OnDestroy {
         this.feedbackEntries = entries;
         this.applyFilters();
         this.updateStats(); // Update stats whenever entries change
-        console.log('[AdminPage] Feedback entries updated:', entries.length);
       });
 
     // Subscribe to loading state
@@ -158,7 +155,6 @@ export class AdminPage implements OnInit, OnDestroy {
   // View management
   async onViewChange(event: any) {
     const newView = event.detail.value;
-    console.log('[AdminPage] View changed to:', newView);
     
     if (newView === 'overview') {
       await this.switchToOverview();
@@ -170,18 +166,14 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   async switchToOverview() {
-    console.log('[AdminPage] Switching to overview');
     this.currentView = 'overview';
     // Load stats when switching to overview (if we have no data yet)
     if (this.feedbackStats.total === 0 && this.feedbackEntries.length === 0) {
-      console.log('[AdminPage] Loading feedback stats...');
       await this.loadFeedbackStats();
     }
-    console.log('[AdminPage] switchToOverview completed');
   }
 
   async switchToFeedback() {
-    console.log('[AdminPage] Switching to feedback');
     this.currentView = 'feedback';
     if (this.feedbackEntries.length === 0) {
       await this.loadFeedback();
@@ -189,7 +181,6 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   async switchToAccounts() {
-    console.log('[AdminPage] Switching to accounts');
     this.currentView = 'accounts';
     if (this.accounts.length === 0) {
       await this.loadAccounts();
@@ -202,7 +193,6 @@ export class AdminPage implements OnInit, OnDestroy {
       await this.adminService.getAllFeedback();
       // Stats will be updated automatically when entries change
     } catch (error) {
-      console.error('[AdminPage] Error loading feedback:', error);
       await this.showToast('Error loading feedback entries', 'danger');
     }
   }
@@ -211,7 +201,6 @@ export class AdminPage implements OnInit, OnDestroy {
     try {
       this.feedbackStats = await this.adminService.getFeedbackStats();
     } catch (error) {
-      console.error('[AdminPage] Error loading feedback stats:', error);
     }
   }
 
@@ -221,13 +210,10 @@ export class AdminPage implements OnInit, OnDestroy {
       const response = await this.adminService.getAllAccounts();
       if (response.isSuccess && response.accounts) {
         this.accounts = response.accounts;
-        console.log('[AdminPage] Loaded', this.accounts.length, 'accounts');
       } else {
-        console.error('[AdminPage] Failed to load accounts:', response.errors);
         await this.showToast('Error loading accounts', 'danger');
       }
     } catch (error) {
-      console.error('[AdminPage] Error loading accounts:', error);
       await this.showToast('Error loading accounts', 'danger');
     } finally {
       this.isLoadingAccounts = false;
@@ -271,11 +257,9 @@ export class AdminPage implements OnInit, OnDestroy {
                 await this.showDeletionAudit();
                 await this.loadAccounts(); // Refresh the list
               } else {
-                console.error('[AdminPage] Failed to delete account:', response.errors);
                 await this.showToast('Error deleting account', 'danger');
               }
             } catch (error) {
-              console.error('[AdminPage] Error deleting account:', error);
               await this.showToast('Error deleting account', 'danger');
             }
           }
@@ -326,11 +310,9 @@ export class AdminPage implements OnInit, OnDestroy {
                   await this.loadAccountDataCounts(account.id!);
                 }
               } else {
-                console.error('[AdminPage] Failed to clear account data:', response.errors);
                 await this.showToast('Error clearing account data', 'danger');
               }
             } catch (error) {
-              console.error('[AdminPage] Error clearing account data:', error);
               await this.showToast('Error clearing account data', 'danger');
             }
           }
@@ -372,13 +354,10 @@ export class AdminPage implements OnInit, OnDestroy {
           dataCounts: response.dataCounts,
           breakdown: this.formatDataCountsBreakdown(response.dataCounts)
         };
-        console.log('[AdminPage] Loaded data counts for account:', accountId, this.accountDataCounts[accountId]);
       } else {
-        console.error('[AdminPage] Failed to load data counts:', response.errors);
         await this.showToast('Error loading account data counts', 'danger');
       }
     } catch (error) {
-      console.error('[AdminPage] Error loading data counts:', error);
       await this.showToast('Error loading account data counts', 'danger');
     } finally {
       this.loadingAccountCounts.delete(accountId);
@@ -510,7 +489,6 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   private updateStats() {
-    console.log('[AdminPage] updateStats called');
     // Update stats from current entries without making additional API calls
     this.feedbackStats = this.adminService.getFeedbackStatsFromCurrent();
     // Update cached stats entries when stats change
@@ -519,8 +497,6 @@ export class AdminPage implements OnInit, OnDestroy {
     // Note: App version filtering removed since appVersion is not available on FeedbackEntry
     this.uniqueAppVersions = [];
     
-    console.log('[AdminPage] Stats updated:', this.feedbackStats);
-    console.log('[AdminPage] Unique app versions:', this.uniqueAppVersions);
   }
 
   // Filtering
@@ -661,7 +637,6 @@ export class AdminPage implements OnInit, OnDestroy {
               );
               await this.showToast('Feedback marked as complete', 'success');
             } catch (error) {
-              console.error('[AdminPage] Error marking feedback as complete:', error);
               await this.showToast('Error marking feedback as complete', 'danger');
             }
           }
@@ -690,7 +665,6 @@ export class AdminPage implements OnInit, OnDestroy {
                await this.adminService.completeFeedback(feedbackEntry.id!, false);
                await this.showToast('Feedback marked as incomplete', 'success');
             } catch (error) {
-              console.error('[AdminPage] Error marking feedback as incomplete:', error);
               await this.showToast('Error marking feedback as incomplete', 'danger');
             }
           }
@@ -727,7 +701,6 @@ export class AdminPage implements OnInit, OnDestroy {
                 await this.showToast('Error deleting feedback', 'danger');
               }
             } catch (error) {
-              console.error('[AdminPage] Error deleting feedback:', error);
               await this.showToast('Error deleting feedback', 'danger');
             }
           }
@@ -743,14 +716,12 @@ export class AdminPage implements OnInit, OnDestroy {
     if (!feedbackEntry || !feedbackWithAccount.accountId) return;
 
     try {
-      console.log('[AdminPage] Opening debug view for account:', feedbackWithAccount.accountId);
       
       // Navigate to the debug page with the feedback data
       await this.router.navigate(['/debug', feedbackEntry.id, feedbackWithAccount.accountId], {
         state: { feedbackWithAccount }
       });
     } catch (error) {
-      console.error('[AdminPage] Error opening debug view:', error);
       await this.showToast('Error opening debug view', 'danger');
     }
   }
@@ -812,7 +783,6 @@ export class AdminPage implements OnInit, OnDestroy {
   }
 
   getStatsEntries(): Array<{key: string, value: number}> {
-    console.log('[AdminPage] getStatsEntries called - this might be causing change detection loop!');
     // Return cached version to prevent change detection loops
     return this._cachedStatsEntries;
   }

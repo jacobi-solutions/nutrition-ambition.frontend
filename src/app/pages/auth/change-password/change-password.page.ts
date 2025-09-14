@@ -76,7 +76,6 @@ export class ChangePasswordPage {
       // Navigate back to the previous page or chat
       this.router.navigate(['/app/chat']);
     } catch (error) {
-      console.error('Password change failed:', error);
       await this.toastService.showToast({
         message: error instanceof Error ? error.message : 'Failed to change password. Please try again.',
         color: 'danger',

@@ -43,7 +43,6 @@ export class AppComponent implements OnInit {
             await this.accountsService.loadAccount();
           }
         } catch (e) {
-          console.warn('[App] init error', e);
         }
       }
     });

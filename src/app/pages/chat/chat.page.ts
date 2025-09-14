@@ -167,7 +167,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     
     // Subscribe to edit food selection started events to process returned messages
     this.editFoodSelectionStartedSubscription = this.chatService.editFoodSelectionStarted$.subscribe((messages) => {
-      console.log('[DEBUG] Edit food selection started, processing returned messages');
       // Only process if we're currently viewing today's date (edit operations always happen on today)
       const today = format(new Date(), 'yyyy-MM-dd');
       if (this.selectedDate === today && messages && messages.length > 0) {
@@ -216,11 +215,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   }
 
   ngAfterViewInit() {
-    console.log('[DEBUG] Chat view initialized');
     
     // Check if content is available
     if (!this.content) {
-      console.warn('[WARN] IonContent reference is not available in ngAfterViewInit');
+      // IonContent reference is not available in ngAfterViewInit
     }
     
     // Initial scroll to bottom
@@ -235,7 +233,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Check for completed pending edits when entering the chat page
     const pendingMessages = this.chatService.consumePendingEditMessages();
     if (pendingMessages && pendingMessages.length > 0) {
-      console.log('[DEBUG] Processing pending edit messages on view enter');
       
       // Filter out pending edit messages - only process completed edit messages
       const completedMessages = pendingMessages.filter(msg => 
@@ -243,14 +240,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       );
       
       if (completedMessages.length > 0) {
-        console.log('[DEBUG] Processing', completedMessages.length, 'completed edit messages');
         // Only process if we're currently viewing today's date (edit operations always happen on today)
         const today = format(new Date(), 'yyyy-MM-dd');
         if (this.selectedDate === today) {
           this.processAndAddNewMessages(completedMessages);
         }
       } else {
-        console.log('[DEBUG] No completed edit messages to process, all were pending');
       }
       this.isLoading = false;
     }
@@ -258,7 +253,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // This will be called when the component has been fully activated
   ionViewDidEnter() {
-    console.log('[DEBUG] Chat view fully entered');
     // Ensure we scroll to bottom when the view is fully active
     this.scrollToBottom();
 
@@ -270,7 +264,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Handle date changes from the header
   onDateChanged(newDate: string) {
-    console.log(`[ChatPage] Date changed to: ${newDate}`);
     
     // Update local value first
     this.selectedDate = newDate;
@@ -281,13 +274,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   
   // Handle navigation to previous day
   onPreviousDay() {
-    console.log(`[ChatPage] Previous day clicked, current date is: ${this.selectedDate}`);
     this.dateService.goToPreviousDay();
   }
   
   // Handle navigation to next day
   onNextDay() {
-    console.log(`[ChatPage] Next day clicked, current date is: ${this.selectedDate}`);
     this.dateService.goToNextDay();
   }
   
@@ -305,7 +296,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Handle refresh from header
   onRefresh(event?: CustomEvent) {
-    console.log('[Chat] Refresh triggered, reloading chat history');
     this.loadChatHistory(this.dateService.getSelectedDate());
     
     // Complete the refresher if event is provided
@@ -328,7 +318,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
     this.hasInitialMessage = false;  // Reset initial message flag
     
-    console.log('[DEBUG] Loading chat history for date:', localDateKey);
     
     // Check if user is authenticated via Firebase Auth
     const isAuthenticated = await this.authService.isAuthenticated();
@@ -340,7 +329,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       
       
       
-      console.log('[DEBUG] Not authenticated, showing welcome message in UI only without backend calls');
       const welcomeMessage = this.chatService.getFirstTimeWelcomeMessage();
       
       // Add the welcome message to UI only - don't log to backend
@@ -358,13 +346,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     }
 
     // If user is authenticated, load chat history
-    console.log('[DEBUG] User is authenticated, loading chat history');
     
     // Get message history for the selected date - auth token is added by AuthInterceptor
     this.chatService.getMessageHistoryByDate(localDateKey)
       .pipe(
         catchError(error => {
-          console.error('Error loading chat history:', error);
           this.error = 'Unable to load chat history. Please try again later.';
           return of(null as ChatMessagesResponse | null);
         }),
@@ -384,7 +370,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           }
           
           // Make sure to scroll to bottom after everything is loaded and rendered
-          console.log('[DEBUG] Messages loaded, scrolling to appropriate position');
           this.scrollToBottom();
         })
       )
@@ -392,8 +377,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         next: (response: ChatMessagesResponse | null) => {
           if (response && response.isSuccess && response.messages && response.messages.length > 0) {
             // Convert API messages to display messages
-            console.log('[DEBUG] Received chat history, message count:', response.messages.length);
-            
             // Process messages and filter to only show allowed roles
             const contextNoteMsgs: ChatMessage[] = [];
             const regularMsgs: ChatMessage[] = [];
@@ -447,12 +430,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             
             // Sort all messages by timestamp to ensure correct order
             this.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-            
 
-            
             this.hasInitialMessage = true;
-            
-            console.log('[DEBUG] Displayed message roles:', this.messages.map(m => m.isUser ? 'User' : (m.isContextNote ? 'ContextNote' : 'Assistant')));
             
             // Scroll at the end of the next event cycle
             this.scrollToBottom();
@@ -465,9 +444,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   // Display a static welcome message in the UI
   showStaticWelcomeMessage() {
     const staticMessage = "Hi there! I'm your nutrition assistant — here to help you track your meals, understand your nutrients, and stay on track with your goals. You can start right away by telling me what you ate today — no setup needed! We can also talk about your health goals whenever you're ready. 🍎🥦";
-    
-    console.log('[DEBUG] Showing static welcome message');
-    
     this.messages.push({
       text: staticMessage,
       isUser: false,
@@ -502,7 +478,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     this.analytics.trackChatMessageSent(sentMessage.length);
     
     // Add user message to UI
-    console.log('[DEBUG] Adding user message to UI:', sentMessage);
     this.messages.push({
       text: sentMessage,
       isUser: true,
@@ -523,13 +498,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     this.scrollToBottom();
     
     // Send the message - authentication token will be added by the AuthInterceptor
-    console.log('[DEBUG] Sending message to backend:', sentMessage);
     this.chatService.sendMessage(sentMessage).subscribe({
       next: (response: ChatMessagesResponse) => {
         this.isLoading = false;
 
         if (response.isSuccess) {
-          console.log('[DEBUG] Message sent successfully, processing returned messages');
           
           // Firebase Analytics: Track successful message sent
           this.analytics.trackChatMessageSent(sentMessage.length);
@@ -539,8 +512,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           // Process the returned messages and add them to the chat
           if (response.messages && response.messages.length > 0) {
             this.processAndAddNewMessages(response.messages);
-          } else {
-            console.log('[DEBUG] No messages returned in response');
           }
           
           // Only focus the input if response doesn't contain pending food selection messages
@@ -549,7 +520,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             setTimeout(() => this.focusInput(), 300);
           }
         } else {
-          console.warn('Message sending failed:', response.errors);
           this.messages.push({
             text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
             isUser: false,
@@ -566,7 +536,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           isUser: false,
           timestamp: new Date()
         });
-        console.error('Error sending message to assistant:', error);
         
         // Scroll for error message
         this.scrollToBottom();
@@ -623,12 +592,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   }
 
   private scrollToBottom() {
-    console.log('[DEBUG] Scrolling to appropriate position');
     
     // Single timeout to allow DOM rendering, then handle scrolling
     setTimeout(async () => {
       if (!this.content) {
-        console.warn('[WARN] No IonContent available for scrolling');
         return;
       }
 
@@ -648,24 +615,18 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         const lastMessageElement = messageElements[messageElements.length - 1] as HTMLElement;
         const messageHeight = lastMessageElement.offsetHeight;
         
-        console.log('[DEBUG] Viewport:', viewportHeight, 'Message height:', messageHeight);
-        
         // If message is taller than 40% of viewport, position it near the top
         if (messageHeight > viewportHeight * 0.4) {
-          console.log('[DEBUG] Long message - positioning at top');
-          
           const marginFromTop = viewportHeight * 0.05; // 5% margin from top
           const messageOffsetTop = lastMessageElement.offsetTop;
           const scrollPosition = Math.max(0, messageOffsetTop - marginFromTop);
           
           await this.content.scrollToPoint(0, scrollPosition, 300);
         } else {
-          console.log('[DEBUG] Short message - scrolling to bottom');
           this.content.scrollToBottom(300);
         }
         
       } catch (error) {
-        console.warn('[WARN] Smart scroll failed, using fallback:', error);
         this.content.scrollToBottom(300);
       }
     }, 250); // Single 250ms delay for DOM rendering
@@ -678,8 +639,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   }
 
   handleAction(action: 'photo' | 'barcode' | 'edit') {
-    console.log(`FAB action clicked: ${action}`);
-    
     // Determine if the action is implemented
     const implementedActions = ['edit']; // Only manual entry is currently working
     const isImplemented = implementedActions.includes(action);
@@ -690,7 +649,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Here we would implement the actual functionality
     switch(action) {
       case 'photo':
-        console.log('Opening camera...');
         // Track unimplemented feature
         this.analytics.trackUnimplementedFeature('fab_action', 'photo', 'chat_page');
         // Show toast for unimplemented feature
@@ -701,7 +659,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         });
         break;
       case 'barcode':
-        console.log('Opening barcode scanner...');
         // Track unimplemented feature
         this.analytics.trackUnimplementedFeature('fab_action', 'barcode', 'chat_page');
         // Show toast for unimplemented feature
@@ -712,7 +669,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         });
         break;
       case 'edit':
-        console.log('Opening manual entry...');
         // This is implemented, so track as a successful action
         this.analytics.trackActionClick('manual_entry_open', 'fab_menu', { source: 'chat_page' });
         break;
@@ -754,7 +710,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Process new messages from API responses and add them to the chat
   private processAndAddNewMessages(newMessages: ChatMessage[]): void {
-    console.log('[DEBUG] Processing', newMessages.length, 'new messages:', newMessages);
     
     // Filter to only show allowed roles and convert to display messages
     const allowedRoles = [
@@ -773,7 +728,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       if (allowedRoles.includes(msg.role!)) {
         // Skip cancelled messages
         if (msg.id && this.cancelledMessageIds.has(msg.id)) {
-          console.log('[DEBUG] Skipping cancelled message:', msg.id);
           return;
         }
         
@@ -806,11 +760,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
         if (existingMessageIndex !== -1) {
           // Update existing message (e.g., pending -> completed)
-          console.log('[DEBUG] Updating existing message:', msg.id);
           this.messages[existingMessageIndex] = displayMessage;
         } else {
           // Add new message
-          console.log('[DEBUG] Adding new message:', msg.id);
           newDisplayMessages.push(displayMessage);
         }
       }
@@ -818,19 +770,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
     // Add all new messages and create a new array reference to trigger change detection
     if (newDisplayMessages.length > 0) {
-      console.log('[DEBUG] Adding', newDisplayMessages.length, 'new messages to chat');
       this.messages = [...this.messages, ...newDisplayMessages];
     } else {
-      console.log('[DEBUG] No new messages to add, but creating new array reference for updates');
       // If we only updated existing messages, create new array reference
       this.messages = [...this.messages];
     }
 
     // Sort messages by timestamp to ensure correct order
     this.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-    
-    console.log('[DEBUG] Total messages after processing:', this.messages.length);
-    console.log('[DEBUG] Messages array after update:', this.messages);
     
     // Force change detection to ensure UI updates
     this.cdr.detectChanges();
@@ -841,12 +788,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Handle food selection confirmation for standalone food selection components
   onFoodSelectionConfirmed(request: SubmitServingSelectionRequest): void {
-    console.log('Food selections confirmed:', request);
 
     this.foodSelectionService.submitServingSelection(request).subscribe({
       next: (response: ChatMessagesResponse) => {
         if (!response.isSuccess) {
-          console.warn('Selection submission failed:', response.errors);
           this.showErrorToast('Failed to log food selection.');
           return;
         }
@@ -878,7 +823,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         this.chatService.mealLogged$.next?.();
       },
       error: (error) => {
-        console.error('Error submitting food selections:', error);
         this.showErrorToast('Failed to log food selection.');
       }
     });
@@ -915,7 +859,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       this.chatService.mealLogged$.next?.();
     },
     error: (err) => {
-      console.error('Error submitting edit food selections:', err);
       this.showErrorToast('Failed to update food selection.');
     }
   });
@@ -927,14 +870,12 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
   // Handle updated message from phrase editing
   onFoodPhraseUpdated(updatedMessage: DisplayMessage): void {
-    console.log('Received updated message from phrase editing:', updatedMessage);
     
     // Find the original message in the array and replace it
     const messageIndex = this.messages.findIndex(m => m.id === updatedMessage.id);
     if (messageIndex !== -1) {
       // Replace the entire message
       this.messages[messageIndex] = updatedMessage;
-      console.log('Replaced message at index:', messageIndex);
       
       // Trigger change detection
       this.cdr.detectChanges();
@@ -943,28 +884,23 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       setTimeout(() => {
         this.scrollToBottom();
       }, 100);
-    } else {
-      console.warn('Could not find original message to replace');
     }
   }
 
   // Handle phrase edit request from food-selection component
   async onPhraseEditRequested(event: {originalPhrase: string, newPhrase: string, messageId: string, componentId?: string, expansionState?: any}): Promise<void> {
-    console.log('Phrase edit/add requested:', event);
     
     // Note: No need to store expansion state - trackBy will preserve component instance
     
-    // Find the message 
+    // Find the message
     const messageIndex = this.messages.findIndex(m => m.id === event.messageId);
     if (messageIndex === -1) {
-      console.warn('Could not find message to edit');
       return;
     }
     
     const originalMessage = this.messages[messageIndex];
     // If we have a componentId, it's ALWAYS an update, never an addition
     const isAddingNew = !event.componentId;
-    console.log(`[DEBUG] componentId: "${event.componentId}" → isAddingNew: ${isAddingNew}`);
     
     // Create a loading message by replacing the target component with a loading placeholder
     const loadingMessage = this.createLoadingMessageForComponent(originalMessage, event.componentId, isAddingNew);
@@ -989,7 +925,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       }
       
       if (response?.isSuccess && response.updatedMessage) {
-        console.log('SUCCESS: Received updated message');
         // Convert ChatMessage to DisplayMessage and replace
         const updatedDisplayMessage = this.convertChatMessageToDisplayMessage(response.updatedMessage);
         // Clear loading state (this will clear both global and component-specific loading)
@@ -1006,7 +941,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         //   this.scrollToBottom();
         // }, 100);
       } else {
-        console.error('FAILED: API call unsuccessful', response?.errors);
         // Restore original message and clear any loading state
         this.messages[messageIndex] = {
           ...originalMessage,
@@ -1016,7 +950,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         this.showErrorToast('Failed to search for food. Please try again.');
       }
     } catch (error) {
-      console.error('ERROR: Exception during API call', error);
       // Restore original message and clear any loading state
       this.messages[messageIndex] = {
         ...originalMessage,
@@ -1115,34 +1048,23 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
   // Handle food selection cancellation
   onCancelFoodSelection(message: DisplayMessage): void {
     if (!message.id) {
-      console.warn('Cannot cancel food selection: message has no ID');
       return;
     }
 
-    console.log('Canceling food selection for message:', message.id, 'Role:', message.role);
-
     // Remove the pending food selection message from UI
     const messageIndex = this.messages.findIndex(m => m.id === message.id);
-    console.log('Found message at index:', messageIndex, 'Total messages before:', this.messages.length);
     
     if (messageIndex !== -1) {
       this.messages.splice(messageIndex, 1);
-      console.log('Removed message, total messages after:', this.messages.length);
-      
+
       // Track this message as cancelled to prevent re-adding
       this.cancelledMessageIds.add(message.id);
-      console.log('Added message to cancelled list:', message.id);
       
       // Show thinking dots while waiting for assistant response
       this.isLoading = true;
       
       // Force change detection to ensure UI updates immediately
       this.cdr.detectChanges();
-      
-      // Additional debugging - log the messages array
-      console.log('Messages array after removal:', this.messages.map(m => ({ id: m.id, role: m.role, text: m.text?.substring(0, 50) })));
-    } else {
-      console.warn('Message not found in array for removal');
     }
 
     // Use the appropriate API based on the message type
@@ -1180,17 +1102,13 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
   }
 
   private handleCancelResponse(response: ChatMessagesResponse, message: DisplayMessage, messageIndex: number): void {
-    console.log('Cancel response received:', response.isSuccess, 'Messages:', response.messages?.length);
     
     if (!response.isSuccess) {
-      console.warn('Cancel food logging failed:', response.errors);
       this.showErrorToast('Failed to cancel food selection.');
-      
+
       // Restore the pending food selection message if cancellation failed
       if (messageIndex !== -1) {
-        console.log('Restoring message at index:', messageIndex);
         this.messages.splice(messageIndex, 0, message);
-        console.log('Message restored, total messages:', this.messages.length);
         this.cdr.detectChanges();
       }
       // Turn off loading indicator
@@ -1203,10 +1121,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
     // Process the returned messages and add them to the chat
     if (response.messages && response.messages.length > 0) {
-      console.log('Processing new messages from cancel response');
       this.processAndAddNewMessages(response.messages);
-    } else {
-      console.log('No new messages in cancel response');
     }
     
     // Turn off loading indicator
@@ -1217,14 +1132,11 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
   }
 
   private handleCancelError(error: any, message: DisplayMessage, messageIndex: number): void {
-    console.error('Error canceling food selection:', error);
     this.showErrorToast('Failed to cancel food selection.');
-    
+
     // Restore the pending food selection message if cancellation failed
     if (messageIndex !== -1) {
-      console.log('Restoring message due to error at index:', messageIndex);
       this.messages.splice(messageIndex, 0, message);
-      console.log('Message restored due to error, total messages:', this.messages.length);
       this.cdr.detectChanges();
     }
     

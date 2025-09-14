@@ -69,8 +69,6 @@ export class EntryActionMenuComponent {
   }
   
   handleAction(action: ActionType) {
-    console.log(`🎯 Action selected: ${action} for entry:`, this.entry);
-    
     // Check if the action is implemented
     const implementedActions: ActionType[] = ['remove', 'learn', 'edit'];
     const isImplemented = implementedActions.includes(action);
@@ -82,16 +80,13 @@ export class EntryActionMenuComponent {
     
     if (isImplemented) {
       // Emit the event for implemented actions
-      console.log(`✅ Emitting actionSelected event for ${action}`);
       const eventData = { action, entry: this.entry };
-      console.log('Event data:', eventData);
       this.actionSelected.emit(eventData);
     } else {
       // Track specifically as unimplemented feature
       this.analyticsService.trackUnimplementedFeature('entry_action', action, `${entryType}_entry`);
       
       // Show toast for unimplemented actions and still emit event to dismiss popover
-      console.log(`🍞 Showing toast for unimplemented action: ${action}`);
       this.toastService.showToast({
         message: 'Feature not implemented yet. Check back soon!',
         duration: 3000,

@@ -68,7 +68,6 @@ export class SettingsPopoverComponent {
     try {
       await this.appUpdateService.forceReloadToLatest(); 
     } catch (e) {
-      console.warn('[Settings] Failed to refresh to latest:', e);
       this.isRefreshing = false;
     }
     // Note: Page will reload if update is successful, so isRefreshing will reset naturally

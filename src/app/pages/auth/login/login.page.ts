@@ -90,7 +90,6 @@ export class LoginPage implements OnInit, OnDestroy {
       await this.router.navigateByUrl(target, { replaceUrl: true });
       setTimeout(() => location.reload(), 0);
     } catch (error) {
-      console.error('Login failed:', error);
       // Track login failure
       this.analyticsService.trackEvent('login_failed', { method: 'email', error: error?.toString() || 'unknown' });
     }
@@ -116,10 +115,7 @@ export class LoginPage implements OnInit, OnDestroy {
       const target = this.authService.consumeLastAttemptedRoute('/app/chat');
       await this.router.navigateByUrl(target);
     } catch (error) {
-      if (environment.authDebug) {
-        // eslint-disable-next-line no-console
-        console.warn('Continue as Guest failed:', error);
-      }
+      // Continue as Guest failed
     } finally {
       this.isWorking = false;
     }

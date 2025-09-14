@@ -75,7 +75,6 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   // We'll use both input and service to ensure synchronization
   @Input() set selectedDate(value: string) {
     if (value) {
-      console.log(`[AppHeader] Input date changed to: ${value}`);
       this._selectedDate = value;
     }
   }
@@ -136,10 +135,6 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Log initial state
-    console.log(`[AppHeader] Init with date: ${this._selectedDate}`);
-    console.log(`[AppHeader] Service date: ${this.dateService.getSelectedDate()}`);
-    
     // Subscribe to auth state so the header reflects changes immediately
     const subUid = this.authService.userUid$.subscribe(uid => {
       this.isLoggedIn = !!uid;
@@ -153,9 +148,8 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     
     // Subscribe to date changes from the service
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
-      console.log(`[AppHeader] Date from service changed to: ${date}`);
       this._selectedDate = date;
-      
+
       // Force change detection to update the view
       this.cdRef.detectChanges();
     });
@@ -167,7 +161,6 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
       this.dateSubscription.unsubscribe();
     }
     this.authSubscriptions.forEach(s => s.unsubscribe());
-    console.log('[AppHeader] Component destroyed');
   }
   
   // Handle date change from the datetime picker
@@ -175,18 +168,15 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     const now = Date.now();
     // If less than 300ms since last change, ignore
     if (now - this.lastDateChange < 300) {
-      console.log('[AppHeader] Ignoring rapid date change');
       return;
     }
     
     this.lastDateChange = now;
-    console.log('[AppHeader] User selected date from picker:', event);
-    
+
     // Extract the new date value and emit it
     if (event.detail && event.detail.value) {
       const newDate = event.detail.value;
-      console.log(`[AppHeader] Emitting new date: ${newDate}`);
-      
+
       // Track date change analytics
       this.analyticsService.trackActionClick('date_changed', 'header', {
         newDate: newDate,
@@ -228,13 +218,11 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   
   // Navigate to previous day
   onPreviousDay() {
-    console.log('[AppHeader] Previous day clicked');
     this.previousDay.emit();
   }
   
   // Navigate to next day
   onNextDay() {
-    console.log('[AppHeader] Next day clicked');
     this.nextDay.emit();
   }
   

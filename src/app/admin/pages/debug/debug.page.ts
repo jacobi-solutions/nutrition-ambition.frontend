@@ -81,7 +81,6 @@ export class DebugPage implements OnInit, OnDestroy {
       }
       
     } catch (error) {
-      console.error('[DebugPage] Error loading feedback data:', error);
     } finally {
       this.loading = false;
     }

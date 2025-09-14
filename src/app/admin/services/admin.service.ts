@@ -24,7 +24,6 @@ import {
   ClearAccountDataResponse,
   GetAccountDataCountsRequest,
   GetAccountDataCountsResponse,
-  Account,
   ErrorDto
 } from '../../services/nutrition-ambition-api.service';
 
@@ -39,7 +38,6 @@ export class AdminService {
   public loading$ = this._loadingSubject.asObservable();
 
   constructor(private apiService: NutritionAmbitionApiService) {
-    console.log('[AdminService] Initialized');
   }
 
   /**
@@ -54,7 +52,6 @@ export class AdminService {
   }): Promise<GetFeedbackWithAccountInfoResponse> {
     try {
       this._loadingSubject.next(true);
-      console.log('[AdminService] Loading all feedback with filters:', filters);
 
       const request = new GetFeedbackWithAccountInfoRequest({
         feedbackType: filters?.feedbackType,
@@ -67,16 +64,13 @@ export class AdminService {
       const response = await firstValueFrom(this.apiService.getFeedbackWithAccountInfo(request));
       
       if (response.isSuccess && response.feedbackWithAccounts) {
-        console.log('[AdminService] Loaded feedback with account info:', response.feedbackWithAccounts.length);
         this._feedbackEntriesSubject.next(response.feedbackWithAccounts);
       } else {
-        console.error('[AdminService] Failed to load feedback:', response.errors);
         this._feedbackEntriesSubject.next([]);
       }
 
       return response;
     } catch (error) {
-      console.error('[AdminService] Error loading feedback:', error);
       this._feedbackEntriesSubject.next([]);
       throw error;
     } finally {
@@ -89,12 +83,10 @@ export class AdminService {
    */
   getFeedbackById(feedbackId: string): FeedbackEntry | null {
     try {
-      console.log('[AdminService] Finding feedback by ID:', feedbackId);
       
       const feedbackWithAccount = this.currentFeedbackEntries.find(f => f.feedback?.id === feedbackId);
       return feedbackWithAccount?.feedback || null;
     } catch (error) {
-      console.error('[AdminService] Error finding feedback by ID:', error);
       return null;
     }
   }
@@ -104,7 +96,6 @@ export class AdminService {
    */
   async completeFeedback(feedbackId: string, isCompleted: boolean, completionNote?: string): Promise<CompleteFeedbackResponse> {
     try {
-      console.log('[AdminService] Updating feedback completion:', { feedbackId, isCompleted, completionNote });
 
       const request = new CompleteFeedbackRequest({
         feedbackId: feedbackId,
@@ -115,16 +106,13 @@ export class AdminService {
       const response = await firstValueFrom(this.apiService.completeFeedback(request));
       
       if (response.isSuccess && response.feedbackEntry) {
-        console.log('[AdminService] Feedback completion updated successfully');
         // Update the local list
         await this.refreshCurrentFeedbackList();
       } else {
-        console.error('[AdminService] Failed to update feedback completion:', response.errors);
       }
 
       return response;
     } catch (error) {
-      console.error('[AdminService] Error updating feedback completion:', error);
       throw error;
     }
   }
@@ -137,7 +125,6 @@ export class AdminService {
    */
   async deleteFeedback(feedbackId: string): Promise<DeleteFeedbackResponse> {
     try {
-      console.log('[AdminService] Deleting feedback:', feedbackId);
 
       const request = new DeleteFeedbackRequest({
         feedbackId: feedbackId
@@ -146,15 +133,12 @@ export class AdminService {
       const response = await firstValueFrom(this.apiService.deleteFeedback(request));
       
       if (response.isSuccess && response.deleted) {
-        console.log('[AdminService] Feedback deleted successfully');
         // Note: UI will handle refreshing the list with current filters
       } else {
-        console.error('[AdminService] Failed to delete feedback:', response.errors);
       }
 
       return response;
     } catch (error) {
-      console.error('[AdminService] Error deleting feedback:', error);
       throw error;
     }
   }
@@ -191,7 +175,6 @@ export class AdminService {
 
       return stats;
     } catch (error) {
-      console.error('[AdminService] Error getting feedback stats:', error);
       return { total: 0, completed: 0, incomplete: 0, byType: {} };
     }
   }
@@ -213,7 +196,6 @@ export class AdminService {
       
       return this.getFeedbackStatsFromCurrent();
     } catch (error) {
-      console.error('[AdminService] Error getting feedback stats:', error);
       return { total: 0, completed: 0, incomplete: 0, byType: {} };
     }
   }
@@ -256,7 +238,6 @@ export class AdminService {
     limit?: number;
   }): Promise<GetUserChatMessagesResponse> {
     try {
-      console.log('[AdminService] Getting chat messages for account:', accountId);
 
       const request = new GetUserChatMessagesRequest({
         accountId: accountId,
@@ -267,14 +248,11 @@ export class AdminService {
       const response = await firstValueFrom(this.apiService.getUserChatMessages(request));
       
       if (response.isSuccess && response.messages) {
-        console.log('[AdminService] Retrieved', response.messages.length, 'chat messages for account', accountId);
       } else {
-        console.error('[AdminService] Failed to get chat messages:', response.errors);
       }
 
       return response;
     } catch (error) {
-      console.error('[AdminService] Error getting chat messages:', error);
       throw error;
     }
   }
@@ -293,7 +271,6 @@ export class AdminService {
     pageToken?: string;
   }): Promise<SearchLogsResponse> {
     try {
-      console.log('[AdminService] Searching logs with filters:', filters);
 
       const request = new SearchLogsRequest({
         accountId: filters?.accountId,
@@ -309,14 +286,11 @@ export class AdminService {
       const response = await firstValueFrom(this.apiService.searchLogs(request));
       
       if (response.isSuccess && response.items) {
-        console.log('[AdminService] Retrieved', response.items.length, 'log entries');
       } else {
-        console.error('[AdminService] Failed to search logs:', response.errors);
       }
 
       return response;
     } catch (error) {
-      console.error('[AdminService] Error searching logs:', error);
       throw error;
     }
   }
@@ -326,20 +300,16 @@ export class AdminService {
    */
   async getAllAccounts(): Promise<GetAllAccountsResponse> {
     try {
-      console.log('[AdminService] Getting all accounts');
 
       const request = new GetAllAccountsRequest();
       const response = await firstValueFrom(this.apiService.getAllAccounts(request));
       
       if (response.isSuccess && response.accounts) {
-        console.log('[AdminService] Retrieved', response.accounts.length, 'accounts');
       } else {
-        console.error('[AdminService] Failed to get accounts:', response.errors);
       }
 
       return response;
     } catch (error) {
-      console.error('[AdminService] Error getting accounts:', error);
       const errorResponse = new GetAllAccountsResponse();
       if (!errorResponse.errors) {
         errorResponse.errors = [];
@@ -354,7 +324,6 @@ export class AdminService {
    */
   async deleteAccount(accountId: string, confirmDelete: boolean = true): Promise<DeleteAccountResponse> {
     try {
-      console.log('[AdminService] Deleting account:', accountId);
 
       const request = new DeleteAccountRequest({
         accountId: accountId,
@@ -364,18 +333,11 @@ export class AdminService {
       const response = await firstValueFrom(this.apiService.deleteAccount(request));
       
       if (response.isSuccess) {
-        console.log('[AdminService] Account deleted successfully:', {
-          accountId: response.deletedAccountId,
-          totalRecordsDeleted: response.totalRecordsDeleted,
-          deletedRecordsByType: response.deletedRecordsByType
-        });
       } else {
-        console.error('[AdminService] Failed to delete account:', response.errors);
       }
 
       return response;
     } catch (error) {
-      console.error('[AdminService] Error deleting account:', error);
       const errorResponse = new DeleteAccountResponse();
       if (!errorResponse.errors) {
         errorResponse.errors = [];
@@ -390,7 +352,6 @@ export class AdminService {
    */
   async clearAccountData(accountId: string, confirmClear: boolean = true): Promise<ClearAccountDataResponse> {
     try {
-      console.log('[AdminService] Clearing account data:', accountId);
 
       const request = new ClearAccountDataRequest({
         accountId: accountId,
@@ -400,18 +361,11 @@ export class AdminService {
       const response = await firstValueFrom(this.apiService.clearAccountData(request));
       
       if (response.isSuccess) {
-        console.log('[AdminService] Account data cleared successfully:', {
-          accountId: response.clearedAccountId,
-          totalRecordsDeleted: response.totalRecordsDeleted,
-          deletedRecordsByType: response.deletedRecordsByType
-        });
       } else {
-        console.error('[AdminService] Failed to clear account data:', response.errors);
       }
 
       return response;
     } catch (error) {
-      console.error('[AdminService] Error clearing account data:', error);
       const errorResponse = new ClearAccountDataResponse();
       if (!errorResponse.errors) {
         errorResponse.errors = [];
@@ -426,7 +380,6 @@ export class AdminService {
    */
   async getAccountDataCounts(accountId: string): Promise<GetAccountDataCountsResponse> {
     try {
-      console.log('[AdminService] Getting data counts for account:', accountId);
 
       const request = new GetAccountDataCountsRequest({
         accountId: accountId
@@ -435,18 +388,11 @@ export class AdminService {
       const response = await firstValueFrom(this.apiService.getAccountDataCounts(request));
       
       if (response.isSuccess) {
-        console.log('[AdminService] Data counts retrieved:', {
-          accountId: response.accountId,
-          totalCount: response.totalDataCount,
-          breakdownCounts: response.dataCounts
-        });
       } else {
-        console.error('[AdminService] Failed to get data counts:', response.errors);
       }
 
       return response;
     } catch (error) {
-      console.error('[AdminService] Error getting data counts:', error);
       const errorResponse = new GetAccountDataCountsResponse();
       if (!errorResponse.errors) {
         errorResponse.errors = [];

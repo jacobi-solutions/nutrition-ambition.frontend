@@ -38,10 +38,8 @@ function getAndBumpPackageVersion() {
     packageJson.version = newVersion;
     fs.writeFileSync(packageJsonFile, JSON.stringify(packageJson, null, 2) + '\n', 'utf8');
     
-    console.log(`📦 Auto-bumped package.json: ${currentVersion} → ${newVersion}`);
     return newVersion;
   } catch (err) {
-    console.error("⚠️  Unable to read/update package.json version:", err.message);
     return "0.0.1"; // fallback
   }
 }
@@ -56,7 +54,6 @@ function getGitInfo() {
 
     return { hash, branch, commitCount };
   } catch (err) {
-    console.error("⚠️  Unable to read git info. Are you in a git repo?");
     process.exit(1);
   }
 }
@@ -79,13 +76,11 @@ export const PREVIOUS_COMMIT_HASH = "${gitInfo.hash}";
   if (fs.existsSync(versionFile)) {
     const current = fs.readFileSync(versionFile, "utf8");
     if (current === banner) {
-      console.log(`ℹ️  Version unchanged (${version}), skipping write.`);
       return;
     }
   }
 
   fs.writeFileSync(versionFile, banner, { encoding: "utf8" });
-  console.log(`✅ Version updated -> ${version} (commit: ${gitInfo.hash})`);
 }
 
 (function main() {

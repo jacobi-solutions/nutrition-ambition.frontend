@@ -19,7 +19,6 @@ export class FoodSelectionService {
 
     return this.apiService.submitServingSelection(request).pipe(
       catchError(err => {
-        console.error('Failed to submit selection', err);
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Submission failed';
         return of(new ChatMessagesResponse({ isSuccess: false, errors: [errorDto] }));
@@ -33,7 +32,6 @@ export class FoodSelectionService {
 
     return this.apiService.cancelFoodLogging(request).pipe(
       catchError(err => {
-        console.error('Failed to cancel food logging', err);
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Cancel failed';
         return of(new ChatMessagesResponse({ isSuccess: false, errors: [errorDto] }));
@@ -45,7 +43,6 @@ export class FoodSelectionService {
     if (!req.localDateKey) req.localDateKey = this.dateService.getSelectedDate();
     return this.apiService.startEditSelection(req).pipe(
       catchError(err => {
-        console.error('Failed to start edit selection', err);
         const error = new ErrorDto({ errorMessage: 'Start edit failed' });
         return of(new ChatMessagesResponse({ isSuccess: false, errors: [error] }));
       })
@@ -58,7 +55,6 @@ export class FoodSelectionService {
 
     return this.apiService.submitEditServingSelection(request).pipe(
       catchError(err => {
-        console.error('Failed to submit edit selection', err);
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Edit submission failed';
         return of(new ChatMessagesResponse({ isSuccess: false, errors: [errorDto] }));
@@ -72,7 +68,6 @@ export class FoodSelectionService {
 
     return this.apiService.cancelEditSelection(request).pipe(
       catchError(err => {
-        console.error('Failed to cancel edit selection', err);
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Cancel edit failed';
         return of(new ChatMessagesResponse({ isSuccess: false, errors: [errorDto] }));
@@ -86,7 +81,6 @@ export class FoodSelectionService {
 
     return this.apiService.searchFoodPhrase(request).pipe(
       catchError(err => {
-        console.error('Failed to search food phrase', err);
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Search failed';
         return of(new SearchFoodPhraseResponse({ isSuccess: false, errors: [errorDto] }));
@@ -100,7 +94,6 @@ export class FoodSelectionService {
 
     return this.apiService.updateFoodPhrase(request).pipe(
       catchError(err => {
-        console.error('Failed to update food phrase', err);
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Update failed';
         return of(new SearchFoodPhraseResponse({ isSuccess: false, errors: [errorDto] }));
@@ -111,7 +104,6 @@ export class FoodSelectionService {
   hydrateFoodSelection(request: HydrateFoodSelectionRequest): Observable<HydrateFoodSelectionResponse> {
     return this.apiService.hydrateFoodSelection(request).pipe(
       catchError(err => {
-        console.error('Failed to hydrate food selection', err);
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Hydration failed';
         return of(new HydrateFoodSelectionResponse({ isSuccess: false, errors: [errorDto] }));
@@ -125,7 +117,6 @@ export class FoodSelectionService {
 
     return this.apiService.getInstantAlternatives(request).pipe(
       catchError(err => {
-        console.error('Failed to get instant alternatives', err);
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Failed to get instant alternatives';
         return of(new GetInstantAlternativesResponse({ isSuccess: false, errors: [errorDto] }));

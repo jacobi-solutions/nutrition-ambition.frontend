@@ -139,7 +139,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
     // Listen for meal logging events from chat service to refresh data
     this.mealLoggedSubscription = this.chatService.mealLogged$.subscribe(() => {
-      console.log('🍽️ Meal logged event received, refreshing summary');
       this.loadDetailedSummary(this.dateService.getSelectedDate(), true);
     });
   }
@@ -157,7 +156,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   ionViewWillEnter() {
-    console.log('📊 Summary tab entered, refreshing data for date:', this.selectedDate);
     // Force reload when entering the tab since user might have added food from chat
     this.selectedDate = this.dateService.getSelectedDate();
     this.loadDetailedSummary(this.dateService.getSelectedDate(), true);
@@ -197,7 +195,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   loadDetailedSummary(localDateKey: string, forceReload: boolean = false) {
-    console.log('🔄 Loading detailed summary for date:', localDateKey, forceReload ? '(forced reload)' : '(cached allowed)');
     this.detailedLoading = true;
     this.detailedError = null;
     this.detailedData = null;
@@ -208,17 +205,12 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       .pipe(
         finalize(() => this.detailedLoading = false),
         catchError(err => {
-          console.error(err);
           this.detailedError = 'Failed to load nutrition data.';
           return of(null);
         })
       )
       .subscribe(response => {
         if (response) {
-          console.log('✅ Detailed summary loaded successfully:', {
-            foodsCount: response.dailySummary?.foods?.length || 0,
-            nutrientsCount: response.dailySummary?.nutrients?.length || 0
-          });
           this.detailedData = response;
         }
       });
@@ -430,12 +422,10 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
             // Scroll smoothly to the target position
             this.content.scrollToPoint(0, scrollPosition, 500);
           });
-        } else {
-          console.warn(`Could not find target element for ${type}: ${identifier}`);
         }
       }, 100); // Additional small delay to ensure DOM is fully updated
     } catch (error) {
-      console.warn('Failed to scroll to selected item:', error);
+      // Failed to scroll to selected item
     }
   }
 
@@ -469,7 +459,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
         this.handleEditEntry(event.entry);   
       break;
       default:
-        console.log('Action not implemented:', event.action);
         // Track unimplemented actions specifically
         this.analytics.trackUnimplementedFeature('entry_action', event.action, 'daily_summary');
     }
@@ -484,7 +473,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     // You should now have these from the backend in each FoodBreakdown:
     // entry.foodEntryId, entry.groupId, entry.itemSetId  (we only need foodEntryId to start)
     if (!entry.foodEntryId) {
-      console.warn('No foodEntryId on entry; cannot start edit.');
       this.showErrorToast('Sorry, could not locate this food to edit.');
       return;
     }
@@ -516,7 +504,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
         }
       },
       error: (err) => {
-        console.error('Edit start error', err);
         this.showErrorToast('An error occurred while starting the edit.');
         this.chatService.clearPendingEdit(); // Clear on error
       }
@@ -526,7 +513,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   
   
   private async handleRemoveEntry(entry: any) {
-    
     this.isPopoverOpen = false;
     // Only allow removal of food entries, not nutrients
     if (entry.entryType !== 'food') {
@@ -539,7 +525,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     if (!entry.foodItemIds || entry.foodItemIds.length === 0) {
-      console.error('No food item IDs found for removal');
       return;
     }
 
@@ -644,19 +629,15 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     this.foodEntryService.deleteFoodEntry(removedFood.foodItemIds).subscribe({
       next: (response) => {
         if (response.isSuccess) {
-          console.log('Food successfully deleted from backend');
           // Refresh to get updated data (both foods and nutrients will be recalculated)
           this.loadDetailedSummary(this.dateService.getSelectedDate(), true);
-          
         } else {
-          console.error('Failed to delete food:', response.errors);
           // Restore the food since deletion failed
           this.undoRemoval(foodKey);
           this.showErrorToast('Failed to delete food. Please try again.');
         }
       },
       error: (error) => {
-        console.error('Error deleting food:', error);
         // Restore the food since deletion failed
         this.undoRemoval(foodKey);
         this.showErrorToast('An error occurred while deleting food.');
@@ -699,7 +680,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
         }
       },
       error: (error) => {
-        console.error('Error learning more about topic:', error);
         this.showErrorToast('An error occurred while getting information.');
       }
     });

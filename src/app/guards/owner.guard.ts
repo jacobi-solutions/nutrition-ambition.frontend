@@ -19,10 +19,8 @@ export class OwnerGuard implements CanActivate {
       take(1), // Only take the first non-null value
       map(account => {
         if (account && account.isOwner === true) {
-          console.log('[OwnerGuard] Access granted for owner');
           return true;
         } else {
-          console.log('[OwnerGuard] Access denied - not an owner');
           this.router.navigate(['/app/chat']); // Redirect to main app
           return false;
         }

@@ -49,7 +49,6 @@ export class ForgotPasswordResetPage implements OnInit {
       try {
         this.userEmail = await this.authService.verifyPasswordResetCode(this.oobCode);
       } catch (error) {
-        console.error('Error verifying reset code:', error);
         await this.toastService.showToast({
           message: error instanceof Error ? error.message : 'Invalid or expired reset link.',
           color: 'danger',
@@ -103,7 +102,6 @@ export class ForgotPasswordResetPage implements OnInit {
       // Navigate to login page
       this.router.navigate(['/login']);
     } catch (error) {
-      console.error('Password reset failed:', error);
       await this.toastService.showToast({
         message: error instanceof Error ? error.message : 'Failed to reset password. Please try again or request a new reset link.',
         color: 'danger',

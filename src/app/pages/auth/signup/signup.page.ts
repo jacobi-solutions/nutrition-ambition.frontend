@@ -76,7 +76,6 @@ export class SignupPage {
       // Navigate to chat for consistency with login
       this.router.navigate(['/app/chat']);
     } catch (error) {
-      console.error('Signup failed:', error);
       await this.toastService.showToast({
         message: error instanceof Error ? error.message : 'Failed to create account. Please try again.',
         color: 'danger',
@@ -98,10 +97,7 @@ export class SignupPage {
       await this.authService.startAnonymousSession();
       this.router.navigateByUrl('/app/chat');
     } catch (error) {
-      if (environment.authDebug) {
-        // eslint-disable-next-line no-console
-        console.warn('Continue as Guest failed:', error);
-      }
+      // Continue as Guest failed
     } finally {
       this.isWorking = false;
     }

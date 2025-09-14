@@ -15,7 +15,6 @@ export class DateService {
   readonly selectedDate$: Observable<string> = this.selectedDateSubject.asObservable();
 
   constructor() {
-    console.log(`[DateService] Initialized with date: ${this.selectedDateSubject.value}`);
   }
 
   // Get the current selected date as local date string (yyyy-MM-dd)
@@ -31,7 +30,6 @@ export class DateService {
 
   // Set a new selected date (expects yyyy-MM-dd format or ISO string)
   setSelectedDate(dateInput: string): void {
-    console.log(`[DateService] Setting date to: ${dateInput}`);
     
     // Handle both ISO strings and yyyy-MM-dd format
     let localDateString: string;
@@ -49,39 +47,32 @@ export class DateService {
     
     // Prevent setting future dates
     if (this.isFutureDate(dateToValidate)) {
-      console.log(`[DateService] Cannot set future date: ${localDateString}. Using today instead.`);
       localDateString = format(new Date(), 'yyyy-MM-dd');
     }
     
-    console.log(`[DateService] Normalized date: ${localDateString}`);
     this.selectedDateSubject.next(localDateString);
   }
 
   // Convenience methods for date navigation
   goToPreviousDay(): void {
-    console.log(`[DateService] Going to previous day from: ${this.selectedDateSubject.value}`);
     const currentDate = parseISO(this.selectedDateSubject.value);
     currentDate.setDate(currentDate.getDate() - 1);
     
     const newDateString = format(currentDate, 'yyyy-MM-dd');
-    console.log(`[DateService] New date will be: ${newDateString}`);
     this.selectedDateSubject.next(newDateString);
   }
 
   goToNextDay(): void {
-    console.log(`[DateService] Going to next day from: ${this.selectedDateSubject.value}`);
     const currentDate = parseISO(this.selectedDateSubject.value);
     const nextDay = new Date(currentDate);
     nextDay.setDate(nextDay.getDate() + 1);
     
     // Prevent going to future dates
     if (this.isFutureDate(nextDay)) {
-      console.log(`[DateService] Cannot go to future date. Staying on current date.`);
       return;
     }
     
     const newDateString = format(nextDay, 'yyyy-MM-dd');
-    console.log(`[DateService] New date will be: ${newDateString}`);
     this.selectedDateSubject.next(newDateString);
   }
 
@@ -104,7 +95,6 @@ export class DateService {
   setSelectedDateFromUtc(utcDate: Date): void {
     // Prevent setting future dates
     if (this.isFutureDate(utcDate)) {
-      console.log(`[DateService] Cannot set future date from UTC. Using today instead.`);
       const localDateString = format(new Date(), 'yyyy-MM-dd');
       this.selectedDateSubject.next(localDateString);
       return;

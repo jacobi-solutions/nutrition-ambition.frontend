@@ -15,7 +15,6 @@ export class AppUpdateService {
 
   initAutoUpdateListeners(): void {
     if (!this.swUpdate.isEnabled) {
-      console.log('[AppUpdate] SW not enabled');
       return;
     }
 
@@ -23,9 +22,8 @@ export class AppUpdateService {
     this.swUpdate.versionUpdates.subscribe(async (event) => {
       if (event.type === 'VERSION_READY') {
         if (this._reloading) return;
-        console.log('[AppUpdate] VERSION_READY → activating & reloading');
         this._reloading = true;
-        try { await this.swUpdate.activateUpdate(); } catch (e) { console.warn('[AppUpdate] activateUpdate failed', e); }
+        try { await this.swUpdate.activateUpdate(); } catch (e) { }
         this.broadcastReload();
         location.reload();
       }
@@ -35,7 +33,6 @@ export class AppUpdateService {
     if (this._bc) {
       this._bc.onmessage = (e) => {
         if (e?.data === 'reload-all' && !this._reloading) {
-          console.log('[AppUpdate] BC reload signal');
           this._reloading = true;
           location.reload();
         }
@@ -44,7 +41,6 @@ export class AppUpdateService {
     } else {
       window.addEventListener('storage', (e) => {
         if (e.key === this._storageKey && !this._reloading) {
-          console.log('[AppUpdate] storage reload signal');
           this._reloading = true;
           location.reload();
         }
@@ -57,11 +53,9 @@ export class AppUpdateService {
     window.addEventListener('focus', () => this.checkNow());
     setInterval(() => this.checkNow(), 15 * 60 * 1000);
 
-    console.log('[AppUpdate] Auto-update listeners initialized');
   }
 
   async forceReloadToLatest(): Promise<void> {
-    console.log('[AppUpdate] Force reload requested');
     if (!this.swUpdate.isEnabled) {
       location.reload();
       return;
@@ -75,24 +69,20 @@ export class AppUpdateService {
       // Nudge browser SW check cadence
       const regs = await navigator.serviceWorker?.getRegistrations?.();
       if (regs?.length) {
-        await Promise.all(regs.map(r => r.update().catch(e => console.warn('[AppUpdate] SW reg update failed', e))));
+        await Promise.all(regs.map(r => r.update().catch(e => {})));
       }
 
       const hadUpdate = await this.swUpdate.checkForUpdate().catch((e) => {
-        console.warn('[AppUpdate] checkForUpdate error', e);
         return false;
       });
-      console.log('[AppUpdate] checkForUpdate:', hadUpdate);
 
       if (force) {
-        console.log('[AppUpdate] Forcing activation & reload');
-        try { await this.swUpdate.activateUpdate(); } catch (e) { console.warn('[AppUpdate] force activate failed', e); }
+        try { await this.swUpdate.activateUpdate(); } catch (e) { }
         this._reloading = true;
         this.broadcastReload();
         location.reload();
       }
     } catch (e) {
-      console.warn('[AppUpdate] checkNow failed', e);
     }
   }
 

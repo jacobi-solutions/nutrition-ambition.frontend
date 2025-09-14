@@ -46,10 +46,8 @@ export class AuthService {
     // Ensure durable persistence at runtime as a safety net alongside bootstrap config
     setPersistence(this.authInstance, indexedDBLocalPersistence)
       .then(() => {
-        console.log('Auth persistence set to IndexedDB (durable).');
       })
       .catch((error) => {
-        console.warn('Failed to set auth persistence to IndexedDB.', error);
       });
 
     // Listen for auth state changes (login/logout, anonymous/registered)
@@ -59,14 +57,10 @@ export class AuthService {
 
       if (user) {
         if (environment.authDebug) {
-          // eslint-disable-next-line no-console
-          console.debug('Auth state: user present');
         }
         this._authRequired$.next(false);
       } else {
         if (environment.authDebug) {
-          // eslint-disable-next-line no-console
-          console.debug(`Auth state: user null (manualSignOut=${this._manualSignOut})`);
         }
         // Manual sign-out or unexpected session loss → require auth UI
         this._authRequired$.next(true);
@@ -106,22 +100,15 @@ export class AuthService {
       
       // Check if we have an anonymous user to upgrade
       if (currentUser && currentUser.isAnonymous) {
-        console.log('Upgrading anonymous user to email/password account');
-        console.log('UID before linking:', currentUser.uid); // 🔍 Log UID before linking
         
         // Create EmailAuthCredential
         const credential = EmailAuthProvider.credential(email, password);
         
         // Link the anonymous account with the email credential
         const result = await linkWithCredential(currentUser, credential);
-        console.log('UID after linking:', result.user.uid); // 🔍 Log UID after linking
-        console.log('Anonymous account successfully upgraded to email/password account');
       } else {
         // No anonymous user, create a new account
-        console.log('Creating new email/password account');
         const result = await createUserWithEmailAndPassword(this.authInstance, email, password);
-        console.log('New account UID:', result.user.uid); // 🔍 Log new account UID
-        console.log('Email/password account created successfully');
       }
       
       // NOW CREATE THE BACKEND ACCOUNT EXPLICITLY
@@ -132,7 +119,6 @@ export class AuthService {
       
       return Promise.resolve();
     } catch (error) {
-      console.error('Error during email registration:', error);
       return Promise.reject(error);
     }
   }
@@ -142,7 +128,6 @@ export class AuthService {
       await sendPasswordResetEmail(this.authInstance, email);
       this.setAuthNotice('Password reset email sent. Please check your inbox.');
     } catch (error) {
-      console.error('Error sending password reset email:', error);
       throw error;
     }
   }
@@ -152,7 +137,6 @@ export class AuthService {
       const email = await verifyPasswordResetCode(this.authInstance, oobCode);
       return email;
     } catch (error) {
-      console.error('Error verifying password reset code:', error);
       
       // Provide more specific error messages for common Firebase auth errors
       if (error && typeof error === 'object' && 'code' in error) {
@@ -178,9 +162,7 @@ export class AuthService {
   async confirmPasswordReset(oobCode: string, newPassword: string): Promise<void> {
     try {
       await confirmPasswordReset(this.authInstance, oobCode, newPassword);
-      console.log('Password reset confirmed successfully');
     } catch (error) {
-      console.error('Error confirming password reset:', error);
       
       // Provide more specific error messages for common Firebase auth errors
       if (error && typeof error === 'object' && 'code' in error) {
@@ -227,9 +209,7 @@ export class AuthService {
         throw new Error(result.errors?.join(', ') || 'Failed to change password');
       }
       
-      console.log('Password changed successfully');
     } catch (error) {
-      console.error('Error changing password:', error);
       
       // Provide more specific error messages for common Firebase auth errors
       if (error && typeof error === 'object' && 'code' in error) {
@@ -309,9 +289,7 @@ export class AuthService {
         throw new Error(errorMessage);
       }
       
-      console.log('Backend account created successfully');
     } catch (error) {
-      console.error('Failed to create backend account:', error);
       throw error;
     }
   }
@@ -328,8 +306,6 @@ export class AuthService {
     // Already authenticated with a real user
     if (current && !current.isAnonymous) {
       if (environment.authDebug) {
-        // eslint-disable-next-line no-console
-        console.debug('startAnonymousSession: already authenticated (non-anon). Skipping.');
       }
       return;
     }
@@ -337,8 +313,6 @@ export class AuthService {
     // Already anonymous
     if (current && current.isAnonymous) {
       if (environment.authDebug) {
-        // eslint-disable-next-line no-console
-        console.debug('startAnonymousSession: already anonymous. Skipping.');
       }
       return;
     }
@@ -346,8 +320,6 @@ export class AuthService {
     // Dedupe concurrent calls
     if (this._anonInFlight) {
       if (environment.authDebug) {
-        // eslint-disable-next-line no-console
-        console.debug('startAnonymousSession: awaiting in-flight anon init');
       }
       await this._anonInFlight;
       return;
@@ -357,8 +329,6 @@ export class AuthService {
       try {
         const credential = await signInAnonymously(this.authInstance);
         if (environment.authDebug) {
-          // eslint-disable-next-line no-console
-          console.debug('startAnonymousSession: anonymous session established. uid:', credential.user.uid);
         }
         
         // NOW CREATE THE BACKEND ACCOUNT FOR ANONYMOUS USER
@@ -366,8 +336,6 @@ export class AuthService {
         
         this._authRequired$.next(false);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('startAnonymousSession: anonymous sign-in failed:', error);
         throw error;
       } finally {
         this._anonInFlight = null;
@@ -381,7 +349,6 @@ export class AuthService {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(this.authInstance, provider);
-      console.log('Google sign-in successful');
       
       // For Google sign-in, we need to create backend account if it's a new user
       // Note: Google sign-in could be either login or signup, so we'll try to create
@@ -393,13 +360,11 @@ export class AuthService {
         if (!error?.message?.includes('already exists')) {
           throw error; // Re-throw if it's a different error
         }
-        console.log('Account already exists - user is logging in');
       }
       
       // Firebase Analytics: Track successful login
       this._analytics.trackAuthEvent('login');
     } catch (error) {
-      console.error('Google sign-in failed:', error);
       throw error;
     }
   }
@@ -407,12 +372,10 @@ export class AuthService {
   async signInWithEmail(email: string, password: string): Promise<void> {
     try {
       await signInWithEmailAndPassword(this.authInstance, email, password);
-      console.log('Email sign-in successful');
       
       // Firebase Analytics: Track successful login
       this._analytics.trackAuthEvent('login');
     } catch (error) {
-      console.error('Email sign-in failed:', error);
     }
   }
 
@@ -421,8 +384,6 @@ export class AuthService {
     try {
       await signOut(this.authInstance);
       if (environment.authDebug) {
-        // eslint-disable-next-line no-console
-        console.debug('signOutUser: user signed out successfully');
       }
       
       // Firebase Analytics: Track successful logout
@@ -438,8 +399,6 @@ export class AuthService {
       this._router.navigate(['/login']);
     } catch (error) {
       if (environment.authDebug) {
-        // eslint-disable-next-line no-console
-        console.warn('signOutUser: sign out failed', error);
       }
     } finally {
       this._manualSignOut = false;

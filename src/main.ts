@@ -65,9 +65,7 @@ export function getAPIBaseUrl(): string {
 @Injectable()
 export class GlobalErrorHandler implements ErrorHandler {
   handleError(error: any): void {
-    console.error('Global error handler caught:', error);
     if (error?.status === 0 || error?.name === 'HttpErrorResponse') {
-      console.warn('Network error detected in global handler');
       const loadingSpinners = document.querySelectorAll('.loading-indicator');
       loadingSpinners.forEach(spinner => spinner.classList.add('hidden'));
     }
@@ -112,4 +110,4 @@ bootstrapApplication(AppComponent, {
             registrationStrategy: 'registerWhenStable:30000'
           }),
   ],
-}).catch(err => console.error(err));
+});

@@ -31,7 +31,6 @@ export class DailySummaryService {
     
     // If we're forcing a reload or don't have cached data
     if (forceReload || !this.detailedSummaryCache.has(cacheKey)) {
-      console.log(`[DailySummaryService] ${forceReload ? 'Force reloading' : 'Loading'} detailed summary for ${cacheKey}`);
       
       // Create a GetDetailedSummaryRequest object with the localDateKey
       const request = new GetDetailedSummaryRequest({
@@ -43,7 +42,6 @@ export class DailySummaryService {
         .pipe(
           shareReplay(1), // Cache the result
           catchError(error => {
-            console.error('Error fetching detailed summary:', error);
             this.detailedSummaryCache.delete(cacheKey); // Clear failed result from cache
             return throwError(() => new Error('Failed to load detailed nutrition summary. Please try again.'));
           })
@@ -52,7 +50,6 @@ export class DailySummaryService {
       // Store in cache
       this.detailedSummaryCache.set(cacheKey, apiResponse);
     } else {
-      console.log(`[DailySummaryService] Using cached detailed summary for ${cacheKey}`);
     }
     
     return this.detailedSummaryCache.get(cacheKey)!;
@@ -65,10 +62,8 @@ export class DailySummaryService {
   clearCache(localDateKey?: string): void {
     if (localDateKey) {
       this.detailedSummaryCache.delete(localDateKey);
-      console.log(`[DailySummaryService] Cleared cache for ${localDateKey}`);
     } else {
       this.detailedSummaryCache.clear();
-      console.log(`[DailySummaryService] Cleared all cache`);
     }
   }
 } 

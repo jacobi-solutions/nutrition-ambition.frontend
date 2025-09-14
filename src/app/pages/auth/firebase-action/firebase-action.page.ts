@@ -37,7 +37,6 @@ export class FirebaseActionPage implements OnInit {
       const continueUrl = params['continueUrl'];
       const lang = params['lang'];
 
-      console.log('Firebase action params:', { mode, oobCode: !!oobCode, apiKey: !!apiKey });
 
       if (!mode || !oobCode) {
         await this.handleError('Invalid or missing parameters in the link.');
@@ -62,7 +61,6 @@ export class FirebaseActionPage implements OnInit {
           break;
       }
     } catch (error) {
-      console.error('Error processing Firebase action:', error);
       await this.handleError('An error occurred while processing the request.');
     }
   }
@@ -76,7 +74,6 @@ export class FirebaseActionPage implements OnInit {
         queryParams: { oobCode }
       });
     } catch (error) {
-      console.error('Password reset error:', error);
       await this.handleError('Invalid or expired password reset link.');
     }
   }
@@ -98,7 +95,6 @@ export class FirebaseActionPage implements OnInit {
       const redirectUrl = continueUrl || '/app/chat';
       this.router.navigateByUrl(redirectUrl);
     } catch (error) {
-      console.error('Email verification error:', error);
       await this.handleError('Invalid or expired email verification link.');
     }
   }
@@ -120,7 +116,6 @@ export class FirebaseActionPage implements OnInit {
       const redirectUrl = continueUrl || '/login';
       this.router.navigateByUrl(redirectUrl);
     } catch (error) {
-      console.error('Email recovery error:', error);
       await this.handleError('Invalid or expired email recovery link.');
     }
   }

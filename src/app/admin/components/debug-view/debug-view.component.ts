@@ -89,7 +89,6 @@ export class DebugViewComponent implements OnInit, OnDestroy {
         );
       }
     } catch (error) {
-      console.error('[DebugView] Error loading chat messages:', error);
     }
   }
 
@@ -111,7 +110,6 @@ export class DebugViewComponent implements OnInit, OnDestroy {
         const lookBackWindow = timeDiffMinutes + 30;
         minutesBack = Math.min(Math.max(lookBackWindow, 60), 60 * 24 * 7); // Cap at 7 days
         
-        console.log('[DebugView] Feedback submitted', timeDiffMinutes, 'minutes ago, looking back', minutesBack, 'minutes');
       }
 
       const response = await this.adminService.searchLogs({
@@ -124,12 +122,9 @@ export class DebugViewComponent implements OnInit, OnDestroy {
 
       if (response.isSuccess && response.items) {
         this.systemLogs = response.items;
-        console.log('[DebugView] Loaded', this.systemLogs.length, 'log entries');
       } else {
-        console.error('[DebugView] Failed to load logs:', response.errors);
       }
     } catch (error) {
-      console.error('[DebugView] Error loading system logs:', error);
     } finally {
       this.logsLoading = false;
     }
@@ -280,7 +275,6 @@ export class DebugViewComponent implements OnInit, OnDestroy {
                 this.feedbackWithAccount.feedback.completionNote = data.completionNote;
               }
             } catch (error) {
-              console.error('[DebugView] Error marking feedback as complete:', error);
               await this.showToast('Error marking feedback as complete', 'danger');
             }
           }
@@ -315,7 +309,6 @@ export class DebugViewComponent implements OnInit, OnDestroy {
                 this.feedbackWithAccount.feedback.completionNote = undefined;
               }
             } catch (error) {
-              console.error('[DebugView] Error marking feedback as incomplete:', error);
               await this.showToast('Error marking feedback as incomplete', 'danger');
             }
           }
@@ -352,7 +345,6 @@ export class DebugViewComponent implements OnInit, OnDestroy {
                 await this.showToast('Error deleting feedback', 'danger');
               }
             } catch (error) {
-              console.error('[DebugView] Error deleting feedback:', error);
               await this.showToast('Error deleting feedback', 'danger');
             }
           }

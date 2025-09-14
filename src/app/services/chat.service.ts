@@ -53,13 +53,11 @@ export class ChatService {
 
   // Send message to the assistant
   sendMessage(message: string): Observable<ChatMessagesResponse> {
-    console.log('[DEBUG] Sending message to the assistant:', message.substring(0, 30) + '...');
     
     // Send to the assistant for processing
     // No need to log the message separately - the backend handles this
     return this.runAssistantMessage(message).pipe(
       catchError(error => {
-        console.error('Error in sendMessage:', error);
         return of(new ChatMessagesResponse({
           isSuccess: false,
           messages: []
@@ -70,7 +68,6 @@ export class ChatService {
   
   // Run assistant message
   runAssistantMessage(message: string): Observable<ChatMessagesResponse> {
-    console.log('[DEBUG] Running assistant message:', message.substring(0, 30) + '...');
     const request = new RunChatRequest({
       message: message,
       localDateKey: this.dateService.getSelectedDate(),
@@ -78,7 +75,6 @@ export class ChatService {
     
     return this.apiService.runResponsesConversation(request).pipe(
       map(response => {
-        console.log('[DEBUG] Assistant response received');
         
         // No need to map response properties as the API now returns ChatMessagesResponse directly
         const botResponse = response;
@@ -88,7 +84,6 @@ export class ChatService {
         return botResponse;
       }),
       catchError(error => {
-        console.error('Error in assistant conversation:', error);
         const errorResponse = new ChatMessagesResponse();
         errorResponse.isSuccess = false;
         errorResponse.messages = [];
@@ -98,7 +93,6 @@ export class ChatService {
   }
 
   getMessageHistoryByDate(localDateKey: string): Observable<ChatMessagesResponse> {
-    console.log('[DEBUG] Getting message history for date:', localDateKey);
     const request = new GetChatMessagesRequest({
       localDateKey: localDateKey
     });
@@ -135,7 +129,6 @@ export class ChatService {
         return response;
       }),
       catchError(error => {
-        console.error('Error learning more about topic:', error);
         return throwError(() => error);
       })
     );
