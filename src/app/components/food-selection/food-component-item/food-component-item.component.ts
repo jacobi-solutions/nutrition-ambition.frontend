@@ -309,14 +309,21 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
   onRowClicked(serving: ComponentServing): void {
     if (serving.providerServingId) {
-      this.servingSelected.emit({componentId: this.component.componentId, servingId: serving.providerServingId});
-      // Recompute display values after serving selection changes
-      this.computeDisplayValues();
+      // Only emit selection change if this serving is not already selected
+      // This prevents corrupting the virtual serving ID when clicking quantity inputs
+      const isAlreadySelected = this.isServingSelected(serving);
+      if (!isAlreadySelected) {
+        this.servingSelected.emit({componentId: this.component.componentId, servingId: serving.providerServingId});
+        // Recompute display values after serving selection changes
+        this.computeDisplayValues();
+      }
     }
   }
 
   onServingQuantityChanged(_serving: ComponentServing, quantity: number): void {
     this.quantityChanged.emit({componentId: this.component.componentId, quantity});
+    // Recompute display values to update serving label in main card
+    this.computeDisplayValues();
   }
 
   // TrackBy functions

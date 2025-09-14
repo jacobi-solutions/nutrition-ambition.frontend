@@ -439,6 +439,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       
       // Set the user virtual serving ID as default for display
       const userVirtualSid = originalSid + '::user';
+      console.log('🟢 SETTING selectedVirtualServingId (processResultItem):', userVirtualSid);
       (selected as any).selectedVirtualServingId = userVirtualSid;
     }
     return selected;
@@ -515,7 +516,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         // Set the user virtual serving ID as default for display (preselects user's preferred units)
         const originalSid = match.servings?.[0]?.providerServingId;
         if (originalSid) {
-          (match as any).selectedVirtualServingId = originalSid + '::user';
+          const newVirtualSid = originalSid + '::user';
+          console.log('🟢 SETTING selectedVirtualServingId (addNewAdditionMatch):', newVirtualSid);
+          (match as any).selectedVirtualServingId = newVirtualSid;
         }
       }
     });
@@ -544,6 +547,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   onServingSelected(componentId: string, servingId: string): void {
+    console.log('🔴 onServingSelected called with:', { componentId, servingId });
+    console.trace('Call stack:');
     const selectedFood = this.getSelectedFood(componentId);
     if (selectedFood) {
       // Handle virtual serving IDs (::user or ::canonical)
@@ -559,6 +564,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.selectedServingIdByComponentId.set(componentId, originalServingId);
 
       // Store the virtual serving selection for display purposes
+      console.log('🟢 SETTING selectedVirtualServingId (onServingSelected):', servingId);
       (selectedFood as any).selectedVirtualServingId = servingId;
 
       // Immediately update the precomputed selection state to ensure UI updates
@@ -1634,6 +1640,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const originalSid = (currentFood as any)?.selectedServingId;
       if (originalSid) {
         // Set the selection to match the row being edited (servingId already has ::user or ::canonical)
+        console.log('🟢 SETTING selectedVirtualServingId (onInlineQtyChanged):', servingId);
         (currentFood as any).selectedVirtualServingId = servingId;
         console.log('Setting selection to edited row:', servingId);
       }
@@ -2070,6 +2077,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             
             // Set the user virtual serving ID as default for display
             const userVirtualSid = originalSid + '::user';
+            console.log('🟢 SETTING selectedVirtualServingId (addEditOperation):', userVirtualSid);
             (selected as any).selectedVirtualServingId = userVirtualSid;
           }
         }
@@ -2324,9 +2332,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   handleQuantityChange(event: {componentId: string, quantity: number}): void {
     // Create a mock serving for the quantity change since onInlineQtyChanged expects a ComponentServing
     // We need to get the current serving and pass it along
+    console.log('=== handleQuantityChange START ===', { componentId: event.componentId, quantity: event.quantity });
     const currentServing = this.getSelectedServing(event.componentId);
+    console.log('handleQuantityChange - currentServing:', currentServing);
     if (currentServing) {
       this.onInlineQtyChanged(event.componentId, currentServing, event.quantity);
+    } else {
+      console.log('handleQuantityChange - NO CURRENT SERVING FOUND!');
     }
   }
 
