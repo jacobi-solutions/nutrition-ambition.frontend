@@ -20,6 +20,8 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Input() componentIndex: number = 0;
   @Input() isReadOnly: boolean = false;
   @Input() isEditMode: boolean = false;
+  @Input() isSingleComponentFood: boolean = false;
+  @Input() parentQuantity: number = 1;
 
   // Precomputed values for performance
   displayName: string = '';
@@ -157,13 +159,22 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
     // Compute serving label
     if (this.selectedServing) {
-      const quantity = this.getDisplayQuantity();
+      let quantity = this.getDisplayQuantity();
       const unit = this.getDisplayUnit();
+
+      // For single-component foods, multiply by parent quantity
+      if (this.isSingleComponentFood && this.parentQuantity > 1) {
+        quantity = quantity * this.parentQuantity;
+      }
 
       if (quantity && unit) {
         this.servingLabel = `${quantity} ${unit}`;
       } else {
-        this.servingLabel = `${this.selectedServing.displayQuantity} ${this.selectedServing.displayUnit}`;
+        const baseQuantity = this.selectedServing.displayQuantity || 1;
+        const finalQuantity = this.isSingleComponentFood && this.parentQuantity > 1
+          ? baseQuantity * this.parentQuantity
+          : baseQuantity;
+        this.servingLabel = `${finalQuantity} ${this.selectedServing.displayUnit}`;
       }
     } else {
       this.servingLabel = '';
@@ -229,7 +240,14 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
   getServingLabelForServing(serving: ComponentServing): string {
     if (!serving) return '';
-    return `${serving.displayQuantity} ${serving.displayUnit}`;
+
+    const baseQuantity = serving.displayQuantity || 1;
+    // For single-component foods, multiply the display quantity by parent quantity
+    const displayQuantity = this.isSingleComponentFood && this.parentQuantity > 1
+      ? (baseQuantity * this.parentQuantity)
+      : baseQuantity;
+
+    return `${displayQuantity} ${serving.displayUnit}`;
   }
 
   // Expanded functionality methods
@@ -248,7 +266,25 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   getOriginalPhrase(): string {
-    return this.component?.component?.originalPhrase || this.component?.component?.key || '';
+    const selectedFood = this.getSelectedFood();
+
+    // First try to get the original text from the selected food match
+    if (selectedFood && (selectedFood as any).originalText) {
+      return (selectedFood as any).originalText;
+    }
+
+    // Then try searchText for inferred foods
+    if (selectedFood && (selectedFood as any).inferred && (selectedFood as any).searchText) {
+      return (selectedFood as any).searchText;
+    }
+
+    // Look for OriginalPhrase at the food level (from backend Food model)
+    if (this.component?.component?.originalPhrase) {
+      return this.component.component.originalPhrase;
+    }
+
+    // Fallback to component key
+    return this.component?.component?.key || '';
   }
 
   hasEditChanges(): boolean {
@@ -261,7 +297,12 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   getEffectiveQuantityForServing(serving: ComponentServing): number {
-    return serving.scaledQuantity || serving.displayQuantity || 1;
+    const baseQuantity = serving.scaledQuantity || serving.displayQuantity || 1;
+
+    // For single-component foods, multiply by parent quantity
+    return this.isSingleComponentFood && this.parentQuantity > 1
+      ? (baseQuantity * this.parentQuantity)
+      : baseQuantity;
   }
 
   getUnitTextForServing(serving: ComponentServing): string {
@@ -306,7 +347,13 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   onServingQuantityChanged(_serving: ComponentServing, quantity: number): void {
-    this.quantityChanged.emit({componentId: this.component.componentId, quantity});
+    // For single-component foods, we need to reverse the multiplication
+    // The user sees multiplied quantities, but backend expects base quantities
+    const baseQuantity = this.isSingleComponentFood && this.parentQuantity > 1
+      ? quantity / this.parentQuantity
+      : quantity;
+
+    this.quantityChanged.emit({componentId: this.component.componentId, quantity: baseQuantity});
     // Recompute display values to update serving label in main card
     this.computeDisplayValues();
   }
@@ -351,7 +398,14 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
         // Scale by the serving quantity to get the actual macro amount
         const serving = this.getSelectedServing();
         const scaledQuantity = serving?.scaledQuantity || 1;
-        return nutrients[key] * scaledQuantity;
+        let macroValue = nutrients[key] * scaledQuantity;
+
+        // For single-component foods, multiply by parent quantity
+        if (this.isSingleComponentFood && this.parentQuantity > 1) {
+          macroValue = macroValue * this.parentQuantity;
+        }
+
+        return macroValue;
       }
     }
     return null;

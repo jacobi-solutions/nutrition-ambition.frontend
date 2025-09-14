@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, ViewChild, NO_ERRORS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
@@ -20,7 +20,8 @@ import { IonIcon } from '@ionic/angular/standalone';
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, FoodComponentItemComponent, SearchFoodComponent, FoodHeaderComponent, FoodSelectionActionsComponent, IonIcon]
+  imports: [CommonModule, FormsModule, FoodComponentItemComponent, SearchFoodComponent, FoodHeaderComponent, FoodSelectionActionsComponent, IonIcon],
+  schemas: [NO_ERRORS_SCHEMA]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() message!: DisplayMessage;
@@ -199,7 +200,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   // Get components for a specific food
-  getComponentsForFood(food: any): Array<{componentId: string, component: ComponentDisplay}> {
+  getComponentsForFood(food: any): ComponentDataDisplay[] {
     if (!food?.components) return [];
 
     // Return empty if the food has been removed
@@ -207,10 +208,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       return [];
     }
 
+    const activeComponents = food.components.filter((component: any) => component.id && !this.removedComponents.has(component.id));
+    const isSingleComponentFood = activeComponents.length === 1;
+    const parentQuantity = food.quantity || 1;
+
     // Filter out removed components and create ComponentDisplay objects with editing state
-    return food.components
-      .filter((component: any) => component.id && !this.removedComponents.has(component.id))
-      .map((component: any) => {
+    return activeComponents.map((component: any) => {
         const componentDisplay = new ComponentDisplay({
           ...component,
           isEditing: this.isComponentBeingEdited(component.id),
@@ -221,14 +224,19 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           loadingInstantOptions: !!this.loadingInstantOptionsFor[component.id],
           moreOptions: this.moreOptionsFor[component.id] || []
         });
-        return { componentId: component.id, component: componentDisplay };
+        return {
+          componentId: component.id,
+          component: componentDisplay,
+          isSingleComponentFood: isSingleComponentFood,
+          parentQuantity: parentQuantity
+        } as ComponentDataDisplay;
       });
   }
 
   // All remaining components across foods (excludes removed foods/components)
-  get availableComponents(): Array<{componentId: string, component: any}> {
+  get availableComponents(): ComponentDataDisplay[] {
     if (!this.message?.logMealToolResponse?.foods) return [];
-    const result: Array<{componentId: string, component: any}> = [];
+    const result: ComponentDataDisplay[] = [];
     for (const food of this.message.logMealToolResponse.foods) {
       const comps = this.getComponentsForFood(food);
       for (const c of comps) result.push(c);
@@ -274,7 +282,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   // Optimized totals using pre-calculated components (passed from template)
-  getFoodTotalCaloriesFromComponents(food: any, foodComponents: Array<{componentId: string, component: any}>): number {
+  getFoodTotalCaloriesFromComponents(food: any, foodComponents: ComponentDataDisplay[]): number {
     const componentTotal = foodComponents.reduce((total, { componentId }) => {
       const selectedServing = this.getSelectedServing(componentId);
       const calories = this.caloriesForServing(selectedServing);

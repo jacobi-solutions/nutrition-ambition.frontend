@@ -30,12 +30,14 @@
 
             <!-- Expanded food editing (quantity + components) -->
             <div *ngIf="!isReadOnly && (food.isEditingExpanded || false)" class="expanded-food-components">
-            <ng-container *ngFor="let componentData of foodComponents; trackBy: trackByComponentId">
+            <ng-container *ngFor="let componentData of $any(foodComponents); trackBy: trackByComponentId">
               <app-food-component-item
                 [component]="componentData"
                 [componentIndex]="0"
                 [isReadOnly]="isReadOnly"
                 [isEditMode]="isEditMode"
+                [isSingleComponentFood]="foodComponents.length === 1"
+                [parentQuantity]="food.quantity || 1"
                 (toggleExpansion)="toggleExpansion($event)"
                 (servingSelected)="onServingSelected($event.componentId, $event.servingId)"
                 (quantityChanged)="handleQuantityChange($event)"
@@ -54,12 +56,14 @@
 
           <!-- Single-component food: Display using child component -->
           <ng-container *ngIf="foodComponents.length === 1">
-            <ng-container *ngFor="let componentData of foodComponents; trackBy: trackByComponentId">
+            <ng-container *ngFor="let componentData of $any(foodComponents); trackBy: trackByComponentId">
               <app-food-component-item
                 [component]="componentData"
                 [componentIndex]="0"
                 [isReadOnly]="isReadOnly"
                 [isEditMode]="isEditMode"
+                [isSingleComponentFood]="foodComponents.length === 1"
+                [parentQuantity]="food.quantity || 1"
                 (toggleExpansion)="toggleExpansion($event)"
                 (servingSelected)="onServingSelected($event.componentId, $event.servingId)"
                 (quantityChanged)="handleQuantityChange($event)"

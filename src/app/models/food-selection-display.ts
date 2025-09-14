@@ -111,7 +111,7 @@ export class FoodDisplay extends Food {
   isEditingExpanded?: boolean;
 
   // Precomputed data to eliminate method calls in template
-  computedComponents?: Array<{componentId: string, component: ComponentDisplay}>;
+  computedComponents?: ComponentDataDisplay[];
 
   // Enhanced components with display flags
   components?: ComponentDisplay[] | undefined;
@@ -161,4 +161,6 @@ export class FoodDisplay extends Food {
 export interface ComponentDataDisplay {
   componentId: string;
   component: ComponentDisplay;
+  isSingleComponentFood?: boolean;
+  parentQuantity?: number;
 }
