@@ -1910,6 +1910,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.editingComponents[componentId] = true;
     this.editingComponentValues[componentId] = this.getSearchTextOnly(componentId);
     this.computeDisplayValues(componentId); // Update computed editing state
+    this.computeAllFoods(); // Recreate ComponentDisplay objects with updated isEditing flag
     this.cdr.detectChanges();
     
     // Then show the suggestion toast and focus the textarea
@@ -2009,14 +2010,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const newValue = this.editingComponentValues[componentId];
     const component = this.findComponentById(componentId);
     const originalValue = component?.key || '';
-    
+
     if (newValue && newValue.trim() !== originalValue) {
       console.log(`Component changed from "${originalValue}" to "${newValue}"`);
     }
-    
+
     this.editingComponents[componentId] = false;
     delete this.editingComponentValues[componentId];
     this.computeDisplayValues(componentId); // Update computed editing state
+    this.computeAllFoods(); // Recreate ComponentDisplay objects with updated isEditing flag
     this.cdr.detectChanges();
   }
 
@@ -2024,6 +2026,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.editingComponents[componentId] = false;
     delete this.editingComponentValues[componentId];
     this.computeDisplayValues(componentId); // Update computed editing state
+    this.computeAllFoods(); // Recreate ComponentDisplay objects with updated isEditing flag
     this.cdr.detectChanges();
   }
 
