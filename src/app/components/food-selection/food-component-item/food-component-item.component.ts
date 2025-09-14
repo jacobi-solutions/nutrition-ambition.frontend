@@ -206,8 +206,8 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   private computeSelectedServing(): ComponentServing | null {
     if (!this.selectedFood?.servings) return null;
 
-    // Find selected serving - for now, return first serving as default
-    const selectedServingId = this.component?.selectedServingId;
+    // Get the selectedServingId from the selected ComponentMatch
+    const selectedServingId = this.selectedFood.selectedServingId;
     if (selectedServingId) {
       return this.selectedFood.servings.find(s => s.providerServingId === selectedServingId) || this.selectedFood.servings[0];
     }
@@ -222,7 +222,8 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
   getDisplayQuantity(): number {
     const serving = this.getSelectedServing();
-    return serving?.scaledQuantity || serving?.displayQuantity || 1;
+    const quantity = serving?.scaledQuantity || serving?.displayQuantity || 1;
+    return Math.round(quantity * 100) / 100; // Round to 2 decimal places
   }
 
   getDisplayUnit(): string {
@@ -247,7 +248,8 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       ? (baseQuantity * this.parentQuantity)
       : baseQuantity;
 
-    return `${displayQuantity} ${serving.displayUnit}`;
+    const roundedQuantity = Math.round(displayQuantity * 100) / 100; // Round to 2 decimal places
+    return `${roundedQuantity} ${serving.displayUnit}`;
   }
 
   // Expanded functionality methods
