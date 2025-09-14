@@ -15,7 +15,7 @@
   </div>
 
   <ion-grid class="row-grid" *ngIf="!isSearching">
-    <ion-row class="top-row" align-items-center>
+    <ion-row class="top-row" align-items-start>
       <ion-col size="10" class="left">
         <div class="name-section">
           <span class="name">{{ displayName | titlecase}}</span>
@@ -43,6 +43,13 @@
         </div>
       </ion-col>
     </ion-row>
+    <ion-row *ngIf="getMacroSummary()" class="macro-row">
+      <ion-col size="12">
+        <div class="macro-summary">
+          {{ getMacroSummary() }}
+        </div>
+      </ion-col>
+    </ion-row>
   </ion-grid>
 </div>
 
@@ -64,27 +71,14 @@
               </ion-icon>
             </div>
 
-            <!-- Edit mode: Textarea with send button -->
-            <div *ngIf="isEditing" class="phrase-edit-mode">
-              <textarea
-                #phraseInput
-                class="phrase-input"
-                [value]="editingValue"
-                (input)="onEditingValueChanged($event)"
-                (blur)="onTextareaBlur($event)"
-                (keydown)="onComponentKeyDown($event)"
-                placeholder="Describe your food..."
-                autoFocus>
-              </textarea>
-              <button
-                class="send-button"
-                (click)="onEditConfirmed(editingValue)"
-                (mousedown)="$event.preventDefault()"
-                [disabled]="!hasEditChanges()"
-                type="button">
-                <ion-icon name="send"></ion-icon>
-              </button>
-            </div>
+            <!-- Edit mode: Use SearchFoodComponent -->
+            <app-search-food
+              *ngIf="isEditing"
+              [initialPhrase]="getOriginalPhrase()"
+              placeholder="Describe your food..."
+              (phraseSubmitted)="onEditConfirmed($event)"
+              (editCanceled)="onEditCanceled()">
+            </app-search-food>
           </div>
         </div>
         <div class="food-select-container">

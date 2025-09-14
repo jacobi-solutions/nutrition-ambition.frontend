@@ -1,0 +1,20 @@
+<!-- Search food input - just the textarea and send button -->
+<div class="search-food-input">
+    <textarea
+      #addFoodTextarea
+      class="add-food-input"
+      [(ngModel)]="currentPhrase"
+      (keydown)="onKeyDown($event)"
+      (blur)="onBlur($event)"
+      [placeholder]="placeholder"
+      (input)="autoResizeTextarea($any($event.target))">
+    </textarea>
+    <button
+      class="send-button"
+      (click)="submitPhrase()"
+      (mousedown)="$event.preventDefault()"
+      [disabled]="!hasChanges()">
+      <ion-icon name="send" *ngIf="!isSubmittingNewFood"></ion-icon>
+      <div *ngIf="isSubmittingNewFood" class="loading-dots">...</div>
+    </button>
+</div>

@@ -35,6 +35,12 @@
   }
 
   .name-section {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 2px;
+
     .name {
       font-family: 'Poppins', sans-serif;
       font-weight: 500;
@@ -46,7 +52,6 @@
       font-size: 0.75rem;
       color: var(--color-medium-gray);
       font-style: italic;
-      margin-left: 4px;
     }
 
     .brand-name {
@@ -56,11 +61,28 @@
   }
 
   .serving-line {
+    margin-top: 0;
+
     .inline-amount {
-      font-size: 0.75rem;
-      color: var(--color-medium-gray);
-      margin-top: 2px;
+      margin-left: 0;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--ion-color-medium);
+      line-height: 1.2;
     }
+  }
+
+  .macro-row {
+    margin-top: 2px;
+  }
+
+  .macro-summary {
+    margin-top: 0;
+    font-weight: 500;
+    font-size: .85em;
+    color: var(--ion-color-medium);
+    line-height: 1.3;
   }
 
   .action-icons {

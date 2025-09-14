@@ -41,7 +41,7 @@
                 (quantityChanged)="handleQuantityChange($event)"
                 (editStarted)="startEditingComponent($event)"
                 (editCanceled)="cancelEditingComponent($event)"
-                (editConfirmed)="sendUpdatedComponent($event.componentId)"
+                (editConfirmed)="sendUpdatedComponent($event)"
                 (removeComponent)="removeItem($event)"
                 (moreOptionsRequested)="toggleMoreOptions($event)"
                 (foodSelected)="handleFoodSelected($event)"
@@ -65,7 +65,7 @@
                 (quantityChanged)="handleQuantityChange($event)"
                 (editStarted)="startEditingComponent($event)"
                 (editCanceled)="cancelEditingComponent($event)"
-                (editConfirmed)="sendUpdatedComponent($event.componentId)"
+                (editConfirmed)="sendUpdatedComponent($event)"
                 (removeComponent)="removeItem($event)"
                 (moreOptionsRequested)="toggleMoreOptions($event)"
                 (foodSelected)="handleFoodSelected($event)"
@@ -80,12 +80,19 @@
     </div>
 
     <!-- Add something row -->
-    <app-add-food
-      [hasPayload]="hasPayload"
-      [isReadOnly]="isReadOnly"
-      [isEditMode]="isEditMode"
-      (foodAdded)="onFoodAdded($event)">
-    </app-add-food>
+    <div *ngIf="hasPayload && !isReadOnly && !isEditMode" class="add-something-row">
+      <div *ngIf="!isAddingFood" class="add-something-display" (click)="startAddingFood()">
+        <div class="add-something-text">Add something</div>
+        <ion-icon name="add-circle-outline" class="add-something-icon"></ion-icon>
+      </div>
+
+      <app-search-food
+        *ngIf="isAddingFood"
+        placeholder="What did you eat?"
+        (phraseSubmitted)="onFoodAdded($event)"
+        (editCanceled)="cancelAddingFood()">
+      </app-search-food>
+    </div>
   </div>
 
 

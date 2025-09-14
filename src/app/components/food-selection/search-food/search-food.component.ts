@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular/standalone';
@@ -6,33 +6,31 @@ import { addIcons } from 'ionicons';
 import { send, addCircleOutline } from 'ionicons/icons';
 
 @Component({
-  selector: 'app-add-food',
-  templateUrl: './add-food.component.html',
-  styleUrls: ['./add-food.component.scss'],
+  selector: 'app-search-food',
+  templateUrl: './search-food.component.html',
+  styleUrls: ['./search-food.component.scss'],
   standalone: true,
   imports: [CommonModule, FormsModule, IonIcon]
 })
-export class AddFoodComponent {
-  @Input() isReadOnly: boolean = false;
-  @Input() isEditMode: boolean = false;
-  @Input() hasPayload: boolean = false;
+export class SearchFoodComponent implements OnInit {
+  @Input() initialPhrase: string = '';
+  @Input() placeholder: string = 'What did you eat?';
+  @Input() isVisible: boolean = false;
 
-  @Output() foodAdded = new EventEmitter<string>();
+  @Output() phraseSubmitted = new EventEmitter<string>();
+  @Output() editCanceled = new EventEmitter<void>();
 
   @ViewChild('addFoodTextarea', { static: false }) addFoodTextarea!: ElementRef<HTMLTextAreaElement>;
 
-  isAddingFood = false;
-  newFoodPhrase = '';
+  currentPhrase = '';
   isSubmittingNewFood = false;
 
   constructor() {
     addIcons({ send, addCircleOutline });
   }
 
-  startAddingFood(): void {
-    this.isAddingFood = true;
-    this.newFoodPhrase = '';
-
+  ngOnInit(): void {
+    this.currentPhrase = this.initialPhrase;
     // Focus the textarea after view update
     setTimeout(() => {
       if (this.addFoodTextarea) {
@@ -41,31 +39,29 @@ export class AddFoodComponent {
     }, 50);
   }
 
-  cancelAddingFood(): void {
-    this.isAddingFood = false;
-    this.newFoodPhrase = '';
-    this.isSubmittingNewFood = false;
+  cancel(): void {
+    this.editCanceled.emit();
   }
 
-  sendNewFood(): void {
-    if (!this.newFoodPhrase?.trim() || this.isSubmittingNewFood) {
+  submitPhrase(): void {
+    if (!this.currentPhrase?.trim() || this.isSubmittingNewFood) {
       return;
     }
 
     this.isSubmittingNewFood = true;
-    this.foodAdded.emit(this.newFoodPhrase.trim());
+    this.phraseSubmitted.emit(this.currentPhrase.trim());
   }
 
-  onAddFoodKeyDown(event: KeyboardEvent): void {
+  onKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      this.sendNewFood();
+      this.submitPhrase();
     } else if (event.key === 'Escape') {
-      this.cancelAddingFood();
+      this.cancel();
     }
   }
 
-  onAddFoodBlur(event: FocusEvent): void {
+  onBlur(event: FocusEvent): void {
     // Don't cancel if user clicked the send button
     const relatedTarget = event.relatedTarget as HTMLElement;
     if (relatedTarget && relatedTarget.classList.contains('send-button')) {
@@ -74,8 +70,8 @@ export class AddFoodComponent {
 
     // Small timeout to allow for button clicks
     setTimeout(() => {
-      if (!this.newFoodPhrase?.trim()) {
-        this.cancelAddingFood();
+      if (!this.currentPhrase?.trim()) {
+        this.cancel();
       }
     }, 150);
   }
@@ -88,6 +84,10 @@ export class AddFoodComponent {
   // Reset state when submission is complete
   resetSubmissionState(): void {
     this.isSubmittingNewFood = false;
-    this.cancelAddingFood();
+  }
+
+  // Check if there are changes from the initial value
+  hasChanges(): boolean {
+    return this.currentPhrase.trim() !== this.initialPhrase.trim() && this.currentPhrase.trim().length > 0;
   }
 }

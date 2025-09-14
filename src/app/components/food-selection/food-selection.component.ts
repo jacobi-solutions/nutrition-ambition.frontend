@@ -5,7 +5,7 @@ import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse } from 'src/app/services/nutrition-ambition-api.service';
 import { FoodComponentItemComponent } from './food-component-item/food-component-item.component';
-import { AddFoodComponent } from './add-food/add-food.component';
+import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodHeaderComponent } from './food-header/food-header.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { DisplayMessage } from 'src/app/models/display-message';
@@ -13,13 +13,14 @@ import { ComponentDisplay, FoodDisplay, ComponentDataDisplay } from 'src/app/mod
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
+import { IonIcon } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'app-food-selection',
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, FoodComponentItemComponent, AddFoodComponent, FoodHeaderComponent, FoodSelectionActionsComponent]
+  imports: [CommonModule, FormsModule, FoodComponentItemComponent, SearchFoodComponent, FoodHeaderComponent, FoodSelectionActionsComponent, IonIcon]
 })
 export class FoodSelectionComponent implements OnInit, OnChanges {
   @Input() message!: DisplayMessage;
@@ -30,10 +31,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   @Output() updatedMessage = new EventEmitter<DisplayMessage>();
   @Output() phraseEditRequested = new EventEmitter<{originalPhrase: string, newPhrase: string, messageId: string, componentId?: string}>();
 
-  @ViewChild(AddFoodComponent) addFoodComponent?: AddFoodComponent;
+  @ViewChild(SearchFoodComponent) addFoodComponent?: SearchFoodComponent;
 
   isReadOnly = false;
   isEditMode = false;
+  isAddingFood = false;
 
   expandedSections: { [componentId: string]: boolean } = {};
   expandedFoods: { [foodIndex: number]: boolean } = {}; // Track food-level expansion
@@ -139,6 +141,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.isReadOnly = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
     this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
+    this.isAddingFood = false; // Ensure this is always false on init
     this.rebuildLookupCaches();
     this.initializeComputedValues();
   }
@@ -159,6 +162,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       if (this.addFoodComponent) {
         this.addFoodComponent.resetSubmissionState();
       }
+
+      // Reset adding food state when message changes
+      this.isAddingFood = false;
 
       this.rebuildLookupCaches();
       this.initializeComputedValues();
@@ -1880,21 +1886,34 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return currentValue.trim() !== originalValue.trim();
   }
 
-  sendUpdatedComponent(componentId: string): void {
+  sendUpdatedComponent(eventOrComponentId: {componentId: string; newPhrase: string} | string): void {
+    let componentId: string;
+    let newPhrase: string;
+
+    // Handle both old (string) and new (object) call patterns
+    if (typeof eventOrComponentId === 'string') {
+      // Old pattern: just componentId, get newPhrase from editing values
+      componentId = eventOrComponentId;
+      newPhrase = this.editingComponentValues[componentId] || '';
+    } else {
+      // New pattern: event object with both values
+      componentId = eventOrComponentId.componentId;
+      newPhrase = eventOrComponentId.newPhrase;
+    }
+
     this.toggleExpansion(componentId);
-    const newValue = this.editingComponentValues[componentId];
-    
-    if (!newValue || !newValue.trim()) {
+
+    if (!newPhrase || !newPhrase.trim()) {
       return;
     }
 
     // Close the edit mode completely first
     this.finishEditingComponent(componentId);
-    
-    // Then send the request
+
+    // Then send the request using the newPhrase value
     this.phraseEditRequested.emit({
       originalPhrase: 'UPDATE', // Non-empty value to indicate this is an update
-      newPhrase: newValue.trim(),
+      newPhrase: newPhrase.trim(),
       messageId: this.message.id || '',
       componentId: componentId
     });
@@ -1925,13 +1944,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // The backend returns the updated ChatMessage with the new foods structure
 
   // Handle adding new food from child component
-  onFoodAdded(newPhrase: string): void {
+  
+  onFoodAdded(phrase: string): void {
+    // Handle the new food phrase submission
     this.phraseEditRequested.emit({
-      originalPhrase: '', // Empty indicates this is a new addition
-      newPhrase: newPhrase,
-      messageId: this.message.id || '',
-      componentId: undefined // No specific component for new additions
+      originalPhrase: '',
+      newPhrase: phrase,
+      messageId: this.message.id || ''
     });
+    this.isAddingFood = false;
   }
 
   // Build quick-lookup caches from the current message payload
@@ -2211,4 +2232,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.onFoodSelected(event.componentId, foodId);
     }
   }
+
+  // Add food methods
+  startAddingFood(): void {
+    this.isAddingFood = true;
+  }
+
+  cancelAddingFood(): void {
+    this.isAddingFood = false;
+  }
+
+  
 }

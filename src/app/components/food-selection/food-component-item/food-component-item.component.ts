@@ -6,13 +6,14 @@ import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
+import { SearchFoodComponent } from '../search-food/search-food.component';
 
 @Component({
   selector: 'app-food-component-item',
   templateUrl: './food-component-item.component.html',
   styleUrls: ['./food-component-item.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, ServingQuantityInputComponent]
+  imports: [CommonModule, FormsModule, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, ServingQuantityInputComponent, SearchFoodComponent]
 })
 export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Input() component: any; // Component data from parent
@@ -268,23 +269,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   // Event handlers for expanded functionality
-  onEditingValueChanged(_event: any): void {
-    // This would normally update local state, but for now we'll use input binding
-    // In a full implementation, we'd track editing state locally
-  }
-
-  onTextareaBlur(_event: any): void {
-    // Handle textarea blur - could auto-save or cancel
-  }
-
-  onComponentKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.onEditConfirmed(this.editingValue);
-    } else if (event.key === 'Escape') {
-      this.onEditCanceled();
-    }
-  }
+  // Note: Edit handling is now done by SearchFoodComponent
 
   onFoodSelectedFromDropdown(foodId: string): void {
     const food = this.getDisplayMatches().find(m => m.providerFoodId === foodId);
@@ -329,6 +314,47 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   // TrackBy functions
   trackByServingId(index: number, serving: ComponentServing): string {
     return serving.providerServingId || index.toString();
+  }
+
+  // Get current edited phrase value
+  getCurrentEditedPhrase(): string {
+    return this.component?.component?.editingValue || this.getOriginalPhrase();
+  }
+
+  getMacroSummary(): string {
+    const serving = this.getSelectedServing();
+    if (!serving?.nutrients) return '';
+
+    const calories = this.getMacro(serving.nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']);
+    const protein = this.getMacro(serving.nutrients, ['protein', 'Protein']);
+    const fat = this.getMacro(serving.nutrients, ['fat', 'Fat', 'total_fat']);
+    const carbs = this.getMacro(serving.nutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']);
+
+    // Only show if we have at least calories
+    if (calories === null) return '';
+
+    const parts = [];
+    if (calories !== null) parts.push(`${Math.round(calories)} cal`);
+
+    // Only add other macros if they exist (branded foods may only have calories)
+    if (protein !== null) parts.push(`${Math.round(protein)} protein`);
+    if (fat !== null) parts.push(`${Math.round(fat)} fat`);
+    if (carbs !== null) parts.push(`${Math.round(carbs)} carbs`);
+
+    return `(${parts.join(', ')})`;
+  }
+
+  private getMacro(nutrients: { [key: string]: number } | undefined, keys: string[]): number | null {
+    if (!nutrients) return null;
+    for (const key of keys) {
+      if (typeof nutrients[key] === 'number') {
+        // Scale by the serving quantity to get the actual macro amount
+        const serving = this.getSelectedServing();
+        const scaledQuantity = serving?.scaledQuantity || 1;
+        return nutrients[key] * scaledQuantity;
+      }
+    }
+    return null;
   }
 
   // Debug helper
