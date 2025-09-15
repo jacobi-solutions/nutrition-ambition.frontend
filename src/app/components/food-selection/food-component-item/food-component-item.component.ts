@@ -31,6 +31,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   selectedFood: ComponentMatch | null = null;
   selectedServing: ComponentServing | null = null;
   computedIsNewAddition: boolean = false;
+  macroSummary: string = '';
 
   // Getters for ComponentDisplay flags
   get isExpanded(): boolean {
@@ -183,6 +184,9 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     // Compute isNewAddition flag
     const matches = this.getDisplayMatches();
     this.computedIsNewAddition = matches.length > 0 && !!(matches[0] as any).isNewAddition;
+
+    // Compute macro summary
+    this.macroSummary = this.computeMacroSummary();
   }
 
 
@@ -370,7 +374,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     return this.component?.component?.editingValue || this.getOriginalPhrase();
   }
 
-  getMacroSummary(): string {
+  private computeMacroSummary(): string {
     const serving = this.getSelectedServing();
     if (!serving?.nutrients) return '';
 

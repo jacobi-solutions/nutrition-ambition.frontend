@@ -79,9 +79,10 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     }
 
     // Check if any components are branded
-    const hasAnyBrandedComponents = this.food.components.some((component: any) =>
-      component.selectedFood?.brand || component.selectedFood?.brandOwner
-    );
+    const hasAnyBrandedComponents = this.food.components.some((component: any) => {
+      const selectedMatch = component.matches?.find((m: any) => m.rank === 1) || component.matches?.[0];
+      return selectedMatch?.brandName;
+    });
 
     // Aggregate macros from all components
     const aggregatedMacros = this.aggregateComponentMacros();
@@ -126,23 +127,31 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     }
 
     for (const component of this.food.components) {
-      const selectedFood = component.selectedFood;
-      if (!selectedFood?.nutrients) continue;
+      // Get the selected match (first one with rank 1, or just first one)
+      const selectedMatch = component.matches?.find((m: any) => m.rank === 1) || component.matches?.[0];
+      if (!selectedMatch) continue;
 
-      const scaledQuantity = component.scaledQuantity || component.quantity || 1;
+      // Get the selected serving (first one, or the one matching selectedServingId)
+      const selectedServing = selectedMatch.servings?.find((s: any) =>
+        s.providerServingId === selectedMatch.selectedServingId
+      ) || selectedMatch.servings?.[0];
+
+      if (!selectedServing?.nutrients) continue;
+
+      const scaledQuantity = selectedServing.scaledQuantity || selectedMatch.effectiveQuantity || 1;
 
       // Add scaled nutrients
-      if (selectedFood.nutrients.energy_kcal) {
-        aggregated.calories += selectedFood.nutrients.energy_kcal * scaledQuantity;
+      if (selectedServing.nutrients.calories) {
+        aggregated.calories += selectedServing.nutrients.calories * scaledQuantity;
       }
-      if (selectedFood.nutrients.protein) {
-        aggregated.protein += selectedFood.nutrients.protein * scaledQuantity;
+      if (selectedServing.nutrients.protein) {
+        aggregated.protein += selectedServing.nutrients.protein * scaledQuantity;
       }
-      if (selectedFood.nutrients.total_fat) {
-        aggregated.fat += selectedFood.nutrients.total_fat * scaledQuantity;
+      if (selectedServing.nutrients.fat) {
+        aggregated.fat += selectedServing.nutrients.fat * scaledQuantity;
       }
-      if (selectedFood.nutrients.carbohydrate) {
-        aggregated.carbs += selectedFood.nutrients.carbohydrate * scaledQuantity;
+      if (selectedServing.nutrients.carbohydrate) {
+        aggregated.carbs += selectedServing.nutrients.carbohydrate * scaledQuantity;
       }
     }
 
