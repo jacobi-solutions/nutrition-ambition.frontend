@@ -55,8 +55,9 @@
     }
 
     .brand-name {
-      font-size: 0.75rem;
-      color: var(--color-medium-gray);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--ion-color-primary);
     }
   }
 
@@ -149,7 +150,7 @@
       justify-content: center;
 
       .dot {
-        background-color: #D64933;
+        background-color: var(--ion-color-medium);
         border-radius: 50%;
         width: 6px;
         height: 6px;
