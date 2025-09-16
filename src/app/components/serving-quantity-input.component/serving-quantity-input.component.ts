@@ -29,10 +29,7 @@ export class ServingQuantityInputComponent {
 
   private emitValue(newValue: number): void {
     const clamped = this.clamp(newValue);
-    if (clamped !== this.value) {
-      this.value = clamped;
-      this.valueChange.emit(this.value);
-    }
+    this.valueChange.emit(clamped);
   }
 
   decrease(): void {
@@ -60,7 +57,6 @@ export class ServingQuantityInputComponent {
     const newValue = parseFloat(target.value);
     // Emit immediately on input, but don't clamp yet (allow intermediate values)
     if (isFinite(newValue) && !isNaN(newValue)) {
-      this.value = newValue;
       this.valueChange.emit(newValue);
     }
   }

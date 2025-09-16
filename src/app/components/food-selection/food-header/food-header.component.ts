@@ -18,6 +18,7 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   @Input() isReadOnly: boolean = false;
   @Input() isExpanded: boolean = false;
   @Input() currentQuantity: number = 1;
+  @Input() selectedServings: { [componentId: string]: any } = {};
 
   @Output() toggleExpansion = new EventEmitter<number>();
   @Output() quantityChanged = new EventEmitter<{foodIndex: number, quantity: number}>();
@@ -43,7 +44,11 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['food'] || changes['currentQuantity'] || changes['isExpanded'] || changes['isReadOnly']) {
+    console.log('🟦 FoodHeader ngOnChanges:', Object.keys(changes));
+    if (changes['selectedServings']) {
+      console.log('🟦 selectedServings changed:', changes['selectedServings'].currentValue);
+    }
+    if (changes['food'] || changes['currentQuantity'] || changes['isExpanded'] || changes['isReadOnly'] || changes['selectedServings']) {
       this.computeDisplayValues();
     }
   }
@@ -78,84 +83,109 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
       return;
     }
 
-    // Check if any components are branded
-    const hasAnyBrandedComponents = this.food.components.some((component: any) => {
-      const selectedMatch = component.matches?.find((m: any) => m.rank === 1) || component.matches?.[0];
-      return selectedMatch?.brandName;
-    });
-
     // Aggregate macros from all components
     const aggregatedMacros = this.aggregateComponentMacros();
 
-    if (hasAnyBrandedComponents) {
-      // Show calories only if any components are branded
-      this.shouldShowCaloriesOnly = true;
-      this.shouldShowMacros = false;
-      if (aggregatedMacros.calories && aggregatedMacros.calories > 0) {
-        this.macroSummary = `${Math.round(aggregatedMacros.calories)} cal`;
-      } else {
-        this.macroSummary = '';
-      }
-    } else {
-      // Show all macros if none are branded
-      this.shouldShowCaloriesOnly = false;
-      this.shouldShowMacros = true;
-      const parts: string[] = [];
+    // Always show full macro information for multi-component foods
+    this.shouldShowMacros = true;
+    this.shouldShowCaloriesOnly = false;
 
-      if (aggregatedMacros.calories && aggregatedMacros.calories > 0) {
-        parts.push(`${Math.round(aggregatedMacros.calories)} cal`);
-      }
-      if (aggregatedMacros.protein && aggregatedMacros.protein > 0) {
-        parts.push(`${Math.round(aggregatedMacros.protein)}g protein`);
-      }
-      if (aggregatedMacros.fat && aggregatedMacros.fat > 0) {
-        parts.push(`${Math.round(aggregatedMacros.fat)}g fat`);
-      }
-      if (aggregatedMacros.carbs && aggregatedMacros.carbs > 0) {
-        parts.push(`${Math.round(aggregatedMacros.carbs)}g carbs`);
-      }
+    const parts: string[] = [];
 
-      this.macroSummary = parts.join(', ');
+    if (aggregatedMacros.calories !== null && aggregatedMacros.calories >= 0) {
+      parts.push(`${Math.round(aggregatedMacros.calories)} cal`);
     }
+    if (aggregatedMacros.protein !== null && aggregatedMacros.protein >= 0) {
+      parts.push(`${Math.round(aggregatedMacros.protein)} protein`);
+    }
+    if (aggregatedMacros.fat !== null && aggregatedMacros.fat >= 0) {
+      parts.push(`${Math.round(aggregatedMacros.fat)} fat`);
+    }
+    if (aggregatedMacros.carbs !== null && aggregatedMacros.carbs >= 0) {
+      parts.push(`${Math.round(aggregatedMacros.carbs)} carbs`);
+    }
+
+    this.macroSummary = parts.length > 0 ? `(${parts.join(', ')})` : '';
   }
 
-  private aggregateComponentMacros(): { calories: number; protein: number; fat: number; carbs: number } {
+  private aggregateComponentMacros(): { calories: number | null; protein: number | null; fat: number | null; carbs: number | null } {
     const aggregated = { calories: 0, protein: 0, fat: 0, carbs: 0 };
+    let hasAnyNutrients = false;
 
     if (!this.food?.components) {
-      return aggregated;
+      return { calories: null, protein: null, fat: null, carbs: null };
     }
 
     for (const component of this.food.components) {
-      // Get the selected match (first one with rank 1, or just first one)
-      const selectedMatch = component.matches?.find((m: any) => m.rank === 1) || component.matches?.[0];
-      if (!selectedMatch) continue;
+      console.log('🍎 Processing component:', component.id, component.key);
 
-      // Get the selected serving (first one, or the one matching selectedServingId)
-      const selectedServing = selectedMatch.servings?.find((s: any) =>
-        s.providerServingId === selectedMatch.selectedServingId
-      ) || selectedMatch.servings?.[0];
+      // Get the selected serving using the selectedServings input if available
+      let selectedServing = null;
+      if (component.id && this.selectedServings[component.id]) {
+        selectedServing = this.selectedServings[component.id];
+        console.log('🍎 Using selectedServings input:', selectedServing.id);
+      } else {
+        // Fallback to the original logic
+        console.log('🍎 Falling back to original logic');
+        const selectedMatch = component.matches?.find((m: any) => m.isBestMatch) || component.matches?.[0];
+        if (!selectedMatch) continue;
+        selectedServing = selectedMatch.servings?.find((s: any) =>
+          s.providerServingId === selectedMatch.selectedServingId
+        ) || selectedMatch.servings?.[0];
+        console.log('🍎 Fallback selectedServing:', selectedServing?.id);
+      }
 
       if (!selectedServing?.nutrients) continue;
 
-      const scaledQuantity = selectedServing.scaledQuantity || selectedMatch.effectiveQuantity || 1;
+      // The nutrients are already scaled by the parent component, so we can use them directly
+      const nutrients = selectedServing.nutrients;
+      console.log('🍎 Using nutrients:', {
+        calories: this.getMacro(nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']),
+        protein: this.getMacro(nutrients, ['protein', 'Protein']),
+        fat: this.getMacro(nutrients, ['fat', 'Fat', 'total_fat']),
+        carbs: this.getMacro(nutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs'])
+      });
 
-      // Add scaled nutrients
-      if (selectedServing.nutrients.calories) {
-        aggregated.calories += selectedServing.nutrients.calories * scaledQuantity;
+      if (this.getMacro(nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']) !== null) {
+        aggregated.calories += this.getMacro(nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy'])!;
+        hasAnyNutrients = true;
       }
-      if (selectedServing.nutrients.protein) {
-        aggregated.protein += selectedServing.nutrients.protein * scaledQuantity;
+      if (this.getMacro(nutrients, ['protein', 'Protein']) !== null) {
+        aggregated.protein += this.getMacro(nutrients, ['protein', 'Protein'])!;
+        hasAnyNutrients = true;
       }
-      if (selectedServing.nutrients.fat) {
-        aggregated.fat += selectedServing.nutrients.fat * scaledQuantity;
+      if (this.getMacro(nutrients, ['fat', 'Fat', 'total_fat']) !== null) {
+        aggregated.fat += this.getMacro(nutrients, ['fat', 'Fat', 'total_fat'])!;
+        hasAnyNutrients = true;
       }
-      if (selectedServing.nutrients.carbohydrate) {
-        aggregated.carbs += selectedServing.nutrients.carbohydrate * scaledQuantity;
+      if (this.getMacro(nutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']) !== null) {
+        aggregated.carbs += this.getMacro(nutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs'])!;
+        hasAnyNutrients = true;
       }
     }
 
-    return aggregated;
+    // Apply food-level quantity multiplier
+    const foodQuantity = this.currentQuantity || this.food?.quantity || 1;
+    if (hasAnyNutrients) {
+      return {
+        calories: aggregated.calories * foodQuantity,
+        protein: aggregated.protein * foodQuantity,
+        fat: aggregated.fat * foodQuantity,
+        carbs: aggregated.carbs * foodQuantity
+      };
+    }
+
+    return { calories: null, protein: null, fat: null, carbs: null };
+  }
+
+  private getMacro(nutrients: { [key: string]: number } | undefined, keys: string[]): number | null {
+    if (!nutrients) return null;
+    for (const key of keys) {
+      if (typeof nutrients[key] === 'number') {
+        return nutrients[key];
+      }
+    }
+    return null;
   }
 
   onToggleExpansion(): void {

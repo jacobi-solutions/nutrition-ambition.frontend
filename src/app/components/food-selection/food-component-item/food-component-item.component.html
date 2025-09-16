@@ -74,7 +74,7 @@
             <!-- Edit mode: Use SearchFoodComponent -->
             <app-search-food
               *ngIf="isEditing"
-              [initialPhrase]="getOriginalPhrase()"
+              [initialPhrase]="originalPhrase"
               placeholder="Describe your food..."
               (phraseSubmitted)="onEditConfirmed($event)"
               (editCanceled)="onEditCanceled()">
@@ -85,13 +85,13 @@
           <ion-select
             interface="popover"
             [interfaceOptions]="{ cssClass: 'wide-select-popover scrollable-popover' }"
-            [value]="getSelectedFoodId()"
+            [value]="selectedFoodId"
             (ionChange)="onFoodSelectedFromDropdown($event.detail.value)"
             (ionFocus)="onDropdownWillOpen()"
             [disabled]="isReadOnly"
             id="foodSelect-{{ component.componentId }}">
             <ion-select-option
-              *ngFor="let match of getDisplayMatches()"
+              *ngFor="let match of displayMatches"
               [value]="match.providerFoodId"
               [disabled]="match.providerFoodId === 'loading'">
               <span *ngIf="match.providerFoodId === 'loading'" class="loading-dots">...</span>
@@ -105,7 +105,7 @@
 
         <!-- More options list -->
         <div *ngIf="showingMoreOptions" class="more-options-list">
-          <div class="more-options-header">More options for "{{ getOriginalPhrase() }}":</div>
+          <div class="more-options-header">More options for "{{ originalPhrase }}":</div>
           <ion-list class="more-options-items">
             <ion-item
               *ngFor="let alternative of moreOptions"
@@ -122,31 +122,31 @@
 
       <div class="serving-options-inline">
         <ion-radio-group
-          [value]="getSelectedServingId()"
+          [value]="selectedServingId"
           (ionChange)="onServingSelectedFromRadio($event.detail.value)">
           <ion-radio
-            *ngFor="let serving of getServingOptions(); trackBy: trackByServingId"
-            [value]="serving.providerServingId"
+            *ngFor="let serving of servingOptions; trackBy: trackByServingId"
+            [value]="serving.id"
             [disabled]="isReadOnly"
             (click)="onRowClicked(serving)">
             <div class="serving-row-content" (click)="$event.stopPropagation(); onRowClicked(serving)">
               <!-- Show stepper only for selected row -->
-              <ng-container *ngIf="isServingSelected(serving) && !isReadOnly">
+              <ng-container *ngIf="serving.isSelected && !isReadOnly">
                 <app-serving-quantity-input
-                  [value]="getEffectiveQuantityForServing(serving)"
+                  [value]="serving.effectiveQuantity || 1"
                   [step]="1"
                   [min]="0.1"
                   [max]="999"
                   [disabled]="isReadOnly"
-                  [ariaLabel]="'Quantity for ' + getUnitTextForServing(serving)"
+                  [ariaLabel]="'Quantity for ' + (serving.unitText || '')"
                   (click)="$event.stopPropagation(); onRowClicked(serving)"
                   (valueChange)="onServingQuantityChanged(serving, $event)">
                 </app-serving-quantity-input>
-                <span class="unit-label">{{ getUnitTextForServing(serving) }}</span>
+                <span class="unit-label">{{ serving.unitText || '' }}</span>
               </ng-container>
               <!-- Show normal label for unselected rows or read-only mode -->
-              <ng-container *ngIf="!isServingSelected(serving) || isReadOnly">
-                <span class="serving-label">{{ getServingLabelForServing(serving) }}</span>
+              <ng-container *ngIf="!serving.isSelected || isReadOnly">
+                <span class="serving-label">{{ serving.servingLabel }}</span>
               </ng-container>
             </div>
           </ion-radio>

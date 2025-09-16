@@ -80,6 +80,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    parseFoodText(body: ParseFoodTextRequest | undefined): Observable<ParseFoodTextResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
@@ -838,6 +843,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<GetAccountDataCountsResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    parseFoodText(body: ParseFoodTextRequest | undefined): Observable<ParseFoodTextResponse> {
+        let url_ = this.baseUrl + "/api/Claude/parse-food-text";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processParseFoodText(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processParseFoodText(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ParseFoodTextResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ParseFoodTextResponse>;
+        }));
+    }
+
+    protected processParseFoodText(response: HttpResponseBase): Observable<ParseFoodTextResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ParseFoodTextResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ParseFoodTextResponse>(null as any);
     }
 
     /**
@@ -2450,6 +2511,7 @@ export class Component implements IComponent {
     id?: string | undefined;
     selectedComponentId?: string | undefined;
     matches?: ComponentMatch[] | undefined;
+    culinaryRole?: string | undefined;
 
     constructor(data?: IComponent) {
         if (data) {
@@ -2469,6 +2531,7 @@ export class Component implements IComponent {
                 for (let item of _data["matches"])
                     this.matches!.push(ComponentMatch.fromJS(item));
             }
+            this.culinaryRole = _data["culinaryRole"];
         }
     }
 
@@ -2488,6 +2551,7 @@ export class Component implements IComponent {
             for (let item of this.matches)
                 data["matches"].push(item.toJSON());
         }
+        data["culinaryRole"] = this.culinaryRole;
         return data;
     }
 }
@@ -2496,6 +2560,7 @@ export interface IComponent {
     id?: string | undefined;
     selectedComponentId?: string | undefined;
     matches?: ComponentMatch[] | undefined;
+    culinaryRole?: string | undefined;
 }
 
 export class ComponentBreakdown implements IComponentBreakdown {
@@ -2567,6 +2632,7 @@ export interface IComponentBreakdown {
 }
 
 export class ComponentMatch implements IComponentMatch {
+    id?: string | undefined;
     provider?: string | undefined;
     providerFoodId?: string | undefined;
     displayName?: string | undefined;
@@ -2584,6 +2650,7 @@ export class ComponentMatch implements IComponentMatch {
     inferred?: boolean;
     inferredReason?: string | undefined;
     searchText?: string | undefined;
+    culinaryRole?: string | undefined;
 
     constructor(data?: IComponentMatch) {
         if (data) {
@@ -2596,6 +2663,7 @@ export class ComponentMatch implements IComponentMatch {
 
     init(_data?: any) {
         if (_data) {
+            this.id = _data["id"];
             this.provider = _data["provider"];
             this.providerFoodId = _data["providerFoodId"];
             this.displayName = _data["displayName"];
@@ -2617,6 +2685,7 @@ export class ComponentMatch implements IComponentMatch {
             this.inferred = _data["inferred"];
             this.inferredReason = _data["inferredReason"];
             this.searchText = _data["searchText"];
+            this.culinaryRole = _data["culinaryRole"];
         }
     }
 
@@ -2629,6 +2698,7 @@ export class ComponentMatch implements IComponentMatch {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
         data["provider"] = this.provider;
         data["providerFoodId"] = this.providerFoodId;
         data["displayName"] = this.displayName;
@@ -2650,11 +2720,13 @@ export class ComponentMatch implements IComponentMatch {
         data["inferred"] = this.inferred;
         data["inferredReason"] = this.inferredReason;
         data["searchText"] = this.searchText;
+        data["culinaryRole"] = this.culinaryRole;
         return data;
     }
 }
 
 export interface IComponentMatch {
+    id?: string | undefined;
     provider?: string | undefined;
     providerFoodId?: string | undefined;
     displayName?: string | undefined;
@@ -2672,15 +2744,18 @@ export interface IComponentMatch {
     inferred?: boolean;
     inferredReason?: string | undefined;
     searchText?: string | undefined;
+    culinaryRole?: string | undefined;
 }
 
 export class ComponentServing implements IComponentServing {
+    id?: string | undefined;
     providerServingId?: string | undefined;
     description?: string | undefined;
-    displayQuantity?: number;
-    displayUnit?: string | undefined;
-    scaledQuantity?: number;
-    scaledUnit?: string | undefined;
+    baseQuantity?: number;
+    baseUnit?: string | undefined;
+    aiRecommendedScale?: number;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
     metricServingAmount?: number | undefined;
     metricServingUnit?: string | undefined;
     numberOfUnits?: number | undefined;
@@ -2700,12 +2775,14 @@ export class ComponentServing implements IComponentServing {
 
     init(_data?: any) {
         if (_data) {
+            this.id = _data["id"];
             this.providerServingId = _data["providerServingId"];
             this.description = _data["description"];
-            this.displayQuantity = _data["displayQuantity"];
-            this.displayUnit = _data["displayUnit"];
-            this.scaledQuantity = _data["scaledQuantity"];
-            this.scaledUnit = _data["scaledUnit"];
+            this.baseQuantity = _data["baseQuantity"];
+            this.baseUnit = _data["baseUnit"];
+            this.aiRecommendedScale = _data["aiRecommendedScale"];
+            this.singularUnit = _data["singularUnit"];
+            this.pluralUnit = _data["pluralUnit"];
             this.metricServingAmount = _data["metricServingAmount"];
             this.metricServingUnit = _data["metricServingUnit"];
             this.numberOfUnits = _data["numberOfUnits"];
@@ -2731,12 +2808,14 @@ export class ComponentServing implements IComponentServing {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
         data["providerServingId"] = this.providerServingId;
         data["description"] = this.description;
-        data["displayQuantity"] = this.displayQuantity;
-        data["displayUnit"] = this.displayUnit;
-        data["scaledQuantity"] = this.scaledQuantity;
-        data["scaledUnit"] = this.scaledUnit;
+        data["baseQuantity"] = this.baseQuantity;
+        data["baseUnit"] = this.baseUnit;
+        data["aiRecommendedScale"] = this.aiRecommendedScale;
+        data["singularUnit"] = this.singularUnit;
+        data["pluralUnit"] = this.pluralUnit;
         data["metricServingAmount"] = this.metricServingAmount;
         data["metricServingUnit"] = this.metricServingUnit;
         data["numberOfUnits"] = this.numberOfUnits;
@@ -2755,12 +2834,14 @@ export class ComponentServing implements IComponentServing {
 }
 
 export interface IComponentServing {
+    id?: string | undefined;
     providerServingId?: string | undefined;
     description?: string | undefined;
-    displayQuantity?: number;
-    displayUnit?: string | undefined;
-    scaledQuantity?: number;
-    scaledUnit?: string | undefined;
+    baseQuantity?: number;
+    baseUnit?: string | undefined;
+    aiRecommendedScale?: number;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
     metricServingAmount?: number | undefined;
     metricServingUnit?: string | undefined;
     numberOfUnits?: number | undefined;
@@ -5098,6 +5179,342 @@ export interface INutrientContribution {
     amount?: number;
     unit?: string | undefined;
     originalUnit?: string | undefined;
+}
+
+export class ParseFoodTextRequest implements IParseFoodTextRequest {
+    foodDescription?: string | undefined;
+
+    constructor(data?: IParseFoodTextRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodDescription = _data["foodDescription"];
+        }
+    }
+
+    static fromJS(data: any): ParseFoodTextRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ParseFoodTextRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodDescription"] = this.foodDescription;
+        return data;
+    }
+}
+
+export interface IParseFoodTextRequest {
+    foodDescription?: string | undefined;
+}
+
+export class ParseFoodTextResponse implements IParseFoodTextResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    mealName?: string | undefined;
+    foods?: ParsedFoodItem[] | undefined;
+
+    constructor(data?: IParseFoodTextResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.mealName = _data["mealName"];
+            if (Array.isArray(_data["foods"])) {
+                this.foods = [] as any;
+                for (let item of _data["foods"])
+                    this.foods!.push(ParsedFoodItem.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ParseFoodTextResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ParseFoodTextResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["mealName"] = this.mealName;
+        if (Array.isArray(this.foods)) {
+            data["foods"] = [];
+            for (let item of this.foods)
+                data["foods"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IParseFoodTextResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    mealName?: string | undefined;
+    foods?: ParsedFoodItem[] | undefined;
+}
+
+export class ParsedComponent implements IParsedComponent {
+    id?: string | undefined;
+    name?: string | undefined;
+    brand?: string | undefined;
+    quantity?: number;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
+    description?: string | undefined;
+    cookingMethod?: string | undefined;
+    size?: string | undefined;
+    originalPhrase?: string | undefined;
+    inferred?: boolean;
+    inferredReason?: string | undefined;
+    resolutionKey?: string | undefined;
+    roleHint?: string | undefined;
+    hasAmount?: boolean;
+
+    constructor(data?: IParsedComponent) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.brand = _data["brand"];
+            this.quantity = _data["quantity"];
+            this.singularUnit = _data["singularUnit"];
+            this.pluralUnit = _data["pluralUnit"];
+            this.description = _data["description"];
+            this.cookingMethod = _data["cookingMethod"];
+            this.size = _data["size"];
+            this.originalPhrase = _data["originalPhrase"];
+            this.inferred = _data["inferred"];
+            this.inferredReason = _data["inferredReason"];
+            this.resolutionKey = _data["resolutionKey"];
+            this.roleHint = _data["roleHint"];
+            this.hasAmount = _data["hasAmount"];
+        }
+    }
+
+    static fromJS(data: any): ParsedComponent {
+        data = typeof data === 'object' ? data : {};
+        let result = new ParsedComponent();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["brand"] = this.brand;
+        data["quantity"] = this.quantity;
+        data["singularUnit"] = this.singularUnit;
+        data["pluralUnit"] = this.pluralUnit;
+        data["description"] = this.description;
+        data["cookingMethod"] = this.cookingMethod;
+        data["size"] = this.size;
+        data["originalPhrase"] = this.originalPhrase;
+        data["inferred"] = this.inferred;
+        data["inferredReason"] = this.inferredReason;
+        data["resolutionKey"] = this.resolutionKey;
+        data["roleHint"] = this.roleHint;
+        data["hasAmount"] = this.hasAmount;
+        return data;
+    }
+}
+
+export interface IParsedComponent {
+    id?: string | undefined;
+    name?: string | undefined;
+    brand?: string | undefined;
+    quantity?: number;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
+    description?: string | undefined;
+    cookingMethod?: string | undefined;
+    size?: string | undefined;
+    originalPhrase?: string | undefined;
+    inferred?: boolean;
+    inferredReason?: string | undefined;
+    resolutionKey?: string | undefined;
+    roleHint?: string | undefined;
+    hasAmount?: boolean;
+}
+
+export class ParsedFoodAttributes implements IParsedFoodAttributes {
+    hasParentTotal?: boolean;
+    hasExplicitAmounts?: boolean;
+    hasMissingAmounts?: boolean;
+
+    constructor(data?: IParsedFoodAttributes) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.hasParentTotal = _data["hasParentTotal"];
+            this.hasExplicitAmounts = _data["hasExplicitAmounts"];
+            this.hasMissingAmounts = _data["hasMissingAmounts"];
+        }
+    }
+
+    static fromJS(data: any): ParsedFoodAttributes {
+        data = typeof data === 'object' ? data : {};
+        let result = new ParsedFoodAttributes();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["hasParentTotal"] = this.hasParentTotal;
+        data["hasExplicitAmounts"] = this.hasExplicitAmounts;
+        data["hasMissingAmounts"] = this.hasMissingAmounts;
+        return data;
+    }
+}
+
+export interface IParsedFoodAttributes {
+    hasParentTotal?: boolean;
+    hasExplicitAmounts?: boolean;
+    hasMissingAmounts?: boolean;
+}
+
+export class ParsedFoodItem implements IParsedFoodItem {
+    name?: string | undefined;
+    brand?: string | undefined;
+    quantity?: number;
+    unit?: string | undefined;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
+    description?: string | undefined;
+    cookingMethod?: string | undefined;
+    size?: string | undefined;
+    originalPhrase?: string | undefined;
+    attributes?: ParsedFoodAttributes;
+    components?: ParsedComponent[] | undefined;
+
+    constructor(data?: IParsedFoodItem) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.brand = _data["brand"];
+            this.quantity = _data["quantity"];
+            this.unit = _data["unit"];
+            this.singularUnit = _data["singularUnit"];
+            this.pluralUnit = _data["pluralUnit"];
+            this.description = _data["description"];
+            this.cookingMethod = _data["cookingMethod"];
+            this.size = _data["size"];
+            this.originalPhrase = _data["originalPhrase"];
+            this.attributes = _data["attributes"] ? ParsedFoodAttributes.fromJS(_data["attributes"]) : <any>undefined;
+            if (Array.isArray(_data["components"])) {
+                this.components = [] as any;
+                for (let item of _data["components"])
+                    this.components!.push(ParsedComponent.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ParsedFoodItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new ParsedFoodItem();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["brand"] = this.brand;
+        data["quantity"] = this.quantity;
+        data["unit"] = this.unit;
+        data["singularUnit"] = this.singularUnit;
+        data["pluralUnit"] = this.pluralUnit;
+        data["description"] = this.description;
+        data["cookingMethod"] = this.cookingMethod;
+        data["size"] = this.size;
+        data["originalPhrase"] = this.originalPhrase;
+        data["attributes"] = this.attributes ? this.attributes.toJSON() : <any>undefined;
+        if (Array.isArray(this.components)) {
+            data["components"] = [];
+            for (let item of this.components)
+                data["components"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IParsedFoodItem {
+    name?: string | undefined;
+    brand?: string | undefined;
+    quantity?: number;
+    unit?: string | undefined;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
+    description?: string | undefined;
+    cookingMethod?: string | undefined;
+    size?: string | undefined;
+    originalPhrase?: string | undefined;
+    attributes?: ParsedFoodAttributes;
+    components?: ParsedComponent[] | undefined;
 }
 
 export class RegisterAccountRequest implements IRegisterAccountRequest {

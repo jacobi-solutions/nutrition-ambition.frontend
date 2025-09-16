@@ -1,4 +1,4 @@
-import { Component, ComponentMatch, Food } from '../services/nutrition-ambition-api.service';
+import { Component, ComponentMatch, ComponentServing, Food } from '../services/nutrition-ambition-api.service';
 
 /**
  * Display extensions for food selection components
@@ -70,39 +70,6 @@ export class ComponentDisplay extends Component {
   }
 }
 
-export class ComponentMatchDisplay extends ComponentMatch {
-  // Loading state flags
-  isNewAddition?: boolean;
-  isEditingPhrase?: boolean;
-
-  constructor(data: Partial<ComponentMatchDisplay> = {}) {
-    super(data);
-    this.isNewAddition = data.isNewAddition;
-    this.isEditingPhrase = data.isEditingPhrase;
-  }
-
-  static fromJS(data: any): ComponentMatchDisplay {
-    data = typeof data === 'object' ? data : {};
-    let result = new ComponentMatchDisplay();
-    result.init(data);
-    return result;
-  }
-
-  init(_data?: any) {
-    super.init(_data);
-    if (_data) {
-      this.isNewAddition = _data["isNewAddition"];
-      this.isEditingPhrase = _data["isEditingPhrase"];
-    }
-  }
-
-  toJSON(data?: any) {
-    data = super.toJSON(data);
-    data["isNewAddition"] = this.isNewAddition;
-    data["isEditingPhrase"] = this.isEditingPhrase;
-    return data;
-  }
-}
 
 export class FoodDisplay extends Food {
   // Food-level display flags
@@ -150,6 +117,114 @@ export class FoodDisplay extends Food {
       data["components"] = [];
       for (let item of this.components)
         data["components"].push(item.toJSON());
+    }
+    return data;
+  }
+}
+
+export class ComponentServingDisplay extends ComponentServing {
+  // UI state flags
+  isSelected?: boolean;
+  effectiveQuantity?: number;
+  unitText?: string;
+  servingLabel?: string;
+
+  // Serving multiplier fields for proper unit-to-serving conversion
+  baseQuantity?: number;        // Original quantity per serving from backend (e.g., 2)
+  baseUnit?: string;            // Original unit from backend (e.g., "tbsp")
+  userSelectedQuantity?: number; // What the user selected (e.g., 3)
+  servingMultiplier?: number;    // Calculated: userSelectedQuantity / baseQuantity
+
+  constructor(data: Partial<ComponentServingDisplay> = {}) {
+    super(data);
+    this.isSelected = data.isSelected;
+    this.effectiveQuantity = data.effectiveQuantity;
+    this.unitText = data.unitText;
+    this.servingLabel = data.servingLabel;
+    this.baseQuantity = data.baseQuantity;
+    this.baseUnit = data.baseUnit;
+    this.userSelectedQuantity = data.userSelectedQuantity;
+    this.servingMultiplier = data.servingMultiplier;
+  }
+
+  static fromJS(data: any): ComponentServingDisplay {
+    data = typeof data === 'object' ? data : {};
+    let result = new ComponentServingDisplay();
+    result.init(data);
+    return result;
+  }
+
+  init(_data?: any) {
+    super.init(_data);
+    if (_data) {
+      this.isSelected = _data["isSelected"];
+      this.effectiveQuantity = _data["effectiveQuantity"];
+      this.unitText = _data["unitText"];
+      this.servingLabel = _data["servingLabel"];
+      this.baseQuantity = _data["baseQuantity"];
+      this.baseUnit = _data["baseUnit"];
+      this.userSelectedQuantity = _data["userSelectedQuantity"];
+      this.servingMultiplier = _data["servingMultiplier"];
+    }
+  }
+
+  toJSON(data?: any) {
+    data = super.toJSON(data);
+    data["isSelected"] = this.isSelected;
+    data["effectiveQuantity"] = this.effectiveQuantity;
+    data["unitText"] = this.unitText;
+    data["servingLabel"] = this.servingLabel;
+    data["baseQuantity"] = this.baseQuantity;
+    data["baseUnit"] = this.baseUnit;
+    data["userSelectedQuantity"] = this.userSelectedQuantity;
+    data["servingMultiplier"] = this.servingMultiplier;
+    return data;
+  }
+}
+
+export class ComponentMatchDisplay extends ComponentMatch {
+  // Loading state flags
+  isNewAddition?: boolean;
+  isEditingPhrase?: boolean;
+
+  // Enhanced servings with display flags
+  servings?: ComponentServingDisplay[] | undefined;
+
+  constructor(data: Partial<ComponentMatchDisplay> = {}) {
+    super(data);
+    this.isNewAddition = data.isNewAddition;
+    this.isEditingPhrase = data.isEditingPhrase;
+    this.servings = data.servings;
+  }
+
+  static fromJS(data: any): ComponentMatchDisplay {
+    data = typeof data === 'object' ? data : {};
+    let result = new ComponentMatchDisplay();
+    result.init(data);
+    return result;
+  }
+
+  init(_data?: any) {
+    super.init(_data);
+    if (_data) {
+      this.isNewAddition = _data["isNewAddition"];
+      this.isEditingPhrase = _data["isEditingPhrase"];
+      if (Array.isArray(_data["servings"])) {
+        this.servings = [] as any;
+        for (let item of _data["servings"])
+          this.servings!.push(ComponentServingDisplay.fromJS ? ComponentServingDisplay.fromJS(item) : new ComponentServingDisplay(item));
+      }
+    }
+  }
+
+  toJSON(data?: any) {
+    data = super.toJSON(data);
+    data["isNewAddition"] = this.isNewAddition;
+    data["isEditingPhrase"] = this.isEditingPhrase;
+    if (Array.isArray(this.servings)) {
+      data["servings"] = [];
+      for (let item of this.servings)
+        data["servings"].push(item.toJSON());
     }
     return data;
   }

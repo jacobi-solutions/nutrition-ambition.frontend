@@ -7,6 +7,8 @@ import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send
 import { ComponentMatch, ComponentServing } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { SearchFoodComponent } from '../search-food/search-food.component';
+import { FoodSelectionService } from 'src/app/services/food-selection.service';
+import { ComponentServingDisplay } from 'src/app/models/food-selection-display';
 
 @Component({
   selector: 'app-food-component-item',
@@ -32,6 +34,13 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   selectedServing: ComponentServing | null = null;
   computedIsNewAddition: boolean = false;
   macroSummary: string = '';
+
+  // Additional precomputed values
+  originalPhrase: string = '';
+  selectedFoodId: string = '';
+  selectedServingId: string = '';
+  displayMatches: ComponentMatch[] = [];
+  servingOptions: ComponentServingDisplay[] = [];
 
   // Getters for ComponentDisplay flags
   get isExpanded(): boolean {
@@ -69,7 +78,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   // Output events for parent coordination
   @Output() toggleExpansion = new EventEmitter<string>();
   @Output() servingSelected = new EventEmitter<{componentId: string, servingId: string}>();
-  @Output() quantityChanged = new EventEmitter<{componentId: string, quantity: number}>();
+  @Output() servingQuantityChanged = new EventEmitter<{componentId: string, servingId: string, quantity: number}>();
   @Output() editStarted = new EventEmitter<string>();
   @Output() editCanceled = new EventEmitter<string>();
   @Output() editConfirmed = new EventEmitter<{componentId: string, newPhrase: string}>();
@@ -79,7 +88,8 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Output() instantOptionsRequested = new EventEmitter<{componentId: string, searchTerm: string}>();
 
   constructor(
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private foodSelectionService: FoodSelectionService
   ) {
     addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal });
   }
@@ -104,9 +114,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     this.servingSelected.emit({componentId: this.component.componentId, servingId});
   }
 
-  onQuantityChanged(quantity: number) {
-    this.quantityChanged.emit({componentId: this.component.componentId, quantity});
-  }
 
   onEditStarted() {
     this.editStarted.emit(this.component.componentId);
@@ -171,11 +178,17 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       if (quantity && unit) {
         this.servingLabel = `${quantity} ${unit}`;
       } else {
-        const baseQuantity = this.selectedServing.displayQuantity || 1;
+        const baseQuantity = this.selectedServing.baseQuantity || 1;
         const finalQuantity = this.isSingleComponentFood && this.parentQuantity > 1
           ? baseQuantity * this.parentQuantity
           : baseQuantity;
-        this.servingLabel = `${finalQuantity} ${this.selectedServing.displayUnit}`;
+        // Calculate display quantity and use proper singular/plural units
+        const aiRecommendedScale = this.selectedServing.aiRecommendedScale || 1.0;
+        const displayQuantity = baseQuantity * aiRecommendedScale;
+        const unitText = displayQuantity === 1 && this.selectedServing.singularUnit
+          ? this.selectedServing.singularUnit
+          : (this.selectedServing.pluralUnit || this.selectedServing.baseUnit || '');
+        this.servingLabel = `${finalQuantity} ${unitText}`;
       }
     } else {
       this.servingLabel = '';
@@ -187,6 +200,58 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
     // Compute macro summary
     this.macroSummary = this.computeMacroSummary();
+
+    // Compute additional precomputed values
+    this.originalPhrase = this.computeOriginalPhrase();
+    this.selectedFoodId = this.computeSelectedFoodId();
+    this.selectedServingId = this.computeSelectedServingId();
+    this.displayMatches = this.computeDisplayMatches();
+    this.servingOptions = this.computeServingOptions();
+  }
+
+  private computeOriginalPhrase(): string {
+    // First try to get the original text from the selected food match
+    if (this.selectedFood && (this.selectedFood as any).originalText) {
+      return (this.selectedFood as any).originalText;
+    }
+
+    // Then try searchText for inferred foods
+    if (this.selectedFood && (this.selectedFood as any).inferred && (this.selectedFood as any).searchText) {
+      return (this.selectedFood as any).searchText;
+    }
+
+    // Look for OriginalPhrase at the food level (from backend Food model)
+    if (this.component?.component?.originalPhrase) {
+      return this.component.component.originalPhrase;
+    }
+
+    // Fallback to component key
+    return this.component?.component?.key || '';
+  }
+
+  private computeSelectedFoodId(): string {
+    return this.selectedFood?.providerFoodId || '';
+  }
+
+  private computeSelectedServingId(): string {
+    return this.selectedServing?.id || '';
+  }
+
+  private computeDisplayMatches(): ComponentMatch[] {
+    return this.component?.component?.matches || [];
+  }
+
+  private computeServingOptions(): ComponentServingDisplay[] {
+    const servings = this.selectedFood?.servings || [];
+    const componentId = this.component?.componentId || '';
+
+    const enhanced = this.foodSelectionService.enhanceServingsWithDisplayProps(
+      servings,
+      componentId,
+      this.isSingleComponentFood,
+      this.parentQuantity
+    );
+    return enhanced;
   }
 
 
@@ -213,7 +278,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     // Get the selectedServingId from the selected ComponentMatch
     const selectedServingId = this.selectedFood.selectedServingId;
     if (selectedServingId) {
-      return this.selectedFood.servings.find(s => s.providerServingId === selectedServingId) || this.selectedFood.servings[0];
+      return this.selectedFood.servings.find(s => s.id === selectedServingId) || this.selectedFood.servings[0];
     }
 
     return this.selectedFood.servings[0];
@@ -226,34 +291,72 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
   getDisplayQuantity(): number {
     const serving = this.getSelectedServing();
-    const quantity = serving?.scaledQuantity || serving?.displayQuantity || 1;
-    return Math.round(quantity * 100) / 100; // Round to 2 decimal places
+    if (!serving) return 1;
+
+    const componentId = this.component?.componentId || '';
+    const servingId = serving.id || '';
+    const baseQuantity = serving.baseQuantity || 1;
+
+    // Get current serving multiplier and convert to units
+    const servingMultiplier = this.foodSelectionService.getServingQuantity(componentId, servingId);
+    const userQuantityInUnits = servingMultiplier * baseQuantity;
+
+    return Math.round(userQuantityInUnits * 100) / 100; // Round to 2 decimal places
   }
 
   getDisplayUnit(): string {
     const serving = this.getSelectedServing();
-    return serving?.scaledUnit || serving?.displayUnit || '';
+    // Use proper singular/plural unit based on current quantity
+    const currentQuantity = this.getDisplayQuantity();
+    if (currentQuantity === 1 && serving?.singularUnit) {
+      return serving.singularUnit;
+    } else if (serving?.pluralUnit) {
+      return serving.pluralUnit;
+    }
+    return serving?.baseUnit || '';
   }
 
   getCalories(): number | null {
     const serving = this.getSelectedServing();
-    if (!serving?.nutrients) return null;
+    if (!serving) return null;
 
-    const energyKcal = serving.nutrients['energy_kcal'];
-    return energyKcal ? Math.round(energyKcal) : null;
+    // Use the same scaling logic as getMacro
+    const scaledNutrients = this.getScaledNutrients(serving);
+    if (!scaledNutrients) return null;
+
+    const energyKcal = scaledNutrients['energy_kcal'];
+    if (!energyKcal) return null;
+
+    let calories = energyKcal;
+
+    // For single-component foods, multiply by parent quantity
+    if (this.isSingleComponentFood && this.parentQuantity > 1) {
+      calories = calories * this.parentQuantity;
+    }
+
+    return Math.round(calories);
   }
 
   getServingLabelForServing(serving: ComponentServing): string {
     if (!serving) return '';
 
-    const baseQuantity = serving.displayQuantity || 1;
+    const baseQuantity = serving.baseQuantity || 1;
+    const aiRecommendedScale = serving.aiRecommendedScale || 1.0;
+    const aiDisplayQuantity = baseQuantity * aiRecommendedScale;
+
     // For single-component foods, multiply the display quantity by parent quantity
     const displayQuantity = this.isSingleComponentFood && this.parentQuantity > 1
-      ? (baseQuantity * this.parentQuantity)
-      : baseQuantity;
+      ? (aiDisplayQuantity * this.parentQuantity)
+      : aiDisplayQuantity;
 
     const roundedQuantity = Math.round(displayQuantity * 100) / 100; // Round to 2 decimal places
-    return `${roundedQuantity} ${serving.displayUnit}`;
+
+    // Use proper singular/plural units
+    const unitText = roundedQuantity === 1 && serving.singularUnit
+      ? serving.singularUnit
+      : (serving.pluralUnit || serving.baseUnit || '');
+
+    return `${roundedQuantity} ${unitText}`;
   }
 
   // Expanded functionality methods
@@ -264,7 +367,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
   getSelectedServingId(): string | undefined {
     const serving = this.getSelectedServing();
-    return serving?.providerServingId;
+    return serving?.id;
   }
 
   getDisplayMatches(): ComponentMatch[] {
@@ -297,23 +400,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     return this.editingValue !== this.getOriginalPhrase();
   }
 
-  isServingSelected(serving: ComponentServing): boolean {
-    const selectedId = this.getSelectedServingId();
-    return serving.providerServingId === selectedId;
-  }
 
-  getEffectiveQuantityForServing(serving: ComponentServing): number {
-    const baseQuantity = serving.scaledQuantity || serving.displayQuantity || 1;
-
-    // For single-component foods, multiply by parent quantity
-    return this.isSingleComponentFood && this.parentQuantity > 1
-      ? (baseQuantity * this.parentQuantity)
-      : baseQuantity;
-  }
-
-  getUnitTextForServing(serving: ComponentServing): string {
-    return serving.scaledUnit || serving.displayUnit || '';
-  }
 
   // Event handlers for expanded functionality
   // Note: Edit handling is now done by SearchFoodComponent
@@ -339,34 +426,53 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     this.computeDisplayValues();
   }
 
-  onRowClicked(serving: ComponentServing): void {
-    if (serving.providerServingId) {
+  onRowClicked(serving: ComponentServingDisplay): void {
+    if (serving.id) {
       // Only emit selection change if this serving is not already selected
       // This prevents corrupting the virtual serving ID when clicking quantity inputs
-      const isAlreadySelected = this.isServingSelected(serving);
+      const isAlreadySelected = serving.isSelected;
       if (!isAlreadySelected) {
-        this.servingSelected.emit({componentId: this.component.componentId, servingId: serving.providerServingId});
+        this.servingSelected.emit({componentId: this.component.componentId, servingId: serving.id});
         // Recompute display values after serving selection changes
         this.computeDisplayValues();
       }
     }
   }
 
-  onServingQuantityChanged(_serving: ComponentServing, quantity: number): void {
-    // For single-component foods, we need to reverse the multiplication
-    // The user sees multiplied quantities, but backend expects base quantities
-    const baseQuantity = this.isSingleComponentFood && this.parentQuantity > 1
-      ? quantity / this.parentQuantity
-      : quantity;
+  onServingQuantityChanged(serving: ComponentServingDisplay, quantity: number): void {
+    const componentId = this.component?.componentId || '';
+    const baseQuantity = serving.baseQuantity || 1;
 
-    this.quantityChanged.emit({componentId: this.component.componentId, quantity: baseQuantity});
-    // Recompute display values to update serving label in main card
+    // Use the new unit-to-serving conversion method
+    this.foodSelectionService.updateServingQuantityFromUnits(componentId, serving.id || '', quantity, baseQuantity);
+
+    // Update the serving object directly for immediate UI feedback
+    serving.userSelectedQuantity = quantity;
+    serving.servingMultiplier = quantity / baseQuantity;
+
+    // Update unit text for proper singular/plural grammar
+    if (quantity === 1 && serving.singularUnit) {
+      serving.unitText = serving.singularUnit;
+    } else if (serving.pluralUnit) {
+      serving.unitText = serving.pluralUnit;
+    } else {
+      serving.unitText = serving.baseUnit || '';
+    }
+
+    // Recompute display values to update serving label and macros
     this.computeDisplayValues();
+
+    // Notify parent about quantity change so food-level macros can update
+    this.servingQuantityChanged.emit({
+      componentId,
+      servingId: serving.id || '',
+      quantity: serving.servingMultiplier || 1
+    });
   }
 
   // TrackBy functions
-  trackByServingId(index: number, serving: ComponentServing): string {
-    return serving.providerServingId || index.toString();
+  trackByServingId(index: number, serving: ComponentServingDisplay): string {
+    return serving.id || index.toString();
   }
 
   // Get current edited phrase value
@@ -398,13 +504,16 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   private getMacro(nutrients: { [key: string]: number } | undefined, keys: string[]): number | null {
-    if (!nutrients) return null;
+    const serving = this.getSelectedServing();
+    if (!serving) return null;
+
+    // Get scaled nutrients (handles both full nutrient data and scaling from base serving)
+    const scaledNutrients = this.getScaledNutrients(serving);
+    if (!scaledNutrients) return null;
+
     for (const key of keys) {
-      if (typeof nutrients[key] === 'number') {
-        // Scale by the serving quantity to get the actual macro amount
-        const serving = this.getSelectedServing();
-        const scaledQuantity = serving?.scaledQuantity || 1;
-        let macroValue = nutrients[key] * scaledQuantity;
+      if (typeof scaledNutrients[key] === 'number') {
+        let macroValue = scaledNutrients[key];
 
         // For single-component foods, multiply by parent quantity
         if (this.isSingleComponentFood && this.parentQuantity > 1) {
@@ -415,6 +524,54 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       }
     }
     return null;
+  }
+
+  /**
+   * Gets scaled nutrients for the current serving. If the serving has no nutrient data
+   * (lightweight alternative serving), scales from the base serving.
+   */
+  private getScaledNutrients(serving: ComponentServing): { [key: string]: number } | null {
+    const componentId = this.component?.componentId || '';
+    const servingId = serving.id || '';
+    const currentQuantity = this.foodSelectionService.getServingQuantity(componentId, servingId);
+
+    // If serving has nutrient data, scale it by current quantity
+    if (serving.nutrients && Object.keys(serving.nutrients).length > 0) {
+      const scaledNutrients: { [key: string]: number } = {};
+      for (const [key, value] of Object.entries(serving.nutrients)) {
+        scaledNutrients[key] = value * currentQuantity;
+      }
+      return scaledNutrients;
+    }
+
+    // Alternative serving has no nutrients - scale from base serving
+    const food = this.getSelectedFood();
+    if (!food?.servings) return null;
+
+    // Find base serving (should be the first one with nutrients)
+    const baseServing = food.servings.find(s => s.nutrients && Object.keys(s.nutrients).length > 0);
+    if (!baseServing?.nutrients) return null;
+
+    // Calculate scale factor: altWeight / baseWeight
+    const baseWeight = baseServing.metricServingAmount;
+    const altWeight = serving.metricServingAmount;
+
+    if (!baseWeight || !altWeight || baseWeight <= 0) return null;
+
+    const weightScaleFactor = altWeight / baseWeight;
+    const totalScaleFactor = weightScaleFactor * currentQuantity;
+
+    // Scale only the 4 preview nutrients for food selection
+    const scaledNutrients: { [key: string]: number } = {};
+    const previewNutrients = ['energy_kcal', 'protein', 'total_fat', 'carbohydrate'];
+
+    for (const nutrientKey of previewNutrients) {
+      if (typeof baseServing.nutrients[nutrientKey] === 'number') {
+        scaledNutrients[nutrientKey] = baseServing.nutrients[nutrientKey] * totalScaleFactor;
+      }
+    }
+
+    return scaledNutrients;
   }
 
   // Debug helper
