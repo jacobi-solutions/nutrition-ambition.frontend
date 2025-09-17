@@ -4,7 +4,7 @@ import { IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { chevronUpOutline, chevronDownOutline, trashOutline } from 'ionicons/icons';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
-import { ServingIdentifierUtil } from '../serving-identifier.util';
+import { ServingIdentifierUtil, NutrientScalingUtil } from '../food-selection.util';
 
 @Component({
   selector: 'app-food-header',
@@ -124,35 +124,33 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
         ServingIdentifierUtil.areEqual(s.servingId, selectedMatch.selectedServingId)
       ) || selectedMatch.servings?.[0];
 
-      if (!selectedServing?.nutrients) continue;
+      if (!selectedServing) continue;
 
-      // Get current serving quantity from the serving's effectiveQuantity
-      const currentQuantity = (selectedServing as any).effectiveQuantity || 1;
+      // Use the utility to get properly scaled nutrients (handles alternative servings)
+      const scaledNutrients = NutrientScalingUtil.getScaledNutrients(selectedServing, selectedMatch);
+      if (!scaledNutrients) continue;
 
-      // Scale the base nutrients by the current quantity
-      const baseNutrients = selectedServing.nutrients;
-
-      const scaledCalories = this.getMacro(baseNutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']);
+      const scaledCalories = NutrientScalingUtil.getMacro(scaledNutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']);
       if (scaledCalories !== null) {
-        aggregated.calories += scaledCalories * currentQuantity;
+        aggregated.calories += scaledCalories;
         hasAnyNutrients = true;
       }
 
-      const scaledProtein = this.getMacro(baseNutrients, ['protein', 'Protein']);
+      const scaledProtein = NutrientScalingUtil.getMacro(scaledNutrients, ['protein', 'Protein']);
       if (scaledProtein !== null) {
-        aggregated.protein += scaledProtein * currentQuantity;
+        aggregated.protein += scaledProtein;
         hasAnyNutrients = true;
       }
 
-      const scaledFat = this.getMacro(baseNutrients, ['fat', 'Fat', 'total_fat']);
+      const scaledFat = NutrientScalingUtil.getMacro(scaledNutrients, ['fat', 'Fat', 'total_fat']);
       if (scaledFat !== null) {
-        aggregated.fat += scaledFat * currentQuantity;
+        aggregated.fat += scaledFat;
         hasAnyNutrients = true;
       }
 
-      const scaledCarbs = this.getMacro(baseNutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']);
+      const scaledCarbs = NutrientScalingUtil.getMacro(scaledNutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']);
       if (scaledCarbs !== null) {
-        aggregated.carbs += scaledCarbs * currentQuantity;
+        aggregated.carbs += scaledCarbs;
         hasAnyNutrients = true;
       }
     }
@@ -171,15 +169,6 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     return { calories: null, protein: null, fat: null, carbs: null };
   }
 
-  private getMacro(nutrients: { [key: string]: number } | undefined, keys: string[]): number | null {
-    if (!nutrients) return null;
-    for (const key of keys) {
-      if (typeof nutrients[key] === 'number') {
-        return nutrients[key];
-      }
-    }
-    return null;
-  }
 
   onToggleExpansion(): void {
     this.toggleExpansion.emit(this.foodIndex);

@@ -8,7 +8,7 @@ import { ComponentMatch, ComponentServing } from 'src/app/services/nutrition-amb
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { SearchFoodComponent } from '../search-food/search-food.component';
 import { ComponentServingDisplay } from 'src/app/models/food-selection-display';
-import { ServingIdentifierUtil } from '../serving-identifier.util';
+import { ServingIdentifierUtil, NutrientScalingUtil } from '../food-selection.util';
 
 @Component({
   selector: 'app-food-component-item',
@@ -332,7 +332,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     if (!serving) return null;
 
     // Use the same scaling logic as getMacro
-    const scaledNutrients = this.getScaledNutrients(serving);
+    const scaledNutrients = NutrientScalingUtil.getScaledNutrients(serving, this.getSelectedFood());
     if (!scaledNutrients) return null;
 
     const calories = scaledNutrients['calories'];
@@ -517,7 +517,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     if (!serving) return null;
 
     // Get scaled nutrients (handles both full nutrient data and scaling from base serving)
-    const scaledNutrients = this.getScaledNutrients(serving);
+    const scaledNutrients = NutrientScalingUtil.getScaledNutrients(serving, this.getSelectedFood());
     if (!scaledNutrients) return null;
 
     for (const key of keys) {
@@ -533,61 +533,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       }
     }
     return null;
-  }
-
-  /**
-   * Gets scaled nutrients for the current serving. If the serving has no nutrient data
-   * (lightweight alternative serving), scales from the base serving.
-   */
-  private getScaledNutrients(serving: ComponentServing): { [key: string]: number } | null {
-    // Get the effective quantity from the serving, fallback to baseQuantity
-    const effectiveQuantity = (serving as any).effectiveQuantity;
-    const currentQuantity = effectiveQuantity !== undefined && effectiveQuantity !== null
-      ? effectiveQuantity
-      : serving.baseQuantity || 1;
-
-    // If serving has nutrient data, scale it by current quantity
-    if (serving.nutrients && Object.keys(serving.nutrients).length > 0) {
-      const scaledNutrients: { [key: string]: number } = {};
-      for (const [key, value] of Object.entries(serving.nutrients)) {
-        scaledNutrients[key] = value * currentQuantity;
-      }
-      return scaledNutrients;
-    }
-
-    // Alternative serving has no nutrients - scale from rank 1 serving
-    const food = this.getSelectedFood();
-    if (!food?.servings) return null;
-
-    // Find the default serving (indicated by servingType === 'default')
-    // This is the base serving with full nutrient data
-    const baseServing = food.servings.find(s =>
-      s.servingId?.servingType === 'default' &&
-      s.nutrients &&
-      Object.keys(s.nutrients).length > 3
-    );
-    if (!baseServing?.nutrients) return null;
-
-    // Calculate scale factor: altWeight / baseWeight
-    const baseWeight = baseServing.metricServingAmount;
-    const altWeight = serving.metricServingAmount;
-
-    if (!baseWeight || !altWeight || baseWeight <= 0) return null;
-
-    const weightScaleFactor = altWeight / baseWeight;
-    const totalScaleFactor = weightScaleFactor * currentQuantity;
-
-    // Scale only the 4 preview nutrients for food selection
-    const scaledNutrients: { [key: string]: number } = {};
-    const previewNutrients = ['calories', 'protein', 'fat', 'carbohydrate'];
-
-    for (const nutrientKey of previewNutrients) {
-      if (typeof baseServing.nutrients[nutrientKey] === 'number') {
-        scaledNutrients[nutrientKey] = baseServing.nutrients[nutrientKey] * totalScaleFactor;
-      }
-    }
-
-    return scaledNutrients;
   }
 
   // Debug helper

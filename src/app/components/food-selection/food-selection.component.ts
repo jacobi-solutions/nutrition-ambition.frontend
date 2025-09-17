@@ -13,7 +13,7 @@ import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { IonIcon } from '@ionic/angular/standalone';
-import { ServingIdentifierUtil } from './serving-identifier.util';
+import { ServingIdentifierUtil } from './food-selection.util';
 
 @Component({
   selector: 'app-food-selection',
@@ -385,27 +385,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  nonServingSelected(foodIndex: number, componentId: string, servingId: string): void {
-    const selectedFood = this.getSelectedFood(componentId);
-    if (selectedFood) {
-      // Find the actual ServingIdentifier object from the serving data
-      const selectedServing = (selectedFood as any)?.servings?.find((s: any) => s.id === servingId);
-      const servingIdentifier = selectedServing?.servingId;
-
-      // Update selectedServingId with the ServingIdentifier object
-      (selectedFood as any).selectedServingId = servingIdentifier;
-
-      // Keep cache in sync (still using string for cache lookup)
-      this.selectedServingIdByComponentId.set(componentId, servingId);
-
-      // Note: No longer need to update service since components use data structure directly
-
-
-      // Trigger recomputation which creates new array references for OnPush components
-      this.computeAllFoods();
-
-    }
-  }
 
   onServingSelected(foodIndex: number, componentId: string, servingId: string): void {
     const food = this.computedFoods[foodIndex];
@@ -434,6 +413,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
             // Create new food reference to trigger food-level change detection
             this.computedFoods[foodIndex] = new FoodDisplay({...food});
+            this.computedFoods = [...this.computedFoods];
           }
         }
       }
@@ -456,6 +436,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             // Create new references at both levels
             food.components[componentIndex] = new ComponentDisplay({...component});
             this.computedFoods[foodIndex] = new FoodDisplay({...food});
+            this.computedFoods = [...this.computedFoods];
           }
         }
       }
