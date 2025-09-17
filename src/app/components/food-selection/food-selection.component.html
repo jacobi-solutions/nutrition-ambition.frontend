@@ -22,8 +22,8 @@
               [foodIndex]="foodIndex"
               [isReadOnly]="isReadOnly"
               [isExpanded]="food.isEditingExpanded || false"
-              [currentQuantity]="editingFoodQuantities[foodIndex] || food.quantity || 1"
-              [selectedServings]="getSelectedServingsForFood(food)"
+              [currentQuantity]="$any(food).precomputedCurrentQuantity"
+              [selectedServings]="$any(food).precomputedSelectedServings"
               (toggleExpansion)="toggleFoodEditing($event)"
               (quantityChanged)="onFoodQuantityChange($event.foodIndex, $event.quantity)"
               (removeFood)="removeFood($event)">

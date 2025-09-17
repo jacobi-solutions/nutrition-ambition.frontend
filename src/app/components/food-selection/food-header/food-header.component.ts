@@ -44,10 +44,6 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('🟦 FoodHeader ngOnChanges:', Object.keys(changes));
-    if (changes['selectedServings']) {
-      console.log('🟦 selectedServings changed:', changes['selectedServings'].currentValue);
-    }
     if (changes['food'] || changes['currentQuantity'] || changes['isExpanded'] || changes['isReadOnly'] || changes['selectedServings']) {
       this.computeDisplayValues();
     }
@@ -117,34 +113,23 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     }
 
     for (const component of this.food.components) {
-      console.log('🍎 Processing component:', component.id, component.key);
-
       // Get the selected serving using the selectedServings input if available
       let selectedServing = null;
       if (component.id && this.selectedServings[component.id]) {
         selectedServing = this.selectedServings[component.id];
-        console.log('🍎 Using selectedServings input:', selectedServing.id);
       } else {
         // Fallback to the original logic
-        console.log('🍎 Falling back to original logic');
         const selectedMatch = component.matches?.find((m: any) => m.isBestMatch) || component.matches?.[0];
         if (!selectedMatch) continue;
         selectedServing = selectedMatch.servings?.find((s: any) =>
           s.providerServingId === selectedMatch.selectedServingId
         ) || selectedMatch.servings?.[0];
-        console.log('🍎 Fallback selectedServing:', selectedServing?.id);
       }
 
       if (!selectedServing?.nutrients) continue;
 
       // The nutrients are already scaled by the parent component, so we can use them directly
       const nutrients = selectedServing.nutrients;
-      console.log('🍎 Using nutrients:', {
-        calories: this.getMacro(nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']),
-        protein: this.getMacro(nutrients, ['protein', 'Protein']),
-        fat: this.getMacro(nutrients, ['fat', 'Fat', 'total_fat']),
-        carbs: this.getMacro(nutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs'])
-      });
 
       if (this.getMacro(nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']) !== null) {
         aggregated.calories += this.getMacro(nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy'])!;
