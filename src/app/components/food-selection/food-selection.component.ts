@@ -8,7 +8,7 @@ import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { FoodComponent } from './food/food.component';
 import { DisplayMessage } from 'src/app/models/display-message';
-import { ComponentDisplay, FoodDisplay } from 'src/app/models/food-selection-display';
+import { ComponentDisplay, ComponentMatchDisplay, ComponentServingDisplay, FoodDisplay } from 'src/app/models/food-selection-display';
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
@@ -261,10 +261,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         this.toggleExpansion(event.payload);
         break;
       case 'servingSelected':
-        this.onServingSelected(event.payload.componentId, event.payload.servingId);
+        this.onServingSelected(event.payload.foodIndex, event.payload.componentId, event.payload.servingId);
         break;
       case 'servingQuantityChanged':
-        this.onServingQuantityChanged(event.payload.componentId, event.payload.servingId, event.payload.quantity);
+        this.onServingQuantityChanged(event.payload.foodIndex, event.payload.componentId, event.payload.servingId, event.payload.quantity);
         break;
       case 'editStarted':
         this.startEditingComponent(event.payload);
@@ -388,7 +388,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  onServingSelected(componentId: string, servingId: string): void {
+  nonServingSelected(foodIndex: number, componentId: string, servingId: string): void {
     const selectedFood = this.getSelectedFood(componentId);
     if (selectedFood) {
       // Find the actual ServingIdentifier object from the serving data
@@ -411,16 +411,60 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  onServingQuantityChanged(componentId: string, servingId: string, quantity: number): void {
-    console.log('🔧 Quantity changed:', { componentId, servingId, quantity });
+  onServingSelected(foodIndex: number, componentId: string, servingId: string): void {
+    const food = this.computedFoods[foodIndex];
+    if (food?.components) {
+      const componentIndex = food.components.findIndex((c: ComponentDisplay) => c.id === componentId);
+      if (componentIndex !== -1) {
+        const component = food.components[componentIndex];
 
-    // CRITICAL: Update the quantity in the food-selection service first
-    this.foodSelectionService.updateServingQuantity(componentId, servingId, quantity);
-    console.log('🔧 Updated service quantity');
+        // Find which match is currently selected (isBestMatch or first)
+        const selectedMatch = component.matches?.find((m: any) => m.isBestMatch) || component.matches?.[0];
 
-    // Recompute to update food-level macros with new array references for OnPush components
-    this.computeAllFoods();
-    console.log('🔧 Recomputed all foods - food-level macros should update');
+        if (selectedMatch) {
+          // Find the serving to get its servingId (ServingIdentifier object)
+          const selectedServing = selectedMatch.servings?.find((s: ComponentServingDisplay) => s.id === servingId);
+          if (selectedServing) {
+            // Update the selectedServingId on the SELECTED match
+            selectedMatch.selectedServingId = selectedServing.servingId;
+
+            // Keep cache in sync
+            this.selectedServingIdByComponentId.set(componentId, servingId);
+
+            // ALSO update the service since child still uses it
+            this.foodSelectionService.selectServing(componentId, servingId);
+
+            // Create new component reference - this triggers ngOnChanges in the child
+            food.components[componentIndex] = new ComponentDisplay({...component});
+
+            // Create new food reference to trigger food-level change detection
+            this.computedFoods[foodIndex] = new FoodDisplay({...food});
+          }
+        }
+      }
+    }
+  }
+
+  onServingQuantityChanged(foodIndex: number, componentId: string, servingId: string, quantity: number): void {
+    const food = this.computedFoods[foodIndex];
+    if (food?.components) {
+      const componentIndex = food.components.findIndex((c: ComponentDisplay) => c.id === componentId);
+      if (componentIndex !== -1) {
+        const component = food.components[componentIndex];
+        if (component?.matches) {
+          var matchIndex = component.matches.findIndex((m: ComponentMatchDisplay) => m.servings?.find((s: ComponentServingDisplay) => s.id ===servingId));
+          var servingIndex = component.matches[matchIndex].servings?.findIndex((s: ComponentServingDisplay) => s.id === servingId) || 0;
+          var match = component?.matches?.[matchIndex];
+          var serving = match?.servings?.[servingIndex];
+          if (serving) {
+            serving.effectiveQuantity = quantity;
+            // Create new references at both levels
+            food.components[componentIndex] = new ComponentDisplay({...component});
+            this.computedFoods[foodIndex] = new FoodDisplay({...food});
+          }
+        }
+      }
+    }
   }
 
   getSelectedServingId(componentId: string): string | undefined {
@@ -1217,100 +1261,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const mdMetric = (md || '').trim().toLowerCase();
     return looksMetric || mdMetric === 'g' || mdMetric === 'ml';
   }
-
-  private rescaleFromSelected(componentId: string, selected: ComponentServing, editedQty: number): void {
-    // 0) guard
-    const component = this.findComponentById(componentId);
-    if (!component) {
-      return;
-    }
-
-    // 1) compute targetMass in metric (g/ml)
-    const selMetricAmt = this.getMetricAmt(selected); // per "one" serving of selected
-    const selIsMetric = this.isMetricRow(selected);
-    let targetMass = NaN;
-
-    if (selIsMetric) {
-      // if selected row's unit is already metric, editedQty is the targetMass (e.g., 120 g)
-      targetMass = editedQty;
-    } else {
-      // household/size row: convert to metric via its per-serving metric amount
-      // editedQty (e.g., 2 large) * 50 g (metric per 1 large) → 100 g target
-      targetMass = editedQty * (isFinite(selMetricAmt) ? selMetricAmt : NaN);
-    }
-
-    if (!isFinite(targetMass) || targetMass <= 0) {
-      return;
-    }
-
-    // 2) iterate all servings in the selected food and update the new properties
-    const selectedFood = this.getSelectedFood(componentId);
-    if (!selectedFood?.servings) {
-      return;
-    }
-
-    // ensure exactly one best match (the edited row)
-    const editedId = ServingIdentifierUtil.toUniqueString(selected.servingId);
-
-    for (const s of selectedFood.servings) {
-      const mAmt = this.getMetricAmt(s);
-      const hasMetric = isFinite(mAmt) && mAmt > 0;
-
-      // Calculate the new scale factor based on target mass
-      let newScale = 1;
-      const baseQuantity = s.baseQuantity || 1;
-
-      if (hasMetric) {
-        // math: aiRecommendedScale = targetMass / (baseQuantity * metricServingAmount)
-        const totalMetricForBase = baseQuantity * mAmt;
-        if (totalMetricForBase > 0) {
-          newScale = targetMass / totalMetricForBase;
-        }
-      } else {
-        // For non-metric, calculate scale based on the edited quantity
-        const sId = ServingIdentifierUtil.toUniqueString(s.servingId);
-        if (sId === editedId) {
-          newScale = editedQty / baseQuantity;
-        }
-      }
-
-      if (!isFinite(newScale) || newScale < 0) newScale = 1;
-
-      // Update the new properties
-      (s as any).aiRecommendedScale = newScale;
-
-      // Update unit text based on the new quantity
-      const newDisplayedQuantity = baseQuantity * newScale;
-      if (newDisplayedQuantity === 1) {
-        // Keep singularUnit or set appropriate unit
-        if (!s.singularUnit) {
-          const mu = this.getMetricUnit(s);
-          const desc = (s as any).description as string | undefined;
-          const md = (s as any).measurementDescription as string | undefined;
-
-          if (this.isMetricRow(s) && mu) {
-            (s as any).singularUnit = mu;
-            (s as any).pluralUnit = mu;
-          } else {
-            const label = (desc && desc.trim().length > 0 ? desc : (md || '')).trim();
-            const strippedLabel = this.stripLeadingCount(label) || 'serving';
-            (s as any).singularUnit = strippedLabel;
-            (s as any).pluralUnit = strippedLabel + 's';
-          }
-        }
-      }
-
-      // mark best match
-      const sId = ServingIdentifierUtil.toUniqueString(s.servingId);
-      (s as any).isBestMatch = sId === editedId;
-    }
-
-    // ensure UI shows the edited row as selected
-    if (editedId) {
-      this.onServingSelected(componentId, editedId);
-    }
-  }
-
 
 
   async cancelSelection(): Promise<void> {

@@ -413,7 +413,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   onServingSelectedFromRadio(servingId: string): void {
     this.servingSelected.emit({componentId: this.component.id, servingId});
     // Recompute display values after serving selection changes
-    this.computeDisplayValues();
+    //this.computeDisplayValues();
   }
 
   onRowClicked(serving: ComponentServingDisplay): void {
@@ -450,7 +450,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     }
 
     // Recompute display values to update serving label and macros
-    this.computeDisplayValues();
+    // this.computeDisplayValues();
 
     // Notify parent about quantity change so food-level macros can update
     this.servingQuantityChanged.emit({
