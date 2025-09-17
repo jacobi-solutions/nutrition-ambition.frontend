@@ -382,7 +382,7 @@ export class DebugViewComponent implements OnInit, OnDestroy {
           if (component.matches && component.matches.length > 0) {
             const firstMatch = component.matches[0]; // Get the first/best match
             const selectedServing = firstMatch.servings?.find((serving: any) => 
-              serving.providerServingId === firstMatch.selectedServingId
+              serving.servingId?.servingType === firstMatch.selectedServingId
             );
 
             if (selectedServing) {

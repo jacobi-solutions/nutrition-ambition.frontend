@@ -5,6 +5,7 @@ import { addIcons } from 'ionicons';
 import { chevronUpOutline, chevronDownOutline, trashOutline } from 'ionicons/icons';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
+import { ServingIdentifierUtil } from '../serving-identifier.util';
 
 @Component({
   selector: 'app-food-header',
@@ -121,7 +122,7 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
       if (!selectedMatch) continue;
 
       const selectedServing = selectedMatch.servings?.find((s: any) =>
-        s.providerServingId === selectedMatch.selectedServingId
+        ServingIdentifierUtil.areEqual(s.servingId, selectedMatch.selectedServingId)
       ) || selectedMatch.servings?.[0];
 
       if (!selectedServing?.nutrients) continue;
@@ -197,5 +198,6 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
       this.removeFood.emit(this.food.id);
     }
   }
+
 
 }

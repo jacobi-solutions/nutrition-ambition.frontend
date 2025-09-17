@@ -9,6 +9,7 @@ import { ServingQuantityInputComponent } from 'src/app/components/serving-quanti
 import { SearchFoodComponent } from '../search-food/search-food.component';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { ComponentServingDisplay } from 'src/app/models/food-selection-display';
+import { ServingIdentifierUtil } from '../serving-identifier.util';
 
 @Component({
   selector: 'app-food-component-item',
@@ -265,7 +266,9 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     // Get the selectedServingId from the selected ComponentMatch
     const selectedServingId = this.selectedFood.selectedServingId;
     if (selectedServingId) {
-      return this.selectedFood.servings.find(s => s.id === selectedServingId) || this.selectedFood.servings[0];
+      return this.selectedFood.servings.find(s =>
+        ServingIdentifierUtil.areEqual(s.servingId, selectedServingId)
+      ) || this.selectedFood.servings[0];
     }
 
     return this.selectedFood.servings[0];
@@ -535,10 +538,10 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     const food = this.getSelectedFood();
     if (!food?.servings) return null;
 
-    // Find the default serving (indicated by ::default in providerServingId)
+    // Find the default serving (indicated by servingType === 'default')
     // This is the base serving with full nutrient data
     const baseServing = food.servings.find(s =>
-      s.providerServingId?.includes('::default') &&
+      s.servingId?.servingType === 'default' &&
       s.nutrients &&
       Object.keys(s.nutrients).length > 3
     );

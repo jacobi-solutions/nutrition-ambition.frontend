@@ -2642,7 +2642,7 @@ export class ComponentMatch implements IComponentMatch {
     cookingMethod?: string | undefined;
     size?: string | undefined;
     rank?: number;
-    selectedServingId?: string | undefined;
+    selectedServingId?: ServingIdentifier;
     totalGrams?: number;
     servings?: ComponentServing[] | undefined;
     effectiveMultiplier?: number;
@@ -2673,7 +2673,7 @@ export class ComponentMatch implements IComponentMatch {
             this.cookingMethod = _data["cookingMethod"];
             this.size = _data["size"];
             this.rank = _data["rank"];
-            this.selectedServingId = _data["selectedServingId"];
+            this.selectedServingId = _data["selectedServingId"] ? ServingIdentifier.fromJS(_data["selectedServingId"]) : <any>undefined;
             this.totalGrams = _data["totalGrams"];
             if (Array.isArray(_data["servings"])) {
                 this.servings = [] as any;
@@ -2708,7 +2708,7 @@ export class ComponentMatch implements IComponentMatch {
         data["cookingMethod"] = this.cookingMethod;
         data["size"] = this.size;
         data["rank"] = this.rank;
-        data["selectedServingId"] = this.selectedServingId;
+        data["selectedServingId"] = this.selectedServingId ? this.selectedServingId.toJSON() : <any>undefined;
         data["totalGrams"] = this.totalGrams;
         if (Array.isArray(this.servings)) {
             data["servings"] = [];
@@ -2736,7 +2736,7 @@ export interface IComponentMatch {
     cookingMethod?: string | undefined;
     size?: string | undefined;
     rank?: number;
-    selectedServingId?: string | undefined;
+    selectedServingId?: ServingIdentifier;
     totalGrams?: number;
     servings?: ComponentServing[] | undefined;
     effectiveMultiplier?: number;
@@ -2749,7 +2749,7 @@ export interface IComponentMatch {
 
 export class ComponentServing implements IComponentServing {
     id?: string | undefined;
-    providerServingId?: string | undefined;
+    servingId?: ServingIdentifier;
     description?: string | undefined;
     baseQuantity?: number;
     baseUnit?: string | undefined;
@@ -2776,7 +2776,7 @@ export class ComponentServing implements IComponentServing {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
-            this.providerServingId = _data["providerServingId"];
+            this.servingId = _data["servingId"] ? ServingIdentifier.fromJS(_data["servingId"]) : <any>undefined;
             this.description = _data["description"];
             this.baseQuantity = _data["baseQuantity"];
             this.baseUnit = _data["baseUnit"];
@@ -2809,7 +2809,7 @@ export class ComponentServing implements IComponentServing {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
-        data["providerServingId"] = this.providerServingId;
+        data["servingId"] = this.servingId ? this.servingId.toJSON() : <any>undefined;
         data["description"] = this.description;
         data["baseQuantity"] = this.baseQuantity;
         data["baseUnit"] = this.baseUnit;
@@ -2835,7 +2835,7 @@ export class ComponentServing implements IComponentServing {
 
 export interface IComponentServing {
     id?: string | undefined;
-    providerServingId?: string | undefined;
+    servingId?: ServingIdentifier;
     description?: string | undefined;
     baseQuantity?: number;
     baseUnit?: string | undefined;
@@ -4740,7 +4740,7 @@ export class HydrateFoodSelectionRequest implements IHydrateFoodSelectionRequest
     messageId?: string | undefined;
     phrase?: string | undefined;
     providerFoodId?: string | undefined;
-    providerServingId?: string | undefined;
+    servingId?: ServingIdentifier;
 
     constructor(data?: IHydrateFoodSelectionRequest) {
         if (data) {
@@ -4756,7 +4756,7 @@ export class HydrateFoodSelectionRequest implements IHydrateFoodSelectionRequest
             this.messageId = _data["messageId"];
             this.phrase = _data["phrase"];
             this.providerFoodId = _data["providerFoodId"];
-            this.providerServingId = _data["providerServingId"];
+            this.servingId = _data["servingId"] ? ServingIdentifier.fromJS(_data["servingId"]) : <any>undefined;
         }
     }
 
@@ -4772,7 +4772,7 @@ export class HydrateFoodSelectionRequest implements IHydrateFoodSelectionRequest
         data["messageId"] = this.messageId;
         data["phrase"] = this.phrase;
         data["providerFoodId"] = this.providerFoodId;
-        data["providerServingId"] = this.providerServingId;
+        data["servingId"] = this.servingId ? this.servingId.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -4781,7 +4781,7 @@ export interface IHydrateFoodSelectionRequest {
     messageId?: string | undefined;
     phrase?: string | undefined;
     providerFoodId?: string | undefined;
-    providerServingId?: string | undefined;
+    servingId?: ServingIdentifier;
 }
 
 export class HydrateFoodSelectionResponse implements IHydrateFoodSelectionResponse {
@@ -5967,6 +5967,58 @@ export interface ISearchLogsResponse {
     nextPageToken?: string | undefined;
 }
 
+export class ServingIdentifier implements IServingIdentifier {
+    provider?: string | undefined;
+    foodType?: string | undefined;
+    foodName?: string | undefined;
+    variantIndex?: number;
+    servingType?: string | undefined;
+
+    constructor(data?: IServingIdentifier) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.provider = _data["provider"];
+            this.foodType = _data["foodType"];
+            this.foodName = _data["foodName"];
+            this.variantIndex = _data["variantIndex"];
+            this.servingType = _data["servingType"];
+        }
+    }
+
+    static fromJS(data: any): ServingIdentifier {
+        data = typeof data === 'object' ? data : {};
+        let result = new ServingIdentifier();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["provider"] = this.provider;
+        data["foodType"] = this.foodType;
+        data["foodName"] = this.foodName;
+        data["variantIndex"] = this.variantIndex;
+        data["servingType"] = this.servingType;
+        return data;
+    }
+}
+
+export interface IServingIdentifier {
+    provider?: string | undefined;
+    foodType?: string | undefined;
+    foodName?: string | undefined;
+    variantIndex?: number;
+    servingType?: string | undefined;
+}
+
 export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {
     pendingMessageId!: string;
     foodEntryId?: string | undefined;
@@ -6155,7 +6207,7 @@ export class UserEditOperation implements IUserEditOperation {
     groupId?: string | undefined;
     componentId?: string | undefined;
     providerFoodId?: string | undefined;
-    providerServingId?: string | undefined;
+    servingId?: ServingIdentifier;
     editedQuantity?: number | undefined;
     scaledQuantity?: number | undefined;
     newParentQuantity?: number | undefined;
@@ -6176,7 +6228,7 @@ export class UserEditOperation implements IUserEditOperation {
             this.groupId = _data["groupId"];
             this.componentId = _data["componentId"];
             this.providerFoodId = _data["providerFoodId"];
-            this.providerServingId = _data["providerServingId"];
+            this.servingId = _data["servingId"] ? ServingIdentifier.fromJS(_data["servingId"]) : <any>undefined;
             this.editedQuantity = _data["editedQuantity"];
             this.scaledQuantity = _data["scaledQuantity"];
             this.newParentQuantity = _data["newParentQuantity"];
@@ -6197,7 +6249,7 @@ export class UserEditOperation implements IUserEditOperation {
         data["groupId"] = this.groupId;
         data["componentId"] = this.componentId;
         data["providerFoodId"] = this.providerFoodId;
-        data["providerServingId"] = this.providerServingId;
+        data["servingId"] = this.servingId ? this.servingId.toJSON() : <any>undefined;
         data["editedQuantity"] = this.editedQuantity;
         data["scaledQuantity"] = this.scaledQuantity;
         data["newParentQuantity"] = this.newParentQuantity;
@@ -6211,7 +6263,7 @@ export interface IUserEditOperation {
     groupId?: string | undefined;
     componentId?: string | undefined;
     providerFoodId?: string | undefined;
-    providerServingId?: string | undefined;
+    servingId?: ServingIdentifier;
     editedQuantity?: number | undefined;
     scaledQuantity?: number | undefined;
     newParentQuantity?: number | undefined;
@@ -6222,7 +6274,7 @@ export class UserSelectedServing implements IUserSelectedServing {
     originalText?: string | undefined;
     provider?: string | undefined;
     providerFoodId?: string | undefined;
-    providerServingId?: string | undefined;
+    servingId?: ServingIdentifier;
     editedQuantity?: number | undefined;
     componentId?: string | undefined;
     scaledQuantity?: number | undefined;
@@ -6241,7 +6293,7 @@ export class UserSelectedServing implements IUserSelectedServing {
             this.originalText = _data["originalText"];
             this.provider = _data["provider"];
             this.providerFoodId = _data["providerFoodId"];
-            this.providerServingId = _data["providerServingId"];
+            this.servingId = _data["servingId"] ? ServingIdentifier.fromJS(_data["servingId"]) : <any>undefined;
             this.editedQuantity = _data["editedQuantity"];
             this.componentId = _data["componentId"];
             this.scaledQuantity = _data["scaledQuantity"];
@@ -6260,7 +6312,7 @@ export class UserSelectedServing implements IUserSelectedServing {
         data["originalText"] = this.originalText;
         data["provider"] = this.provider;
         data["providerFoodId"] = this.providerFoodId;
-        data["providerServingId"] = this.providerServingId;
+        data["servingId"] = this.servingId ? this.servingId.toJSON() : <any>undefined;
         data["editedQuantity"] = this.editedQuantity;
         data["componentId"] = this.componentId;
         data["scaledQuantity"] = this.scaledQuantity;
@@ -6272,7 +6324,7 @@ export interface IUserSelectedServing {
     originalText?: string | undefined;
     provider?: string | undefined;
     providerFoodId?: string | undefined;
-    providerServingId?: string | undefined;
+    servingId?: ServingIdentifier;
     editedQuantity?: number | undefined;
     componentId?: string | undefined;
     scaledQuantity?: number | undefined;

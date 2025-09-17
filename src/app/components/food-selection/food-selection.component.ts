@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier } from 'src/app/services/nutrition-ambition-api.service';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { FoodComponent } from './food/food.component';
@@ -13,6 +13,7 @@ import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { IonIcon } from '@ionic/angular/standalone';
+import { ServingIdentifierUtil } from './serving-identifier.util';
 
 @Component({
   selector: 'app-food-selection',
@@ -567,11 +568,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       if ((match as any).isBestMatch) {
         // Set default serving on the selected match
         (match as any).selectedServingId = match.servings?.[0]?.id;
-        // Set the user virtual serving ID as default for display (preselects user's preferred units)
+        // Set the default serving ID for display
         const originalSid = match.servings?.[0]?.id;
         if (originalSid) {
-          const newVirtualSid = originalSid + '::user';
-          (match as any).selectedVirtualServingId = newVirtualSid;
+          (match as any).selectedServingId = originalSid;
         }
       }
     });
@@ -579,11 +579,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // In edit mode, track the operation
     if (this.isEditMode) {
       const selectedMatch = component.matches.find((match: any) => match.providerFoodId === foodId);
+      const servingIdentifier = (selectedMatch as any)?.selectedServingId;
       this.addEditOperation(new UserEditOperation({
         action: EditFoodSelectionType.UpdateServing,
         componentId: componentId,
         providerFoodId: foodId,
-        providerServingId: (selectedMatch as any)?.selectedServingId
+        servingId: servingIdentifier
       }));
     }
 
@@ -600,20 +601,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   onServingSelected(componentId: string, servingId: string): void {
     const selectedFood = this.getSelectedFood(componentId);
     if (selectedFood) {
-      // Handle virtual serving IDs (::user or ::canonical)
-      // Map them back to the original serving ID for backend compatibility
-      const originalServingId = servingId.includes('::')
-        ? servingId.split('::')[0]
-        : servingId;
+      // Find the actual ServingIdentifier object from the serving data
+      const selectedServing = (selectedFood as any)?.servings?.find((s: any) => s.id === servingId);
+      const servingIdentifier = selectedServing?.servingId;
 
-      // Update selectedServingId directly on the selected match
-      (selectedFood as any).selectedServingId = originalServingId;
+      // Update selectedServingId with the ServingIdentifier object
+      (selectedFood as any).selectedServingId = servingIdentifier;
 
-      // Keep cache in sync with the original serving ID
-      this.selectedServingIdByComponentId.set(componentId, originalServingId);
-
-      // Store the virtual serving selection for display purposes
-      (selectedFood as any).selectedVirtualServingId = servingId;
+      // Keep cache in sync (still using string for cache lookup)
+      this.selectedServingIdByComponentId.set(componentId, servingId);
 
       // Update the FoodSelectionService with the new selection (using the new GUID id)
       this.foodSelectionService.selectServing(componentId, servingId);
@@ -623,12 +619,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.computeAllFoods();
 
       // In edit mode, track the operation
-      if (this.isEditMode) {
+      if (this.isEditMode && servingIdentifier) {
         this.addEditOperation(new UserEditOperation({
           action: EditFoodSelectionType.UpdateServing,
           componentId: componentId,
           providerFoodId: (selectedFood as any)?.providerFoodId,
-          providerServingId: servingId
+          servingId: servingIdentifier
         }));
       }
     }
@@ -667,7 +663,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Gets the original serving ID (without ::user or ::canonical suffix) for backend operations
+   * Gets the serving ID for backend operations
    */
   getOriginalServingId(componentId: string): string | undefined {
     const selectedFood = this.getSelectedFood(componentId);
@@ -709,12 +705,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   // Getter to always derive the selected serving for a food match
   getSelectedServingForFood(match: ComponentMatch): ComponentServing | undefined {
-    return match?.servings?.find((s: any) => s?.providerServingId === (match as any)?.selectedServingId);
+    const selectedServingId = (match as any)?.selectedServingId;
+    return match?.servings?.find((s: any) => {
+      if (!s?.servingId || !selectedServingId) return false;
+      return ServingIdentifierUtil.areEqual(s.servingId, selectedServingId);
+    });
   }
 
   // TrackBy function to prevent DOM reuse issues
   trackByServingId(index: number, serving: ComponentServing): string {
-    return (serving as any).providerServingId || `${index}`;
+    return ServingIdentifierUtil.toUniqueString(serving.servingId) || `${index}`;
   }
 
   // TrackBy helpers for larger lists
@@ -814,12 +814,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               // Use the frontend's calculated scaling - it's already correct!
               const scaledQuantity = this.getDisplayedQuantity(selectedServing);
 
+              const servingIdentifier = selectedServing.servingId;
               req.selections.push(new UserSelectedServing({
                 componentId: component.id,
                 originalText: (((component as any)?.key) ?? (selectedFood as any)?.originalText) || '',
                 provider: (selectedFood as any)?.provider ?? 'nutritionix',
                 providerFoodId: (selectedFood as any)?.providerFoodId,
-                providerServingId: servingId,
+                servingId: servingIdentifier,
                 editedQuantity: displayQuantity,
                 scaledQuantity: scaledQuantity
               }));
@@ -949,9 +950,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const userDisplayUnit = this.getDisplayUnit(serving);
 
     // Create user-anchored serving (user's exact input) - this should be pre-selected
+    const userServingId = serving.servingId ? new ServingIdentifier({
+      ...serving.servingId,
+      servingType: 'user'
+    }) : undefined;
+
     const userServing = new ComponentServing({
       ...serving,
-      providerServingId: serving.providerServingId + '::user',
+      servingId: userServingId,
       baseQuantity: userDisplayedQuantity, // User's exact quantity (e.g., 100)
       baseUnit: userDisplayUnit,           // User's exact unit (e.g., "g")
       aiRecommendedScale: 1,               // Scale of 1 for user input
@@ -1524,7 +1530,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
 
     // ensure exactly one best match (the edited row)
-    const editedId = selected.providerServingId;
+    const editedId = ServingIdentifierUtil.toUniqueString(selected.servingId);
 
     for (const s of selectedFood.servings) {
       const mAmt = this.getMetricAmt(s);
@@ -1542,7 +1548,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         }
       } else {
         // For non-metric, calculate scale based on the edited quantity
-        if (s.providerServingId === editedId) {
+        const sId = ServingIdentifierUtil.toUniqueString(s.servingId);
+        if (sId === editedId) {
           newScale = editedQty / baseQuantity;
         }
       }
@@ -1574,7 +1581,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
 
       // mark best match
-      (s as any).isBestMatch = (s as any).providerServingId === editedId;
+      const sId = ServingIdentifierUtil.toUniqueString(s.servingId);
+      (s as any).isBestMatch = sId === editedId;
     }
 
     // ensure UI shows the edited row as selected
@@ -1985,15 +1993,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         if (matches.length) {
           const selected: ComponentMatch = (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
           this.selectedFoodByComponentId.set(cid, selected);
-          const originalSid = (selected as any)?.selectedServingId ?? selected.servings?.[0]?.providerServingId;
-          if (originalSid) {
-            // Set the original serving ID for backend operations
-            (selected as any).selectedServingId = originalSid;
-            this.selectedServingIdByComponentId.set(cid, originalSid);
-            
-            // Set the user virtual serving ID as default for display
-            const userVirtualSid = originalSid + '::user';
-            (selected as any).selectedVirtualServingId = userVirtualSid;
+          const fallbackServingId = selected.servings?.[0]?.servingId || null;
+          const originalServingIdentifier = (selected as any)?.selectedServingId ?? fallbackServingId;
+          if (originalServingIdentifier) {
+            // Set the ServingIdentifier object for backend operations
+            (selected as any).selectedServingId = originalServingIdentifier;
+            // For the cache, we need a string key - use the first serving's id if available
+            const stringId = selected.servings?.[0]?.id || ServingIdentifierUtil.toUniqueString(originalServingIdentifier);
+            this.selectedServingIdByComponentId.set(cid, stringId);
           }
         }
       }
@@ -2007,6 +2014,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       color: 'danger'
     });
   }
+
 
   // Helper to detect if a ComponentMatch represents a common food (no brand name)
   isCommonFood(match: ComponentMatch): boolean {
@@ -2163,8 +2171,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         originalText: '',
         description: '',
         rank: 999,
-        servings: [],
-        selectedServingId: ''
+        servings: []
       });
 
       // Set loading state and options
