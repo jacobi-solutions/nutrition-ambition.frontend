@@ -1,24 +1,24 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { chevronUpOutline, chevronDownOutline, trashOutline } from 'ionicons/icons';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
+import { FoodSelectionService } from 'src/app/services/food-selection.service';
 
 @Component({
   selector: 'app-food-header',
   templateUrl: './food-header.component.html',
   styleUrls: ['./food-header.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent]
+  imports: [CommonModule, IonIcon, IonGrid, IonRow, IonCol, ServingQuantityInputComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FoodHeaderComponent implements OnInit, OnChanges {
   @Input() food: any = null;
   @Input() foodIndex: number = 0;
   @Input() isReadOnly: boolean = false;
   @Input() isExpanded: boolean = false;
-  @Input() currentQuantity: number = 1;
-  @Input() selectedServings: { [componentId: string]: any } = {};
 
   @Output() toggleExpansion = new EventEmitter<number>();
   @Output() quantityChanged = new EventEmitter<{foodIndex: number, quantity: number}>();
@@ -35,7 +35,7 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   shouldShowCaloriesOnly: boolean = false;
   macroSummary: string = '';
 
-  constructor() {
+  constructor(private foodSelectionService: FoodSelectionService) {
     addIcons({ chevronUpOutline, chevronDownOutline, trashOutline });
   }
 
@@ -44,7 +44,7 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['food'] || changes['currentQuantity'] || changes['isExpanded'] || changes['isReadOnly'] || changes['selectedServings']) {
+    if (changes['food'] || changes['isExpanded'] || changes['isReadOnly']) {
       this.computeDisplayValues();
     }
   }
@@ -56,7 +56,7 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     // Compute serving label
     if (this.food && this.food.components && this.food.components.length > 1) {
       // For multi-component foods, show the food-level quantity and unit
-      const quantity = this.currentQuantity || this.food.quantity || 1;
+      const quantity = this.food.quantity || 1;
       const unit = this.food.unit || 'servings';
       this.servingLabel = `${quantity} ${unit}`;
     } else {
@@ -113,44 +113,52 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     }
 
     for (const component of this.food.components) {
-      // Get the selected serving using the selectedServings input if available
-      let selectedServing = null;
-      if (component.id && this.selectedServings[component.id]) {
-        selectedServing = this.selectedServings[component.id];
-      } else {
-        // Fallback to the original logic
-        const selectedMatch = component.matches?.find((m: any) => m.isBestMatch) || component.matches?.[0];
-        if (!selectedMatch) continue;
-        selectedServing = selectedMatch.servings?.find((s: any) =>
-          s.providerServingId === selectedMatch.selectedServingId
-        ) || selectedMatch.servings?.[0];
-      }
+      // Skip removed components
+      if (component.isRemoved) continue;
+
+      // Get the selected serving from component data
+      const selectedMatch = component.matches?.find((m: any) => m.isBestMatch) || component.matches?.[0];
+      if (!selectedMatch) continue;
+
+      const selectedServing = selectedMatch.servings?.find((s: any) =>
+        s.providerServingId === selectedMatch.selectedServingId
+      ) || selectedMatch.servings?.[0];
 
       if (!selectedServing?.nutrients) continue;
 
-      // The nutrients are already scaled by the parent component, so we can use them directly
-      const nutrients = selectedServing.nutrients;
+      // Get current serving quantity from the service
+      const currentQuantity = this.foodSelectionService.getServingQuantity(component.id, selectedServing.id || '') || 1;
 
-      if (this.getMacro(nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']) !== null) {
-        aggregated.calories += this.getMacro(nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy'])!;
+      // Scale the base nutrients by the current quantity
+      const baseNutrients = selectedServing.nutrients;
+
+      const scaledCalories = this.getMacro(baseNutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']);
+      if (scaledCalories !== null) {
+        aggregated.calories += scaledCalories * currentQuantity;
         hasAnyNutrients = true;
       }
-      if (this.getMacro(nutrients, ['protein', 'Protein']) !== null) {
-        aggregated.protein += this.getMacro(nutrients, ['protein', 'Protein'])!;
+
+      const scaledProtein = this.getMacro(baseNutrients, ['protein', 'Protein']);
+      if (scaledProtein !== null) {
+        aggregated.protein += scaledProtein * currentQuantity;
         hasAnyNutrients = true;
       }
-      if (this.getMacro(nutrients, ['fat', 'Fat', 'total_fat']) !== null) {
-        aggregated.fat += this.getMacro(nutrients, ['fat', 'Fat', 'total_fat'])!;
+
+      const scaledFat = this.getMacro(baseNutrients, ['fat', 'Fat', 'total_fat']);
+      if (scaledFat !== null) {
+        aggregated.fat += scaledFat * currentQuantity;
         hasAnyNutrients = true;
       }
-      if (this.getMacro(nutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']) !== null) {
-        aggregated.carbs += this.getMacro(nutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs'])!;
+
+      const scaledCarbs = this.getMacro(baseNutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']);
+      if (scaledCarbs !== null) {
+        aggregated.carbs += scaledCarbs * currentQuantity;
         hasAnyNutrients = true;
       }
     }
 
     // Apply food-level quantity multiplier
-    const foodQuantity = this.currentQuantity || this.food?.quantity || 1;
+    const foodQuantity = this.food?.quantity || 1;
     if (hasAnyNutrients) {
       return {
         calories: aggregated.calories * foodQuantity,

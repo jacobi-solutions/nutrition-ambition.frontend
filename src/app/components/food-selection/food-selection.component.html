@@ -8,79 +8,18 @@
       </div>
 
       <div *ngIf="hasPayload" class="food-items-list">
-      <!-- Loop over foods instead of flattened components -->
+      <!-- Loop over foods using new intermediate food component -->
       <ng-container *ngFor="let food of computedFoods; let foodIndex = index; let isLast = last; trackBy: trackByFood">
-        <div class="food-item-container" [class.is-last]="isLast" *ngIf="(food.computedComponents?.length || 0) > 0">
-          
-          <!-- Cache components per food to avoid repeated calls -->
-          <ng-container *ngIf="food.computedComponents as foodComponents">
-          <!-- Multi-component food: Show as component-style item -->
-          <ng-container *ngIf="foodComponents.length > 1">
-            <!-- Food header component -->
-            <app-food-header
-              [food]="food"
-              [foodIndex]="foodIndex"
-              [isReadOnly]="isReadOnly"
-              [isExpanded]="food.isEditingExpanded || false"
-              [currentQuantity]="$any(food).precomputedCurrentQuantity"
-              [selectedServings]="$any(food).precomputedSelectedServings"
-              (toggleExpansion)="toggleFoodEditing($event)"
-              (quantityChanged)="onFoodQuantityChange($event.foodIndex, $event.quantity)"
-              (removeFood)="removeFood($event)">
-            </app-food-header>
-
-            <!-- Expanded food editing (quantity + components) -->
-            <div *ngIf="!isReadOnly && (food.isEditingExpanded || false)" class="expanded-food-components">
-            <ng-container *ngFor="let componentData of $any(foodComponents); trackBy: trackByComponentId">
-              <app-food-component-item
-                [component]="componentData"
-                [componentIndex]="0"
-                [isReadOnly]="isReadOnly"
-                [isEditMode]="isEditMode"
-                [isSingleComponentFood]="foodComponents.length === 1"
-                [parentQuantity]="food.quantity || 1"
-                (toggleExpansion)="toggleExpansion($event)"
-                (servingSelected)="onServingSelected($event.componentId, $event.servingId)"
-                (servingQuantityChanged)="onServingQuantityChanged($event.componentId, $event.servingId, $event.quantity)"
-                (editStarted)="startEditingComponent($event)"
-                (editCanceled)="cancelEditingComponent($event)"
-                (editConfirmed)="sendUpdatedComponent($event)"
-                (removeComponent)="removeItem($event)"
-                (moreOptionsRequested)="toggleMoreOptions($event)"
-                (foodSelected)="handleFoodSelected($event)"
-                (instantOptionsRequested)="onDropdownWillOpen($event.componentId)">
-              </app-food-component-item>
-            </ng-container>
-            
-          </div> <!-- Close expanded-food-components -->
-          </ng-container> <!-- Close multi-component food -->
-
-          <!-- Single-component food: Display using child component -->
-          <ng-container *ngIf="foodComponents.length === 1">
-            <ng-container *ngFor="let componentData of $any(foodComponents); trackBy: trackByComponentId">
-              <app-food-component-item
-                [component]="componentData"
-                [componentIndex]="0"
-                [isReadOnly]="isReadOnly"
-                [isEditMode]="isEditMode"
-                [isSingleComponentFood]="foodComponents.length === 1"
-                [parentQuantity]="food.quantity || 1"
-                (toggleExpansion)="toggleExpansion($event)"
-                (servingSelected)="onServingSelected($event.componentId, $event.servingId)"
-                (servingQuantityChanged)="onServingQuantityChanged($event.componentId, $event.servingId, $event.quantity)"
-                (editStarted)="startEditingComponent($event)"
-                (editCanceled)="cancelEditingComponent($event)"
-                (editConfirmed)="sendUpdatedComponent($event)"
-                (removeComponent)="removeItem($event)"
-                (moreOptionsRequested)="toggleMoreOptions($event)"
-                (foodSelected)="handleFoodSelected($event)"
-                (instantOptionsRequested)="onDropdownWillOpen($event.componentId)">
-              </app-food-component-item>
-            </ng-container>
-          </ng-container> <!-- Close single-component food -->
-          </ng-container> <!-- Close cached components container -->
-
-        </div> <!-- Close food-item-container -->
+        <div [class.is-last]="isLast" *ngIf="hasVisibleComponents(food)">
+          <app-food
+            [food]="food"
+            [foodIndex]="foodIndex"
+            [isReadOnly]="isReadOnly"
+            [isEditMode]="isEditMode"
+            (foodChanged)="onFoodChanged($event.index, $event.food)"
+            (actionRequested)="onFoodActionRequested($event)">
+          </app-food>
+        </div>
       </ng-container>
     </div>
 

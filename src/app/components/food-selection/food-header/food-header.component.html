@@ -11,7 +11,7 @@
             <!-- Show quantity stepper when expanded -->
             <ng-container *ngIf="computedShouldShowQuantityInput">
               <app-serving-quantity-input
-                [value]="currentQuantity"
+                [value]="food?.quantity || 1"
                 [step]="1"
                 [min]="1"
                 [max]="999"

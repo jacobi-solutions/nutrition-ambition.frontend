@@ -1,0 +1,66 @@
+<!-- Food container with header and components -->
+<div class="food-item-container">
+
+  <!-- Multi-component food: Show header + expandable components -->
+  <ng-container *ngIf="isMultiComponentFood()">
+    <!-- Food header component -->
+    <app-food-header
+      [food]="food"
+      [foodIndex]="foodIndex"
+      [isReadOnly]="isReadOnly"
+      [isExpanded]="food.isEditingExpanded || false"
+      (toggleExpansion)="onToggleFoodExpansion()"
+      (quantityChanged)="onQuantityChange($event.quantity)"
+      (removeFood)="onRemoveFood()">
+    </app-food-header>
+
+    <!-- Expanded food editing (quantity + components) -->
+    <div *ngIf="!isReadOnly && (food.isEditingExpanded || false)" class="expanded-food-components">
+      <ng-container *ngFor="let component of visibleComponents; trackBy: trackByComponent">
+        <app-food-component-item
+          [component]="component"
+          [componentIndex]="0"
+          [isReadOnly]="isReadOnly"
+          [isEditMode]="isEditMode"
+          [isSingleComponentFood]="false"
+          [parentQuantity]="food.quantity || 1"
+          (toggleExpansion)="onToggleComponentExpansion($event)"
+          (servingSelected)="onServingSelected($event)"
+          (servingQuantityChanged)="onServingQuantityChanged($event)"
+          (editStarted)="onEditStarted($event)"
+          (editCanceled)="onEditCanceled($event)"
+          (editConfirmed)="onEditConfirmed($event)"
+          (removeComponent)="onRemoveComponent($event)"
+          (moreOptionsRequested)="onMoreOptionsRequested($event)"
+          (foodSelected)="onFoodSelected($event)"
+          (instantOptionsRequested)="onInstantOptionsRequested($event.componentId)">
+        </app-food-component-item>
+      </ng-container>
+    </div> <!-- Close expanded-food-components -->
+  </ng-container> <!-- Close multi-component food -->
+
+  <!-- Single-component food: Display directly as component item -->
+  <ng-container *ngIf="!isMultiComponentFood()">
+    <ng-container *ngFor="let component of visibleComponents; trackBy: trackByComponent">
+      <app-food-component-item
+        [component]="component"
+        [componentIndex]="0"
+        [isReadOnly]="isReadOnly"
+        [isEditMode]="isEditMode"
+        [isSingleComponentFood]="true"
+        [parentQuantity]="food.quantity || 1"
+        (toggleExpansion)="onToggleComponentExpansion($event)"
+        (servingSelected)="onServingSelected($event)"
+        (servingQuantityChanged)="onServingQuantityChanged($event)"
+        (editStarted)="onEditStarted($event)"
+        (editCanceled)="onEditCanceled($event)"
+        (editConfirmed)="onEditConfirmed($event)"
+        (removeComponent)="onRemoveComponent($event)"
+        (moreOptionsRequested)="onMoreOptionsRequested($event)"
+        (foodSelected)="onFoodSelected($event)"
+        (instantOptionsRequested)="onInstantOptionsRequested($event.componentId)">
+      </app-food-component-item>
+    </ng-container>
+  </ng-container> <!-- Close single-component food -->
+
+</div> <!-- Close food-item-container -->

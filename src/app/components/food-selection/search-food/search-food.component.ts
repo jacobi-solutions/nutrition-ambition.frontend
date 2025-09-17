@@ -76,6 +76,13 @@ export class SearchFoodComponent implements OnInit {
     }, 150);
   }
 
+  onTextareaInput(event: Event): void {
+    const target = event.target as HTMLTextAreaElement;
+    if (target) {
+      this.autoResizeTextarea(target);
+    }
+  }
+
   autoResizeTextarea(textarea: HTMLTextAreaElement): void {
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(textarea.scrollHeight, 72) + 'px'; // Max 3 rows (72px)

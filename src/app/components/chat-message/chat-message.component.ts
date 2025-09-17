@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
@@ -14,7 +14,7 @@ import { ChatMessage, ComponentMatch } from '../../services/nutrition-ambition-a
     CommonModule
   ]
 })
-export class ChatMessageComponent implements OnInit {
+export class ChatMessageComponent {
   @Input() text: string = '';
   @Input() isUser: boolean = false;
   @Input() isTool: boolean = false;
@@ -26,9 +26,6 @@ export class ChatMessageComponent implements OnInit {
     private sanitizer: DomSanitizer
   ) {}
 
-  ngOnInit() {
-    // Component initialization
-  }
 
   /**
    * Converts the message content to Markdown and sanitizes it

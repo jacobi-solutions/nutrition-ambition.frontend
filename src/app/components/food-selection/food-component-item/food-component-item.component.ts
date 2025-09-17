@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
@@ -15,7 +15,8 @@ import { ComponentServingDisplay } from 'src/app/models/food-selection-display';
   templateUrl: './food-component-item.component.html',
   styleUrls: ['./food-component-item.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, ServingQuantityInputComponent, SearchFoodComponent]
+  imports: [CommonModule, FormsModule, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, ServingQuantityInputComponent, SearchFoodComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Input() component: any; // Component data from parent
@@ -42,38 +43,15 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   displayMatches: ComponentMatch[] = [];
   servingOptions: ComponentServingDisplay[] = [];
 
-  // Getters for ComponentDisplay flags
-  get isExpanded(): boolean {
-    return this.component?.component?.isExpanded || false;
-  }
-
-  get isEditing(): boolean {
-    return this.component?.component?.isEditing || false;
-  }
-
-  get editingValue(): string {
-    return this.component?.component?.editingValue || '';
-  }
-
-  get isSearching(): boolean {
-    return this.component?.component?.isSearching || false;
-  }
-
-  get showingMoreOptions(): boolean {
-    return this.component?.component?.showingMoreOptions || false;
-  }
-
-  get loadingMoreOptions(): boolean {
-    return this.component?.component?.loadingMoreOptions || false;
-  }
-
-  get moreOptions(): ComponentMatch[] {
-    return this.component?.component?.moreOptions || [];
-  }
-
-  get loadingInstantOptions(): boolean {
-    return this.component?.component?.loadingInstantOptions || false;
-  }
+  // Precomputed ComponentDisplay flags
+  isExpanded: boolean = false;
+  isEditing: boolean = false;
+  editingValue: string = '';
+  isSearching: boolean = false;
+  showingMoreOptions: boolean = false;
+  loadingMoreOptions: boolean = false;
+  moreOptions: ComponentMatch[] = [];
+  loadingInstantOptions: boolean = false;
 
   // Output events for parent coordination
   @Output() toggleExpansion = new EventEmitter<string>();
@@ -101,48 +79,47 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     if (changes['component'] || changes['isExpanded']) {
       this.computeDisplayValues();
-      this.cdr.detectChanges();
     }
   }
 
   // Pass-through methods for now - will be implemented as we extract logic
   onToggleExpansion() {
-    this.toggleExpansion.emit(this.component.componentId);
+    this.toggleExpansion.emit(this.component.id);
   }
 
   onServingSelected(servingId: string) {
-    this.servingSelected.emit({componentId: this.component.componentId, servingId});
+    this.servingSelected.emit({componentId: this.component.id, servingId});
   }
 
 
   onEditStarted() {
-    this.editStarted.emit(this.component.componentId);
+    this.editStarted.emit(this.component.id);
   }
 
   onEditCanceled() {
-    this.editCanceled.emit(this.component.componentId);
+    this.editCanceled.emit(this.component.id);
   }
 
   onEditConfirmed(newPhrase: string) {
-    this.editConfirmed.emit({componentId: this.component.componentId, newPhrase});
+    this.editConfirmed.emit({componentId: this.component.id, newPhrase});
   }
 
   onRemoveComponent() {
-    this.removeComponent.emit(this.component.componentId);
+    this.removeComponent.emit(this.component.id);
   }
 
   onMoreOptionsRequested() {
-    this.moreOptionsRequested.emit(this.component.componentId);
+    this.moreOptionsRequested.emit(this.component.id);
   }
 
   onFoodSelected(food: ComponentMatch) {
-    this.foodSelected.emit({componentId: this.component.componentId, food});
+    this.foodSelected.emit({componentId: this.component.id, food});
     // Recompute display values after food selection changes
     this.computeDisplayValues();
   }
 
   onInstantOptionsRequested(searchTerm: string) {
-    this.instantOptionsRequested.emit({componentId: this.component.componentId, searchTerm});
+    this.instantOptionsRequested.emit({componentId: this.component.id, searchTerm});
   }
 
   // Compute all display values when data changes
@@ -156,7 +133,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     } else if (this.selectedFood?.displayName) {
       this.displayName = this.selectedFood.displayName;
     } else {
-      this.displayName = this.component?.component?.key || '';
+      this.displayName = this.component?.key || '';
     }
 
     // Compute inferred flag
@@ -201,6 +178,16 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     // Compute macro summary
     this.macroSummary = this.computeMacroSummary();
 
+    // Compute ComponentDisplay flags
+    this.isExpanded = this.component?.isExpanded || false;
+    this.isEditing = this.component?.isEditing || false;
+    this.editingValue = this.component?.editingValue || '';
+    this.isSearching = this.component?.isSearching || false;
+    this.showingMoreOptions = this.component?.showingMoreOptions || false;
+    this.loadingMoreOptions = this.component?.loadingMoreOptions || false;
+    this.moreOptions = this.component?.moreOptions || [];
+    this.loadingInstantOptions = this.component?.loadingInstantOptions || false;
+
     // Compute additional precomputed values
     this.originalPhrase = this.computeOriginalPhrase();
     this.selectedFoodId = this.computeSelectedFoodId();
@@ -221,12 +208,12 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     }
 
     // Look for OriginalPhrase at the food level (from backend Food model)
-    if (this.component?.component?.originalPhrase) {
+    if (this.component?.originalPhrase) {
       return this.component.component.originalPhrase;
     }
 
     // Fallback to component key
-    return this.component?.component?.key || '';
+    return this.component?.key || '';
   }
 
   private computeSelectedFoodId(): string {
@@ -238,12 +225,12 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   private computeDisplayMatches(): ComponentMatch[] {
-    return this.component?.component?.matches || [];
+    return this.component?.matches || [];
   }
 
   private computeServingOptions(): ComponentServingDisplay[] {
     const servings = this.selectedFood?.servings || [];
-    const componentId = this.component?.componentId || '';
+    const componentId = this.component?.id || '';
 
     const enhanced = this.foodSelectionService.enhanceServingsWithDisplayProps(
       servings,
@@ -293,7 +280,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     const serving = this.getSelectedServing();
     if (!serving) return 1;
 
-    const componentId = this.component?.componentId || '';
+    const componentId = this.component?.id || '';
     const servingId = serving.id || '';
     const baseQuantity = serving.baseQuantity || 1;
 
@@ -324,17 +311,17 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     const scaledNutrients = this.getScaledNutrients(serving);
     if (!scaledNutrients) return null;
 
-    const energyKcal = scaledNutrients['energy_kcal'];
-    if (!energyKcal) return null;
+    const calories = scaledNutrients['calories'];
+    if (!calories) return null;
 
-    let calories = energyKcal;
+    let finalCalories = calories;
 
     // For single-component foods, multiply by parent quantity
     if (this.isSingleComponentFood && this.parentQuantity > 1) {
-      calories = calories * this.parentQuantity;
+      finalCalories = finalCalories * this.parentQuantity;
     }
 
-    return Math.round(calories);
+    return Math.round(finalCalories);
   }
 
   getServingLabelForServing(serving: ComponentServing): string {
@@ -371,7 +358,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   getDisplayMatches(): ComponentMatch[] {
-    return this.component?.component?.matches || [];
+    return this.component?.matches || [];
   }
 
   getOriginalPhrase(): string {
@@ -388,12 +375,12 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     }
 
     // Look for OriginalPhrase at the food level (from backend Food model)
-    if (this.component?.component?.originalPhrase) {
+    if (this.component?.originalPhrase) {
       return this.component.component.originalPhrase;
     }
 
     // Fallback to component key
-    return this.component?.component?.key || '';
+    return this.component?.key || '';
   }
 
   hasEditChanges(): boolean {
@@ -408,20 +395,20 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   onFoodSelectedFromDropdown(foodId: string): void {
     const food = this.getDisplayMatches().find(m => m.providerFoodId === foodId);
     if (food) {
-      this.foodSelected.emit({componentId: this.component.componentId, food});
+      this.foodSelected.emit({componentId: this.component.id, food});
     }
   }
 
   onDropdownWillOpen(): void {
-    this.instantOptionsRequested.emit({componentId: this.component.componentId, searchTerm: ''});
+    this.instantOptionsRequested.emit({componentId: this.component.id, searchTerm: ''});
   }
 
   onMoreOptionSelected(alternative: ComponentMatch): void {
-    this.foodSelected.emit({componentId: this.component.componentId, food: alternative});
+    this.foodSelected.emit({componentId: this.component.id, food: alternative});
   }
 
   onServingSelectedFromRadio(servingId: string): void {
-    this.servingSelected.emit({componentId: this.component.componentId, servingId});
+    this.servingSelected.emit({componentId: this.component.id, servingId});
     // Recompute display values after serving selection changes
     this.computeDisplayValues();
   }
@@ -432,7 +419,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       // This prevents corrupting the virtual serving ID when clicking quantity inputs
       const isAlreadySelected = serving.isSelected;
       if (!isAlreadySelected) {
-        this.servingSelected.emit({componentId: this.component.componentId, servingId: serving.id});
+        this.servingSelected.emit({componentId: this.component.id, servingId: serving.id});
         // Recompute display values after serving selection changes
         this.computeDisplayValues();
       }
@@ -440,7 +427,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   onServingQuantityChanged(serving: ComponentServingDisplay, quantity: number): void {
-    const componentId = this.component?.componentId || '';
+    const componentId = this.component?.id || '';
     const baseQuantity = serving.baseQuantity || 1;
 
     // Use the new unit-to-serving conversion method
@@ -477,7 +464,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
   // Get current edited phrase value
   getCurrentEditedPhrase(): string {
-    return this.component?.component?.editingValue || this.getOriginalPhrase();
+    return this.component?.editingValue || this.getOriginalPhrase();
   }
 
   private computeMacroSummary(): string {
@@ -531,7 +518,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
    * (lightweight alternative serving), scales from the base serving.
    */
   private getScaledNutrients(serving: ComponentServing): { [key: string]: number } | null {
-    const componentId = this.component?.componentId || '';
+    const componentId = this.component?.id || '';
     const servingId = serving.id || '';
     const currentQuantity = this.foodSelectionService.getServingQuantity(componentId, servingId);
 
@@ -544,12 +531,17 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       return scaledNutrients;
     }
 
-    // Alternative serving has no nutrients - scale from base serving
+    // Alternative serving has no nutrients - scale from rank 1 serving
     const food = this.getSelectedFood();
     if (!food?.servings) return null;
 
-    // Find base serving (should be the first one with nutrients)
-    const baseServing = food.servings.find(s => s.nutrients && Object.keys(s.nutrients).length > 0);
+    // Find the default serving (indicated by ::default in providerServingId)
+    // This is the base serving with full nutrient data
+    const baseServing = food.servings.find(s =>
+      s.providerServingId?.includes('::default') &&
+      s.nutrients &&
+      Object.keys(s.nutrients).length > 3
+    );
     if (!baseServing?.nutrients) return null;
 
     // Calculate scale factor: altWeight / baseWeight
@@ -563,7 +555,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
     // Scale only the 4 preview nutrients for food selection
     const scaledNutrients: { [key: string]: number } = {};
-    const previewNutrients = ['energy_kcal', 'protein', 'total_fat', 'carbohydrate'];
+    const previewNutrients = ['calories', 'protein', 'fat', 'carbohydrate'];
 
     for (const nutrientKey of previewNutrients) {
       if (typeof baseServing.nutrients[nutrientKey] === 'number') {

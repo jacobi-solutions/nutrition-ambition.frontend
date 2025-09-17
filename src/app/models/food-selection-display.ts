@@ -82,11 +82,6 @@ export class FoodDisplay extends Food {
   isEditingExpanded?: boolean;
   editingQuantity?: number;
 
-  // Precomputed data to eliminate method calls in template
-  computedComponents?: ComponentDataDisplay[];
-  precomputedSelectedServings?: { [componentId: string]: any };
-  precomputedCurrentQuantity?: number;
-
   // Enhanced components with display flags
   components?: ComponentDisplay[] | undefined;
 
@@ -96,9 +91,6 @@ export class FoodDisplay extends Food {
     this.isEditing = data.isEditing;
     this.isEditingExpanded = data.isEditingExpanded;
     this.editingQuantity = data.editingQuantity;
-    this.computedComponents = data.computedComponents;
-    this.precomputedSelectedServings = data.precomputedSelectedServings;
-    this.precomputedCurrentQuantity = data.precomputedCurrentQuantity;
     this.components = data.components;
   }
 
@@ -109,9 +101,6 @@ export class FoodDisplay extends Food {
       this.isEditing = _data["isEditing"];
       this.isEditingExpanded = _data["isEditingExpanded"];
       this.editingQuantity = _data["editingQuantity"];
-      this.computedComponents = _data["computedComponents"];
-      this.precomputedSelectedServings = _data["precomputedSelectedServings"];
-      this.precomputedCurrentQuantity = _data["precomputedCurrentQuantity"];
       if (Array.isArray(_data["components"])) {
         this.components = [] as any;
         for (let item of _data["components"])
@@ -126,9 +115,6 @@ export class FoodDisplay extends Food {
     data["isEditing"] = this.isEditing;
     data["isEditingExpanded"] = this.isEditingExpanded;
     data["editingQuantity"] = this.editingQuantity;
-    data["computedComponents"] = this.computedComponents;
-    data["precomputedSelectedServings"] = this.precomputedSelectedServings;
-    data["precomputedCurrentQuantity"] = this.precomputedCurrentQuantity;
     if (Array.isArray(this.components)) {
       data["components"] = [];
       for (let item of this.components)
@@ -246,12 +232,3 @@ export class ComponentMatchDisplay extends ComponentMatch {
   }
 }
 
-/**
- * Helper type for component data used in templates
- */
-export interface ComponentDataDisplay {
-  componentId: string;
-  component: ComponentDisplay;
-  isSingleComponentFood?: boolean;
-  parentQuantity?: number;
-}

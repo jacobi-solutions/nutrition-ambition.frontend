@@ -7,7 +7,7 @@
       (keydown)="onKeyDown($event)"
       (blur)="onBlur($event)"
       [placeholder]="placeholder"
-      (input)="autoResizeTextarea($any($event.target))">
+      (input)="onTextareaInput($event)">
     </textarea>
     <button
       class="send-button"
