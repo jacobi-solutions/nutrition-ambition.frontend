@@ -4,7 +4,6 @@ import { IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { chevronUpOutline, chevronDownOutline, trashOutline } from 'ionicons/icons';
 import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
-import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { ServingIdentifierUtil } from '../serving-identifier.util';
 
 @Component({
@@ -36,7 +35,7 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   shouldShowCaloriesOnly: boolean = false;
   macroSummary: string = '';
 
-  constructor(private foodSelectionService: FoodSelectionService) {
+  constructor() {
     addIcons({ chevronUpOutline, chevronDownOutline, trashOutline });
   }
 
@@ -127,8 +126,8 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
 
       if (!selectedServing?.nutrients) continue;
 
-      // Get current serving quantity from the service
-      const currentQuantity = this.foodSelectionService.getServingQuantity(component.id, selectedServing.id || '') || 1;
+      // Get current serving quantity from the serving's effectiveQuantity
+      const currentQuantity = (selectedServing as any).effectiveQuantity || 1;
 
       // Scale the base nutrients by the current quantity
       const baseNutrients = selectedServing.nutrients;

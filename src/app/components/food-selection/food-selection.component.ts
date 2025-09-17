@@ -309,11 +309,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Auto-select the first serving if none is selected yet
     if (selected.servings?.[0]?.id) {
       const firstServingId = selected.servings[0].id;
-      const currentSelection = this.foodSelectionService.getSelectedServing(componentId);
-      console.log('🍎 Auto-selecting serving - currentSelection:', currentSelection, 'firstServingId:', firstServingId);
-      if (!currentSelection) {
-        this.foodSelectionService.selectServing(componentId, firstServingId);
-      }
+      console.log('🍎 Auto-selecting serving - firstServingId:', firstServingId);
+      // Note: Serving selection is now handled in the data structure directly
     }
 
     return selected;
@@ -401,8 +398,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       // Keep cache in sync (still using string for cache lookup)
       this.selectedServingIdByComponentId.set(componentId, servingId);
 
-      // Update the FoodSelectionService with the new selection (using the new GUID id)
-      this.foodSelectionService.selectServing(componentId, servingId);
+      // Note: No longer need to update service since components use data structure directly
 
 
       // Trigger recomputation which creates new array references for OnPush components
@@ -431,8 +427,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             // Keep cache in sync
             this.selectedServingIdByComponentId.set(componentId, servingId);
 
-            // ALSO update the service since child still uses it
-            this.foodSelectionService.selectServing(componentId, servingId);
+            // Note: No longer need to update service since child components use data structure directly
 
             // Create new component reference - this triggers ngOnChanges in the child
             food.components[componentIndex] = new ComponentDisplay({...component});
@@ -468,10 +463,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getSelectedServingId(componentId: string): string | undefined {
-    // Use the food-selection service to get the currently selected serving
-    const selectedServingFromService = this.foodSelectionService.getSelectedServing(componentId);
-    if (selectedServingFromService) {
-      return selectedServingFromService;
+    // Use our cache first
+    const cachedSelection = this.selectedServingIdByComponentId.get(componentId);
+    if (cachedSelection) {
+      return cachedSelection;
     }
 
     // Fallback: get the first serving from the selected food
@@ -479,8 +474,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const firstServingId = selectedFood?.servings?.[0]?.id;
 
     if (firstServingId) {
-      // Auto-select this serving in the service
-      this.foodSelectionService.selectServing(componentId, firstServingId);
+      // Cache this selection
+      this.selectedServingIdByComponentId.set(componentId, firstServingId);
       return firstServingId;
     }
 
@@ -832,9 +827,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         if (component.id && !(component as any).isRemoved) {
           const selectedServing = this.getSelectedServing(component.id);
           if (selectedServing) {
-            // Get the current quantity multiplier from the food-selection service
-            const servingId = selectedServing.id || '';
-            const currentQuantity = this.foodSelectionService.getServingQuantity(component.id, servingId);
+            // Get the current quantity from the serving's effectiveQuantity
+            const currentQuantity = (selectedServing as any).effectiveQuantity || 1;
             // console.log('🍽️ Component', component.id, 'quantity:', currentQuantity);
 
             // Create a copy of the serving with scaled nutrients
@@ -1136,13 +1130,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         this.onComponentChanged(foodIndex, componentId, { isRemoved: true });
       }
 
-      // Clean up food-selection service state for this component
+      // Clean up cached serving selection for this component
       const selectedServing = this.getSelectedServing(componentId);
       console.log('🗑️ Removing component:', componentId, 'selectedServing:', selectedServing?.id);
       if (selectedServing?.id) {
-        // Clear the serving selection and quantity tracking for this component
-        this.foodSelectionService.updateServingQuantity(componentId, selectedServing.id, 0);
-        console.log('🗑️ Cleared quantity tracking for removed component');
+        // Clear the serving selection cache for this component
+        this.selectedServingIdByComponentId.delete(componentId);
+        console.log('🗑️ Cleared selection cache for removed component');
       }
 
       // Check if this was the last remaining food item
