@@ -424,7 +424,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       if (!isAlreadySelected) {
         this.servingSelected.emit({componentId: this.component.id, servingId: serving.id});
         // Recompute display values after serving selection changes
-        this.computeDisplayValues();
+        // this.computeDisplayValues();
       }
     }
   }

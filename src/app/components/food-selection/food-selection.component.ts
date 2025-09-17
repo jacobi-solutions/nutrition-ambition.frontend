@@ -45,8 +45,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   
 
 
-  // Track edit operations for the new backend structure
-  editOperations: UserEditOperation[] = [];
+ 
   removedFoods: Set<string> = new Set(); // Track foods removed via RemoveFood operation
   
   // Track which component was being edited to re-expand it after update
@@ -133,7 +132,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
 
-
   toggleExpansion(componentId: string): void {
     // Get current state from component
     const component = this.findComponentById(componentId);
@@ -147,27 +145,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  isExpanded(componentId: string): boolean {
-    const component = this.findComponentById(componentId);
-    return component?.isExpanded ?? false;
-  }
-
-  // Food-level expansion methods
-  toggleFoodExpansion(foodIndex: number): void {
-    const food = this.computedFoods[foodIndex];
-    if (food) {
-      const newFood = new FoodDisplay({
-        ...food,
-        isEditingExpanded: !food.isEditingExpanded
-      });
-      this.onFoodChanged(foodIndex, newFood);
-    }
-  }
-
-  isFoodExpanded(foodIndex: number): boolean {
-    const food = this.computedFoods[foodIndex];
-    return food?.isEditingExpanded ?? false;
-  }
 
   // Get components for a specific food
   getComponentsForFood(food: any): any[] {
@@ -216,79 +193,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return result;
   }
 
-  // Calculate total macros for a food (sum of all its components)
-  getFoodTotalCalories(food: any): number {
-    const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
-      const selectedServing = this.getSelectedServing(componentId);
-      const calories = this.caloriesForServing(selectedServing);
-      return total + (calories || 0);
-    }, 0);
-    return componentTotal * (food.quantity || 1);
-  }
-
-  getFoodTotalProtein(food: any): number {
-    const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
-      const selectedServing = this.getSelectedServing(componentId);
-      const protein = this.proteinForServing(selectedServing);
-      return total + (protein || 0);
-    }, 0);
-    return componentTotal * (food.quantity || 1);
-  }
-
-  getFoodTotalFat(food: any): number {
-    const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
-      const selectedServing = this.getSelectedServing(componentId);
-      const fat = this.fatForServing(selectedServing);
-      return total + (fat || 0);
-    }, 0);
-    return componentTotal * (food.quantity || 1);
-  }
-
-  getFoodTotalCarbs(food: any): number {
-    const componentTotal = this.getComponentsForFood(food).reduce((total, { componentId }) => {
-      const selectedServing = this.getSelectedServing(componentId);
-      const carbs = this.carbsForServing(selectedServing);
-      return total + (carbs || 0);
-    }, 0);
-    return componentTotal * (food.quantity || 1);
-  }
-
-  // Optimized totals using pre-calculated components (passed from template)
-  getFoodTotalCaloriesFromComponents(food: any, foodComponents: any[]): number {
-    const componentTotal = foodComponents.reduce((total, { componentId }) => {
-      const selectedServing = this.getSelectedServing(componentId);
-      const calories = this.caloriesForServing(selectedServing);
-      return total + (calories || 0);
-    }, 0);
-    return componentTotal * (food.quantity || 1);
-  }
-
-  getFoodTotalProteinFromComponents(food: any, foodComponents: Array<{componentId: string, component: any}>): number {
-    const componentTotal = foodComponents.reduce((total, { componentId }) => {
-      const selectedServing = this.getSelectedServing(componentId);
-      const protein = this.proteinForServing(selectedServing);
-      return total + (protein || 0);
-    }, 0);
-    return componentTotal * (food.quantity || 1);
-  }
-
-  getFoodTotalFatFromComponents(food: any, foodComponents: Array<{componentId: string, component: any}>): number {
-    const componentTotal = foodComponents.reduce((total, { componentId }) => {
-      const selectedServing = this.getSelectedServing(componentId);
-      const fat = this.fatForServing(selectedServing);
-      return total + (fat || 0);
-    }, 0);
-    return componentTotal * (food.quantity || 1);
-  }
-
-  getFoodTotalCarbsFromComponents(food: any, foodComponents: Array<{componentId: string, component: any}>): number {
-    const componentTotal = foodComponents.reduce((total, { componentId }) => {
-      const selectedServing = this.getSelectedServing(componentId);
-      const carbs = this.carbsForServing(selectedServing);
-      return total + (carbs || 0);
-    }, 0);
-    return componentTotal * (food.quantity || 1);
-  }
 
   // Food-level expansion management
   toggleFoodEditing(foodIndex: number): void {
@@ -328,74 +232,18 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return food.isEditingExpanded ?? false;
   }
 
-  getFoodServingLabel(food: any): string {
-    // For multi-component foods, get the serving label from the first component's selected serving
-    if (food.components && food.components.length > 0) {
-      const firstComponent = food.components[0];
-      const selectedServing = this.getSelectedServing(firstComponent.id);
-      if (selectedServing) {
-        const quantity = this.getDisplayedQuantity(selectedServing) || 1;
-        const unit = this.getUnitText(selectedServing);
-        return `${quantity} ${unit}`;
-      }
-    }
-    
-    // Fallback to old logic for single-component foods
-    const quantity = food.quantity || 1;
-    // Prefer explicit singular/plural from API if provided
-    const hasPlural = typeof food.pluralUnit === 'string' && food.pluralUnit.trim().length > 0;
-    const hasSingular = typeof food.singularUnit === 'string' && food.singularUnit.trim().length > 0;
-    const unitBase = (food.unit || '').trim();
+  
 
-    if (quantity === 1) {
-      const label = hasSingular ? (food.singularUnit as string).trim() : (unitBase || 'serving');
-      return `1 ${label}`;
-    }
-
-    const label = hasPlural ? (food.pluralUnit as string).trim() : (unitBase ? `${unitBase}s` : 'servings');
-    return `${quantity} ${label}`;
-  }
-
-  getFoodNameWithIngredientCount(food: any): string {
-    const componentCount = this.getComponentsForFood(food).length;
-    if (componentCount > 1) {
-      return `${food.name} - ${componentCount} ingredients`;
-    }
-    return food.name;
-  }
-
-  updateFoodQuantity(foodIndex: number): void {
-    const food = this.computedFoods[foodIndex];
-    if (!food) return;
-
-    // Get quantity from food display property
-    const newQuantity = food.editingQuantity;
-    if (newQuantity && newQuantity > 0) {
-      // In edit mode, track the operation instead of directly updating
-      if (this.isEditMode && food.id) {
-        this.addEditOperation(new UserEditOperation({
-          action: EditFoodSelectionType.UpdateParentQuantity,
-          groupId: food.id,
-          newParentQuantity: newQuantity,
-          newParentUnit: food.unit || 'serving'
-        }));
-      } else {
-        // In normal mode, update directly for UI display
-        food.quantity = newQuantity;
-      }
-      // Trigger recomputation which creates new array references for OnPush components
-      this.computeAllFoods();
-    }
-  }
 
   onFoodQuantityChange(foodIndex: number, newQuantity: number): void {
-    const food = this.message.logMealToolResponse?.foods?.[foodIndex];
+    const food = this.computedFoods[foodIndex];
     if (food) {
-      // Update the food display property directly (primary source of truth)
-      (food as any).editingQuantity = newQuantity;
+      this.computedFoods[foodIndex] = new FoodDisplay({
+        ...food, quantity: newQuantity
+      });
     }
 
-    this.updateFoodQuantity(foodIndex);
+    this.computedFoods = [...this.computedFoods];
   }
 
   onFoodActionRequested(event: { action: string; payload: any }): void {
@@ -442,21 +290,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  // Add a helper method to manage edit operations
-  private addEditOperation(operation: UserEditOperation): void {
-    // Remove any existing operation with the same action and target
-    if (operation.action === EditFoodSelectionType.UpdateParentQuantity && operation.groupId) {
-      this.editOperations = this.editOperations.filter(op => 
-        !(op.action === EditFoodSelectionType.UpdateParentQuantity && op.groupId === operation.groupId)
-      );
-    } else if (operation.action === EditFoodSelectionType.UpdateServing && operation.componentId) {
-      this.editOperations = this.editOperations.filter(op => 
-        !(op.action === EditFoodSelectionType.UpdateServing && op.componentId === operation.componentId)
-      );
-    }
-    
-    this.editOperations.push(operation);
-  }
 
   getSelectedFood(componentId: string): ComponentMatch | null {
     const cached = this.selectedFoodByComponentId.get(componentId);
@@ -508,20 +341,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
 
-  private findFoodByComponentId(componentId: string): any {
-    if (!this.message.logMealToolResponse?.foods) return null;
-    
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.components) {
-        for (const component of food.components) {
-          if (component.id === componentId) {
-            return food;
-          }
-        }
-      }
-    }
-    return null;
-  }
 
   private findFoodById(foodId: string): any {
     if (!this.message.logMealToolResponse?.foods) return null;
@@ -534,25 +353,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
 
-  // Helper method to update flags on ComponentDisplay objects by finding them in the data
-  private updateComponentFlag(componentId: string, flagUpdate: (component: any) => void): void {
-    if (!this.message?.logMealToolResponse?.foods) return;
-
-    // Update the flag in the original component data
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.components) {
-        for (const component of food.components) {
-          if (component.id === componentId) {
-            flagUpdate(component);
-            // Recompute all foods to reflect the changes
-            this.computeAllFoods();
-            return;
-          }
-        }
-      }
-    }
-  }
-
+  
   onFoodSelected(componentId: string, foodId: string): void {
     // Prevent selection of loading indicator
     if (foodId === 'loading') {
@@ -576,17 +377,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
     });
 
-    // In edit mode, track the operation
-    if (this.isEditMode) {
-      const selectedMatch = component.matches.find((match: any) => match.providerFoodId === foodId);
-      const servingIdentifier = (selectedMatch as any)?.selectedServingId;
-      this.addEditOperation(new UserEditOperation({
-        action: EditFoodSelectionType.UpdateServing,
-        componentId: componentId,
-        providerFoodId: foodId,
-        servingId: servingIdentifier
-      }));
-    }
 
     // Update caches for this component
     const selectedMatch = component.matches.find((match: any) => match.providerFoodId === foodId) as ComponentMatch | undefined;
@@ -618,15 +408,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       // Trigger recomputation which creates new array references for OnPush components
       this.computeAllFoods();
 
-      // In edit mode, track the operation
-      if (this.isEditMode && servingIdentifier) {
-        this.addEditOperation(new UserEditOperation({
-          action: EditFoodSelectionType.UpdateServing,
-          componentId: componentId,
-          providerFoodId: (selectedFood as any)?.providerFoodId,
-          servingId: servingIdentifier
-        }));
-      }
     }
   }
 
@@ -703,33 +484,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
 
-  // Getter to always derive the selected serving for a food match
-  getSelectedServingForFood(match: ComponentMatch): ComponentServing | undefined {
-    const selectedServingId = (match as any)?.selectedServingId;
-    return match?.servings?.find((s: any) => {
-      if (!s?.servingId || !selectedServingId) return false;
-      return ServingIdentifierUtil.areEqual(s.servingId, selectedServingId);
-    });
-  }
 
-  // TrackBy function to prevent DOM reuse issues
-  trackByServingId(index: number, serving: ComponentServing): string {
-    return ServingIdentifierUtil.toUniqueString(serving.servingId) || `${index}`;
-  }
-
-  // TrackBy helpers for larger lists
-  trackByMeal(index: number, meal: LogMealToolResponse): string {
-    // Meal responses may not have stable ids; use mealName + index as stable-enough key
-    return (meal as any)?.mealName ? `${(meal as any).mealName}-${index}` : `${index}`;
-  }
 
   trackByFood(index: number, food: any): string {
     return food?.id || `${index}`;
   }
 
-  trackByComponentId(index: number, componentData: { componentId: string }): string {
-    return componentData?.componentId || `${index}`;
-  }
 
   isWeightUnit(unit: string | undefined): boolean {
     if (!unit) return false;
@@ -743,18 +503,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     for (const k of keys) if (typeof nutrients[k] === 'number') return nutrients[k];
     return null;
   }
-  caloriesForServing(s: ComponentServing | null) {
-    return this.scaledMacro(s, ['calories','Calories','energy_kcal','Energy']);
-  }
-  proteinForServing(s: ComponentServing | null) {
-    return this.scaledMacro(s, ['protein','Protein']);
-  }
-  fatForServing(s: ComponentServing | null) {
-    return this.scaledMacro(s, ['fat','Fat','total_fat']);
-  }
-  carbsForServing(s: ComponentServing | null) {
-    return this.scaledMacro(s, ['carbohydrate','Carbohydrate','carbohydrates','carbs']);
-  }
+ 
   
 
   isSelectionComplete(): boolean {
@@ -841,7 +590,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     req.groupId = this.message.logMealToolResponse?.groupId ?? '';
     req.itemSetId = this.message.logMealToolResponse?.itemSetId ?? '';
     req.localDateKey = this.dateService.getSelectedDate() || undefined;
-    req.operations = [...this.editOperations]; // Use the tracked edit operations
+    
   
     this.isSubmitting = true;
     this.editConfirmed.emit(req);
@@ -1139,11 +888,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
 
 
-  // Helper to recompute food components for a component
-  private recomputeComponentAndFood(componentId: string): void {
-    // Recompute all foods since component changed
-    this.computeAllFoods();
-  }
 
   // Compute all foods as FoodDisplay objects with embedded state
   private computeAllFoods(): void {
@@ -1341,13 +1085,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     setTimeout(async () => {
       // In edit mode, track the operation instead of just hiding UI
-      if (this.isEditMode) {
-        this.addEditOperation(new UserEditOperation({
-          action: EditFoodSelectionType.RemoveComponent,
-          componentId: componentId
-        }));
-      }
-
+     
       // Mark component as removed
       const foodIndex = this.findFoodIndexForComponent(componentId);
       if (foodIndex >= 0) {
@@ -1391,12 +1129,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                 this.onComponentChanged(foodIndex, componentId, { isRemoved: false });
               }
 
-              // In edit mode, also remove the operation
-              if (this.isEditMode) {
-                this.editOperations = this.editOperations.filter(op =>
-                  !(op.action === EditFoodSelectionType.RemoveComponent && op.componentId === componentId)
-                );
-              }
 
               console.log('🔄 Undoing removal for component:', componentId);
             }
@@ -1410,13 +1142,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const food = this.findFoodById(foodId);
     if (!food) return;
 
-    // In edit mode, track the operation
-    if (this.isEditMode) {
-      this.addEditOperation(new UserEditOperation({
-        action: EditFoodSelectionType.RemoveFood,
-        groupId: foodId
-      }));
-    }
+   
 
     this.removedFoods.add(foodId);
 
@@ -1449,13 +1175,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           text: 'Undo',
           handler: () => {
             this.removedFoods.delete(foodId);
-            
-            // In edit mode, also remove the operation
-            if (this.isEditMode) {
-              this.editOperations = this.editOperations.filter(op => 
-                !(op.action === EditFoodSelectionType.RemoveFood && op.groupId === foodId)
-              );
-            }
+           
           }
         }
       ]
@@ -2187,32 +1907,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
   
-
-  // Get display matches including loading state
-  getDisplayMatches(componentId: string): ComponentMatch[] {
-    const component = this.findComponentById(componentId);
-    if (!component?.matches) return [];
-
-    const baseMatches = component.matches || [];
-    const instantOptions = component.moreOptions || [];
-    const allMatches = [...baseMatches];
-    
-    // Add instant options (including loading placeholder)
-    for (const option of instantOptions) {
-      // If it's a loading placeholder, always add it
-      if (option.providerFoodId === 'loading') {
-        allMatches.push(option);
-      } else {
-        // For real options, only add if not already in base matches
-        const exists = baseMatches.some((match: ComponentMatch) => match.providerFoodId === option.providerFoodId);
-        if (!exists) {
-          allMatches.push(option);
-        }
-      }
-    }
-
-    return allMatches;
-  }
 
   // Fetch instant options when dropdown opens (similar to fetchMoreOptions but for dropdown)
   async fetchInstantOptions(componentId: string): Promise<void> {
