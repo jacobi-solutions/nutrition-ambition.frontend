@@ -228,28 +228,32 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     const servings = this.selectedFood?.servings || [];
     const selectedServingId = this.selectedServing?.id || '';
 
-    // Servings are already ComponentServingDisplay objects with effectiveQuantity set
-    // Just update the isSelected flag and ensure labels are current
+    // Create ComponentServingDisplay objects with proper UI state
     return servings.map(serving => {
       const servingId = serving.id || '';
-      const effectiveQuantity = serving.effectiveQuantity || 1;
+      const effectiveQuantity = (serving as any).effectiveQuantity || 1;
+      const isSelected = servingId === selectedServingId;
 
-      // Update selection state
-      serving.isSelected = servingId === selectedServingId;
-
-      // Update unit text for current quantity
+      // Determine unit text for current quantity
+      let unitText: string;
       if (effectiveQuantity === 1 && serving.singularUnit) {
-        serving.unitText = serving.singularUnit;
+        unitText = serving.singularUnit;
       } else if (serving.pluralUnit) {
-        serving.unitText = serving.pluralUnit;
+        unitText = serving.pluralUnit;
       } else {
-        serving.unitText = serving.baseUnit || '';
+        unitText = serving.baseUnit || '';
       }
 
-      // Update serving label
-      serving.servingLabel = `${effectiveQuantity} ${serving.unitText}`;
-
-      return serving;
+      // Create new ComponentServingDisplay object
+      return new ComponentServingDisplay({
+        ...serving,
+        effectiveQuantity: effectiveQuantity,
+        isSelected: isSelected,
+        unitText: unitText,
+        servingLabel: `${effectiveQuantity} ${unitText}`,
+        userSelectedQuantity: effectiveQuantity,
+        servingMultiplier: 1
+      });
     });
   }
 
@@ -449,7 +453,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     this.servingQuantityChanged.emit({
       componentId,
       servingId: serving.id || '',
-      quantity: serving.servingMultiplier || 1
+      quantity: quantity
     });
   }
 
@@ -467,10 +471,10 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     const serving = this.getSelectedServing();
     if (!serving?.nutrients) return '';
 
-    const calories = this.getMacro(serving.nutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']);
-    const protein = this.getMacro(serving.nutrients, ['protein', 'Protein']);
-    const fat = this.getMacro(serving.nutrients, ['fat', 'Fat', 'total_fat']);
-    const carbs = this.getMacro(serving.nutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']);
+    const calories = this.getMacro(['calories', 'Calories', 'energy_kcal', 'Energy']);
+    const protein = this.getMacro(['protein', 'Protein']);
+    const fat = this.getMacro(['fat', 'Fat', 'total_fat']);
+    const carbs = this.getMacro(['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']);
 
     // Only show if we have at least calories
     if (calories === null) return '';
@@ -486,7 +490,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     return `(${parts.join(', ')})`;
   }
 
-  private getMacro(nutrients: { [key: string]: number } | undefined, keys: string[]): number | null {
+  private getMacro(keys: string[]): number | null {
     const serving = this.getSelectedServing();
     if (!serving) return null;
 
