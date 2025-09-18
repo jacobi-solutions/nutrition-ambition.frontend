@@ -26,10 +26,6 @@
               <span class="inline-amount">{{ servingLabel }}</span>
             </ng-container>
           </div>
-          <!-- Macro summary row -->
-          <div class="macro-row" *ngIf="macroSummary">
-            <span class="macro-summary">{{ macroSummary }}</span>
-          </div>
         </ion-col>
         <ion-col size="2" class="right" *ngIf="!isReadOnly">
           <div class="action-icons">
@@ -44,6 +40,13 @@
               class="delete-icon"
               (click)="onRemoveFood()">
             </ion-icon>
+          </div>
+        </ion-col>
+      </ion-row>
+      <ion-row *ngIf="macroSummary" class="macro-row">
+        <ion-col size="12">
+          <div class="macro-summary">
+            {{ macroSummary }}
           </div>
         </ion-col>
       </ion-row>

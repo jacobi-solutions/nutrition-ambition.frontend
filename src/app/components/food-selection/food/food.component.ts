@@ -29,9 +29,8 @@ export class FoodComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['food']) {
-      this.computeVisibleComponents();
-    }
+    // Always recompute visible components when food changes
+    this.computeVisibleComponents();
   }
 
   // Helper methods for template

@@ -42,40 +42,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   isSubmitting = false;
   isCanceling = false;
   private cancelTimeout: any = null;
-  
-
-
- 
-  removedFoods: Set<string> = new Set(); // Track foods removed via RemoveFood operation
-  
-  // Track which component was being edited to re-expand it after update
-  private editingComponentId: string | null = null;
-
-
-  // Hot-path caches to avoid repeated deep scans - TODO: Remove these in favor of direct component access
-  private selectedFoodByComponentId: Map<string, ComponentMatch> = new Map();
-  private selectedServingIdByComponentId: Map<string, string> = new Map();
-  
-  
-  // Consolidated display data for components - eliminates all function calls from template
-  public componentDisplayData: { [componentId: string]: {
-    displayName: string;
-    isInferred: boolean;
-    isExpanded: boolean;
-    isSearching: boolean;
-    isEditing: boolean;
-    editingValue: string;
-    hasChanges: boolean;
-    servingSelections: { [servingId: string]: boolean };
-  }} = {};
-
-
   // Precomputed foods array with all display state embedded - eliminates all method calls in template
   computedFoods: FoodDisplay[] = [];
 
+  // Precomputed selection complete status
+  _isSelectionComplete: boolean = false;
+
   constructor(
     private toastService: ToastService, 
-    private cdr: ChangeDetectorRef,
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService,
     private foodSelectionService: FoodSelectionService
@@ -101,7 +75,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.isReadOnly = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
     this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
     this.isAddingFood = false; // Ensure this is always false on init
-    this.rebuildLookupCaches();
     this.computeAllFoods();
   }
 
@@ -125,12 +98,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       // Reset adding food state when message changes
       this.isAddingFood = false;
 
-      this.rebuildLookupCaches();
       this.computeAllFoods();
     }
     if (changes['isReadOnly'] && this.isReadOnly) this.isSubmitting = false;
   }
-
 
   toggleExpansion(componentId: string): void {
     // Get current state from component
@@ -144,55 +115,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.onComponentChanged(foodIndex, componentId, { isExpanded: newState });
     }
   }
-
-
-  // Get components for a specific food
-  getComponentsForFood(food: any): any[] {
-    if (!food?.components) return [];
-
-    // Return empty if the food has been removed (check both new flag and legacy set)
-    if ((food as any).isRemoved || (food.id && this.removedFoods.has(food.id))) {
-      return [];
-    }
-
-    const activeComponents = food.components.filter((component: any) => component.id && !(component as any).isRemoved);
-    const isSingleComponentFood = activeComponents.length === 1;
-    const parentQuantity = food.quantity || 1;
-
-    // Filter out removed components and create ComponentDisplay objects with editing state
-    return activeComponents.map((component: any) => {
-        const componentDisplay = new ComponentDisplay({
-          ...component,
-          // Use component state directly (immutable pattern)
-          isEditing: component.isEditing ?? false,
-          editingValue: component.editingValue ?? '',
-          isExpanded: component.isExpanded ?? false,
-          isSearching: (component as any).isSearching ?? false,
-          showingMoreOptions: component.showingMoreOptions ?? false,
-          loadingMoreOptions: component.loadingMoreOptions ?? false,
-          loadingInstantOptions: component.loadingInstantOptions ?? false,
-          moreOptions: component.moreOptions ?? []
-        });
-        return {
-          componentId: component.id,
-          component: componentDisplay,
-          isSingleComponentFood: isSingleComponentFood,
-          parentQuantity: parentQuantity
-        };
-      });
-  }
-
   // All remaining components across foods (excludes removed foods/components)
   get availableComponents(): any[] {
-    if (!this.message?.logMealToolResponse?.foods) return [];
+    if (!this.computedFoods) return [];
     const result: any[] = [];
-    for (const food of this.message.logMealToolResponse.foods) {
-      const comps = this.getComponentsForFood(food);
-      for (const c of comps) result.push(c);
+    for (const food of this.computedFoods) {
+      if (food.isRemoved) continue;
+      for (const comp of food.components || []) {
+        if (!comp.isRemoved) {
+          result.push(comp);
+        }
+      }
     }
     return result;
   }
-
 
   // Food-level expansion management
   toggleFoodEditing(foodIndex: number): void {
@@ -210,30 +146,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     });
 
     this.onFoodChanged(foodIndex, newFood);
-
-    // Recompute all foods to reflect the change
-    this.computeAllFoods();
   }
-
-  isFoodEditingExpanded(foodIndex: number): boolean {
-    const food = this.computedFoods[foodIndex];
-    if (!food) return false;
-
-    // Auto-expand if any component in this food is being edited
-    if (food.components) {
-      for (const component of food.components) {
-        if (component.matches && component.matches.length > 0 && (component.matches[0] as any).isEditingPhrase) {
-          return true;
-        }
-      }
-    }
-
-    // Check food display property
-    return food.isEditingExpanded ?? false;
-  }
-
-  
-
 
   onFoodQuantityChange(foodIndex: number, newQuantity: number): void {
     const food = this.computedFoods[foodIndex];
@@ -292,28 +205,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
 
   getSelectedFood(componentId: string): ComponentMatch | null {
-    const cached = this.selectedFoodByComponentId.get(componentId);
-    if (cached) {
-      // console.log('🍎 getSelectedFood for', componentId, '- using cached');
-      return cached;
-    }
-
     const component = this.findComponentById(componentId);
     const matches: any[] = component?.matches || [];
-    console.log('🍎 getSelectedFood for', componentId, '- component found:', !!component, 'matches:', matches.length);
     if (!matches.length) return null;
 
-    const selected = (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
-    this.selectedFoodByComponentId.set(componentId, selected);
-
-    // Auto-select the first serving if none is selected yet
-    if (selected.servings?.[0]?.id) {
-      const firstServingId = selected.servings[0].id;
-      console.log('🍎 Auto-selecting serving - firstServingId:', firstServingId);
-      // Note: Serving selection is now handled in the data structure directly
-    }
-
-    return selected;
+    return (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
   }
 
   private findComponentById(componentId: string): any {
@@ -338,19 +234,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
 
-
-  private findFoodById(foodId: string): any {
-    if (!this.message.logMealToolResponse?.foods) return null;
-
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.id === foodId) {
-        return food;
-      }
-    }
-    return null;
-  }
-
-  
   onFoodSelected(componentId: string, foodId: string): void {
     // Prevent selection of loading indicator
     if (foodId === 'loading') {
@@ -378,13 +261,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Update caches for this component
     const selectedMatch = component.matches.find((match: any) => match.providerFoodId === foodId) as ComponentMatch | undefined;
     if (selectedMatch) {
-      this.selectedFoodByComponentId.set(componentId, selectedMatch);
-      const sid = (selectedMatch as any)?.selectedServingId ?? selectedMatch.servings?.[0]?.id;
-      if (sid) this.selectedServingIdByComponentId.set(componentId, sid);
-      
+      // Selection state is now managed in the data structure via isBestMatch flag
+      // and selectedServingId property - no need for external caches
     }
   }
-
 
   onServingSelected(foodIndex: number, componentId: string, servingId: string): void {
     const food = this.computedFoods[foodIndex];
@@ -403,8 +283,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             // Update the selectedServingId on the SELECTED match
             selectedMatch.selectedServingId = selectedServing.servingId;
 
-            // Keep cache in sync
-            this.selectedServingIdByComponentId.set(componentId, servingId);
+            // Selection state is now stored directly in the selectedServingId property
 
             // Note: No longer need to update service since child components use data structure directly
 
@@ -444,23 +323,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getSelectedServingId(componentId: string): string | undefined {
-    // Use our cache first
-    const cachedSelection = this.selectedServingIdByComponentId.get(componentId);
-    if (cachedSelection) {
-      return cachedSelection;
-    }
-
-    // Fallback: get the first serving from the selected food
     const selectedFood = this.getSelectedFood(componentId);
-    const firstServingId = selectedFood?.servings?.[0]?.id;
-
-    if (firstServingId) {
-      // Cache this selection
-      this.selectedServingIdByComponentId.set(componentId, firstServingId);
-      return firstServingId;
-    }
-
-    return undefined;
+    return (selectedFood as any)?.selectedServingId || selectedFood?.servings?.[0]?.id;
   }
 
   /**
@@ -473,9 +337,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       if (originalServingId) return originalServingId;
     }
     
-    // Fallback to cached value
-    const cached = this.selectedServingIdByComponentId.get(componentId);
-    if (cached) return cached;
+    // Use direct property lookup
     
     // Final fallback to first serving
     const firstServingId = (sf: any) => sf?.servings?.[0]?.id;
@@ -485,36 +347,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   getSelectedServing(componentId: string): ComponentServing | null {
     const food = this.getSelectedFood(componentId);
     const selectedServingId = this.getSelectedServingId(componentId);
-    console.log('🎂 getSelectedServing for', componentId, '- food:', !!food, 'selectedServingId:', selectedServingId);
 
     if (selectedServingId && food?.servings) {
-      // Find the serving with the matching GUID ID
-      const selected = food.servings.find((s: any) => s.id === selectedServingId) || null;
-      console.log('🎂 Found selected serving:', !!selected, selected?.id);
-      return selected;
+      return food.servings.find((s: any) => s.id === selectedServingId) || null;
     }
 
     // Fallback: return the first serving if available
-    if (food?.servings?.[0]) {
-      console.log('🎂 Using fallback first serving:', food.servings[0].id);
-      return food.servings[0];
-    }
-
-    console.log('🎂 No serving found - returning null');
-    return null;
+    return food?.servings?.[0] || null;
   }
-
-
 
   trackByFood(index: number, food: any): string {
     return food?.id || `${index}`;
-  }
-
-
-  isWeightUnit(unit: string | undefined): boolean {
-    if (!unit) return false;
-    const u = unit.toLowerCase();
-    return ['g', 'gram', 'grams', 'ml', 'milliliter', 'milliliters'].includes(u);
   }
 
   // Macro helpers
@@ -524,32 +367,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
  
-  
-
   isSelectionComplete(): boolean {
-    if (!this.hasPayload) return false;
-
-    // Check if all non-removed components have valid selections
-    if (this.message.logMealToolResponse?.foods) {
-      for (const food of this.message.logMealToolResponse.foods) {
-        if (food.id && this.removedFoods.has(food.id)) continue;
-
-        if (food.components) {
-          for (const component of food.components) {
-            if (!component.id || (component as any).isRemoved) continue;
-
-            const selectedFood = this.getSelectedFood(component.id);
-            const servingId = this.getOriginalServingId(component.id);
-
-            if (!(selectedFood as any)?.providerFoodId || !servingId) {
-              return false;
-            }
-          }
-        }
-      }
-    }
-
-    return true;
+    return this._isSelectionComplete;
   }
 
   confirmSelections(): void {
@@ -566,9 +385,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     req.selections = [];
 
     // Iterate through all foods and components directly
-    if (this.message.logMealToolResponse?.foods) {
-      for (const food of this.message.logMealToolResponse.foods) {
-        if (food.id && this.removedFoods.has(food.id)) continue;
+    if (this.computedFoods) {
+      for (const food of this.computedFoods) {
+        if (food.isRemoved) continue;
 
         if (food.components) {
           for (const component of food.components) {
@@ -616,28 +435,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.editConfirmed.emit(req);
   }
   
-  // Format a number nicely for UI (0, 1, 1.5, 1.33, 473.2, etc.)
-
-
-  // Build the user-facing label for a serving row - prioritize UI fields
-  getServingLabel(s: ComponentServing | null): string {
-    if (!s) return '';
-
-    // Use new formula: displayedQuantity = baseQuantity × aiRecommendedScale
-    const dq = this.getDisplayedQuantity(s);
-    const du = this.getDisplayUnit(s);
-    if (dq !== undefined && du && du.trim()) {
-      return `${this.formatQuantity(dq)} ${du}`.trim();
-    }
-
-    // Fall back to description if available
-    if (s.description && s.description.trim()) {
-      return s.description;
-    }
-
-    return 'serving';
-  }
-
   getDisplayQuantity(s: ComponentServing | null): number {
     if (!s) return 1;
 
@@ -670,20 +467,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return this.getDisplayQuantity(serving);
   }
 
-  getDisplayNameOrSearchText(componentId: string): string {
-    const food = this.getSelectedFood(componentId);
-    if (food && (food as any).inferred && (food as any).searchText) return (food as any).searchText;
-    if (food?.displayName) return food.displayName;
-
-    const comp = this.findComponentById(componentId);
-    return comp?.key || '';
-  }
-
-  isInferred(componentId: string): boolean {
-    const food = this.getSelectedFood(componentId);
-    return !!(food && (food as any).inferred === true);
-  }
-
   getSearchTextOnly(componentId: string): string {
     const food = this.getSelectedFood(componentId);
     
@@ -709,53 +492,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Creates dual serving options from a single ComponentServing that contains both user and canonical data
-   * Returns an array of virtual serving objects for display purposes
-   */
-  getDualServingOptions(serving: ComponentServing | null): ComponentServing[] {
-    if (!serving) return [];
-
-    const userDisplayedQuantity = this.getDisplayedQuantity(serving);
-    const userDisplayUnit = this.getDisplayUnit(serving);
-
-    // Create user-anchored serving (user's exact input) - this should be pre-selected
-    const userServingId = serving.servingId ? new ServingIdentifier({
-      ...serving.servingId,
-      servingType: 'user'
-    }) : undefined;
-
-    const userServing = new ComponentServing({
-      ...serving,
-      servingId: userServingId,
-      baseQuantity: userDisplayedQuantity, // User's exact quantity (e.g., 100)
-      baseUnit: userDisplayUnit,           // User's exact unit (e.g., "g")
-      aiRecommendedScale: 1,               // Scale of 1 for user input
-      description: `${userDisplayedQuantity} ${userDisplayUnit}`,
-      // Keep the same nutrients
-      nutrients: serving.nutrients
-    });
-
-    // For now, we'll only return the user serving as the backend is being updated
-    // to handle the new dual serving structure
-    return [userServing];
-  }
-
-  getUnitText(s: ComponentServing): string {
-    // Use the new display unit logic
-    const unit = this.getDisplayUnit(s);
-    if (unit && unit.trim().length) return unit.trim();
-
-    // Fall back to description parsing if display unit is empty
-    const desc = s.description;
-    if (desc && desc.trim().length) {
-      const stripped = this.stripLeadingCount(desc);
-      if (stripped && stripped.trim()) return stripped.trim();
-    }
-
-    return 'serving';
-  }
-
-  /**
    * Get the displayed quantity using the new formula: baseQuantity × aiRecommendedScale
    */
   private getDisplayedQuantity(s: ComponentServing | null): number {
@@ -766,232 +502,77 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return baseQuantity * aiScale;
   }
 
-  /**
-   * Get the display unit using proper grammar (singular vs plural)
-   */
-  private getDisplayUnit(s: ComponentServing | null): string {
-    if (!s) return 'serving';
-
-    const quantity = this.getDisplayedQuantity(s);
-
-    // Use singularUnit when quantity is 1, pluralUnit otherwise
-    if (quantity === 1) {
-      return s.singularUnit || s.baseUnit || 'serving';
-    } else {
-      return s.pluralUnit || s.baseUnit || 'servings';
-    }
-  }
-
-  // Debug method to check if serving is selected
-  isServingSelected(componentId: string, serving: ComponentServing): boolean {
-    const selectedId = this.getSelectedServingId(componentId);
-    const servingId = serving.id;
-    const isSelected = selectedId === servingId;
-    return isSelected;
-  }
-
-  // Method to get selected servings for all components in a food with quantity-scaled nutrients
-  getSelectedServingsForFood(food: any): { [componentId: string]: any } {
-    const selectedServings: { [componentId: string]: any } = {};
-    // console.log('🍽️ Getting selected servings for food:', food?.id || food?.name);
-
-    // Use computedComponents if available (FoodDisplay), otherwise fallback to components (raw food)
-    const componentsToCheck = (food as any).computedComponents || food?.components;
-
-    if (componentsToCheck) {
-      for (const componentData of componentsToCheck) {
-        // Extract component from componentData
-        const component = componentData.component || componentData;
-
-        // Skip removed components - this is the key fix!
-        // console.log('🍽️ Component', component.id, 'isRemoved:', !!(component as any).isRemoved);
-        if (component.id && !(component as any).isRemoved) {
-          const selectedServing = this.getSelectedServing(component.id);
-          if (selectedServing) {
-            // Get the current quantity from the serving's effectiveQuantity
-            const currentQuantity = (selectedServing as any).effectiveQuantity || 1;
-            // console.log('🍽️ Component', component.id, 'quantity:', currentQuantity);
-
-            // Create a copy of the serving with scaled nutrients
-            const servingWithScaledNutrients = {
-              ...selectedServing,
-              nutrients: this.scaleNutrientsByQuantity(selectedServing.nutrients, currentQuantity)
-            };
-            selectedServings[component.id] = servingWithScaledNutrients;
-          }
-        }
-      }
-    }
-
-    return selectedServings;
-  }
-
-  // Simple helper to scale nutrients by a quantity multiplier
-  private scaleNutrientsByQuantity(nutrients: { [key: string]: number } | undefined, quantity: number): { [key: string]: number } | undefined {
-    if (!nutrients || quantity === 1) {
-      return nutrients;
-    }
-
-    const scaledNutrients: { [key: string]: number } = {};
-    for (const [key, value] of Object.entries(nutrients)) {
-      if (typeof value === 'number') {
-        scaledNutrients[key] = value * quantity;
-      }
-    }
-    return scaledNutrients;
-  }
-
-  // Scale nutrients for a serving (similar to food-component-item logic)
-  private getScaledNutrientsForServing(componentId: string, serving: ComponentServing): { [key: string]: number } | null {
-    const currentQuantity = this.getEffectiveQuantity(componentId, serving);
-
-    // If serving has nutrient data, scale it by current quantity
-    if (serving.nutrients && Object.keys(serving.nutrients).length > 3) { // More than just basic fields
-      const scaledNutrients: { [key: string]: number } = {};
-      for (const [key, value] of Object.entries(serving.nutrients)) {
-        if (typeof value === 'number') {
-          scaledNutrients[key] = value * currentQuantity;
-        }
-      }
-      return scaledNutrients;
-    }
-
-    // Alternative serving has no nutrients - scale from base serving
-    const food = this.getSelectedFood(componentId);
-    if (!food?.servings) return null;
-
-    // Find base serving (should be the first one with nutrients)
-    const baseServing = food.servings.find((s: any) => s.nutrients && Object.keys(s.nutrients).length > 3);
-    if (!baseServing?.nutrients) {
-      return null;
-    }
-
-    // Calculate scale factor: altWeight / baseWeight
-    const baseWeight = baseServing.metricServingAmount;
-    const altWeight = serving.metricServingAmount;
-
-    if (!baseWeight || !altWeight || baseWeight <= 0) return null;
-
-    const weightScaleFactor = altWeight / baseWeight;
-    const totalScaleFactor = weightScaleFactor * currentQuantity;
-
-    // Scale all nutrients from the base serving
-    const scaledNutrients: { [key: string]: number } = {};
-    for (const [key, value] of Object.entries(baseServing.nutrients)) {
-      if (typeof value === 'number') {
-        scaledNutrients[key] = value * totalScaleFactor;
-      }
-    }
-
-    return scaledNutrients;
-  }
-
-
-
-  // Check if any component is in editing phrase mode (for main loading overlay)
-  getIsEditingPhrase(): boolean {
-    if (!this.message.logMealToolResponse?.foods) return false;
-
-    for (const food of this.message.logMealToolResponse.foods) {
-      if (food.components) {
-        for (const component of food.components) {
-          if (component.matches && component.matches.length > 0 && (component.matches[0] as any).isEditingPhrase) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-
-
-
-
   // Compute all foods as FoodDisplay objects with embedded state
   private computeAllFoods(): void {
     const rawFoods = this.message?.logMealToolResponse?.foods || [];
 
-    // Save current UI state before recreation
-    const currentUIState = this.saveCurrentUIState();
-
-    // Create a completely new array to trigger Angular change detection
-    const newComputedFoods = rawFoods.map((food, foodIndex) => {
-      // Transform components to ComponentDisplay objects, preserving UI state
+    // Only rebuild from raw data - no state preservation needed
+    this.computedFoods = rawFoods.map((food, foodIndex) => {
       const transformedComponents = food.components?.map((component: any) => {
-        const currentComponentState = currentUIState.components[component.id] || {};
         return new ComponentDisplay({
           ...component,
-          // Preserve UI state flags if they exist, otherwise use defaults
-          isSearching: currentComponentState.isSearching || false,
-          isEditing: currentComponentState.isEditing || false,
-          isExpanded: currentComponentState.isExpanded || false,
-          editingValue: currentComponentState.editingValue || '',
-          showingMoreOptions: currentComponentState.showingMoreOptions || false,
-          loadingMoreOptions: currentComponentState.loadingMoreOptions || false,
-          loadingInstantOptions: currentComponentState.loadingInstantOptions || false,
-          moreOptions: currentComponentState.moreOptions || [],
-          isRemoved: currentComponentState.isRemoved || false
+          // All UI state starts fresh
+          isSearching: false,
+          isEditing: false,
+          isExpanded: false,
+          editingValue: '',
+          showingMoreOptions: false,
+          loadingMoreOptions: false,
+          loadingInstantOptions: false,
+          moreOptions: [],
+          isRemoved: false
         });
       }) || [];
 
-      const currentFoodState = food.id ? currentUIState.foods[food.id] || {} : {};
-      const foodDisplay = new FoodDisplay({
+      // Calculate visible components count
+      const visibleComponents = transformedComponents.filter(c => !c.isRemoved);
+
+      return new FoodDisplay({
         ...food,
         components: transformedComponents,
-        isEditingExpanded: currentFoodState.isEditingExpanded !== undefined
-          ? currentFoodState.isEditingExpanded
-          : this.isFoodEditingExpanded(foodIndex)
+        isEditingExpanded: false,
+        isRemoved: false,
+        // Precomputed visibility
+        visibleComponentCount: visibleComponents.length,
+        hasVisibleComponents: visibleComponents.length > 0
       });
-
-      return foodDisplay;
     });
 
-    // Create new array reference to trigger change detection
-    this.computedFoods = [...newComputedFoods];
+    // Compute selection complete after foods are built
+    this.computeSelectionComplete();
   }
 
-  // Save current UI state before recreation
-  private saveCurrentUIState(): { foods: any; components: any } {
-    const foodState: any = {};
-    const componentState: any = {};
+  private computeSelectionComplete(): void {
+    if (!this.hasPayload) {
+      this._isSelectionComplete = false;
+      return;
+    }
 
     for (const food of this.computedFoods) {
-      if (food.id) {
-        foodState[food.id] = {
-          isEditingExpanded: food.isEditingExpanded
-        };
-      }
+      if (food.isRemoved) continue;
 
       if (food.components) {
         for (const component of food.components) {
-          if (component.id) {
-            componentState[component.id] = {
-              isSearching: component.isSearching,
-              isEditing: component.isEditing,
-              isExpanded: component.isExpanded,
-              editingValue: component.editingValue,
-              showingMoreOptions: component.showingMoreOptions,
-              loadingMoreOptions: component.loadingMoreOptions,
-              loadingInstantOptions: component.loadingInstantOptions,
-              moreOptions: component.moreOptions,
-              isRemoved: component.isRemoved
-            };
+          if (!component.id || component.isRemoved) continue;
+
+          const selectedFood = this.getSelectedFood(component.id);
+          const servingId = this.getOriginalServingId(component.id);
+
+          if (!(selectedFood as any)?.providerFoodId || !servingId) {
+            this._isSelectionComplete = false;
+            return;
           }
         }
       }
     }
 
-    return { foods: foodState, components: componentState };
+    this._isSelectionComplete = true;
   }
 
   // Helper methods for template
-  hasVisibleComponents(food: any): boolean {
-    return this.getVisibleComponents(food).length > 0;
-  }
-
-  isMultiComponentFood(food: any): boolean {
-    return this.getVisibleComponents(food).length > 1;
+  hasVisibleComponents(food: FoodDisplay): boolean {
+    if (food.isRemoved) return false;
+    return food.hasVisibleComponents ?? false;
   }
 
   getVisibleComponents(food: any): any[] {
@@ -999,34 +580,25 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return food.components.filter((component: any) => !component.isRemoved);
   }
 
-  trackByComponent(index: number, component: any): string {
-    return component.id || index.toString();
-  }
-
-  // IMMUTABLE UPDATE METHODS - As specified in the refactoring plan
 
   /**
    * Core immutable update method for food changes
    * Creates new array reference with updated food at specific index
    */
   onFoodChanged(foodIndex: number, newFood: FoodDisplay): void {
+    // Recalculate visibility for the food
+    const visibleComponents = newFood.components?.filter(c => !c.isRemoved) || [];
+    newFood.visibleComponentCount = visibleComponents.length;
+    newFood.hasVisibleComponents = visibleComponents.length > 0;
+
     const currentFoods = [...this.computedFoods];
     currentFoods[foodIndex] = newFood;
     this.computedFoods = currentFoods;
+
+    // Recalculate selection complete
+    this.computeSelectionComplete();
   }
 
-  /**
-   * Immutable component removal method
-   * Creates new food object with component filtered out
-   */
-  onComponentRemoved(foodIndex: number, componentId: string): void {
-    const food = this.computedFoods[foodIndex];
-    const newFood = new FoodDisplay({
-      ...food,
-      components: food.components?.filter(c => c.id !== componentId) || []
-    });
-    this.onFoodChanged(foodIndex, newFood);
-  }
 
   /**
    * Immutable component update method
@@ -1037,7 +609,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const newFood = new FoodDisplay({
       ...food,
       components: food.components?.map(c =>
-        c.id === componentId ? { ...c, ...changes } : c
+        c.id === componentId
+          ? new ComponentDisplay({ ...c, ...changes })
+          : c
       ) || []
     });
     this.onFoodChanged(foodIndex, newFood);
@@ -1056,47 +630,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return -1;
   }
 
-  
-
   private nf = new Intl.NumberFormat(undefined, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
-
-  /**
-   * Format quantity to remove floating point precision issues and limit decimal places
-   */
-  private formatQuantity(value: number): string {
-    if (!isFinite(value) || value === 0) return '0';
-    
-    // Round to 3 decimal places to avoid floating point precision issues
-    const rounded = Math.round(value * 1000) / 1000;
-    
-    // For whole numbers, show no decimals
-    if (rounded === Math.floor(rounded)) {
-      return rounded.toString();
-    }
-    
-    // For decimals, show up to 2 decimal places, removing trailing zeros
-    return rounded.toFixed(2).replace(/\.?0+$/, '');
-  }
-  
-  private fmt(n: number): string {
-    if (!isFinite(n)) return '0';
-    return this.nf.format(n);
-  }
-  
-
-  // Scale a macro per 1 serving by the displayed quantity
-  private scaledMacro(s: ComponentServing | null, keys: string[]): number | null {
-    if (!s || !s.nutrients) return null;
-    const base = this.getMacro(s.nutrients, keys);
-    if (base == null) return null;
-    const q = this.getDisplayedQuantity(s);
-    if (!isFinite(q) || q <= 0) return base; // be forgiving; show per-serving
-    return base * q;
-  }
-
 
   async removeItem(componentId: string) {
     const rowElement = document.getElementById(`row-${componentId}`);
@@ -1115,9 +652,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const selectedServing = this.getSelectedServing(componentId);
       console.log('🗑️ Removing component:', componentId, 'selectedServing:', selectedServing?.id);
       if (selectedServing?.id) {
-        // Clear the serving selection cache for this component
-        this.selectedServingIdByComponentId.delete(componentId);
-        console.log('🗑️ Cleared selection cache for removed component');
+        // Selection state is cleared when component is marked as removed
       }
 
       // Check if this was the last remaining food item
@@ -1158,85 +693,55 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   async removeFood(foodId: string) {
-    const food = this.findFoodById(foodId);
-    if (!food) return;
+    const foodIndex = this.computedFoods.findIndex(f => f.id === foodId);
+    if (foodIndex === -1) return;
 
-   
+    const food = this.computedFoods[foodIndex];
 
-    this.removedFoods.add(foodId);
+    // Mark as removed using display model pattern
+    const removedFood = new FoodDisplay({
+      ...food,
+      isRemoved: true
+    });
 
-    // Evict all cached entries for components within this food
+    // Update the specific food
+    this.onFoodChanged(foodIndex, removedFood);
+
+    // Clear component caches
     const comps = (food.components || []) as any[];
     for (const c of comps) {
       const cid = c?.id;
       if (!cid) continue;
-      this.selectedFoodByComponentId.delete(cid);
-      this.selectedServingIdByComponentId.delete(cid);
+      // Selection state is managed in the display model - no external cleanup needed
     }
 
-    // Check if this was the last remaining food item
-    const remainingItems = this.availableComponents;
-    const isLastItem = remainingItems.length === 0;
-
-    if (isLastItem) {
+    // Check if last item
+    const remainingFoods = this.computedFoods.filter(f => !f.isRemoved);
+    if (remainingFoods.length === 0) {
       this.cancelSelection();
       return;
     }
 
     const foodName = food.name || 'food item';
 
+    // Show toast with undo
     await this.toastService.showToast({
       message: `${foodName} removed`,
       duration: 5000,
       color: 'medium',
-      buttons: [
-        {
-          text: 'Undo',
-          handler: () => {
-            this.removedFoods.delete(foodId);
-           
-          }
+      buttons: [{
+        text: 'Undo',
+        handler: () => {
+          // Restore the food
+          const restoredFood = new FoodDisplay({
+            ...food,
+            isRemoved: false
+          });
+          this.onFoodChanged(foodIndex, restoredFood);
         }
-      ]
+      }]
     });
   }
-
-  // Rescaling helper methods
-  private num(x: any): number {
-    const n = parseFloat(x);
-    return isFinite(n) ? n : NaN;
-  }
-
-  private getMetricAmt(s: ComponentServing): number {
-    return this.num((s as any).metricServingAmount);
-  }
-
-  private getMetricUnit(s: ComponentServing): string {
-    return String((s as any).metricServingUnit || '').trim();
-  }
-
-  private getNumberOfUnits(s: ComponentServing): number {
-    const units = this.num((s as any).numberOfUnits ?? 1);
-    return isFinite(units) && units > 0 ? units : 1;
-  }
-
-  private stripLeadingCount(label: string | undefined): string {
-    if (!label) return '';
-    // Remove leading digits, fractions, and whitespace (e.g., "2 medium" -> "medium")
-    return label.replace(/^\s*[\d¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞.,/]*\s*/, '').trim();
-  }
-
-  private isMetricRow(s: ComponentServing): boolean {
-    const desc = (s as any).description as string | undefined;
-    const mu = this.getMetricUnit(s).toLowerCase();
-    const md = (s as any).measurementDescription as string | undefined;
-    
-    // Consider "100 g", "250 ml", or measurementDescription==="g"/"ml" as metric rows
-    const looksMetric = !!desc && /^\s*[\d¼½¾⅐⅑⅒⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]/.test(desc) && ['g','ml','l'].includes(mu);
-    const mdMetric = (md || '').trim().toLowerCase();
-    return looksMetric || mdMetric === 'g' || mdMetric === 'ml';
-  }
-
 
   async cancelSelection(): Promise<void> {
     // Start the canceling state to show thinking dots
@@ -1416,47 +921,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return suggestion;
   }
 
-  isComponentBeingEdited(componentId: string): boolean {
-    const component = this.findComponentById(componentId);
-    return component?.isEditing ?? false;
-  }
-
-  isSearchingComponent(componentId: string): boolean {
-    const component = this.findComponentById(componentId);
-
-    // Check component display property first
-    if (component?.isSearching !== undefined) {
-      return component.isSearching;
-    }
-
-    // Check if this component has a ComponentMatch with isEditingPhrase = true
-    const isSearching = component?.matches && component.matches.length > 0 && (component.matches[0] as any).isEditingPhrase;
-    if (isSearching) {
-      return true;
-    }
-
-    // Use component state directly
-    return false;
-  }
-
-  clearComponentSearching(componentId: string): void {
-    // With immutable pattern, this is handled by component state
-  }
-
-
-
-  onTextareaBlur(componentId: string, event: FocusEvent): void {
-    // Check if the focus is moving to the send button
-    const relatedTarget = event.relatedTarget as HTMLElement;
-    if (relatedTarget && relatedTarget.classList.contains('send-button')) {
-      return; // Don't close edit mode
-    }
-    
-    // Use a small delay to allow button click to process first
-    setTimeout(() => {
-      this.finishEditingComponent(componentId);
-    }, 150);
-  }
 
   async startEditingComponent(componentId: string): Promise<void> {
     // Start editing component
@@ -1483,48 +947,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }, 0);
   }
 
-  getEditingComponentValue(componentId: string): string {
-    const component = this.findComponentById(componentId);
-
-    // Get editing value from component if available
-    if (component?.editingValue !== undefined) {
-      return component.editingValue;
-    }
-
-    // Fall back to original component key only if no editing value exists
-    return component?.key || '';
-  }
-
-
-
-  updateEditingComponent(componentId: string, event: any): void {
-    const newValue = event.target.value;
-
-    // Update editing value
-    const foodIndex = this.findFoodIndexForComponent(componentId);
-    if (foodIndex >= 0) {
-      this.onComponentChanged(foodIndex, componentId, {
-        editingValue: newValue
-      });
-    }
-
-    this.autoResizeTextarea(event.target);
-  }
-
-  onComponentKeyDown(componentId: string, event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      // Enter without shift sends the message
-      event.preventDefault();
-      this.sendUpdatedComponent(componentId);
-    } else if (event.key === 'Enter' && event.shiftKey) {
-      // Shift+Enter adds a new line (default behavior)
-      // Let the default behavior happen, then resize
-      setTimeout(() => {
-        this.autoResizeTextarea(event.target as HTMLTextAreaElement);
-      }, 0);
-    }
-  }
-
   autoResizeTextarea(textarea: HTMLTextAreaElement): void {
     // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
@@ -1536,19 +958,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     
     const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
     textarea.style.height = newHeight + 'px';
-  }
-
-  hasChanges(componentId: string): boolean {
-    const component = this.findComponentById(componentId);
-
-    // Get editing value from component
-    const currentValue = component?.editingValue ?? '';
-    if (!currentValue) {
-      return false;
-    }
-
-    const originalValue = component?.key || '';
-    return currentValue.trim() !== originalValue.trim();
   }
 
   sendUpdatedComponent(eventOrComponentId: {componentId: string; newPhrase: string} | string): void {
@@ -1585,7 +994,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     });
   }
 
-
   finishEditingComponent(componentId: string): void {
     // Clear editing state
     const foodIndex = this.findFoodIndexForComponent(componentId);
@@ -1607,11 +1015,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       });
     }
   }
-
-  // The backend returns the updated ChatMessage with the new foods structure
-
-  // Handle adding new food from child component
-  
   onFoodAdded(phrase: string): void {
     // Handle the new food phrase submission
     this.phraseEditRequested.emit({
@@ -1622,35 +1025,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.isAddingFood = false;
   }
 
-  // Build quick-lookup caches from the current message payload
-  private rebuildLookupCaches(): void {
-    this.selectedFoodByComponentId.clear();
-    this.selectedServingIdByComponentId.clear();
-
-    const foods = this.message?.logMealToolResponse?.foods || [];
-    for (const food of foods) {
-      const components = food.components || [];
-      for (const component of components) {
-        const cid = component?.id;
-        if (!cid) continue;
-
-        const matches: any[] = component?.matches || [];
-        if (matches.length) {
-          const selected: ComponentMatch = (matches.find(m => (m as any).isBestMatch) || matches[0]) as ComponentMatch;
-          this.selectedFoodByComponentId.set(cid, selected);
-          const fallbackServingId = selected.servings?.[0]?.servingId || null;
-          const originalServingIdentifier = (selected as any)?.selectedServingId ?? fallbackServingId;
-          if (originalServingIdentifier) {
-            // Set the ServingIdentifier object for backend operations
-            (selected as any).selectedServingId = originalServingIdentifier;
-            // For the cache, we need a string key - use the first serving's id if available
-            const stringId = selected.servings?.[0]?.id || ServingIdentifierUtil.toUniqueString(originalServingIdentifier);
-            this.selectedServingIdByComponentId.set(cid, stringId);
-          }
-        }
-      }
-    }
-  }
 
   private async showErrorToast(message: string): Promise<void> {
     await this.toastService.showToast({
@@ -1660,16 +1034,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     });
   }
 
-
   // Helper to detect if a ComponentMatch represents a common food (no brand name)
   isCommonFood(match: ComponentMatch): boolean {
     return !match.brandName || match.brandName.trim().length === 0;
-  }
-
-  // Helper to check if the selected food for a component is common
-  isSelectedFoodCommon(componentId: string): boolean {
-    const selectedFood = this.getSelectedFood(componentId);
-    return selectedFood ? this.isCommonFood(selectedFood) : false;
   }
 
   // Get the original phrase for a component to use in the search
@@ -1761,36 +1128,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  // Select an option from the more options list
-  onMoreOptionSelected(componentId: string, alternativeMatch: ComponentMatch): void {
-    // Add the alternative to the component's matches if not already present
-    const component = this.findComponentById(componentId);
-    if (!component?.matches) return;
-
-    const existingMatch = component.matches.find((m: any) =>
-      m.providerFoodId === alternativeMatch.providerFoodId
-    );
-
-    if (!existingMatch) {
-      // Add the new match to the component
-      component.matches.push(alternativeMatch);
-    }
-
-    // Select this food
-    const foodId = alternativeMatch.providerFoodId;
-    if (foodId) {
-      this.onFoodSelected(componentId, foodId);
-    }
-
-    // Hide more options
-    const foodIndex = this.findFoodIndexForComponent(componentId);
-    if (foodIndex >= 0) {
-      this.onComponentChanged(foodIndex, componentId, {
-        showingMoreOptions: false
-      });
-    }
-  }
-
   // Track recent dropdown open calls to prevent multiple triggers
   private recentDropdownOpens: { [componentId: string]: number } = {};
 
@@ -1831,7 +1168,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       await this.fetchInstantOptions(componentId);
     }
   }
-  
 
   // Fetch instant options when dropdown opens (similar to fetchMoreOptions but for dropdown)
   async fetchInstantOptions(componentId: string): Promise<void> {
@@ -1893,8 +1229,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
     }
   }
-
-  // Event handlers for child component integration
 
   handleFoodSelected(event: {componentId: string, food: ComponentMatch}): void {
     const foodId = event.food.providerFoodId;

@@ -44,9 +44,8 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['food'] || changes['isExpanded'] || changes['isReadOnly']) {
-      this.computeDisplayValues();
-    }
+    // Always recompute when any input changes
+    this.computeDisplayValues();
   }
 
   private computeDisplayValues(): void {
