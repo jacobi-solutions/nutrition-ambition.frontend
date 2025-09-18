@@ -43,7 +43,7 @@ export class FoodComponent implements OnInit, OnChanges {
       this.visibleComponents = [];
       return;
     }
-    this.visibleComponents = this.food.components.filter((component: any) => !component.isRemoved);
+    this.visibleComponents = [...this.food.components]
   }
 
   trackByComponent(index: number, component: any): string {
@@ -97,8 +97,12 @@ export class FoodComponent implements OnInit, OnChanges {
     this.actionRequested.emit({ action: 'editConfirmed', payload: event.componentId });
   }
 
-  onRemoveComponent(componentId: string): void {
-    this.actionRequested.emit({ action: 'removeComponent', payload: componentId });
+  onRemoveComponent(event: any): void {
+    event.foodIndex = this.foodIndex;
+    this.actionRequested.emit({
+      action: 'removeComponent',
+      payload: event
+    });
   }
 
   onMoreOptionsRequested(componentId: string): void {

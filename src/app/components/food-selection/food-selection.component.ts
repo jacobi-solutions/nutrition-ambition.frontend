@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier } from 'src/app/services/nutrition-ambition-api.service';
+import { Subject } from 'rxjs';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { FoodComponent } from './food/food.component';
@@ -49,6 +50,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   _isSelectionComplete: boolean = false;
 
   constructor(
+    private cdr: ChangeDetectorRef,
     private toastService: ToastService, 
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService,
@@ -115,20 +117,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.onComponentChanged(foodIndex, componentId, { isExpanded: newState });
     }
   }
-  // All remaining components across foods (excludes removed foods/components)
-  get availableComponents(): any[] {
-    if (!this.computedFoods) return [];
-    const result: any[] = [];
-    for (const food of this.computedFoods) {
-      if (food.isRemoved) continue;
-      for (const comp of food.components || []) {
-        if (!comp.isRemoved) {
-          result.push(comp);
-        }
-      }
-    }
-    return result;
-  }
+ 
 
   // Food-level expansion management
   toggleFoodEditing(foodIndex: number): void {
@@ -189,7 +178,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         this.sendUpdatedComponent(event.payload);
         break;
       case 'removeComponent':
-        this.removeItem(event.payload);
+        this.removeComponent(event.payload.foodIndex, event.payload.componentId);
         break;
       case 'moreOptionsRequested':
         this.toggleMoreOptions(event.payload);
@@ -387,18 +376,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Iterate through all foods and components directly
     if (this.computedFoods) {
       for (const food of this.computedFoods) {
-        if (food.isRemoved) continue;
-
         if (food.components) {
           for (const component of food.components) {
-            if (!component.id || (component as any).isRemoved) continue;
 
-            const selectedFood = this.getSelectedFood(component.id);
-            const servingId = this.getOriginalServingId(component.id);
-            const selectedServing = this.getSelectedServing(component.id);
+            const selectedFood = this.getSelectedFood(component?.id ?? '');
+            const servingId = this.getOriginalServingId(component?.id ?? '');
+            const selectedServing = this.getSelectedServing(component?.id ?? '');  
 
             if ((selectedFood as any)?.providerFoodId && servingId && selectedServing) {
-              const displayQuantity = this.getEffectiveQuantity(component.id, selectedServing);
+              const displayQuantity = this.getEffectiveQuantity(component?.id ?? '', selectedServing);
               // Use the frontend's calculated scaling - it's already correct!
               const scaledQuantity = this.getDisplayedQuantity(selectedServing);
 
@@ -520,83 +506,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           loadingMoreOptions: false,
           loadingInstantOptions: false,
           moreOptions: [],
-          isRemoved: false
         });
       }) || [];
 
-      // Calculate visible components count
-      const visibleComponents = transformedComponents.filter(c => !c.isRemoved);
 
       return new FoodDisplay({
         ...food,
         components: transformedComponents,
         isEditingExpanded: false,
-        isRemoved: false,
-        // Precomputed visibility
-        visibleComponentCount: visibleComponents.length,
-        hasVisibleComponents: visibleComponents.length > 0
       });
     });
 
-    // Compute selection complete after foods are built
-    this.computeSelectionComplete();
-  }
-
-  private computeSelectionComplete(): void {
-    if (!this.hasPayload) {
-      this._isSelectionComplete = false;
-      return;
-    }
-
-    for (const food of this.computedFoods) {
-      if (food.isRemoved) continue;
-
-      if (food.components) {
-        for (const component of food.components) {
-          if (!component.id || component.isRemoved) continue;
-
-          const selectedFood = this.getSelectedFood(component.id);
-          const servingId = this.getOriginalServingId(component.id);
-
-          if (!(selectedFood as any)?.providerFoodId || !servingId) {
-            this._isSelectionComplete = false;
-            return;
-          }
-        }
-      }
-    }
-
-    this._isSelectionComplete = true;
-  }
-
-  // Helper methods for template
-  hasVisibleComponents(food: FoodDisplay): boolean {
-    if (food.isRemoved) return false;
-    return food.hasVisibleComponents ?? false;
-  }
-
-  getVisibleComponents(food: any): any[] {
-    if (!food?.components) return [];
-    return food.components.filter((component: any) => !component.isRemoved);
-  }
-
-
-  /**
-   * Core immutable update method for food changes
-   * Creates new array reference with updated food at specific index
-   */
-  onFoodChanged(foodIndex: number, newFood: FoodDisplay): void {
-    // Recalculate visibility for the food
-    const visibleComponents = newFood.components?.filter(c => !c.isRemoved) || [];
-    newFood.visibleComponentCount = visibleComponents.length;
-    newFood.hasVisibleComponents = visibleComponents.length > 0;
-
-    const currentFoods = [...this.computedFoods];
-    currentFoods[foodIndex] = newFood;
-    this.computedFoods = currentFoods;
-
-    // Recalculate selection complete
-    this.computeSelectionComplete();
   }
 
 
@@ -618,6 +538,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   /**
+   * Core immutable update method for food changes
+   * Creates new array reference with updated food at specific index
+   */
+  onFoodChanged(foodIndex: number, newFood: FoodDisplay): void {
+    const currentFoods = [...this.computedFoods];
+    currentFoods[foodIndex] = newFood;
+    this.computedFoods = currentFoods;
+  }
+
+  /**
    * Helper method to find food index containing a specific component
    */
   private findFoodIndexForComponent(componentId: string): number {
@@ -635,56 +565,62 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     maximumFractionDigits: 2,
   });
 
-  async removeItem(componentId: string) {
-    const rowElement = document.getElementById(`row-${componentId}`);
-    if (rowElement) rowElement.classList.add('removing');
+  async removeComponent(foodIndex: number, componentId: string) {
+    const food = this.computedFoods[foodIndex];
+    if (!food?.components) return;
+
+    // Check if last item
+    if (food.components.length === 1) {
+      this.removeFood(food.id ?? '');
+      return;
+    }
+
+    const componentIndex = food.components.findIndex((c: ComponentDisplay) => c.id === componentId);
+    if (componentIndex === -1) return;
+
+    // Capture original components BEFORE removal (for undo)
+    const componentsToRestore = [...food.components];
+
+    // Get component for display name
+    const componentToRemove = food.components[componentIndex];
+
+    // Create NEW components array (without the removed item)
+    const newComponents = [
+      ...food.components.slice(0, componentIndex),
+      ...food.components.slice(componentIndex + 1)
+    ];
+
+    // Create NEW food with updated components
+    const updatedFood = new FoodDisplay({
+      ...food,
+      components: newComponents
+    });
+
+    // Update the array
+    this.computedFoods[foodIndex] = updatedFood;
+    this.computedFoods = [...this.computedFoods];
 
     setTimeout(async () => {
-      // In edit mode, track the operation instead of just hiding UI
-     
-      // Mark component as removed
-      const foodIndex = this.findFoodIndexForComponent(componentId);
-      if (foodIndex >= 0) {
-        this.onComponentChanged(foodIndex, componentId, { isRemoved: true });
-      }
-
-      // Clean up cached serving selection for this component
-      const selectedServing = this.getSelectedServing(componentId);
-      console.log('🗑️ Removing component:', componentId, 'selectedServing:', selectedServing?.id);
-      if (selectedServing?.id) {
-        // Selection state is cleared when component is marked as removed
-      }
-
-      // Check if this was the last remaining food item
-      const remainingItems = this.availableComponents; // This will exclude the just-removed item
-      const isLastItem = remainingItems.length === 0;
-
-      if (isLastItem) {
-        // If this was the last item, trigger cancellation instead of showing undo toast
-        this.cancelSelection();
-        return;
-      }
-
-      const component = this.findComponentById(componentId);
-      const food = this.getSelectedFood(componentId);
-      const itemName = food?.displayName || component?.key || 'item';
-
+      // Get display name from component's selected match
+      const selectedMatch = componentToRemove?.matches?.find((m: any) => m.isBestMatch)
+                           || componentToRemove?.matches?.[0];
+      const itemName = selectedMatch?.displayName || 'item';
+      
       await this.toastService.showToast({
         message: `${itemName} removed`,
-        duration: 5000,
+        duration: 3000,
         color: 'medium',
         buttons: [
           {
             text: 'Undo',
             handler: () => {
-              // Restore component by clearing isRemoved flag
-              const foodIndex = this.findFoodIndexForComponent(componentId);
-              if (foodIndex >= 0) {
-                this.onComponentChanged(foodIndex, componentId, { isRemoved: false });
-              }
-
-
-              console.log('🔄 Undoing removal for component:', componentId);
+              // Use map to create completely new array - this triggers OnPush change detection
+              this.computedFoods = this.computedFoods.map(f =>
+                f.id === food.id
+                  ? new FoodDisplay({ ...f, components: componentsToRestore })
+                  : f
+              );
+              this.cdr.detectChanges();
             }
           }
         ]
@@ -696,48 +632,41 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const foodIndex = this.computedFoods.findIndex(f => f.id === foodId);
     if (foodIndex === -1) return;
 
-    const food = this.computedFoods[foodIndex];
-
-    // Mark as removed using display model pattern
-    const removedFood = new FoodDisplay({
-      ...food,
-      isRemoved: true
-    });
-
-    // Update the specific food
-    this.onFoodChanged(foodIndex, removedFood);
-
-    // Clear component caches
-    const comps = (food.components || []) as any[];
-    for (const c of comps) {
-      const cid = c?.id;
-      if (!cid) continue;
-      // Selection state is managed in the display model - no external cleanup needed
-    }
-
-    // Check if last item
-    const remainingFoods = this.computedFoods.filter(f => !f.isRemoved);
-    if (remainingFoods.length === 0) {
+    // Check if last food
+    if (this.computedFoods.length === 1) {
       this.cancelSelection();
       return;
     }
 
-    const foodName = food.name || 'food item';
+    // Capture original foods array BEFORE removal (for undo)
+    const foodsToRestore = [...this.computedFoods];
+
+    // Get food for display name
+    const foodToRemove = this.computedFoods[foodIndex];
+
+    // Create NEW foods array (without the removed item)
+    const newFoods = [
+      ...this.computedFoods.slice(0, foodIndex),
+      ...this.computedFoods.slice(foodIndex + 1)
+    ];
+
+    // Update the array
+    this.computedFoods = newFoods;
+
+    // Get food name for toast
+    const foodName = foodToRemove.name || 'food item';
 
     // Show toast with undo
     await this.toastService.showToast({
       message: `${foodName} removed`,
-      duration: 5000,
+      duration: 3000,
       color: 'medium',
       buttons: [{
         text: 'Undo',
         handler: () => {
-          // Restore the food
-          const restoredFood = new FoodDisplay({
-            ...food,
-            isRemoved: false
-          });
-          this.onFoodChanged(foodIndex, restoredFood);
+          // Simply restore the original foods array
+          this.computedFoods = foodsToRestore;
+          this.cdr.detectChanges();
         }
       }]
     });
@@ -750,7 +679,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Show toast with undo option
     const toast = await this.toastService.showToast({
       message: 'Food logging canceled',
-      duration: 5000,
+      duration: 3000,
       color: 'medium',
       buttons: [
         {
@@ -774,7 +703,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.selectionCanceled.emit();
       this.cancelTimeout = null;
       // Note: isCanceling will be reset by parent when API response comes back
-    }, 5000);
+    }, 3000);
     
     // Listen for toast dismissal (if user dismisses manually)
     toast.onDidDismiss().then((result) => {

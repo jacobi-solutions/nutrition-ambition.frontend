@@ -5,7 +5,7 @@ import { IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, 
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing } from 'src/app/services/nutrition-ambition-api.service';
-import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
+import { ServingQuantityInputComponent } from 'src/app/components/food-selection/serving-quantity-input.component/serving-quantity-input.component';
 import { SearchFoodComponent } from '../search-food/search-food.component';
 import { ComponentServingDisplay } from 'src/app/models/food-selection-display';
 import { ServingIdentifierUtil, NutrientScalingUtil } from '../food-selection.util';
@@ -60,7 +60,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Output() editStarted = new EventEmitter<string>();
   @Output() editCanceled = new EventEmitter<string>();
   @Output() editConfirmed = new EventEmitter<{componentId: string, newPhrase: string}>();
-  @Output() removeComponent = new EventEmitter<string>();
+  @Output() removeComponent = new EventEmitter<{componentId: string}>();
   @Output() moreOptionsRequested = new EventEmitter<string>();
   @Output() foodSelected = new EventEmitter<{componentId: string, food: ComponentMatch}>();
   @Output() instantOptionsRequested = new EventEmitter<{componentId: string, searchTerm: string}>();
@@ -104,7 +104,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   onRemoveComponent() {
-    this.removeComponent.emit(this.component.id);
+    this.removeComponent.emit({ componentId: this.component.id });
   }
 
   onMoreOptionsRequested() {

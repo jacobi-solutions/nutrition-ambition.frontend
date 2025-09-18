@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IonIcon, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { chevronUpOutline, chevronDownOutline, trashOutline } from 'ionicons/icons';
-import { ServingQuantityInputComponent } from 'src/app/components/serving-quantity-input.component/serving-quantity-input.component';
+import { ServingQuantityInputComponent } from 'src/app/components/food-selection/serving-quantity-input.component/serving-quantity-input.component';
 import { ServingIdentifierUtil, NutrientScalingUtil } from '../food-selection.util';
 
 @Component({
@@ -112,8 +112,6 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     }
 
     for (const component of this.food.components) {
-      // Skip removed components
-      if (component.isRemoved) continue;
 
       // Get the selected serving from component data
       const selectedMatch = component.matches?.find((m: any) => m.isBestMatch) || component.matches?.[0];
