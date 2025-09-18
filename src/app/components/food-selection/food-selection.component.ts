@@ -492,8 +492,31 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Only rebuild from raw data - no state preservation needed
     this.computedFoods = rawFoods.map((food, foodIndex) => {
       const transformedComponents = food.components?.map((component: any) => {
+        // Transform matches to include ComponentServingDisplay objects
+        const transformedMatches = component.matches?.map((match: any) => {
+          const transformedServings = match.servings?.map((serving: any) => {
+            // Convert to ComponentServingDisplay with initial effectiveQuantity
+            const effectiveQuantity = (serving.baseQuantity || 1) * (serving.aiRecommendedScale || 1);
+            return new ComponentServingDisplay({
+              ...serving,
+              effectiveQuantity: effectiveQuantity,
+              isSelected: false,
+              unitText: serving.singularUnit || serving.baseUnit || '',
+              servingLabel: `${effectiveQuantity} ${serving.singularUnit || serving.baseUnit || ''}`,
+              userSelectedQuantity: effectiveQuantity,
+              servingMultiplier: 1
+            });
+          }) || [];
+
+          return new ComponentMatchDisplay({
+            ...match,
+            servings: transformedServings
+          });
+        }) || [];
+
         return new ComponentDisplay({
           ...component,
+          matches: transformedMatches,
           // All UI state starts fresh
           isSearching: false,
           isEditing: false,

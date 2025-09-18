@@ -32,7 +32,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   brandName: string = '';
   servingLabel: string = '';
   selectedFood: ComponentMatch | null = null;
-  selectedServing: ComponentServing | null = null;
+  selectedServing: ComponentServingDisplay | null = null;
   computedIsNewAddition: boolean = false;
   macroSummary: string = '';
 
@@ -228,35 +228,28 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     const servings = this.selectedFood?.servings || [];
     const selectedServingId = this.selectedServing?.id || '';
 
+    // Servings are already ComponentServingDisplay objects with effectiveQuantity set
+    // Just update the isSelected flag and ensure labels are current
     return servings.map(serving => {
-      const display = new ComponentServingDisplay(serving);
       const servingId = serving.id || '';
+      const effectiveQuantity = serving.effectiveQuantity || 1;
 
-      // Set display properties
-      display.isSelected = servingId === selectedServingId;
+      // Update selection state
+      serving.isSelected = servingId === selectedServingId;
 
-      // Get the effective quantity (user's current selection or default)
-      const effectiveQuantity = (serving as any).effectiveQuantity !== undefined
-        ? (serving as any).effectiveQuantity
-        : serving.baseQuantity || 1;
-
-      display.effectiveQuantity = effectiveQuantity;
-      display.baseQuantity = serving.baseQuantity || 1;
-      display.baseUnit = serving.baseUnit || '';
-
-      // Set unit text using singular/plural forms for proper grammar
+      // Update unit text for current quantity
       if (effectiveQuantity === 1 && serving.singularUnit) {
-        display.unitText = serving.singularUnit;
+        serving.unitText = serving.singularUnit;
       } else if (serving.pluralUnit) {
-        display.unitText = serving.pluralUnit;
+        serving.unitText = serving.pluralUnit;
       } else {
-        display.unitText = display.baseUnit;
+        serving.unitText = serving.baseUnit || '';
       }
 
-      // Create the serving label that shows in the radio buttons
-      display.servingLabel = `${effectiveQuantity} ${display.unitText}`;
+      // Update serving label
+      serving.servingLabel = `${effectiveQuantity} ${serving.unitText}`;
 
-      return display;
+      return serving;
     });
   }
 
@@ -274,11 +267,11 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     return selected as ComponentMatch;
   }
 
-  getSelectedServing(): ComponentServing | null {
+  getSelectedServing(): ComponentServingDisplay | null {
     return this.selectedServing;
   }
 
-  private computeSelectedServing(): ComponentServing | null {
+  private computeSelectedServing(): ComponentServingDisplay | null {
     if (!this.selectedFood?.servings) return null;
 
     // Get the selectedServingId from the selected ComponentMatch
@@ -301,15 +294,9 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     const serving = this.getSelectedServing();
     if (!serving) return 1;
 
-    // Use effectiveQuantity if it exists, otherwise use baseQuantity
-    const effectiveQuantity = (serving as any).effectiveQuantity;
-    if (effectiveQuantity !== undefined && effectiveQuantity !== null) {
-      return Math.round(effectiveQuantity * 100) / 100; // Round to 2 decimal places
-    }
-
-    // Fallback to baseQuantity
-    const baseQuantity = serving.baseQuantity || 1;
-    return Math.round(baseQuantity * 100) / 100; // Round to 2 decimal places
+    // ComponentServingDisplay always has effectiveQuantity
+    const effectiveQuantity = serving.effectiveQuantity || serving.baseQuantity || 1;
+    return Math.round(effectiveQuantity * 100) / 100; // Round to 2 decimal places
   }
 
   getDisplayUnit(): string {
@@ -335,14 +322,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     const calories = scaledNutrients['calories'];
     if (!calories) return null;
 
-    let finalCalories = calories;
-
-    // For single-component foods, multiply by parent quantity
-    if (this.isSingleComponentFood && this.parentQuantity > 1) {
-      finalCalories = finalCalories * this.parentQuantity;
-    }
-
-    return Math.round(finalCalories);
+    return Math.round(calories);
   }
 
   getServingLabelForServing(serving: ComponentServing): string {
@@ -352,10 +332,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     const aiRecommendedScale = serving.aiRecommendedScale || 1.0;
     const aiDisplayQuantity = baseQuantity * aiRecommendedScale;
 
-    // For single-component foods, multiply the display quantity by parent quantity
-    const displayQuantity = this.isSingleComponentFood && this.parentQuantity > 1
-      ? (aiDisplayQuantity * this.parentQuantity)
-      : aiDisplayQuantity;
+    const displayQuantity = aiDisplayQuantity;
 
     const roundedQuantity = Math.round(displayQuantity * 100) / 100; // Round to 2 decimal places
 
@@ -519,14 +496,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
     for (const key of keys) {
       if (typeof scaledNutrients[key] === 'number') {
-        let macroValue = scaledNutrients[key];
-
-        // For single-component foods, multiply by parent quantity
-        if (this.isSingleComponentFood && this.parentQuantity > 1) {
-          macroValue = macroValue * this.parentQuantity;
-        }
-
-        return macroValue;
+        return scaledNutrients[key];
       }
     }
     return null;
