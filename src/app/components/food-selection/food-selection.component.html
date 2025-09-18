@@ -10,7 +10,7 @@
       <div *ngIf="hasPayload" class="food-items-list">
       <!-- Loop over foods using new intermediate food component -->
       <ng-container *ngFor="let food of computedFoods; let foodIndex = index; let isLast = last; trackBy: trackByFood">
-        <div [class.is-last]="isLast">
+        <div class="food-item-container" [class.is-last]="isLast">
           <app-food
             [food]="food"
             [foodIndex]="foodIndex"

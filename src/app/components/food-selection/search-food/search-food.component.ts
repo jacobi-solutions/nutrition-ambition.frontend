@@ -70,9 +70,9 @@ export class SearchFoodComponent implements OnInit {
 
     // Small timeout to allow for button clicks
     setTimeout(() => {
-      if (!this.currentPhrase?.trim()) {
+      
         this.cancel();
-      }
+      
     }, 150);
   }
 

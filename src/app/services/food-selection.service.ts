@@ -96,26 +96,30 @@ export class FoodSelectionService {
     // Ensure localDateKey is set
     request.localDateKey = request.localDateKey || this.dateService.getSelectedDate();
 
-    return this.apiService.searchFoodPhrase(request).pipe(
+    var response = this.apiService.searchFoodPhrase(request).pipe(
       catchError(err => {
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Search failed';
         return of(new SearchFoodPhraseResponse({ isSuccess: false, errors: [errorDto] }));
       })
     );
+
+    return response;
   }
 
   updateFoodPhrase(request: SearchFoodPhraseRequest): Observable<SearchFoodPhraseResponse> {
     // Ensure localDateKey is set
     request.localDateKey = request.localDateKey || this.dateService.getSelectedDate();
 
-    return this.apiService.updateFoodPhrase(request).pipe(
+    var response = this.apiService.updateFoodPhrase(request).pipe(
       catchError(err => {
         const errorDto = new ErrorDto();
         errorDto.errorMessage = 'Update failed';
         return of(new SearchFoodPhraseResponse({ isSuccess: false, errors: [errorDto] }));
       })
     );
+
+    return response;
   }
 
   hydrateFoodSelection(request: HydrateFoodSelectionRequest): Observable<HydrateFoodSelectionResponse> {

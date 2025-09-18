@@ -7,7 +7,7 @@ import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send
 import { ComponentMatch, ComponentServing } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/food-selection/serving-quantity-input.component/serving-quantity-input.component';
 import { SearchFoodComponent } from '../search-food/search-food.component';
-import { ComponentServingDisplay } from 'src/app/models/food-selection-display';
+import { ComponentDisplay, ComponentServingDisplay } from 'src/app/models/food-selection-display';
 import { ServingIdentifierUtil, NutrientScalingUtil } from '../food-selection.util';
 
 @Component({
@@ -57,8 +57,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Output() toggleExpansion = new EventEmitter<string>();
   @Output() servingSelected = new EventEmitter<{componentId: string, servingId: string}>();
   @Output() servingQuantityChanged = new EventEmitter<{componentId: string, servingId: string, quantity: number}>();
-  @Output() editStarted = new EventEmitter<string>();
-  @Output() editCanceled = new EventEmitter<string>();
   @Output() editConfirmed = new EventEmitter<{componentId: string, newPhrase: string}>();
   @Output() removeComponent = new EventEmitter<{componentId: string}>();
   @Output() moreOptionsRequested = new EventEmitter<string>();
@@ -92,14 +90,16 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
 
   onEditStarted() {
-    this.editStarted.emit(this.component.id);
+    this.isEditing = true;
   }
 
   onEditCanceled() {
-    this.editCanceled.emit(this.component.id);
+    this.isEditing = false;
   }
 
   onEditConfirmed(newPhrase: string) {
+    this.isEditing = false;
+    this.isSearching = true;
     this.editConfirmed.emit({componentId: this.component.id, newPhrase});
   }
 
@@ -170,9 +170,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       this.servingLabel = '';
     }
 
-    // Compute isNewAddition flag
-    const matches = this.getDisplayMatches();
-    this.computedIsNewAddition = matches.length > 0 && !!(matches[0] as any).isNewAddition;
 
     // Compute macro summary
     this.macroSummary = this.computeMacroSummary();

@@ -8,6 +8,7 @@ import { Component, ComponentMatch, ComponentServing, Food } from '../services/n
 export class ComponentDisplay extends Component {
   // Display state flags
   isSearching?: boolean;
+  isNewAddition?: boolean;
   isEditing?: boolean;
   isExpanded?: boolean;
   editingValue?: string;
@@ -30,6 +31,7 @@ export class ComponentDisplay extends Component {
     this.loadingInstantOptions = data.loadingInstantOptions;
     this.moreOptions = data.moreOptions;
     this.matches = data.matches;
+    this.isNewAddition = data.isNewAddition;
   }
 
   init(_data?: any) {
@@ -43,6 +45,7 @@ export class ComponentDisplay extends Component {
       this.loadingMoreOptions = _data["loadingMoreOptions"];
       this.loadingInstantOptions = _data["loadingInstantOptions"];
       this.moreOptions = _data["moreOptions"];
+      this.isNewAddition = _data["isNewAddition"];
       if (Array.isArray(_data["matches"])) {
         this.matches = [] as any;
         for (let item of _data["matches"])
@@ -61,6 +64,7 @@ export class ComponentDisplay extends Component {
     data["loadingMoreOptions"] = this.loadingMoreOptions;
     data["loadingInstantOptions"] = this.loadingInstantOptions;
     data["moreOptions"] = this.moreOptions;
+    data["isNewAddition"] = this.isNewAddition;
     if (Array.isArray(this.matches)) {
       data["matches"] = [];
       for (let item of this.matches)

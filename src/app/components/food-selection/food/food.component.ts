@@ -85,16 +85,24 @@ export class FoodComponent implements OnInit, OnChanges {
     });
   }
 
-  onEditStarted(componentId: string): void {
-    this.actionRequested.emit({ action: 'editStarted', payload: componentId });
+  onEditStarted(event: any): void {
+    event.foodIndex = this.foodIndex;
+    this.actionRequested.emit({
+      action: 'editStarted',
+      payload: event
+    });
   }
 
   onEditCanceled(componentId: string): void {
     this.actionRequested.emit({ action: 'editCanceled', payload: componentId });
   }
 
-  onEditConfirmed(event: {componentId: string, newPhrase: string}): void {
-    this.actionRequested.emit({ action: 'editConfirmed', payload: event.componentId });
+  onEditConfirmed(event: any): void {
+    event.foodIndex = this.foodIndex;
+    this.actionRequested.emit({
+      action: 'editFoodPhraseConfirmed',
+      payload: event
+    });
   }
 
   onRemoveComponent(event: any): void {

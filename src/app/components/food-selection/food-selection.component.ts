@@ -32,8 +32,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   @Output() editConfirmed = new EventEmitter<SubmitEditServingSelectionRequest>();
   @Output() selectionCanceled = new EventEmitter<void>();
   @Output() updatedMessage = new EventEmitter<DisplayMessage>();
-  @Output() phraseEditRequested = new EventEmitter<{originalPhrase: string, newPhrase: string, messageId: string, componentId?: string}>();
-
   @ViewChild(SearchFoodComponent) addFoodComponent?: SearchFoodComponent;
 
   isReadOnly = false;
@@ -60,7 +58,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   get hasPayload(): boolean {
-    return !!this.message.logMealToolResponse?.foods && this.message.logMealToolResponse.foods.length > 0;
+    return !!this.computedFoods && this.computedFoods.length > 0;
   }
 
   get statusText(): string {
@@ -99,6 +97,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
       // Reset adding food state when message changes
       this.isAddingFood = false;
+
+      // Reset submitting state when message updates (after food addition/edit completes)
+      this.isSubmitting = false;
 
       this.computeAllFoods();
     }
@@ -168,14 +169,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       case 'servingQuantityChanged':
         this.onServingQuantityChanged(event.payload.foodIndex, event.payload.componentId, event.payload.servingId, event.payload.quantity);
         break;
-      case 'editStarted':
-        this.startEditingComponent(event.payload);
-        break;
-      case 'editCanceled':
-        this.cancelEditingComponent(event.payload);
-        break;
-      case 'editConfirmed':
-        this.sendUpdatedComponent(event.payload);
+      case 'editFoodPhraseConfirmed':
+        this.editFoodPhraseOnComponent(event.payload.foodIndex, event.payload.componentId, event.payload.newPhrase);
         break;
       case 'removeComponent':
         this.removeComponent(event.payload.foodIndex, event.payload.componentId);
@@ -310,6 +305,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
     }
   }
+
+  
 
   getSelectedServingId(componentId: string): string | undefined {
     const selectedFood = this.getSelectedFood(componentId);
@@ -851,30 +848,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
 
-  async startEditingComponent(componentId: string): Promise<void> {
-    // Start editing component
-    const foodIndex = this.findFoodIndexForComponent(componentId);
-    if (foodIndex >= 0) {
-      this.onComponentChanged(foodIndex, componentId, {
-        isEditing: true,
-        editingValue: this.getSearchTextOnly(componentId)
-      });
-    }
-
-
-    // Then show the suggestion toast and focus the textarea
-    setTimeout(async () => {
-      // Show the suggestion toast
-      await this.onEditPhrase(componentId);
-
-      // Focus the textarea and ensure proper sizing
-      const textarea = document.querySelector(`textarea.phrase-input`) as HTMLTextAreaElement;
-      if (textarea) {
-        textarea.focus();
-        this.autoResizeTextarea(textarea);
-      }
-    }, 0);
-  }
 
   autoResizeTextarea(textarea: HTMLTextAreaElement): void {
     // Reset height to auto to get the correct scrollHeight
@@ -889,39 +862,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     textarea.style.height = newHeight + 'px';
   }
 
-  sendUpdatedComponent(eventOrComponentId: {componentId: string; newPhrase: string} | string): void {
-    let componentId: string;
-    let newPhrase: string;
-
-    // Handle both old (string) and new (object) call patterns
-    if (typeof eventOrComponentId === 'string') {
-      // Old pattern: just componentId, get newPhrase from component
-      componentId = eventOrComponentId;
-      const component = this.findComponentById(componentId);
-      newPhrase = component?.editingValue || '';
-    } else {
-      // New pattern: event object with both values
-      componentId = eventOrComponentId.componentId;
-      newPhrase = eventOrComponentId.newPhrase;
-    }
-
-    this.toggleExpansion(componentId);
-
-    if (!newPhrase || !newPhrase.trim()) {
-      return;
-    }
-
-    // Close the edit mode completely first
-    this.finishEditingComponent(componentId);
-
-    // Then send the request using the newPhrase value
-    this.phraseEditRequested.emit({
-      originalPhrase: 'UPDATE', // Non-empty value to indicate this is an update
-      newPhrase: newPhrase.trim(),
-      messageId: this.message.id || '',
-      componentId: componentId
-    });
-  }
+  
 
   finishEditingComponent(componentId: string): void {
     // Clear editing state
@@ -934,24 +875,96 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  cancelEditingComponent(componentId: string): void {
-    // Clear editing state
-    const foodIndex = this.findFoodIndexForComponent(componentId);
-    if (foodIndex >= 0) {
-      this.onComponentChanged(foodIndex, componentId, {
-        isEditing: false,
-        editingValue: undefined
+  async editFoodPhraseOnComponent(foodIndex: number, componentId: string, newPhrase: string): Promise<void> {
+    if (!newPhrase || !newPhrase.trim()) {
+      return;
+    }
+
+    var food = this.computedFoods[foodIndex];
+    var componentToUpdate = food.components?.find(c => c.id === componentId);
+    
+
+    const request = new SearchFoodPhraseRequest({
+      originalPhrase: 'UPDATE',
+      searchPhrase: newPhrase.trim(),
+      messageId: this.message.id || '',
+      componentId: componentId,
+      localDateKey: this.dateService.getSelectedDate()
+    });
+
+    const response = await this.foodSelectionService.updateFoodPhrase(request).toPromise();
+
+    if (response?.isSuccess && response.foodOptions && response.foodOptions.length > 0) {
+      // Get the updated food from response  
+      const updatedFood = new FoodDisplay(response.foodOptions[0]);
+
+      // Preserve UI state from old components
+      const oldFood = this.computedFoods[foodIndex];
+      oldFood.components?.forEach((oldComp, idx) => {
+        if (updatedFood.components?.[idx]) {
+          // Preserve expanded state and other UI properties
+          updatedFood.components[idx].isExpanded = oldComp.isExpanded;
+          updatedFood.components[idx].showingMoreOptions = oldComp.showingMoreOptions;
+        }
       });
+
+      // Replace the food
+      this.computedFoods[foodIndex] = updatedFood;
+      this.computedFoods = [...this.computedFoods];
+      this.cdr.detectChanges();
+    } else {
+      // Reset searching state on error
+      this.onComponentChanged(foodIndex, componentId, {
+        isSearching: false
+      });
+      await this.showErrorToast('Failed to update food. Please try again.');
     }
   }
-  onFoodAdded(phrase: string): void {
-    // Handle the new food phrase submission
-    this.phraseEditRequested.emit({
-      originalPhrase: '',
-      newPhrase: phrase,
-      messageId: this.message.id || ''
-    });
+  
+  async onFoodAdded(phrase: string): Promise<void> {
     this.isAddingFood = false;
+
+      // Handle the new food phrase submission directly
+      const request = new SearchFoodPhraseRequest({
+        searchPhrase: phrase,
+        originalPhrase: '',
+        messageId: this.message.id || '',
+        localDateKey: this.dateService.getSelectedDate()
+      });
+
+      var component = new ComponentDisplay({
+        isSearching: true,
+        isEditing: false,
+        isExpanded: false,
+        editingValue: '',
+        showingMoreOptions: false,
+        isNewAddition: true,
+      });
+
+      var tempLoadingFoodId = 'temp-loading-' + Date.now();
+
+      var tempLoadingFood = new FoodDisplay({
+        id: tempLoadingFoodId,
+        name: '',
+        components: [component]
+      });
+
+      this.computedFoods = [...this.computedFoods, tempLoadingFood];
+
+      const response = await this.foodSelectionService.searchFoodPhrase(request).toPromise();
+      var tempFoodToReplaceIndex = this.computedFoods.findIndex(x => x.id === tempLoadingFoodId);
+      if (response?.isSuccess) {
+        var newFoods = response.foodOptions?.map(x => new FoodDisplay(x) );
+        
+        this.computedFoods = [...this.computedFoods.slice(0, tempFoodToReplaceIndex), ...newFoods || [], ...this.computedFoods.slice(tempFoodToReplaceIndex + 1)];
+        this.cdr.detectChanges();
+      } else {
+        this.computedFoods = [...this.computedFoods.slice(0, tempFoodToReplaceIndex), ...this.computedFoods.slice(tempFoodToReplaceIndex + 1)];
+        this.cdr.detectChanges();
+        await this.showErrorToast('Failed to add food. Please try again.');
+      }
+       
+    
   }
 
 

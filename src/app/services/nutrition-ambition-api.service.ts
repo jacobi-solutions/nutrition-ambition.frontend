@@ -5751,8 +5751,6 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
     accountId?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
-    mealName?: string | undefined;
-    updatedMessage?: ChatMessage;
 
     constructor(data?: ISearchFoodPhraseResponse) {
         if (data) {
@@ -5780,8 +5778,6 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
                 for (let item of _data["foodOptions"])
                     this.foodOptions!.push(Food.fromJS(item));
             }
-            this.mealName = _data["mealName"];
-            this.updatedMessage = _data["updatedMessage"] ? ChatMessage.fromJS(_data["updatedMessage"]) : <any>undefined;
         }
     }
 
@@ -5809,8 +5805,6 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
             for (let item of this.foodOptions)
                 data["foodOptions"].push(item.toJSON());
         }
-        data["mealName"] = this.mealName;
-        data["updatedMessage"] = this.updatedMessage ? this.updatedMessage.toJSON() : <any>undefined;
         return data;
     }
 }
@@ -5823,8 +5817,6 @@ export interface ISearchFoodPhraseResponse {
     accountId?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
-    mealName?: string | undefined;
-    updatedMessage?: ChatMessage;
 }
 
 export class SearchLogsRequest implements ISearchLogsRequest {
