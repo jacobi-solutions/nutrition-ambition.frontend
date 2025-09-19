@@ -6079,6 +6079,7 @@ export class SubmitServingSelectionRequest implements ISubmitServingSelectionReq
     localDateKey?: string | undefined;
     pendingMessageId?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
+    foodQuantities?: UserSelectedFoodQuantity[] | undefined;
 
     constructor(data?: ISubmitServingSelectionRequest) {
         if (data) {
@@ -6097,6 +6098,11 @@ export class SubmitServingSelectionRequest implements ISubmitServingSelectionReq
                 this.selections = [] as any;
                 for (let item of _data["selections"])
                     this.selections!.push(UserSelectedServing.fromJS(item));
+            }
+            if (Array.isArray(_data["foodQuantities"])) {
+                this.foodQuantities = [] as any;
+                for (let item of _data["foodQuantities"])
+                    this.foodQuantities!.push(UserSelectedFoodQuantity.fromJS(item));
             }
         }
     }
@@ -6117,6 +6123,11 @@ export class SubmitServingSelectionRequest implements ISubmitServingSelectionReq
             for (let item of this.selections)
                 data["selections"].push(item.toJSON());
         }
+        if (Array.isArray(this.foodQuantities)) {
+            data["foodQuantities"] = [];
+            for (let item of this.foodQuantities)
+                data["foodQuantities"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -6125,6 +6136,7 @@ export interface ISubmitServingSelectionRequest {
     localDateKey?: string | undefined;
     pendingMessageId?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
+    foodQuantities?: UserSelectedFoodQuantity[] | undefined;
 }
 
 export class TelemetryContext implements ITelemetryContext {
@@ -6260,6 +6272,46 @@ export interface IUserEditOperation {
     scaledQuantity?: number | undefined;
     newParentQuantity?: number | undefined;
     newParentUnit?: string | undefined;
+}
+
+export class UserSelectedFoodQuantity implements IUserSelectedFoodQuantity {
+    foodId?: string | undefined;
+    quantity?: number;
+
+    constructor(data?: IUserSelectedFoodQuantity) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodId = _data["foodId"];
+            this.quantity = _data["quantity"];
+        }
+    }
+
+    static fromJS(data: any): UserSelectedFoodQuantity {
+        data = typeof data === 'object' ? data : {};
+        let result = new UserSelectedFoodQuantity();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodId"] = this.foodId;
+        data["quantity"] = this.quantity;
+        return data;
+    }
+}
+
+export interface IUserSelectedFoodQuantity {
+    foodId?: string | undefined;
+    quantity?: number;
 }
 
 export class UserSelectedServing implements IUserSelectedServing {

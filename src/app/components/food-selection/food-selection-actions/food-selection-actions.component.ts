@@ -15,7 +15,6 @@ export class FoodSelectionActionsComponent implements OnInit, OnChanges {
   @Input() isReadOnly: boolean = false;
   @Input() isEditMode: boolean = false;
   @Input() statusText: string = '';
-  @Input() isSelectionComplete: boolean = false;
 
   // Precomputed values for performance
   computedShowTypingIndicator: boolean = false;

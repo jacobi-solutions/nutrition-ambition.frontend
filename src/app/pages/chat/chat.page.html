@@ -51,7 +51,7 @@
               [isEditingPhrase]="message.isEditingPhrase || false"
               (selectionConfirmed)="onFoodSelectionConfirmed($event)"
               (editConfirmed)="onEditFoodSelectionConfirmed($event)"
-              (cancel)="onCancelFoodSelection(message)"
+              (selectionCanceled)="onCancelFoodSelection(message)"
               (updatedMessage)="onFoodPhraseUpdated($event)">
             </app-food-selection>
 

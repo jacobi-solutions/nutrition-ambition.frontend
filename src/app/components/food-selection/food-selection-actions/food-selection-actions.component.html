@@ -13,7 +13,6 @@
   <ion-button
     *ngIf="computedShowActionButtons"
     expand="block"
-    [disabled]="!isSelectionComplete"
     (click)="onConfirmSelection()"
     color="tertiary"
     class="confirm-button">

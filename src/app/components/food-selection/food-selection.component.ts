@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier, UserSelectedFoodQuantity } from 'src/app/services/nutrition-ambition-api.service';
 import { Subject } from 'rxjs';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
@@ -44,8 +44,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Precomputed foods array with all display state embedded - eliminates all method calls in template
   computedFoods: FoodDisplay[] = [];
 
-  // Precomputed selection complete status
-  _isSelectionComplete: boolean = false;
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -331,15 +329,31 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   getSelectedServing(componentId: string): ComponentServing | null {
-    const food = this.getSelectedFood(componentId);
+    const component = this.findComponentById(componentId);
+    if (!component) return null;
+
+    const selectedMatch = component.matches?.find((m: any) =>
+      m.providerFoodId === component.selectedComponentId
+    );
+
+    if (!selectedMatch) {
+      // Fallback to first match
+      const firstMatch = component.matches?.[0];
+      if (!firstMatch) return null;
+      return firstMatch.servings?.[0] || null;
+    }
+
     const selectedServingId = this.getSelectedServingId(componentId);
 
-    if (selectedServingId && food?.servings) {
-      return food.servings.find((s: any) => s.id === selectedServingId) || null;
+    if (selectedServingId && selectedMatch?.servings) {
+      const serving = selectedMatch.servings.find((s: any) =>
+        s.id === selectedServingId || (s.servingId && s.servingId.toString() === selectedServingId.toString())
+      );
+      if (serving) return serving;
     }
 
     // Fallback: return the first serving if available
-    return food?.servings?.[0] || null;
+    return selectedMatch?.servings?.[0] || null;
   }
 
   trackByFood(index: number, food: any): string {
@@ -353,9 +367,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
  
-  isSelectionComplete(): boolean {
-    return this._isSelectionComplete;
-  }
 
   confirmSelections(): void {
     if (this.isEditMode) {
@@ -370,20 +381,41 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     req.pendingMessageId = this.message.id;
     req.selections = [];
 
+    // Add food quantities for multi-component foods
+    req.foodQuantities = [];
+
     // Iterate through all foods and components directly
     if (this.computedFoods) {
       for (const food of this.computedFoods) {
+        // Track food quantity for multi-component foods
+        if (food.components && food.components.length > 1) {
+          req.foodQuantities.push( new UserSelectedFoodQuantity({
+            foodId: food.id,
+            quantity: food.quantity || 1
+          }));
+        }
+
         if (food.components) {
           for (const component of food.components) {
 
             const selectedFood = this.getSelectedFood(component?.id ?? '');
             const servingId = this.getOriginalServingId(component?.id ?? '');
-            const selectedServing = this.getSelectedServing(component?.id ?? '');  
+            const selectedServing = this.getSelectedServing(component?.id ?? '');
+
+            console.log('🔍 COMPONENT CHECK:', {
+              componentId: component?.id,
+              hasSelectedFood: !!selectedFood,
+              providerFoodId: (selectedFood as any)?.providerFoodId,
+              hasServingId: !!servingId,
+              servingId: servingId,
+              hasSelectedServing: !!selectedServing,
+              selectedServingId: selectedServing?.id,
+              effectiveQuantity: (selectedServing as any)?.effectiveQuantity
+            });
 
             if ((selectedFood as any)?.providerFoodId && servingId && selectedServing) {
-              const displayQuantity = this.getEffectiveQuantity(component?.id ?? '', selectedServing);
-              // Use the frontend's calculated scaling - it's already correct!
-              const scaledQuantity = this.getDisplayedQuantity(selectedServing);
+              // Use effectiveQuantity for both values - it's what the user sees/edited
+              const effectiveQuantity = (selectedServing as any).effectiveQuantity || 1;
 
               const servingIdentifier = selectedServing.servingId;
               req.selections.push(new UserSelectedServing({
@@ -392,14 +424,24 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                 provider: (selectedFood as any)?.provider ?? 'nutritionix',
                 providerFoodId: (selectedFood as any)?.providerFoodId,
                 servingId: servingIdentifier,
-                editedQuantity: displayQuantity,
-                scaledQuantity: scaledQuantity
+                editedQuantity: effectiveQuantity,
+                scaledQuantity: effectiveQuantity
               }));
             }
           }
         }
       }
     }
+
+    console.log('🔥 CONFIRM REQUEST:', {
+      pendingMessageId: req.pendingMessageId,
+      selectionsCount: req.selections?.length || 0,
+      selections: req.selections,
+      foodQuantitiesCount: req.foodQuantities?.length || 0,
+      foodQuantities: req.foodQuantities,
+      computedFoodsCount: this.computedFoods?.length || 0,
+      computedFoods: this.computedFoods
+    });
 
     this.isSubmitting = true;
     this.selectionConfirmed.emit(req);
@@ -431,24 +473,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return 1;
   }
 
-  getEffectiveQuantity(componentId: string, serving: ComponentServing | null): number {
-    // Always prioritize the serving's displayed quantity for UI display
-    // This ensures the stepper shows the correct UI value (e.g., 0.42 cup instead of 100)
-    if (serving) {
-      const displayedQuantity = this.getDisplayedQuantity(serving);
-      if (displayedQuantity !== undefined && isFinite(displayedQuantity) && displayedQuantity > 0) {
-        return displayedQuantity;
-      }
-    }
-
-    // Fall back to food's effectiveQuantity only if serving's displayed quantity is not available
-    const food = this.getSelectedFood(componentId);
-    if (food && (food as any).effectiveQuantity && (food as any).effectiveQuantity > 0) {
-      return (food as any).effectiveQuantity;
-    }
-
-    return this.getDisplayQuantity(serving);
-  }
 
   getSearchTextOnly(componentId: string): string {
     const food = this.getSelectedFood(componentId);
@@ -474,16 +498,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return component?.key || '';
   }
 
-  /**
-   * Get the displayed quantity using the new formula: baseQuantity × aiRecommendedScale
-   */
-  private getDisplayedQuantity(s: ComponentServing | null): number {
-    if (!s) return 1;
-
-    const baseQuantity = s.baseQuantity || 1;
-    const aiScale = s.aiRecommendedScale || 1;
-    return baseQuantity * aiScale;
-  }
 
   // Compute all foods as FoodDisplay objects with embedded state
   private computeAllFoods(): void {
