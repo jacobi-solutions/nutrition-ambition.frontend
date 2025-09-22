@@ -23,7 +23,7 @@ export class SearchFoodComponent implements OnInit {
   @ViewChild('addFoodTextarea', { static: false }) addFoodTextarea!: ElementRef<HTMLTextAreaElement>;
 
   currentPhrase = '';
-  isSubmittingNewFood = false;
+isSubmittingNewFood = false;
 
   constructor() {
     addIcons({ send, addCircleOutline });

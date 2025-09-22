@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@an
 import { CommonModule } from '@angular/common';
 import {
   IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
-  IonSpinner, IonText, IonSegment, IonSegmentButton, IonLabel, IonList,
+  IonSpinner, IonSegment, IonSegmentButton, IonLabel, IonList,
   IonItem, IonIcon, IonButton, IonPopover, IonRefresher, IonRefresherContent
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
@@ -13,8 +13,15 @@ import {
   FoodContribution,
   ComponentBreakdown,
   NutritionAmbitionApiService,
-  EditFoodSelectionRequest
+  EditFoodSelectionRequest,
+  SubmitEditServingSelectionRequest
 } from '../../services/nutrition-ambition-api.service';
+import {
+  FoodBreakdownDisplay,
+  ComponentBreakdownDisplay,
+  FoodEntryBreakdownDisplay,
+  NutrientBreakdownDisplay
+} from '../../models/daily-summary-display';
 import { catchError, finalize, of, Subscription, skip } from 'rxjs';
 import { DailySummaryService } from 'src/app/services/daily-summary.service';
 import { AuthService } from 'src/app/services/auth.service';
@@ -33,6 +40,7 @@ import {
 } from 'ionicons/icons';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
 import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-action-menu/entry-action-menu.component';
+import { FoodSelectionComponent } from 'src/app/components/food-selection/food-selection.component';
 import { ToastService } from 'src/app/services/toast.service';
 import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
@@ -64,7 +72,8 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
     IonRefresher,
     IonRefresherContent,
     AppHeaderComponent,
-    EntryActionMenuComponent
+    EntryActionMenuComponent,
+    FoodSelectionComponent
   ]
 })
 export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
@@ -73,9 +82,15 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   detailedData: GetDetailedSummaryResponse | null = null;
   viewMode: 'nutrients' | 'foods' = 'nutrients';
-  selectedNutrient: NutrientBreakdown | null = null;
-  selectedFood: FoodBreakdown | null = null;
-  selectedComponent: ComponentBreakdown | null = null;
+
+  // Display models with precomputed values
+  nutrientsDisplay: NutrientBreakdownDisplay[] = [];
+  foodEntriesDisplay: FoodEntryBreakdownDisplay[] = [];
+
+  // Selected items (using display models)
+  selectedNutrient: NutrientBreakdownDisplay | null = null;
+  selectedFood: FoodBreakdownDisplay | null = null;
+  selectedComponent: ComponentBreakdownDisplay | null = null;
   detailedLoading = false;
   detailedError: string | null = null;
   // Local date only — uses 'yyyy-MM-dd' format
@@ -94,6 +109,11 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   private removedFoods: Map<string, any> = new Map();
   private undoTimeouts: Map<string, any> = new Map();
 
+  // In-place editing state
+  editingFoodKey: string | null = null;
+  editingMessage: any | null = null;
+  isLoadingEdit = false;
+
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);
   private dateService = inject(DateService);
@@ -101,7 +121,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   private foodEntryService = inject(FoodEntryService);
   private router = inject(Router);
   private toastService = inject(ToastService);
-  private apiService = inject(NutritionAmbitionApiService);
 
   constructor(
     private elementRef: ElementRef, 
@@ -212,25 +231,26 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       .subscribe(response => {
         if (response) {
           this.detailedData = response;
+          this.convertToDisplayModels();
         }
       });
   }
 
   // Sort macronutrients in desired fixed order
-  get macronutrientList(): NutrientBreakdown[] {
+  get macronutrientList(): NutrientBreakdownDisplay[] {
     const order = ['calories', 'protein', 'fat', 'carbohydrate'];
     return order
-      .map(key => this.detailedData?.dailySummary?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
-      .filter((n): n is NutrientBreakdown => !!n);
+      .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
+      .filter((n): n is NutrientBreakdownDisplay => !!n);
   }
 
   // Sort micronutrients using sortOrder field (set by backend)
-  get micronutrientList(): NutrientBreakdown[] {
-    return this.detailedData?.dailySummary?.nutrients
-      ?.filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
-      ?.sort((a, b) => {
-        return (a['sortOrder'] ?? 9999) - (b['sortOrder'] ?? 9999);
-      }) || [];
+  get micronutrientList(): NutrientBreakdownDisplay[] {
+    return this.nutrientsDisplay
+      .filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
+      .sort((a, b) => {
+        return ((a as any)['sortOrder'] ?? 9999) - ((b as any)['sortOrder'] ?? 9999);
+      });
   }
 
   // Get macronutrients for the selected food
@@ -303,7 +323,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     // For multi-component foods, append ingredient count
     if (this.isMultiComponentFood(food)) {
       const componentCount = food.componentCount || food.components?.length || 0;
-      return `${baseName} - ${componentCount} ingredients`;
+      return `${baseName} - ${componentCount} components`;
     }
     
     // For single-component foods, just return the name
@@ -319,34 +339,44 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       const unit = component.unit || 'serving';
       return `${quantity} ${unit}`;
     }
-    
-    // For multi-component foods, show the food-level info
-    const quantity = this.formatQuantity(food.totalAmount);
-    const unit = food.unit || 'serving';
+
+    // For multi-component foods, show the food-level quantity and unit
+    const quantity = this.formatQuantity(food.quantity || 1);
+    const unit = food.foodUnit || 'serving';
     return `${quantity} ${unit}`;
   }
 
-  selectNutrient(nutrient: NutrientBreakdown) {
+  selectNutrient(nutrient: NutrientBreakdownDisplay) {
     const isAlreadySelected = this.selectedNutrient?.nutrientKey === nutrient.nutrientKey;
     this.selectedNutrient = isAlreadySelected ? null : nutrient;
     this.selectedFood = null;
-    
+    this.selectedComponent = null;
+
+    // Update all selection states
+    this.updateAllSelectionStates();
+
     // No auto-scroll when opening drilldown in the same tab
   }
 
-  selectFood(food: FoodBreakdown) {
-    const isAlreadySelected = this.isSameFood(this.selectedFood, food);
+  selectFood(food: FoodBreakdownDisplay) {
+    const isAlreadySelected = this.selectedFood?.foodId === food.foodId;
     this.selectedFood = isAlreadySelected ? null : food;
     this.selectedNutrient = null;
     this.selectedComponent = null; // Reset component selection when selecting a food
-    
+
+    // Update all selection states
+    this.updateAllSelectionStates();
+
     // No auto-scroll when opening drilldown in the same tab
   }
 
-  selectComponent(component: ComponentBreakdown) {
-    const isAlreadySelected = this.isSameComponent(this.selectedComponent, component);
+  selectComponent(component: ComponentBreakdownDisplay) {
+    const isAlreadySelected = this.selectedComponent?.componentId === component.componentId;
     this.selectedComponent = isAlreadySelected ? null : component;
     // Keep the food selected when selecting a component
+
+    // Update all selection states
+    this.updateAllSelectionStates();
   }
 
   isSameComponent(component1: ComponentBreakdown | null, component2: ComponentBreakdown | null): boolean {
@@ -358,7 +388,17 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   navigateToFood(foodName: string) {
     this.viewMode = 'foods';
-    this.selectedFood = this.detailedData?.dailySummary?.foods?.find(f => f.name?.toLowerCase() === foodName.toLowerCase()) || null;
+    // Find the food in the display models
+    for (const entry of this.foodEntriesDisplay) {
+      const food = entry.foodsDisplay?.find(f => f.name?.toLowerCase() === foodName.toLowerCase());
+      if (food) {
+        this.selectedFood = food;
+        break;
+      }
+    }
+    if (!this.selectedFood) {
+      this.selectedFood = null;
+    }
     this.selectedNutrient = null;
     
     // Scroll to the selected food after DOM updates
@@ -369,7 +409,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   navigateToNutrient(nutrientKey: string) {
     this.viewMode = 'nutrients';
-    this.selectedNutrient = this.detailedData?.dailySummary?.nutrients?.find(n => n.nutrientKey === nutrientKey) || null;
+    this.selectedNutrient = this.nutrientsDisplay.find(n => n.nutrientKey === nutrientKey) || null;
     this.selectedFood = null;
     
     // Scroll to the selected nutrient after DOM updates
@@ -429,10 +469,10 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   }
 
-  openActionMenu(event: Event, entry: any, type: 'food' | 'nutrient') {
+  openActionMenu(event: Event, entry: any, type: 'food' | 'nutrient', component?: any) {
     event.stopPropagation();
     this.popoverEvent = event;
-    this.selectedEntry = { ...entry, entryType: type };
+    this.selectedEntry = { ...entry, entryType: type, component: component };
     this.isPopoverOpen = true;
   }
 
@@ -469,45 +509,110 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       this.showErrorToast('Only food items can be edited.');
       return;
     }
-  
-    // You should now have these from the backend in each FoodBreakdown:
-    // entry.foodEntryId, entry.foodId, entry.componentId  (we only need foodEntryId to start)
-    if (!entry.foodEntryId) {
+
+    // Check if we're editing a component - if so, use the parent food's foodEntryId
+    const isComponentEdit = entry.component && entry.component.componentId;
+    const editTarget = isComponentEdit ? entry : entry; // entry is already the parent food for components
+
+    if (!editTarget.foodEntryId) {
       this.showErrorToast('Sorry, could not locate this food to edit.');
       return;
     }
-  
-    const displayName = this.getFoodDisplayName(entry);
-  
-    // Start the pending edit state immediately
-    this.chatService.startPendingEdit(displayName);
-    
-    // UX: set context note and navigate to Chat
-    this.chatService.setContextNote(`Editing ${displayName}`);
-    this.router.navigate(['/app/chat']);
-  
+
+    // Find the entry name from the food entries
+    const entryName = this.detailedData?.dailySummary?.foodEntries?.find(e =>
+      e.foods?.some((f: any) => this.isSameFood(f, editTarget))
+    )?.entryName || 'Food';
+
+    // Set up in-place editing state (use the key of the food we're editing)
+    this.editingFoodKey = this.getFoodKey(editTarget);
+    this.isLoadingEdit = true;
+    this.editingMessage = null;
+
     const req = new EditFoodSelectionRequest({
-      foodEntryId: entry.foodEntryId,
-      foodId: entry.foodId || '',
-      componentId: entry.componentId || '',
-      localDateKey: this.dateService.getSelectedDate()
+      foodEntryId: editTarget.foodEntryId,
+      foodId: editTarget.foodId || '',
+      componentId: editTarget.componentId || '',
+      localDateKey: this.dateService.getSelectedDate(),
+      isInlineEdit: true
     });
-  
+
     this.foodSelectionService.startEditFoodSelection(req).subscribe({
       next: (resp) => {
+        this.isLoadingEdit = false;
         if (!resp?.isSuccess) {
           this.showErrorToast('Failed to start edit. Please try again.');
-          this.chatService.clearPendingEdit(); // Clear on error
+          this.clearEditingState();
         } else {
-          // Complete the pending edit with the returned messages
-          this.chatService.completePendingEdit(resp.messages);
+          // Extract the food selection message from the response
+          const foodSelectionMessage = resp.messages?.find(m =>
+            m.role === 'PendingEditFoodSelection' ||
+            m.role === 'PendingFoodSelection'
+          );
+
+          if (foodSelectionMessage) {
+            // Ensure the meal name is set correctly
+            this.editingMessage = {
+              ...foodSelectionMessage,
+              mealName: entryName
+            };
+
+            // Update selection states to show the editing UI
+            this.updateAllSelectionStates();
+          } else {
+            this.showErrorToast('Invalid edit data received.');
+            this.clearEditingState();
+          }
         }
       },
       error: (err) => {
+        this.isLoadingEdit = false;
         this.showErrorToast('An error occurred while starting the edit.');
-        this.chatService.clearPendingEdit(); // Clear on error
+        this.clearEditingState();
       }
     });
+  }
+
+  private clearEditingState() {
+    this.editingFoodKey = null;
+    this.editingMessage = null;
+    this.isLoadingEdit = false;
+
+    // Update selection states to hide the editing UI
+    this.updateAllSelectionStates();
+  }
+
+  // Handle edit confirmation from food-selection component
+  onEditConfirmed(request: any) {
+    if (!request) {
+      this.showErrorToast('Invalid edit data.');
+      return;
+    }
+
+    this.foodSelectionService.submitEditServingSelection(request).subscribe({
+      next: (response) => {
+        if (response.isSuccess) {
+          this.clearEditingState();
+          // Refresh the data to show updated food
+          this.loadDetailedSummary(this.dateService.getSelectedDate(), true);
+          this.toastService.showToast({
+            message: 'Food updated successfully',
+            duration: 2000,
+            color: 'success'
+          });
+        } else {
+          this.showErrorToast('Failed to update food. Please try again.');
+        }
+      },
+      error: (err) => {
+        this.showErrorToast('An error occurred while updating food.');
+      }
+    });
+  }
+
+  // Handle edit cancellation from food-selection component
+  onEditCanceled() {
+    this.clearEditingState();
   }
   
   
@@ -616,6 +721,12 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   entryContainsSelectedFood(entry: any): boolean {
     if (!entry || !this.selectedFood) return false;
     return (entry.foods ?? []).some((f: any) => this.isSameFood(f, this.selectedFood));
+  }
+
+  // Helper method to check if an entry contains the food being edited
+  entryContainsEditingFood(entry: any): boolean {
+    if (!entry || !this.editingFoodKey) return false;
+    return (entry.foods ?? []).some((f: any) => this.isEditingFood(f));
   }
 
   
@@ -737,15 +848,74 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
         || index.toString();
   }
 
+  // Helper method to check if a food is currently being edited
+  isEditingFood(food: any): boolean {
+    if (!this.editingFoodKey) return false;
+
+    // Create consistent key for comparison
+    const foodKey = this.getFoodKey(food);
+    return foodKey === this.editingFoodKey;
+  }
+
+  private getFoodKey(food: any): string {
+    // Create a unique key for the food using the same logic as removal/comparison
+    if (food.componentId) return food.componentId;
+    if (Array.isArray(food.foodItemIds)) return food.foodItemIds.join(',');
+    return food.foodEntryId || food.name || '';
+  }
+
   segmentChanged(event: any) {
     this.viewMode = event.detail.value;
     this.selectedNutrient = null;
     this.selectedFood = null;
+    this.selectedComponent = null;
+
+    // Update all selection states
+    this.updateAllSelectionStates();
   }
 
   get hasFoodEntries(): boolean {
     const entries = this.detailedData?.dailySummary?.foodEntries ?? [];
     return entries.some(e => (e.foods?.length ?? 0) > 0);
+  }
+
+  /**
+   * Convert API data to display models with precomputed values
+   */
+  private convertToDisplayModels(): void {
+    if (!this.detailedData?.dailySummary) return;
+
+    // Convert nutrients to display models
+    this.nutrientsDisplay = (this.detailedData.dailySummary.nutrients || []).map(nutrient => {
+      const display = new NutrientBreakdownDisplay(nutrient);
+      display.computeDisplayValues();
+      return display;
+    });
+
+    // Convert food entries to display models
+    this.foodEntriesDisplay = (this.detailedData.dailySummary.foodEntries || []).map(entry => {
+      const display = new FoodEntryBreakdownDisplay(entry);
+      display.computeDisplayValues();
+      return display;
+    });
+
+    // Update selection states
+    this.updateAllSelectionStates();
+  }
+
+  /**
+   * Update selection states across all display models
+   */
+  private updateAllSelectionStates(): void {
+    // Update nutrient selection states
+    this.nutrientsDisplay.forEach(nutrient => {
+      nutrient.updateSelectionState(this.selectedNutrient ?? undefined);
+    });
+
+    // Update food entry selection states
+    this.foodEntriesDisplay.forEach(entry => {
+      entry.updateSelectionState(this.selectedFood ?? undefined, this.selectedComponent ?? undefined, this.editingFoodKey || undefined);
+    });
   }
 
   // Helper method to check if an item is the last in the list

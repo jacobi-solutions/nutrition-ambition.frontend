@@ -2570,6 +2570,7 @@ export class ComponentBreakdown implements IComponentBreakdown {
     brandName?: string | undefined;
     totalAmount?: number;
     unit?: string | undefined;
+    inferred?: boolean;
     nutrients?: NutrientContribution[] | undefined;
 
     constructor(data?: IComponentBreakdown) {
@@ -2589,6 +2590,7 @@ export class ComponentBreakdown implements IComponentBreakdown {
             this.brandName = _data["brandName"];
             this.totalAmount = _data["totalAmount"];
             this.unit = _data["unit"];
+            this.inferred = _data["inferred"];
             if (Array.isArray(_data["nutrients"])) {
                 this.nutrients = [] as any;
                 for (let item of _data["nutrients"])
@@ -2612,6 +2614,7 @@ export class ComponentBreakdown implements IComponentBreakdown {
         data["brandName"] = this.brandName;
         data["totalAmount"] = this.totalAmount;
         data["unit"] = this.unit;
+        data["inferred"] = this.inferred;
         if (Array.isArray(this.nutrients)) {
             data["nutrients"] = [];
             for (let item of this.nutrients)
@@ -2628,6 +2631,7 @@ export interface IComponentBreakdown {
     brandName?: string | undefined;
     totalAmount?: number;
     unit?: string | undefined;
+    inferred?: boolean;
     nutrients?: NutrientContribution[] | undefined;
 }
 
@@ -3276,6 +3280,7 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
     foodId?: string | undefined;
     componentId?: string | undefined;
     localDateKey?: string | undefined;
+    isInlineEdit?: boolean;
 
     constructor(data?: IEditFoodSelectionRequest) {
         if (data) {
@@ -3292,6 +3297,7 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
             this.foodId = _data["foodId"];
             this.componentId = _data["componentId"];
             this.localDateKey = _data["localDateKey"];
+            this.isInlineEdit = _data["isInlineEdit"];
         }
     }
 
@@ -3308,6 +3314,7 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
         data["foodId"] = this.foodId;
         data["componentId"] = this.componentId;
         data["localDateKey"] = this.localDateKey;
+        data["isInlineEdit"] = this.isInlineEdit;
         return data;
     }
 }
@@ -3317,6 +3324,7 @@ export interface IEditFoodSelectionRequest {
     foodId?: string | undefined;
     componentId?: string | undefined;
     localDateKey?: string | undefined;
+    isInlineEdit?: boolean;
 }
 
 export class ErrorDto implements IErrorDto {
@@ -3782,6 +3790,8 @@ export class FoodBreakdown implements IFoodBreakdown {
     componentId?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
+    quantity?: number;
+    foodUnit?: string | undefined;
     totalAmount?: number;
     unit?: string | undefined;
     nutrients?: NutrientContribution[] | undefined;
@@ -3809,6 +3819,8 @@ export class FoodBreakdown implements IFoodBreakdown {
             this.componentId = _data["componentId"];
             this.name = _data["name"];
             this.brandName = _data["brandName"];
+            this.quantity = _data["quantity"];
+            this.foodUnit = _data["foodUnit"];
             this.totalAmount = _data["totalAmount"];
             this.unit = _data["unit"];
             if (Array.isArray(_data["nutrients"])) {
@@ -3844,6 +3856,8 @@ export class FoodBreakdown implements IFoodBreakdown {
         data["componentId"] = this.componentId;
         data["name"] = this.name;
         data["brandName"] = this.brandName;
+        data["quantity"] = this.quantity;
+        data["foodUnit"] = this.foodUnit;
         data["totalAmount"] = this.totalAmount;
         data["unit"] = this.unit;
         if (Array.isArray(this.nutrients)) {
@@ -3868,6 +3882,8 @@ export interface IFoodBreakdown {
     componentId?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
+    quantity?: number;
+    foodUnit?: string | undefined;
     totalAmount?: number;
     unit?: string | undefined;
     nutrients?: NutrientContribution[] | undefined;
@@ -6005,7 +6021,7 @@ export interface IServingIdentifier {
 }
 
 export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {
-    pendingMessageId!: string;
+    pendingMessageId?: string | undefined;
     foodEntryId?: string | undefined;
     foodId?: string | undefined;
     componentId?: string | undefined;
@@ -6071,7 +6087,7 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
 }
 
 export interface ISubmitEditServingSelectionRequest {
-    pendingMessageId: string;
+    pendingMessageId?: string | undefined;
     foodEntryId?: string | undefined;
     foodId?: string | undefined;
     componentId?: string | undefined;

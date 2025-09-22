@@ -52,10 +52,10 @@
           <ion-card-content>
             <ion-list [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, macronutrientList)">
               <ng-container *ngFor="let nutrient of macronutrientList; trackBy: trackById">
-                <ion-item 
+                <ion-item
                   class="nutrient-entry"
-                  (click)="selectNutrient(nutrient)" 
-                  [class.selected]="selectedNutrient?.nutrientKey === nutrient.nutrientKey">
+                  (click)="selectNutrient(nutrient)"
+                  [class.selected]="nutrient.isSelected">
                   <div class="breakdown-item">
                     <div class="primary-info">
                       <span class="name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
@@ -63,22 +63,22 @@
                     </div>
                   </div>
 
-                  <ion-button 
-                    fill="clear" 
-                    slot="end" 
-                    size="small" 
-                    class="action-btn" 
+                  <ion-button
+                    fill="clear"
+                    slot="end"
+                    size="small"
+                    class="action-btn"
                     (click)="openActionMenu($event, nutrient, 'nutrient')">
                     <ion-icon name="ellipsis-vertical"></ion-icon>
                   </ion-button>
 
-                  <ion-button 
-                    fill="clear" 
-                    slot="end" 
-                    size="small" 
+                  <ion-button
+                    fill="clear"
+                    slot="end"
+                    size="small"
                     class="chevron-btn">
-                    <ion-icon 
-                      [name]="selectedNutrient?.nutrientKey === nutrient.nutrientKey ? 'chevron-down-outline' : 'chevron-forward-outline'">
+                    <ion-icon
+                      [name]="nutrient.isSelected ? 'chevron-down-outline' : 'chevron-forward-outline'">
                     </ion-icon>
                   </ion-button>
                 </ion-item>
@@ -117,10 +117,10 @@
           <ion-card-content>
             <ion-list [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, micronutrientList)">
               <ng-container *ngFor="let nutrient of micronutrientList; trackBy: trackById">
-                <ion-item 
+                <ion-item
                   class="nutrient-entry"
-                  (click)="selectNutrient(nutrient)" 
-                  [class.selected]="selectedNutrient?.nutrientKey === nutrient.nutrientKey">
+                  (click)="selectNutrient(nutrient)"
+                  [class.selected]="nutrient.isSelected">
                   <div class="breakdown-item">
                     <div class="primary-info">
                       <span class="name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
@@ -128,22 +128,22 @@
                     </div>
                   </div>
 
-                  <ion-button 
-                    fill="clear" 
-                    slot="end" 
-                    size="small" 
-                    class="action-btn" 
+                  <ion-button
+                    fill="clear"
+                    slot="end"
+                    size="small"
+                    class="action-btn"
                     (click)="openActionMenu($event, nutrient, 'nutrient')">
                     <ion-icon name="ellipsis-vertical"></ion-icon>
                   </ion-button>
 
-                  <ion-button 
-                    fill="clear" 
-                    slot="end" 
-                    size="small" 
+                  <ion-button
+                    fill="clear"
+                    slot="end"
+                    size="small"
                     class="chevron-btn">
-                    <ion-icon 
-                      [name]="selectedNutrient?.nutrientKey === nutrient.nutrientKey ? 'chevron-down-outline' : 'chevron-forward-outline'">
+                    <ion-icon
+                      [name]="nutrient.isSelected ? 'chevron-down-outline' : 'chevron-forward-outline'">
                     </ion-icon>
                   </ion-button>
                 </ion-item>
@@ -188,88 +188,116 @@
 
         <!-- One card per food entry -->
         <ng-container *ngIf="hasFoodEntries">
-          <ion-card
-            *ngFor="let entry of detailedData?.dailySummary?.foodEntries; trackBy: trackByEntryId"
-            [class.expanded]="selectedFood && entryContainsSelectedFood(entry)"
-          >
-            <!-- Entry Header -->
-            <ion-card-header>
-              <ion-card-title>{{ entry.entryName | titlecase }}</ion-card-title>
-            </ion-card-header>
+          <ng-container *ngFor="let entry of foodEntriesDisplay; trackBy: trackByEntryId">
 
-            <!-- Entry Content -->
-            <ion-card-content>
-              <ion-list>
-                <ng-container *ngFor="let food of entry?.foods; trackBy: trackById">
-                  <!-- Food Row -->
-                  <ion-item 
-                    (click)="selectFood(food)" 
-                    [class.selected]="isSameFood(selectedFood, food)">
+            <!-- Show food-selection component when editing any food in this entry -->
+            <div *ngIf="entry.hasEditingFood" class="editing-entry-container">
+              <!-- Loading state while fetching edit data -->
+              <ion-card *ngIf="isLoadingEdit" class="edit-loading-card">
+                <ion-card-header>
+                  <ion-card-title>{{ entry.entryName | titlecase }}</ion-card-title>
+                </ion-card-header>
+                <ion-card-content>
+                  <div class="edit-loading">
+                    <ion-spinner name="dots" color="medium"></ion-spinner>
+                    <span>Loading edit data</span>
+                  </div>
+                </ion-card-content>
+              </ion-card>
+
+              <!-- Food selection component for editing (replaces entire card) -->
+              <app-food-selection
+                *ngIf="!isLoadingEdit && editingMessage"
+                [message]="editingMessage"
+                (editConfirmed)="onEditConfirmed($event)"
+                (selectionCanceled)="onEditCanceled()">
+              </app-food-selection>
+            </div>
+
+            <!-- Normal Entry Card (when not editing any food in this entry) -->
+            <ion-card
+              *ngIf="!entry.hasEditingFood"
+              [class.expanded]="entry.hasSelectedFood"
+            >
+              <!-- Entry Header -->
+              <ion-card-header>
+                <ion-card-title>{{ entry.entryName | titlecase }}</ion-card-title>
+              </ion-card-header>
+
+              <!-- Entry Content -->
+              <ion-card-content>
+                <ion-list>
+                  <ng-container *ngFor="let food of entry?.foodsDisplay; trackBy: trackById">
+                    <!-- Normal Food Row -->
+                    <ion-item
+                      (click)="selectFood(food)"
+                      [class.selected]="food.isSelected">
                     <div class="breakdown-item">
                       <div class="primary-info">
                         <span class="name">
                           <span *ngIf="food.brandName" class="brand-name">
-                            {{ food.brandName }} - 
-                          </span>{{ getFoodDisplayName(food) | titlecase }}
+                            {{ food.brandName }} -
+                          </span>{{ food.displayName | titlecase }}
                         </span>
                         <span class="amount">
-                          {{ getFoodServingDisplay(food) }}
+                          {{ food.servingDisplay }}
                         </span>
                       </div>
                     </div>
 
                     <!-- Action Buttons -->
-                    <ion-button fill="clear" slot="end" size="small" class="action-btn" 
+                    <ion-button fill="clear" slot="end" size="small" class="action-btn"
                                 (click)="openActionMenu($event, food, 'food')">
                       <ion-icon name="ellipsis-vertical"></ion-icon>
                     </ion-button>
                     <ion-button fill="clear" slot="end" size="small" class="chevron-btn">
-                      <ion-icon 
-                        [name]="isSameFood(selectedFood, food) 
-                                ? 'chevron-down-outline' 
+                      <ion-icon
+                        [name]="food.isSelected
+                                ? 'chevron-down-outline'
                                 : 'chevron-forward-outline'">
                       </ion-icon>
                     </ion-button>
                   </ion-item>
 
-                  <!-- Multi-component food expansion: Show components as individual food-like items -->
-                  <ng-container *ngIf="isSameFood(selectedFood, food) && isMultiComponentFood(food) && food.components?.length">
+                    <!-- Multi-component food expansion: Show components as individual food-like items -->
+                    <ng-container *ngIf="food.isSelected && food.isMultiComponent && food.componentsDisplay?.length">
                     <div class="components-container">
-                      <ng-container *ngFor="let component of food.components; trackBy: trackById">
+                      <ng-container *ngFor="let component of food.componentsDisplay; trackBy: trackById">
                         <!-- Component Row (looks like a single-component food) -->
-                        <ion-item 
+                        <ion-item
                           class="component-item"
-                          (click)="selectComponent(component)" 
-                          [class.selected]="isSameComponent(selectedComponent, component)">
+                          (click)="selectComponent(component)"
+                          [class.selected]="component.isSelected">
                           <div class="breakdown-item">
                             <div class="primary-info">
                               <span class="name">
                                 <span *ngIf="component.brandName" class="brand-name">
-                                  {{ component.brandName }} - 
+                                  {{ component.brandName }} -
                                 </span>{{ component.name | titlecase }}
+                                <span *ngIf="component.inferred" class="inferred-indicator"> (inferred)</span>
                               </span>
                               <span class="amount">
-                                {{ formatQuantity(component.totalAmount) }} {{ component.unit }}
+                                {{ component.formattedAmount }}
                               </span>
                             </div>
                           </div>
 
                           <!-- Action Buttons -->
-                          <ion-button fill="clear" slot="end" size="small" class="action-btn" 
-                                      (click)="openActionMenu($event, component, 'food')">
+                          <ion-button fill="clear" slot="end" size="small" class="action-btn"
+                                      (click)="openActionMenu($event, food, 'food', component)">
                             <ion-icon name="ellipsis-vertical"></ion-icon>
                           </ion-button>
                           <ion-button fill="clear" slot="end" size="small" class="chevron-btn">
-                            <ion-icon 
-                              [name]="isSameComponent(selectedComponent, component) 
-                                      ? 'chevron-down-outline' 
+                            <ion-icon
+                              [name]="component.isSelected
+                                      ? 'chevron-down-outline'
                                       : 'chevron-forward-outline'">
                             </ion-icon>
                           </ion-button>
                         </ion-item>
 
                         <!-- Component Drilldown (standard nutrient breakdown) -->
-                        <ng-container *ngIf="isSameComponent(selectedComponent, component)">
+                        <ng-container *ngIf="component.isSelected">
                           <ion-item lines="none" class="component-drilldown drilldown-row food-drilldown">
                             <div class="drilldown-content">
                               <ng-container *ngIf="selectedComponent?.nutrients?.length">
@@ -312,8 +340,8 @@
                     </div>
                   </ng-container>
 
-                  <!-- Single-component food drilldown (existing behavior) -->
-                  <ng-container *ngIf="isSameFood(selectedFood, food) && isSingleComponentFood(food)">
+                    <!-- Single-component food drilldown (existing behavior) -->
+                    <ng-container *ngIf="food.isSelected && food.isSingleComponent">
                     <ion-item lines="none" class="drilldown-row food-drilldown">
                       <div class="drilldown-content">
                         <ng-container *ngIf="selectedFood?.nutrients?.length">
@@ -359,11 +387,9 @@
               </div> -->
             </ion-card-content>
           </ion-card>
+          </ng-container>
         </ng-container>
       </div>
-
-      
-
 
     </div>
   </div>

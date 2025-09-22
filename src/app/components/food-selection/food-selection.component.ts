@@ -449,7 +449,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   private confirmEditSelections(): void {
     const req = new SubmitEditServingSelectionRequest();
-    req.pendingMessageId = this.message.id || '';
+
+    // Only set pendingMessageId if we have a real message ID (for chat-based edits)
+    // For inline edits, leave pendingMessageId undefined
+    if (this.message.id) {
+      req.pendingMessageId = this.message.id;
+    }
+
     req.foodEntryId = this.message.logMealToolResponse?.foodEntryId ?? '';
     req.foodId = this.message.logMealToolResponse?.foodId ?? '';
     req.componentId = this.message.logMealToolResponse?.componentId ?? '';
@@ -747,9 +753,16 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   async cancelSelection(): Promise<void> {
+    // For edit mode, just cancel immediately without toast
+    if (this.isEditMode) {
+      this.selectionCanceled.emit();
+      return;
+    }
+
+    // For new food logging, keep the existing toast with undo option
     // Start the canceling state to show thinking dots
     this.isCanceling = true;
-    
+
     // Show toast with undo option
     const toast = await this.toastService.showToast({
       message: 'Food logging canceled',
@@ -770,7 +783,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         }
       ]
     });
-    
+
     // Set a timeout to actually cancel after toast duration
     this.cancelTimeout = setTimeout(() => {
       // Toast expired without undo - proceed with cancellation
@@ -778,7 +791,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.cancelTimeout = null;
       // Note: isCanceling will be reset by parent when API response comes back
     }, 3000);
-    
+
     // Listen for toast dismissal (if user dismisses manually)
     toast.onDidDismiss().then((result) => {
       // If toast was dismissed but not by undo button, proceed with cancellation
@@ -972,23 +985,34 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const response = await this.foodSelectionService.updateFoodPhrase(request).toPromise();
 
     if (response?.isSuccess && response.foodOptions && response.foodOptions.length > 0) {
-      // Get the updated food from response  
-      const updatedFood = new FoodDisplay(response.foodOptions[0]);
+      // Get the updated component from the backend response
+      const updatedFood = response.foodOptions[0];
 
-      // Preserve UI state from old components
-      const oldFood = this.computedFoods[foodIndex];
-      oldFood.components?.forEach((oldComp, idx) => {
-        if (updatedFood.components?.[idx]) {
-          // Preserve expanded state and other UI properties
-          updatedFood.components[idx].isExpanded = oldComp.isExpanded;
-          updatedFood.components[idx].showingMoreOptions = oldComp.showingMoreOptions;
+      if (updatedFood.components && updatedFood.components.length > 0) {
+        // Get the old component to preserve UI state
+        const oldFood = this.computedFoods[foodIndex];
+        const oldComponent = oldFood.components?.find(c => c.id === componentId);
+
+        if (oldComponent) {
+          // Update using the established pattern - this handles change detection properly
+          this.onComponentChanged(foodIndex, componentId, {
+            ...updatedFood.components[0],
+            isExpanded: oldComponent.isExpanded,
+            showingMoreOptions: oldComponent.showingMoreOptions,
+            isSearching: false
+          });
+        } else {
+          // Fallback: reset searching state if component not found
+          this.onComponentChanged(foodIndex, componentId, {
+            isSearching: false
+          });
         }
-      });
-
-      // Replace the food
-      this.computedFoods[foodIndex] = updatedFood;
-      this.computedFoods = [...this.computedFoods];
-      this.cdr.detectChanges();
+      } else {
+        // Fallback: reset searching state if no components in response
+        this.onComponentChanged(foodIndex, componentId, {
+          isSearching: false
+        });
+      }
     } else {
       // Reset searching state on error
       this.onComponentChanged(foodIndex, componentId, {

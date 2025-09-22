@@ -91,6 +91,36 @@
   padding: 24px;
 }
 
+// In-place editing styles
+.editing-entry-container {
+  margin: 16px 0;
+
+  .edit-loading-card {
+    .edit-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      gap: 12px;
+
+      ion-spinner {
+        --color: var(--ion-color-primary);
+      }
+
+      span {
+        color: var(--ion-color-medium);
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  // Let food-selection component use its natural styling
+  app-food-selection {
+    display: block;
+    //margin: 0 16px; // Match the card margins for alignment
+  }
+}
+
 // Fix conflicting selected backgrounds - disable Ionic's default selected styling
 ion-item.selected {
   --background: transparent !important;
@@ -244,7 +274,6 @@ ion-content {
   .main-content-wrapper {
     max-width: 420px;
     margin: 0 auto;
-    padding: 0 8px;
   }
 }
 
@@ -381,6 +410,13 @@ ion-card {
   color: var(--ion-color-primary);
   font-weight: 600;
   font-size: 0.9em;
+}
+
+.inferred-indicator {
+  color: var(--ion-color-medium);
+  font-style: italic;
+  font-size: 0.85em;
+  font-weight: 400;
 }
 
 .selected {
@@ -781,5 +817,19 @@ ion-item {
     .amount {
       text-align: left;
     }
+  }
+}
+
+// Edit loading state styling
+.edit-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  padding: 20px;
+
+  span {
+    color: var(--ion-color-medium);
+    font-size: 14px;
   }
 }
