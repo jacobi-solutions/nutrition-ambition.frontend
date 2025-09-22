@@ -471,7 +471,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     }
   
     // You should now have these from the backend in each FoodBreakdown:
-    // entry.foodEntryId, entry.groupId, entry.itemSetId  (we only need foodEntryId to start)
+    // entry.foodEntryId, entry.foodId, entry.componentId  (we only need foodEntryId to start)
     if (!entry.foodEntryId) {
       this.showErrorToast('Sorry, could not locate this food to edit.');
       return;
@@ -488,8 +488,8 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   
     const req = new EditFoodSelectionRequest({
       foodEntryId: entry.foodEntryId,
-      groupId: entry.groupId || '',
-      itemSetId: entry.itemSetId || '',
+      foodId: entry.foodId || '',
+      componentId: entry.componentId || '',
       localDateKey: this.dateService.getSelectedDate()
     });
   
@@ -652,7 +652,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   isSameFood(a: any | null, b: any | null): boolean {
     if (!a || !b) return false;
   
-    if (a.itemSetId && b.itemSetId) return a.itemSetId === b.itemSetId;
+    if (a.componentId && b.componentId) return a.componentId === b.componentId;
   
     const aKey = Array.isArray(a.foodItemIds) ? a.foodItemIds.join(',') : '';
     const bKey = Array.isArray(b.foodItemIds) ? b.foodItemIds.join(',') : '';
@@ -730,10 +730,10 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   }
   
   trackById(index: number, item: any): string {
-    return item?.itemSetId 
-        || (Array.isArray(item?.foodItemIds) ? item.foodItemIds.join(',') : '') 
-        || item?.nutrientKey 
-        || item?.name 
+    return item?.componentId
+        || (Array.isArray(item?.foodItemIds) ? item.foodItemIds.join(',') : '')
+        || item?.nutrientKey
+        || item?.name
         || index.toString();
   }
 

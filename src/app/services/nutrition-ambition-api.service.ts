@@ -3273,8 +3273,8 @@ export interface IDeleteFoodEntryResponse {
 
 export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
     foodEntryId!: string;
-    groupId?: string | undefined;
-    itemSetId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
     localDateKey?: string | undefined;
 
     constructor(data?: IEditFoodSelectionRequest) {
@@ -3289,8 +3289,8 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
     init(_data?: any) {
         if (_data) {
             this.foodEntryId = _data["foodEntryId"];
-            this.groupId = _data["groupId"];
-            this.itemSetId = _data["itemSetId"];
+            this.foodId = _data["foodId"];
+            this.componentId = _data["componentId"];
             this.localDateKey = _data["localDateKey"];
         }
     }
@@ -3305,8 +3305,8 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["foodEntryId"] = this.foodEntryId;
-        data["groupId"] = this.groupId;
-        data["itemSetId"] = this.itemSetId;
+        data["foodId"] = this.foodId;
+        data["componentId"] = this.componentId;
         data["localDateKey"] = this.localDateKey;
         return data;
     }
@@ -3314,16 +3314,9 @@ export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
 
 export interface IEditFoodSelectionRequest {
     foodEntryId: string;
-    groupId?: string | undefined;
-    itemSetId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
     localDateKey?: string | undefined;
-}
-
-export enum EditFoodSelectionType {
-    UpdateServing = "UpdateServing",
-    UpdateParentQuantity = "UpdateParentQuantity",
-    RemoveComponent = "RemoveComponent",
-    RemoveFood = "RemoveFood",
 }
 
 export class ErrorDto implements IErrorDto {
@@ -3785,8 +3778,8 @@ export interface IFood {
 export class FoodBreakdown implements IFoodBreakdown {
     foodItemIds?: string[] | undefined;
     foodEntryId?: string | undefined;
-    groupId?: string | undefined;
-    itemSetId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     totalAmount?: number;
@@ -3812,8 +3805,8 @@ export class FoodBreakdown implements IFoodBreakdown {
                     this.foodItemIds!.push(item);
             }
             this.foodEntryId = _data["foodEntryId"];
-            this.groupId = _data["groupId"];
-            this.itemSetId = _data["itemSetId"];
+            this.foodId = _data["foodId"];
+            this.componentId = _data["componentId"];
             this.name = _data["name"];
             this.brandName = _data["brandName"];
             this.totalAmount = _data["totalAmount"];
@@ -3847,8 +3840,8 @@ export class FoodBreakdown implements IFoodBreakdown {
                 data["foodItemIds"].push(item);
         }
         data["foodEntryId"] = this.foodEntryId;
-        data["groupId"] = this.groupId;
-        data["itemSetId"] = this.itemSetId;
+        data["foodId"] = this.foodId;
+        data["componentId"] = this.componentId;
         data["name"] = this.name;
         data["brandName"] = this.brandName;
         data["totalAmount"] = this.totalAmount;
@@ -3871,8 +3864,8 @@ export class FoodBreakdown implements IFoodBreakdown {
 export interface IFoodBreakdown {
     foodItemIds?: string[] | undefined;
     foodEntryId?: string | undefined;
-    groupId?: string | undefined;
-    itemSetId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
     name?: string | undefined;
     brandName?: string | undefined;
     totalAmount?: number;
@@ -4969,8 +4962,8 @@ export class LogMealToolResponse implements ILogMealToolResponse {
     pendingMessageId?: string | undefined;
     foods?: Food[] | undefined;
     foodEntryId?: string | undefined;
-    groupId?: string | undefined;
-    itemSetId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
 
     constructor(data?: ILogMealToolResponse) {
         if (data) {
@@ -4991,8 +4984,8 @@ export class LogMealToolResponse implements ILogMealToolResponse {
                     this.foods!.push(Food.fromJS(item));
             }
             this.foodEntryId = _data["foodEntryId"];
-            this.groupId = _data["groupId"];
-            this.itemSetId = _data["itemSetId"];
+            this.foodId = _data["foodId"];
+            this.componentId = _data["componentId"];
         }
     }
 
@@ -5013,8 +5006,8 @@ export class LogMealToolResponse implements ILogMealToolResponse {
                 data["foods"].push(item.toJSON());
         }
         data["foodEntryId"] = this.foodEntryId;
-        data["groupId"] = this.groupId;
-        data["itemSetId"] = this.itemSetId;
+        data["foodId"] = this.foodId;
+        data["componentId"] = this.componentId;
         return data;
     }
 }
@@ -5024,8 +5017,8 @@ export interface ILogMealToolResponse {
     pendingMessageId?: string | undefined;
     foods?: Food[] | undefined;
     foodEntryId?: string | undefined;
-    groupId?: string | undefined;
-    itemSetId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
 }
 
 export enum MessageRoleTypes {
@@ -6014,10 +6007,11 @@ export interface IServingIdentifier {
 export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {
     pendingMessageId!: string;
     foodEntryId?: string | undefined;
-    groupId?: string | undefined;
-    itemSetId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
     localDateKey?: string | undefined;
-    operations?: UserEditOperation[] | undefined;
+    selections?: UserSelectedServing[] | undefined;
+    foodQuantities?: UserSelectedFoodQuantity[] | undefined;
 
     constructor(data?: ISubmitEditServingSelectionRequest) {
         if (data) {
@@ -6032,13 +6026,18 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
         if (_data) {
             this.pendingMessageId = _data["pendingMessageId"];
             this.foodEntryId = _data["foodEntryId"];
-            this.groupId = _data["groupId"];
-            this.itemSetId = _data["itemSetId"];
+            this.foodId = _data["foodId"];
+            this.componentId = _data["componentId"];
             this.localDateKey = _data["localDateKey"];
-            if (Array.isArray(_data["operations"])) {
-                this.operations = [] as any;
-                for (let item of _data["operations"])
-                    this.operations!.push(UserEditOperation.fromJS(item));
+            if (Array.isArray(_data["selections"])) {
+                this.selections = [] as any;
+                for (let item of _data["selections"])
+                    this.selections!.push(UserSelectedServing.fromJS(item));
+            }
+            if (Array.isArray(_data["foodQuantities"])) {
+                this.foodQuantities = [] as any;
+                for (let item of _data["foodQuantities"])
+                    this.foodQuantities!.push(UserSelectedFoodQuantity.fromJS(item));
             }
         }
     }
@@ -6054,13 +6053,18 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
         data = typeof data === 'object' ? data : {};
         data["pendingMessageId"] = this.pendingMessageId;
         data["foodEntryId"] = this.foodEntryId;
-        data["groupId"] = this.groupId;
-        data["itemSetId"] = this.itemSetId;
+        data["foodId"] = this.foodId;
+        data["componentId"] = this.componentId;
         data["localDateKey"] = this.localDateKey;
-        if (Array.isArray(this.operations)) {
-            data["operations"] = [];
-            for (let item of this.operations)
-                data["operations"].push(item.toJSON());
+        if (Array.isArray(this.selections)) {
+            data["selections"] = [];
+            for (let item of this.selections)
+                data["selections"].push(item.toJSON());
+        }
+        if (Array.isArray(this.foodQuantities)) {
+            data["foodQuantities"] = [];
+            for (let item of this.foodQuantities)
+                data["foodQuantities"].push(item.toJSON());
         }
         return data;
     }
@@ -6069,10 +6073,11 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
 export interface ISubmitEditServingSelectionRequest {
     pendingMessageId: string;
     foodEntryId?: string | undefined;
-    groupId?: string | undefined;
-    itemSetId?: string | undefined;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
     localDateKey?: string | undefined;
-    operations?: UserEditOperation[] | undefined;
+    selections?: UserSelectedServing[] | undefined;
+    foodQuantities?: UserSelectedFoodQuantity[] | undefined;
 }
 
 export class SubmitServingSelectionRequest implements ISubmitServingSelectionRequest {
@@ -6204,74 +6209,6 @@ export enum UnitKind {
     Volume = "Volume",
     Count = "Count",
     Unknown = "Unknown",
-}
-
-export class UserEditOperation implements IUserEditOperation {
-    action!: EditFoodSelectionType;
-    groupId?: string | undefined;
-    componentId?: string | undefined;
-    providerFoodId?: string | undefined;
-    servingId?: ServingIdentifier;
-    editedQuantity?: number | undefined;
-    scaledQuantity?: number | undefined;
-    newParentQuantity?: number | undefined;
-    newParentUnit?: string | undefined;
-
-    constructor(data?: IUserEditOperation) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.action = _data["action"];
-            this.groupId = _data["groupId"];
-            this.componentId = _data["componentId"];
-            this.providerFoodId = _data["providerFoodId"];
-            this.servingId = _data["servingId"] ? ServingIdentifier.fromJS(_data["servingId"]) : <any>undefined;
-            this.editedQuantity = _data["editedQuantity"];
-            this.scaledQuantity = _data["scaledQuantity"];
-            this.newParentQuantity = _data["newParentQuantity"];
-            this.newParentUnit = _data["newParentUnit"];
-        }
-    }
-
-    static fromJS(data: any): UserEditOperation {
-        data = typeof data === 'object' ? data : {};
-        let result = new UserEditOperation();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["action"] = this.action;
-        data["groupId"] = this.groupId;
-        data["componentId"] = this.componentId;
-        data["providerFoodId"] = this.providerFoodId;
-        data["servingId"] = this.servingId ? this.servingId.toJSON() : <any>undefined;
-        data["editedQuantity"] = this.editedQuantity;
-        data["scaledQuantity"] = this.scaledQuantity;
-        data["newParentQuantity"] = this.newParentQuantity;
-        data["newParentUnit"] = this.newParentUnit;
-        return data;
-    }
-}
-
-export interface IUserEditOperation {
-    action: EditFoodSelectionType;
-    groupId?: string | undefined;
-    componentId?: string | undefined;
-    providerFoodId?: string | undefined;
-    servingId?: ServingIdentifier;
-    editedQuantity?: number | undefined;
-    scaledQuantity?: number | undefined;
-    newParentQuantity?: number | undefined;
-    newParentUnit?: string | undefined;
 }
 
 export class UserSelectedFoodQuantity implements IUserSelectedFoodQuantity {

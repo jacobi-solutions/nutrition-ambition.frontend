@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, UserEditOperation, EditFoodSelectionType, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier, UserSelectedFoodQuantity } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier, UserSelectedFoodQuantity } from 'src/app/services/nutrition-ambition-api.service';
 import { Subject } from 'rxjs';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
@@ -451,11 +451,51 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const req = new SubmitEditServingSelectionRequest();
     req.pendingMessageId = this.message.id || '';
     req.foodEntryId = this.message.logMealToolResponse?.foodEntryId ?? '';
-    req.groupId = this.message.logMealToolResponse?.groupId ?? '';
-    req.itemSetId = this.message.logMealToolResponse?.itemSetId ?? '';
+    req.foodId = this.message.logMealToolResponse?.foodId ?? '';
+    req.componentId = this.message.logMealToolResponse?.componentId ?? '';
     req.localDateKey = this.dateService.getSelectedDate() || undefined;
-    
-  
+
+    // Build selections array just like confirmRegularSelections
+    req.selections = [];
+    req.foodQuantities = [];
+
+    // Iterate through all foods and components directly
+    if (this.computedFoods) {
+      for (const food of this.computedFoods) {
+        // Track food quantity for multi-component foods
+        if (food.components && food.components.length > 1) {
+          req.foodQuantities.push(new UserSelectedFoodQuantity({
+            foodId: food.id,
+            quantity: food.quantity || 1
+          }));
+        }
+
+        if (food.components) {
+          for (const component of food.components) {
+            const selectedFood = this.getSelectedFood(component?.id ?? '');
+            const servingId = this.getOriginalServingId(component?.id ?? '');
+            const selectedServing = this.getSelectedServing(component?.id ?? '');
+
+            if ((selectedFood as any)?.providerFoodId && servingId && selectedServing) {
+              // Use effectiveQuantity for both values - it's what the user sees/edited
+              const effectiveQuantity = (selectedServing as any).effectiveQuantity || 1;
+
+              const servingIdentifier = selectedServing.servingId;
+              req.selections.push(new UserSelectedServing({
+                componentId: component.id,
+                originalText: (((component as any)?.key) ?? (selectedFood as any)?.originalText) || '',
+                provider: (selectedFood as any)?.provider ?? 'nutritionix',
+                providerFoodId: (selectedFood as any)?.providerFoodId,
+                servingId: servingIdentifier,
+                editedQuantity: effectiveQuantity,
+                scaledQuantity: effectiveQuantity
+              }));
+            }
+          }
+        }
+      }
+    }
+
     this.isSubmitting = true;
     this.editConfirmed.emit(req);
   }
