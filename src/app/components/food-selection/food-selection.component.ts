@@ -992,11 +992,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const oldFood = this.computedFoods[foodIndex];
       oldFood.components?.forEach((oldComp, idx) => {
         if (updatedFood.components?.[idx]) {
-          // Preserve expanded state and other UI properties
+          // Preserve all UI state properties
           updatedFood.components[idx].isExpanded = oldComp.isExpanded;
           updatedFood.components[idx].showingMoreOptions = oldComp.showingMoreOptions;
+          updatedFood.components[idx].moreOptions = oldComp.moreOptions;
+          updatedFood.components[idx].isEditing = oldComp.isEditing;
+          updatedFood.components[idx].editingValue = oldComp.editingValue;
+          updatedFood.components[idx].loadingMoreOptions = oldComp.loadingMoreOptions;
+          updatedFood.components[idx].loadingInstantOptions = oldComp.loadingInstantOptions;
         }
       });
+
+      // Preserve food-level UI state
+      updatedFood.isEditingExpanded = oldFood.isEditingExpanded;
+      updatedFood.editingQuantity = oldFood.editingQuantity;
 
       // Replace the food
       this.computedFoods[foodIndex] = updatedFood;
