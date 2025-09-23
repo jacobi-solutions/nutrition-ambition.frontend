@@ -164,7 +164,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
         const unitText = displayQuantity === 1 && this.selectedServing.singularUnit
           ? this.selectedServing.singularUnit
           : (this.selectedServing.pluralUnit || this.selectedServing.baseUnit || '');
-        this.servingLabel = `${finalQuantity} ${unitText}`;
+        this.servingLabel = `${displayQuantity} ${unitText}`;
       }
     } else {
       this.servingLabel = '';

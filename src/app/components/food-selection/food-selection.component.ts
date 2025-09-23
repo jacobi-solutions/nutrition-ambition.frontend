@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier, UserSelectedFoodQuantity } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood } from 'src/app/services/nutrition-ambition-api.service';
 import { Subject } from 'rxjs';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
@@ -420,7 +420,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               const servingIdentifier = selectedServing.servingId;
               req.selections.push(new UserSelectedServing({
                 componentId: component.id,
-                originalText: (((component as any)?.key) ?? (selectedFood as any)?.originalText) || '',
+                originalText: this.getComponentDisplayName(component.id || '') || (selectedFood as any)?.originalText || '',
                 provider: (selectedFood as any)?.provider ?? 'nutritionix',
                 providerFoodId: (selectedFood as any)?.providerFoodId,
                 servingId: servingIdentifier,
@@ -489,7 +489,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               const servingIdentifier = selectedServing.servingId;
               req.selections.push(new UserSelectedServing({
                 componentId: component.id,
-                originalText: (((component as any)?.key) ?? (selectedFood as any)?.originalText) || '',
+                originalText: this.getComponentDisplayName(component.id || '') || (selectedFood as any)?.originalText || '',
                 provider: (selectedFood as any)?.provider ?? 'nutritionix',
                 providerFoodId: (selectedFood as any)?.providerFoodId,
                 servingId: servingIdentifier,
@@ -501,6 +501,58 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         }
       }
     }
+
+    // Send complete Foods data to ensure all edits (including new component matches) are preserved
+    req.foods = this.computedFoods?.map(foodDisplay => {
+      return new Food({
+        id: foodDisplay.id,
+        name: foodDisplay.name,
+        originalPhrase: foodDisplay.originalPhrase,
+        unit: foodDisplay.unit,
+        quantity: foodDisplay.quantity,
+        description: foodDisplay.description,
+        brand: foodDisplay.brand,
+        components: foodDisplay.components?.map(compDisplay => {
+          return new ComponentOfFood({
+            id: compDisplay.id,
+            culinaryRole: compDisplay.culinaryRole,
+            selectedComponentId: compDisplay.selectedComponentId,
+            matches: compDisplay.matches?.map(matchDisplay => {
+              return new ComponentMatch({
+                providerFoodId: matchDisplay.providerFoodId,
+                displayName: matchDisplay.displayName,
+                brandName: matchDisplay.brandName,
+                originalText: matchDisplay.originalText,
+                searchText: matchDisplay.searchText,
+                description: matchDisplay.description,
+                cookingMethod: matchDisplay.cookingMethod,
+                size: matchDisplay.size,
+                rank: matchDisplay.rank,
+                provider: matchDisplay.provider,
+                inferred: matchDisplay.inferred,
+                selectedServingId: matchDisplay.selectedServingId,
+                servings: matchDisplay.servings?.map(servingDisplay => {
+                  return new ComponentServing({
+                    id: servingDisplay.id,
+                    servingId: servingDisplay.servingId,
+                    description: servingDisplay.description,
+                    measurementDescription: servingDisplay.measurementDescription,
+                    metricServingAmount: servingDisplay.metricServingAmount,
+                    metricServingUnit: servingDisplay.metricServingUnit,
+                    baseQuantity: servingDisplay.baseQuantity,
+                    baseUnit: servingDisplay.baseUnit,
+                    singularUnit: servingDisplay.singularUnit,
+                    pluralUnit: servingDisplay.pluralUnit,
+                    aiRecommendedScale: servingDisplay.aiRecommendedScale,
+                    nutrients: servingDisplay.nutrients
+                  });
+                })
+              });
+            })
+          });
+        })
+      });
+    }) || [];
 
     this.isSubmitting = true;
     this.editConfirmed.emit(req);
@@ -522,26 +574,37 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   getSearchTextOnly(componentId: string): string {
     const food = this.getSelectedFood(componentId);
-    
+
     // First try to get the original text from the selected food match
     if (food && (food as any).originalText) {
       return (food as any).originalText;
     }
-    
+
     // Then try searchText for inferred foods
     if (food && (food as any).inferred && (food as any).searchText) {
       return (food as any).searchText;
     }
-    
+
     // Look for OriginalPhrase at the food level (from backend Food model)
     const foodData = this.getFoodForComponent(componentId);
     if (foodData && (foodData as any).originalPhrase) {
       return (foodData as any).originalPhrase;
     }
-    
-    // Fallback to component key
-    const component = this.findComponentById(componentId);
-    return component?.key || '';
+
+    // Fallback to selected food display name
+    if (food && food.displayName) {
+      return food.displayName;
+    }
+
+    return '';
+  }
+
+  /**
+   * Helper method to get display name for a component from its selected match
+   */
+  private getComponentDisplayName(componentId: string): string {
+    const selectedFood = this.getSelectedFood(componentId);
+    return selectedFood?.displayName || selectedFood?.originalText || '';
   }
 
 
@@ -593,7 +656,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       return new FoodDisplay({
         ...food,
         components: transformedComponents,
-        isEditingExpanded: false,
+        isEditingExpanded: this.isEditMode, // Auto-expand if in edit mode
       });
     });
 
@@ -638,6 +701,41 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
     }
     return -1;
+  }
+
+  private getComponentDisplayQuantity(component: ComponentDisplay): number | undefined {
+    // Get the selected serving for this component
+    const selectedServingId = this.foodSelectionService.getSelectedServing(component.id || '');
+    if (selectedServingId) {
+      const servingQuantity = this.foodSelectionService.getServingQuantity(component.id || '', selectedServingId);
+      const selectedFood = this.getSelectedFood(component.id || '');
+      const selectedServing = selectedFood?.servings?.find(s => s.id === selectedServingId);
+      if (selectedServing && selectedServing.baseQuantity) {
+        return servingQuantity * selectedServing.baseQuantity;
+      }
+    }
+    return undefined;
+  }
+
+  private getComponentDisplayUnit(component: ComponentDisplay): string | undefined {
+    // Get the selected serving for this component
+    const selectedServingId = this.foodSelectionService.getSelectedServing(component.id || '');
+    if (selectedServingId) {
+      const selectedFood = this.getSelectedFood(component.id || '');
+      const selectedServing = selectedFood?.servings?.find(s => s.id === selectedServingId);
+      if (selectedServing) {
+        const quantity = this.getComponentDisplayQuantity(component) || 1;
+        // Use plural unit for quantities != 1, singular for quantity = 1
+        if (quantity === 1 && selectedServing.singularUnit) {
+          return selectedServing.singularUnit;
+        } else if (selectedServing.pluralUnit) {
+          return selectedServing.pluralUnit;
+        } else {
+          return selectedServing.baseUnit;
+        }
+      }
+    }
+    return undefined;
   }
 
   private nf = new Intl.NumberFormat(undefined, {
@@ -811,7 +909,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     const missingInfo = this.getMissingInformation(food);
     const component = this.findComponentById(componentId);
-    const originalText = component?.key || '';
+    const originalText = this.getComponentDisplayName(componentId);
     const suggestionMessage = this.generateSuggestionMessage(originalText, missingInfo);
     
     // Show suggestion as a positioned tooltip above the phrase input
@@ -982,34 +1080,72 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       localDateKey: this.dateService.getSelectedDate()
     });
 
+    // Add component context for multi-component foods
+    if (food.components && food.components.length > 1) {
+      request.parentFoodName = food.name;
+      request.parentFoodUnit = food.unit;
+
+      // Create existing components list for context
+      request.existingComponents = food.components.map(c => {
+        const quantity = this.getComponentDisplayQuantity(c);
+        const unit = this.getComponentDisplayUnit(c);
+
+        return new ComponentDescription({
+          id: c.id,
+          name: this.getComponentDisplayName(c.id || ''),
+          quantity: quantity !== undefined ? quantity : undefined,
+          unit: unit || undefined,
+          culinaryRole: c.culinaryRole
+        });
+      }).filter(comp => comp.name); // Only include components with valid names
+    }
+
     const response = await this.foodSelectionService.updateFoodPhrase(request).toPromise();
 
     if (response?.isSuccess && response.foodOptions && response.foodOptions.length > 0) {
-      // Backend returns the complete updated food for both chat and inline editing
-      const updatedFood = new FoodDisplay(response.foodOptions[0]);
-
-      // Preserve UI state from old components
+      // Capture UI state before rebuilding
       const oldFood = this.computedFoods[foodIndex];
-      oldFood.components?.forEach((oldComp, idx) => {
-        if (updatedFood.components?.[idx]) {
-          // Preserve all UI state properties
-          updatedFood.components[idx].isExpanded = oldComp.isExpanded;
-          updatedFood.components[idx].showingMoreOptions = oldComp.showingMoreOptions;
-          updatedFood.components[idx].moreOptions = oldComp.moreOptions;
-          updatedFood.components[idx].isEditing = oldComp.isEditing;
-          updatedFood.components[idx].editingValue = oldComp.editingValue;
-          updatedFood.components[idx].loadingMoreOptions = oldComp.loadingMoreOptions;
-          updatedFood.components[idx].loadingInstantOptions = oldComp.loadingInstantOptions;
+      const uiStateCapture = oldFood.components?.map(comp => ({
+        id: comp.id,
+        isExpanded: comp.isExpanded,
+        showingMoreOptions: comp.showingMoreOptions,
+        moreOptions: comp.moreOptions,
+        isEditing: comp.isEditing,
+        editingValue: comp.editingValue,
+        loadingMoreOptions: comp.loadingMoreOptions,
+        loadingInstantOptions: comp.loadingInstantOptions
+      })) || [];
+
+      // Update the raw message data with the new food
+      const rawFoods = this.message?.logMealToolResponse?.foods || [];
+      rawFoods[foodIndex] = response.foodOptions[0];
+
+      // Rebuild all foods using the same pipeline as initial load (ensures proper effectiveQuantity calculation)
+      this.computeAllFoods();
+
+      // Restore UI state
+      uiStateCapture.forEach(savedState => {
+        if (savedState.id) {
+          this.onComponentChanged(foodIndex, savedState.id, {
+            isExpanded: savedState.isExpanded,
+            showingMoreOptions: savedState.showingMoreOptions,
+            moreOptions: savedState.moreOptions,
+            isEditing: savedState.isEditing,
+            editingValue: savedState.editingValue,
+            loadingMoreOptions: savedState.loadingMoreOptions,
+            loadingInstantOptions: savedState.loadingInstantOptions
+          });
         }
       });
 
-      // Preserve food-level UI state
-      updatedFood.isEditingExpanded = oldFood.isEditingExpanded;
-      updatedFood.editingQuantity = oldFood.editingQuantity;
+      // Restore food-level UI state
+      this.onFoodChanged(foodIndex, new FoodDisplay({
+        ...this.computedFoods[foodIndex],
+        isEditingExpanded: oldFood.isEditingExpanded,
+        editingQuantity: oldFood.editingQuantity
+      }));
 
-      // Replace the food
-      this.computedFoods[foodIndex] = updatedFood;
-      this.computedFoods = [...this.computedFoods];
+      // Trigger change detection
       this.cdr.detectChanges();
     } else {
       // Reset searching state on error

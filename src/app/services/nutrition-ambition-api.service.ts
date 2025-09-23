@@ -2635,6 +2635,58 @@ export interface IComponentBreakdown {
     nutrients?: NutrientContribution[] | undefined;
 }
 
+export class ComponentDescription implements IComponentDescription {
+    id?: string | undefined;
+    name?: string | undefined;
+    quantity?: number | undefined;
+    unit?: string | undefined;
+    culinaryRole?: string | undefined;
+
+    constructor(data?: IComponentDescription) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.quantity = _data["quantity"];
+            this.unit = _data["unit"];
+            this.culinaryRole = _data["culinaryRole"];
+        }
+    }
+
+    static fromJS(data: any): ComponentDescription {
+        data = typeof data === 'object' ? data : {};
+        let result = new ComponentDescription();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["quantity"] = this.quantity;
+        data["unit"] = this.unit;
+        data["culinaryRole"] = this.culinaryRole;
+        return data;
+    }
+}
+
+export interface IComponentDescription {
+    id?: string | undefined;
+    name?: string | undefined;
+    quantity?: number | undefined;
+    unit?: string | undefined;
+    culinaryRole?: string | undefined;
+}
+
 export class ComponentMatch implements IComponentMatch {
     id?: string | undefined;
     provider?: string | undefined;
@@ -5707,6 +5759,9 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
     messageId?: string | undefined;
     componentId?: string | undefined;
     foodEntryId?: string | undefined;
+    parentFoodName?: string | undefined;
+    parentFoodUnit?: string | undefined;
+    existingComponents?: ComponentDescription[] | undefined;
 
     constructor(data?: ISearchFoodPhraseRequest) {
         if (data) {
@@ -5725,6 +5780,13 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
             this.messageId = _data["messageId"];
             this.componentId = _data["componentId"];
             this.foodEntryId = _data["foodEntryId"];
+            this.parentFoodName = _data["parentFoodName"];
+            this.parentFoodUnit = _data["parentFoodUnit"];
+            if (Array.isArray(_data["existingComponents"])) {
+                this.existingComponents = [] as any;
+                for (let item of _data["existingComponents"])
+                    this.existingComponents!.push(ComponentDescription.fromJS(item));
+            }
         }
     }
 
@@ -5743,6 +5805,13 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
         data["messageId"] = this.messageId;
         data["componentId"] = this.componentId;
         data["foodEntryId"] = this.foodEntryId;
+        data["parentFoodName"] = this.parentFoodName;
+        data["parentFoodUnit"] = this.parentFoodUnit;
+        if (Array.isArray(this.existingComponents)) {
+            data["existingComponents"] = [];
+            for (let item of this.existingComponents)
+                data["existingComponents"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -5754,6 +5823,9 @@ export interface ISearchFoodPhraseRequest {
     messageId?: string | undefined;
     componentId?: string | undefined;
     foodEntryId?: string | undefined;
+    parentFoodName?: string | undefined;
+    parentFoodUnit?: string | undefined;
+    existingComponents?: ComponentDescription[] | undefined;
 }
 
 export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
@@ -6032,6 +6104,7 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
     localDateKey?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
     foodQuantities?: UserSelectedFoodQuantity[] | undefined;
+    foods?: Food[] | undefined;
 
     constructor(data?: ISubmitEditServingSelectionRequest) {
         if (data) {
@@ -6058,6 +6131,11 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
                 this.foodQuantities = [] as any;
                 for (let item of _data["foodQuantities"])
                     this.foodQuantities!.push(UserSelectedFoodQuantity.fromJS(item));
+            }
+            if (Array.isArray(_data["foods"])) {
+                this.foods = [] as any;
+                for (let item of _data["foods"])
+                    this.foods!.push(Food.fromJS(item));
             }
         }
     }
@@ -6086,6 +6164,11 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
             for (let item of this.foodQuantities)
                 data["foodQuantities"].push(item.toJSON());
         }
+        if (Array.isArray(this.foods)) {
+            data["foods"] = [];
+            for (let item of this.foods)
+                data["foods"].push(item.toJSON());
+        }
         return data;
     }
 }
@@ -6098,6 +6181,7 @@ export interface ISubmitEditServingSelectionRequest {
     localDateKey?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
     foodQuantities?: UserSelectedFoodQuantity[] | undefined;
+    foods?: Food[] | undefined;
 }
 
 export class SubmitServingSelectionRequest implements ISubmitServingSelectionRequest {
