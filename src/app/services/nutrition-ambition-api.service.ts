@@ -5706,6 +5706,7 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
     originalPhrase?: string | undefined;
     messageId?: string | undefined;
     componentId?: string | undefined;
+    foodEntryId?: string | undefined;
 
     constructor(data?: ISearchFoodPhraseRequest) {
         if (data) {
@@ -5723,6 +5724,7 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
             this.originalPhrase = _data["originalPhrase"];
             this.messageId = _data["messageId"];
             this.componentId = _data["componentId"];
+            this.foodEntryId = _data["foodEntryId"];
         }
     }
 
@@ -5740,6 +5742,7 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
         data["originalPhrase"] = this.originalPhrase;
         data["messageId"] = this.messageId;
         data["componentId"] = this.componentId;
+        data["foodEntryId"] = this.foodEntryId;
         return data;
     }
 }
@@ -5750,6 +5753,7 @@ export interface ISearchFoodPhraseRequest {
     originalPhrase?: string | undefined;
     messageId?: string | undefined;
     componentId?: string | undefined;
+    foodEntryId?: string | undefined;
 }
 
 export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {

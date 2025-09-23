@@ -972,7 +972,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     var food = this.computedFoods[foodIndex];
     var componentToUpdate = food.components?.find(c => c.id === componentId);
-    
 
     const request = new SearchFoodPhraseRequest({
       originalPhrase: 'UPDATE',
@@ -985,33 +984,48 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const response = await this.foodSelectionService.updateFoodPhrase(request).toPromise();
 
     if (response?.isSuccess && response.foodOptions && response.foodOptions.length > 0) {
-      // Get the updated component from the backend response
-      const updatedFood = response.foodOptions[0];
+      const responseFood = response.foodOptions[0];
 
-      if (updatedFood.components && updatedFood.components.length > 0) {
-        // Get the old component to preserve UI state
+      // Check if this is inline editing (no messageId) or single component response
+      const isInlineEdit = !this.message.id ||
+                          (responseFood.components && responseFood.components.length === 1 &&
+                           food.components && food.components.length > 1);
+
+      if (isInlineEdit && responseFood.components && responseFood.components.length > 0) {
+        // Inline editing: Only update the specific component's matches
+        const updatedComponent = responseFood.components[0];
         const oldFood = this.computedFoods[foodIndex];
-        const oldComponent = oldFood.components?.find(c => c.id === componentId);
 
-        if (oldComponent) {
-          // Update using the established pattern - this handles change detection properly
+        // Find the component to update and preserve its UI state
+        const componentToUpdate = oldFood.components?.find(c => c.id === componentId);
+        if (componentToUpdate) {
+          // Update just the component with new matches while preserving UI state
           this.onComponentChanged(foodIndex, componentId, {
-            ...updatedFood.components[0],
-            isExpanded: oldComponent.isExpanded,
-            showingMoreOptions: oldComponent.showingMoreOptions,
-            isSearching: false
-          });
-        } else {
-          // Fallback: reset searching state if component not found
-          this.onComponentChanged(foodIndex, componentId, {
-            isSearching: false
+            ...updatedComponent,
+            isExpanded: componentToUpdate.isExpanded,
+            showingMoreOptions: componentToUpdate.showingMoreOptions,
+            isSearching: false,
+            isEditing: false
           });
         }
       } else {
-        // Fallback: reset searching state if no components in response
-        this.onComponentChanged(foodIndex, componentId, {
-          isSearching: false
+        // Chat editing: Replace the entire food (original behavior)
+        const updatedFood = new FoodDisplay(responseFood);
+
+        // Preserve UI state from old components
+        const oldFood = this.computedFoods[foodIndex];
+        oldFood.components?.forEach((oldComp, idx) => {
+          if (updatedFood.components?.[idx]) {
+            // Preserve expanded state and other UI properties
+            updatedFood.components[idx].isExpanded = oldComp.isExpanded;
+            updatedFood.components[idx].showingMoreOptions = oldComp.showingMoreOptions;
+          }
         });
+
+        // Replace the food
+        this.computedFoods[foodIndex] = updatedFood;
+        this.computedFoods = [...this.computedFoods];
+        this.cdr.detectChanges();
       }
     } else {
       // Reset searching state on error
