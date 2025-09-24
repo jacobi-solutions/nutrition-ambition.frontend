@@ -57,7 +57,8 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
       // For multi-component foods, show the food-level quantity and unit
       const quantity = this.food.quantity || 1;
       const unit = this.food.unit || 'servings';
-      this.servingLabel = `${quantity} ${unit}`;
+      const componentCount = this.food.components.length;
+      this.servingLabel = `${quantity} ${unit} - ${componentCount} component${componentCount !== 1 ? 's' : ''}`;
     } else {
       this.servingLabel = '';
     }
