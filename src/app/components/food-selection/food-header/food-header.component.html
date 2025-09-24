@@ -19,7 +19,7 @@
                 [ariaLabel]="'Quantity for ' + food?.name"
                 (valueChange)="onQuantityChange($event)">
               </app-serving-quantity-input>
-              <span class="unit-label">{{ food?.unit || 'servings' }}</span>
+              <span class="unit-label">{{ quantityUnitLabel }}</span>
             </ng-container>
             <!-- Show normal label when collapsed or read-only -->
             <ng-container *ngIf="computedShouldShowNormalLabel">

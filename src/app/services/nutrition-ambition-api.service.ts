@@ -2639,7 +2639,8 @@ export class ComponentDescription implements IComponentDescription {
     id?: string | undefined;
     name?: string | undefined;
     quantity?: number | undefined;
-    unit?: string | undefined;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
     culinaryRole?: string | undefined;
 
     constructor(data?: IComponentDescription) {
@@ -2656,7 +2657,8 @@ export class ComponentDescription implements IComponentDescription {
             this.id = _data["id"];
             this.name = _data["name"];
             this.quantity = _data["quantity"];
-            this.unit = _data["unit"];
+            this.singularUnit = _data["singularUnit"];
+            this.pluralUnit = _data["pluralUnit"];
             this.culinaryRole = _data["culinaryRole"];
         }
     }
@@ -2673,7 +2675,8 @@ export class ComponentDescription implements IComponentDescription {
         data["id"] = this.id;
         data["name"] = this.name;
         data["quantity"] = this.quantity;
-        data["unit"] = this.unit;
+        data["singularUnit"] = this.singularUnit;
+        data["pluralUnit"] = this.pluralUnit;
         data["culinaryRole"] = this.culinaryRole;
         return data;
     }
@@ -2683,7 +2686,8 @@ export interface IComponentDescription {
     id?: string | undefined;
     name?: string | undefined;
     quantity?: number | undefined;
-    unit?: string | undefined;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
     culinaryRole?: string | undefined;
 }
 
@@ -3767,7 +3771,8 @@ export class Food implements IFood {
     id?: string | undefined;
     name?: string | undefined;
     quantity?: number;
-    unit?: string | undefined;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
     description?: string | undefined;
     brand?: string | undefined;
     originalPhrase?: string | undefined;
@@ -3787,7 +3792,8 @@ export class Food implements IFood {
             this.id = _data["id"];
             this.name = _data["name"];
             this.quantity = _data["quantity"];
-            this.unit = _data["unit"];
+            this.singularUnit = _data["singularUnit"];
+            this.pluralUnit = _data["pluralUnit"];
             this.description = _data["description"];
             this.brand = _data["brand"];
             this.originalPhrase = _data["originalPhrase"];
@@ -3811,7 +3817,8 @@ export class Food implements IFood {
         data["id"] = this.id;
         data["name"] = this.name;
         data["quantity"] = this.quantity;
-        data["unit"] = this.unit;
+        data["singularUnit"] = this.singularUnit;
+        data["pluralUnit"] = this.pluralUnit;
         data["description"] = this.description;
         data["brand"] = this.brand;
         data["originalPhrase"] = this.originalPhrase;
@@ -3828,7 +3835,8 @@ export interface IFood {
     id?: string | undefined;
     name?: string | undefined;
     quantity?: number;
-    unit?: string | undefined;
+    singularUnit?: string | undefined;
+    pluralUnit?: string | undefined;
     description?: string | undefined;
     brand?: string | undefined;
     originalPhrase?: string | undefined;
@@ -5369,7 +5377,7 @@ export class ParsedComponent implements IParsedComponent {
     inferredReason?: string | undefined;
     resolutionKey?: string | undefined;
     roleHint?: string | undefined;
-    hasAmount?: boolean;
+    hasUserDefinedQuantity?: boolean;
 
     constructor(data?: IParsedComponent) {
         if (data) {
@@ -5396,7 +5404,7 @@ export class ParsedComponent implements IParsedComponent {
             this.inferredReason = _data["inferredReason"];
             this.resolutionKey = _data["resolutionKey"];
             this.roleHint = _data["roleHint"];
-            this.hasAmount = _data["hasAmount"];
+            this.hasUserDefinedQuantity = _data["hasUserDefinedQuantity"];
         }
     }
 
@@ -5423,7 +5431,7 @@ export class ParsedComponent implements IParsedComponent {
         data["inferredReason"] = this.inferredReason;
         data["resolutionKey"] = this.resolutionKey;
         data["roleHint"] = this.roleHint;
-        data["hasAmount"] = this.hasAmount;
+        data["hasUserDefinedQuantity"] = this.hasUserDefinedQuantity;
         return data;
     }
 }
@@ -5443,7 +5451,7 @@ export interface IParsedComponent {
     inferredReason?: string | undefined;
     resolutionKey?: string | undefined;
     roleHint?: string | undefined;
-    hasAmount?: boolean;
+    hasUserDefinedQuantity?: boolean;
 }
 
 export class ParsedFoodAttributes implements IParsedFoodAttributes {
@@ -5494,7 +5502,6 @@ export class ParsedFoodItem implements IParsedFoodItem {
     name?: string | undefined;
     brand?: string | undefined;
     quantity?: number;
-    unit?: string | undefined;
     singularUnit?: string | undefined;
     pluralUnit?: string | undefined;
     description?: string | undefined;
@@ -5518,7 +5525,6 @@ export class ParsedFoodItem implements IParsedFoodItem {
             this.name = _data["name"];
             this.brand = _data["brand"];
             this.quantity = _data["quantity"];
-            this.unit = _data["unit"];
             this.singularUnit = _data["singularUnit"];
             this.pluralUnit = _data["pluralUnit"];
             this.description = _data["description"];
@@ -5546,7 +5552,6 @@ export class ParsedFoodItem implements IParsedFoodItem {
         data["name"] = this.name;
         data["brand"] = this.brand;
         data["quantity"] = this.quantity;
-        data["unit"] = this.unit;
         data["singularUnit"] = this.singularUnit;
         data["pluralUnit"] = this.pluralUnit;
         data["description"] = this.description;
@@ -5567,7 +5572,6 @@ export interface IParsedFoodItem {
     name?: string | undefined;
     brand?: string | undefined;
     quantity?: number;
-    unit?: string | undefined;
     singularUnit?: string | undefined;
     pluralUnit?: string | undefined;
     description?: string | undefined;
@@ -5760,7 +5764,8 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
     componentId?: string | undefined;
     foodEntryId?: string | undefined;
     parentFoodName?: string | undefined;
-    parentFoodUnit?: string | undefined;
+    parentFoodSingularUnit?: string | undefined;
+    parentFoodPluralUnit?: string | undefined;
     existingComponents?: ComponentDescription[] | undefined;
 
     constructor(data?: ISearchFoodPhraseRequest) {
@@ -5781,7 +5786,8 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
             this.componentId = _data["componentId"];
             this.foodEntryId = _data["foodEntryId"];
             this.parentFoodName = _data["parentFoodName"];
-            this.parentFoodUnit = _data["parentFoodUnit"];
+            this.parentFoodSingularUnit = _data["parentFoodSingularUnit"];
+            this.parentFoodPluralUnit = _data["parentFoodPluralUnit"];
             if (Array.isArray(_data["existingComponents"])) {
                 this.existingComponents = [] as any;
                 for (let item of _data["existingComponents"])
@@ -5806,7 +5812,8 @@ export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {
         data["componentId"] = this.componentId;
         data["foodEntryId"] = this.foodEntryId;
         data["parentFoodName"] = this.parentFoodName;
-        data["parentFoodUnit"] = this.parentFoodUnit;
+        data["parentFoodSingularUnit"] = this.parentFoodSingularUnit;
+        data["parentFoodPluralUnit"] = this.parentFoodPluralUnit;
         if (Array.isArray(this.existingComponents)) {
             data["existingComponents"] = [];
             for (let item of this.existingComponents)
@@ -5824,7 +5831,8 @@ export interface ISearchFoodPhraseRequest {
     componentId?: string | undefined;
     foodEntryId?: string | undefined;
     parentFoodName?: string | undefined;
-    parentFoodUnit?: string | undefined;
+    parentFoodSingularUnit?: string | undefined;
+    parentFoodPluralUnit?: string | undefined;
     existingComponents?: ComponentDescription[] | undefined;
 }
 

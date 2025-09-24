@@ -27,6 +27,7 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   // Precomputed values for performance
   displayName: string = '';
   servingLabel: string = '';
+  quantityUnitLabel: string = '';
   computedShouldShowQuantityInput: boolean = false;
   computedShouldShowNormalLabel: boolean = false;
 
@@ -56,12 +57,16 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     if (this.food && this.food.components && this.food.components.length > 1) {
       // For multi-component foods, show the food-level quantity and unit
       const quantity = this.food.quantity || 1;
-      const unit = this.food.unit || 'servings';
+      const unit = quantity === 1 ? (this.food.singularUnit || 'serving') : (this.food.pluralUnit || 'servings');
       const componentCount = this.food.components.length;
       this.servingLabel = `${quantity} ${unit} - ${componentCount} component${componentCount !== 1 ? 's' : ''}`;
     } else {
       this.servingLabel = '';
     }
+
+    // Compute quantity unit label
+    const quantity = this.food?.quantity || 1;
+    this.quantityUnitLabel = quantity === 1 ? (this.food?.singularUnit || 'serving') : (this.food?.pluralUnit || 'servings');
 
     // Compute visibility flags
     this.computedShouldShowQuantityInput = this.isExpanded && !this.isReadOnly;

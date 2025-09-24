@@ -508,7 +508,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         id: foodDisplay.id,
         name: foodDisplay.name,
         originalPhrase: foodDisplay.originalPhrase,
-        unit: foodDisplay.unit,
+        singularUnit: foodDisplay.singularUnit,
+        pluralUnit: foodDisplay.pluralUnit,
         quantity: foodDisplay.quantity,
         description: foodDisplay.description,
         brand: foodDisplay.brand,
@@ -717,22 +718,26 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return undefined;
   }
 
-  private getComponentDisplayUnit(component: ComponentDisplay): string | undefined {
-    // Get the selected serving for this component
+
+  private getComponentSingularUnit(component: ComponentDisplay): string | undefined {
     const selectedServingId = this.foodSelectionService.getSelectedServing(component.id || '');
     if (selectedServingId) {
       const selectedFood = this.getSelectedFood(component.id || '');
       const selectedServing = selectedFood?.servings?.find(s => s.id === selectedServingId);
       if (selectedServing) {
-        const quantity = this.getComponentDisplayQuantity(component) || 1;
-        // Use plural unit for quantities != 1, singular for quantity = 1
-        if (quantity === 1 && selectedServing.singularUnit) {
-          return selectedServing.singularUnit;
-        } else if (selectedServing.pluralUnit) {
-          return selectedServing.pluralUnit;
-        } else {
-          return selectedServing.baseUnit;
-        }
+        return selectedServing.singularUnit || selectedServing.baseUnit;
+      }
+    }
+    return undefined;
+  }
+
+  private getComponentPluralUnit(component: ComponentDisplay): string | undefined {
+    const selectedServingId = this.foodSelectionService.getSelectedServing(component.id || '');
+    if (selectedServingId) {
+      const selectedFood = this.getSelectedFood(component.id || '');
+      const selectedServing = selectedFood?.servings?.find(s => s.id === selectedServingId);
+      if (selectedServing) {
+        return selectedServing.pluralUnit || selectedServing.baseUnit;
       }
     }
     return undefined;
@@ -1083,18 +1088,21 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Add component context for multi-component foods
     if (food.components && food.components.length > 1) {
       request.parentFoodName = food.name;
-      request.parentFoodUnit = food.unit;
+      request.parentFoodSingularUnit = food.singularUnit;
+      request.parentFoodPluralUnit = food.pluralUnit;
 
       // Create existing components list for context
       request.existingComponents = food.components.map(c => {
         const quantity = this.getComponentDisplayQuantity(c);
-        const unit = this.getComponentDisplayUnit(c);
+        const singularUnit = this.getComponentSingularUnit(c);
+        const pluralUnit = this.getComponentPluralUnit(c);
 
         return new ComponentDescription({
           id: c.id,
           name: this.getComponentDisplayName(c.id || ''),
           quantity: quantity !== undefined ? quantity : undefined,
-          unit: unit || undefined,
+          singularUnit: singularUnit || undefined,
+          pluralUnit: pluralUnit || undefined,
           culinaryRole: c.culinaryRole
         });
       }).filter(comp => comp.name); // Only include components with valid names
