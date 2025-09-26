@@ -159,8 +159,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
           ? baseQuantity * this.parentQuantity
           : baseQuantity;
         // Calculate display quantity and use proper singular/plural units
-        const aiRecommendedScale = this.selectedServing.aiRecommendedScale || 1.0;
-        const displayQuantity = baseQuantity * aiRecommendedScale;
+        const displayQuantity = baseQuantity * (this.selectedServing.aiRecommendedScaleNumerator || 1) / (this.selectedServing.aiRecommendedScaleDenominator || 1);
         const unitText = displayQuantity === 1 && this.selectedServing.singularUnit
           ? this.selectedServing.singularUnit
           : (this.selectedServing.pluralUnit || this.selectedServing.baseUnit || '');
@@ -333,8 +332,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     if (!serving) return '';
 
     const baseQuantity = serving.baseQuantity || 1;
-    const aiRecommendedScale = serving.aiRecommendedScale || 1.0;
-    const aiDisplayQuantity = baseQuantity * aiRecommendedScale;
+    const aiDisplayQuantity = baseQuantity * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1);
 
     const displayQuantity = aiDisplayQuantity;
 

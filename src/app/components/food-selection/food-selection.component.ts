@@ -544,7 +544,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                     baseUnit: servingDisplay.baseUnit,
                     singularUnit: servingDisplay.singularUnit,
                     pluralUnit: servingDisplay.pluralUnit,
-                    aiRecommendedScale: servingDisplay.aiRecommendedScale,
+                    aiRecommendedScaleNumerator: servingDisplay.aiRecommendedScaleNumerator,
+                    aiRecommendedScaleDenominator: servingDisplay.aiRecommendedScaleDenominator,
                     nutrients: servingDisplay.nutrients
                   });
                 })
@@ -558,47 +559,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.isSubmitting = true;
     this.editConfirmed.emit(req);
   }
-  
-  getDisplayQuantity(s: ComponentServing | null): number {
-    if (!s) return 1;
 
-    // Use new formula: displayedQuantity = baseQuantity × aiRecommendedScale
-    const baseQuantity = s.baseQuantity || 1;
-    const aiScale = s.aiRecommendedScale || 1;
-    const displayedQuantity = baseQuantity * aiScale;
-
-    if (isFinite(displayedQuantity) && displayedQuantity > 0) return displayedQuantity;
-
-    return 1;
-  }
-
-
-  getSearchTextOnly(componentId: string): string {
-    const food = this.getSelectedFood(componentId);
-
-    // First try to get the original text from the selected food match
-    if (food && (food as any).originalText) {
-      return (food as any).originalText;
-    }
-
-    // Then try searchText for inferred foods
-    if (food && (food as any).inferred && (food as any).searchText) {
-      return (food as any).searchText;
-    }
-
-    // Look for OriginalPhrase at the food level (from backend Food model)
-    const foodData = this.getFoodForComponent(componentId);
-    if (foodData && (foodData as any).originalPhrase) {
-      return (foodData as any).originalPhrase;
-    }
-
-    // Fallback to selected food display name
-    if (food && food.displayName) {
-      return food.displayName;
-    }
-
-    return '';
-  }
 
   /**
    * Helper method to get display name for a component from its selected match
@@ -620,7 +581,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         const transformedMatches = component.matches?.map((match: any) => {
           const transformedServings = match.servings?.map((serving: any) => {
             // Convert to ComponentServingDisplay with initial effectiveQuantity
-            const effectiveQuantity = (serving.baseQuantity || 1) * (serving.aiRecommendedScale || 1);
+            // Use UserConfirmedQuantity if available, otherwise calculate from AI fractions
+            const effectiveQuantity = serving.userConfirmedQuantity ||
+              ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1));
             return new ComponentServingDisplay({
               ...serving,
               effectiveQuantity: effectiveQuantity,
@@ -658,6 +621,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         ...food,
         components: transformedComponents,
         isEditingExpanded: this.isEditMode, // Auto-expand if in edit mode
+        initialQuantity: food.quantity, // Store baseline quantity for nutrition calculations (no default)
       });
     });
 

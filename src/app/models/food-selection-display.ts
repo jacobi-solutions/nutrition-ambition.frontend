@@ -85,6 +85,9 @@ export class FoodDisplay extends Food {
   visibleComponentCount?: number;
   hasVisibleComponents?: boolean;
 
+  // Nutrition calculation baseline
+  initialQuantity?: number;
+
   // Enhanced components with display flags
   components?: ComponentDisplay[] | undefined;
 
@@ -94,6 +97,7 @@ export class FoodDisplay extends Food {
     this.isEditing = data.isEditing;
     this.isEditingExpanded = data.isEditingExpanded;
     this.editingQuantity = data.editingQuantity;
+    this.initialQuantity = data.initialQuantity;
     this.components = data.components;
   }
 
@@ -104,6 +108,7 @@ export class FoodDisplay extends Food {
       this.isEditing = _data["isEditing"];
       this.isEditingExpanded = _data["isEditingExpanded"];
       this.editingQuantity = _data["editingQuantity"];
+      this.initialQuantity = _data["initialQuantity"];
       if (Array.isArray(_data["components"])) {
         this.components = [] as any;
         for (let item of _data["components"])
@@ -118,6 +123,7 @@ export class FoodDisplay extends Food {
     data["isEditing"] = this.isEditing;
     data["isEditingExpanded"] = this.isEditingExpanded;
     data["editingQuantity"] = this.editingQuantity;
+    data["initialQuantity"] = this.initialQuantity;
     data["visibleComponentCount"] = this.visibleComponentCount;
     data["hasVisibleComponents"] = this.hasVisibleComponents;
     if (Array.isArray(this.components)) {

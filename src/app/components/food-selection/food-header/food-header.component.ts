@@ -158,14 +158,22 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
       }
     }
 
-    // Apply food-level quantity multiplier
+    // Apply food-level quantity normalization using initialQuantity
     const foodQuantity = this.food?.quantity || 1;
+    const initialQuantity = this.food?.initialQuantity;
+
+    if (initialQuantity === undefined || initialQuantity === null) {
+      throw new Error(`initialQuantity is required for nutrition calculations but is missing for food: ${this.food?.name || 'unknown'}`);
+    }
+
     if (hasAnyNutrients) {
+      // Normalize by dividing by initial quantity, then scale by current quantity
+      const scaleFactor = foodQuantity / initialQuantity;
       return {
-        calories: aggregated.calories * foodQuantity,
-        protein: aggregated.protein * foodQuantity,
-        fat: aggregated.fat * foodQuantity,
-        carbs: aggregated.carbs * foodQuantity
+        calories: aggregated.calories * scaleFactor,
+        protein: aggregated.protein * scaleFactor,
+        fat: aggregated.fat * scaleFactor,
+        carbs: aggregated.carbs * scaleFactor
       };
     }
 

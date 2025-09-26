@@ -100,11 +100,6 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    estimate(body: EstimateUnitConversionsRequest | undefined): Observable<EstimateUnitConversionsResponse>;
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
     getDetailedSummary(body: GetDetailedSummaryRequest | undefined): Observable<GetDetailedSummaryResponse>;
     /**
      * @param body (optional) 
@@ -1067,62 +1062,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<ChatMessagesResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    estimate(body: EstimateUnitConversionsRequest | undefined): Observable<EstimateUnitConversionsResponse> {
-        let url_ = this.baseUrl + "/api/Conversions/Estimate";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processEstimate(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processEstimate(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<EstimateUnitConversionsResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<EstimateUnitConversionsResponse>;
-        }));
-    }
-
-    protected processEstimate(response: HttpResponseBase): Observable<EstimateUnitConversionsResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = EstimateUnitConversionsResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<EstimateUnitConversionsResponse>(null as any);
     }
 
     /**
@@ -2813,7 +2752,9 @@ export class ComponentServing implements IComponentServing {
     description?: string | undefined;
     baseQuantity?: number;
     baseUnit?: string | undefined;
-    aiRecommendedScale?: number;
+    aiRecommendedScaleNumerator?: number | undefined;
+    aiRecommendedScaleDenominator?: number | undefined;
+    userConfirmedQuantity?: number | undefined;
     singularUnit?: string | undefined;
     pluralUnit?: string | undefined;
     metricServingAmount?: number | undefined;
@@ -2840,7 +2781,9 @@ export class ComponentServing implements IComponentServing {
             this.description = _data["description"];
             this.baseQuantity = _data["baseQuantity"];
             this.baseUnit = _data["baseUnit"];
-            this.aiRecommendedScale = _data["aiRecommendedScale"];
+            this.aiRecommendedScaleNumerator = _data["aiRecommendedScaleNumerator"];
+            this.aiRecommendedScaleDenominator = _data["aiRecommendedScaleDenominator"];
+            this.userConfirmedQuantity = _data["userConfirmedQuantity"];
             this.singularUnit = _data["singularUnit"];
             this.pluralUnit = _data["pluralUnit"];
             this.metricServingAmount = _data["metricServingAmount"];
@@ -2873,7 +2816,9 @@ export class ComponentServing implements IComponentServing {
         data["description"] = this.description;
         data["baseQuantity"] = this.baseQuantity;
         data["baseUnit"] = this.baseUnit;
-        data["aiRecommendedScale"] = this.aiRecommendedScale;
+        data["aiRecommendedScaleNumerator"] = this.aiRecommendedScaleNumerator;
+        data["aiRecommendedScaleDenominator"] = this.aiRecommendedScaleDenominator;
+        data["userConfirmedQuantity"] = this.userConfirmedQuantity;
         data["singularUnit"] = this.singularUnit;
         data["pluralUnit"] = this.pluralUnit;
         data["metricServingAmount"] = this.metricServingAmount;
@@ -2899,7 +2844,9 @@ export interface IComponentServing {
     description?: string | undefined;
     baseQuantity?: number;
     baseUnit?: string | undefined;
-    aiRecommendedScale?: number;
+    aiRecommendedScaleNumerator?: number | undefined;
+    aiRecommendedScaleDenominator?: number | undefined;
+    userConfirmedQuantity?: number | undefined;
     singularUnit?: string | undefined;
     pluralUnit?: string | undefined;
     metricServingAmount?: number | undefined;
@@ -3421,214 +3368,6 @@ export class ErrorDto implements IErrorDto {
 export interface IErrorDto {
     errorMessage?: string | undefined;
     errorCode?: string | undefined;
-}
-
-export class EstimateUnitConversionsRequest implements IEstimateUnitConversionsRequest {
-    componentId?: string | undefined;
-    foodDisplayName?: string | undefined;
-    brandName?: string | undefined;
-    servingId?: string | undefined;
-    servingDescription?: string | undefined;
-    numberOfUnits?: number;
-    measurementDescription?: string | undefined;
-    metricServingAmount?: number | undefined;
-    metricServingUnit?: string | undefined;
-    targetUnits?: string[] | undefined;
-
-    constructor(data?: IEstimateUnitConversionsRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.componentId = _data["componentId"];
-            this.foodDisplayName = _data["foodDisplayName"];
-            this.brandName = _data["brandName"];
-            this.servingId = _data["servingId"];
-            this.servingDescription = _data["servingDescription"];
-            this.numberOfUnits = _data["numberOfUnits"];
-            this.measurementDescription = _data["measurementDescription"];
-            this.metricServingAmount = _data["metricServingAmount"];
-            this.metricServingUnit = _data["metricServingUnit"];
-            if (Array.isArray(_data["targetUnits"])) {
-                this.targetUnits = [] as any;
-                for (let item of _data["targetUnits"])
-                    this.targetUnits!.push(item);
-            }
-        }
-    }
-
-    static fromJS(data: any): EstimateUnitConversionsRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new EstimateUnitConversionsRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["componentId"] = this.componentId;
-        data["foodDisplayName"] = this.foodDisplayName;
-        data["brandName"] = this.brandName;
-        data["servingId"] = this.servingId;
-        data["servingDescription"] = this.servingDescription;
-        data["numberOfUnits"] = this.numberOfUnits;
-        data["measurementDescription"] = this.measurementDescription;
-        data["metricServingAmount"] = this.metricServingAmount;
-        data["metricServingUnit"] = this.metricServingUnit;
-        if (Array.isArray(this.targetUnits)) {
-            data["targetUnits"] = [];
-            for (let item of this.targetUnits)
-                data["targetUnits"].push(item);
-        }
-        return data;
-    }
-}
-
-export interface IEstimateUnitConversionsRequest {
-    componentId?: string | undefined;
-    foodDisplayName?: string | undefined;
-    brandName?: string | undefined;
-    servingId?: string | undefined;
-    servingDescription?: string | undefined;
-    numberOfUnits?: number;
-    measurementDescription?: string | undefined;
-    metricServingAmount?: number | undefined;
-    metricServingUnit?: string | undefined;
-    targetUnits?: string[] | undefined;
-}
-
-export class EstimateUnitConversionsResponse implements IEstimateUnitConversionsResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    componentId?: string | undefined;
-    foodDisplayName?: string | undefined;
-    estimates?: EstimatedUnit[] | undefined;
-
-    constructor(data?: IEstimateUnitConversionsResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.componentId = _data["componentId"];
-            this.foodDisplayName = _data["foodDisplayName"];
-            if (Array.isArray(_data["estimates"])) {
-                this.estimates = [] as any;
-                for (let item of _data["estimates"])
-                    this.estimates!.push(EstimatedUnit.fromJS(item));
-            }
-        }
-    }
-
-    static fromJS(data: any): EstimateUnitConversionsResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new EstimateUnitConversionsResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["componentId"] = this.componentId;
-        data["foodDisplayName"] = this.foodDisplayName;
-        if (Array.isArray(this.estimates)) {
-            data["estimates"] = [];
-            for (let item of this.estimates)
-                data["estimates"].push(item.toJSON());
-        }
-        return data;
-    }
-}
-
-export interface IEstimateUnitConversionsResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    componentId?: string | undefined;
-    foodDisplayName?: string | undefined;
-    estimates?: EstimatedUnit[] | undefined;
-}
-
-export class EstimatedUnit implements IEstimatedUnit {
-    unit?: string | undefined;
-    gramsPerUnit?: number;
-    confidence?: number;
-    note?: string | undefined;
-
-    constructor(data?: IEstimatedUnit) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.unit = _data["unit"];
-            this.gramsPerUnit = _data["gramsPerUnit"];
-            this.confidence = _data["confidence"];
-            this.note = _data["note"];
-        }
-    }
-
-    static fromJS(data: any): EstimatedUnit {
-        data = typeof data === 'object' ? data : {};
-        let result = new EstimatedUnit();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["unit"] = this.unit;
-        data["gramsPerUnit"] = this.gramsPerUnit;
-        data["confidence"] = this.confidence;
-        data["note"] = this.note;
-        return data;
-    }
-}
-
-export interface IEstimatedUnit {
-    unit?: string | undefined;
-    gramsPerUnit?: number;
-    confidence?: number;
-    note?: string | undefined;
 }
 
 export class FeedbackEntry implements IFeedbackEntry {
