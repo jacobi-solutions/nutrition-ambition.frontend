@@ -52,7 +52,7 @@ export class ForgotPasswordResetPage implements OnInit {
         await this.toastService.showToast({
           message: error instanceof Error ? error.message : 'Invalid or expired reset link.',
           color: 'danger',
-          duration: 5000
+          duration: 1500
         });
         this.router.navigate(['/login']);
       }
@@ -64,7 +64,7 @@ export class ForgotPasswordResetPage implements OnInit {
       await this.toastService.showToast({
         message: 'Passwords do not match',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
       return;
     }
@@ -73,7 +73,7 @@ export class ForgotPasswordResetPage implements OnInit {
       await this.toastService.showToast({
         message: 'Password must be at least 8 characters',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
       return;
     }
@@ -82,7 +82,7 @@ export class ForgotPasswordResetPage implements OnInit {
       await this.toastService.showToast({
         message: 'Invalid reset link. Please request a new password reset.',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
       return;
     }
@@ -96,7 +96,7 @@ export class ForgotPasswordResetPage implements OnInit {
       await this.toastService.showToast({
         message: 'Password has been reset successfully! Please log in with your new password.',
         color: 'success',
-        duration: 5000
+        duration: 1500
       });
       
       // Navigate to login page
@@ -105,7 +105,7 @@ export class ForgotPasswordResetPage implements OnInit {
       await this.toastService.showToast({
         message: error instanceof Error ? error.message : 'Failed to reset password. Please try again or request a new reset link.',
         color: 'danger',
-        duration: 5000
+        duration: 1500
       });
     } finally {
       this.isWorking = false;

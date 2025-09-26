@@ -654,7 +654,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         // Show toast for unimplemented feature
         this.toastService.showToast({
           message: 'Photo capture not implemented yet. Check back soon!',
-          duration: 3000,
+          duration: 1500,
           color: 'medium'
         });
         break;
@@ -664,7 +664,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         // Show toast for unimplemented feature
         this.toastService.showToast({
           message: 'Barcode scanner not implemented yet. Check back soon!',
-          duration: 3000,
+          duration: 1500,
           color: 'medium'
         });
         break;

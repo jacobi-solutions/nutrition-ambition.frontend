@@ -38,7 +38,7 @@ export class SignupPage {
       await this.toastService.showToast({
         message: 'Email is required',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
       return;
     }
@@ -47,7 +47,7 @@ export class SignupPage {
       await this.toastService.showToast({
         message: 'Password must be at least 8 characters',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
       return;
     }
@@ -56,7 +56,7 @@ export class SignupPage {
       await this.toastService.showToast({
         message: 'Passwords do not match',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
       return;
     }
@@ -70,7 +70,7 @@ export class SignupPage {
       await this.toastService.showToast({
         message: 'Account created. You\'re all set!',
         color: 'success',
-        duration: 3000
+        duration: 1500
       });
       
       // Navigate to chat for consistency with login
@@ -79,7 +79,7 @@ export class SignupPage {
       await this.toastService.showToast({
         message: error instanceof Error ? error.message : 'Failed to create account. Please try again.',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
     } finally {
       this.isWorking = false;

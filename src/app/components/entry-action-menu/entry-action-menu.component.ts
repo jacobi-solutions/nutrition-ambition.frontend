@@ -89,7 +89,7 @@ export class EntryActionMenuComponent {
       // Show toast for unimplemented actions and still emit event to dismiss popover
       this.toastService.showToast({
         message: 'Feature not implemented yet. Check back soon!',
-        duration: 3000,
+        duration: 1500,
         color: 'medium'
       });
       

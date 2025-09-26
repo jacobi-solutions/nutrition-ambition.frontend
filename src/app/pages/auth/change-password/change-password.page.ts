@@ -38,7 +38,7 @@ export class ChangePasswordPage {
       await this.toastService.showToast({
         message: 'New passwords do not match',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
       return;
     }
@@ -47,7 +47,7 @@ export class ChangePasswordPage {
       await this.toastService.showToast({
         message: 'New password must be at least 8 characters',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
       return;
     }
@@ -56,7 +56,7 @@ export class ChangePasswordPage {
       await this.toastService.showToast({
         message: 'Current password is required',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
       return;
     }
@@ -70,7 +70,7 @@ export class ChangePasswordPage {
       await this.toastService.showToast({
         message: 'Password has been changed successfully!',
         color: 'success',
-        duration: 3000
+        duration: 1500
       });
       
       // Navigate back to the previous page or chat
@@ -79,7 +79,7 @@ export class ChangePasswordPage {
       await this.toastService.showToast({
         message: error instanceof Error ? error.message : 'Failed to change password. Please try again.',
         color: 'danger',
-        duration: 3000
+        duration: 1500
       });
     } finally {
       this.isWorking = false;

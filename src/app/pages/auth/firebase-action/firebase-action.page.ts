@@ -88,7 +88,7 @@ export class FirebaseActionPage implements OnInit {
       await this.toastService.showToast({
         message: 'Email verified successfully!',
         color: 'success',
-        duration: 3000
+        duration: 1500
       });
 
       // Redirect to the continue URL or default to app
@@ -109,7 +109,7 @@ export class FirebaseActionPage implements OnInit {
       await this.toastService.showToast({
         message: 'Email recovery processed.',
         color: 'success',
-        duration: 3000
+        duration: 1500
       });
 
       // Redirect to login or continue URL
@@ -127,13 +127,13 @@ export class FirebaseActionPage implements OnInit {
     await this.toastService.showToast({
       message,
       color: 'danger',
-      duration: 5000
+      duration: 1500
     });
 
     // Redirect to login after showing error
     setTimeout(() => {
       this.router.navigate(['/login']);
-    }, 3000);
+    }, 1500);
   }
 
   navigateToLogin() {

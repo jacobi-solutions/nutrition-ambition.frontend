@@ -623,7 +623,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     if (entry.entryType !== 'food') {
       await this.toastService.showToast({
         message: 'Only food items can be removed.',
-        duration: 3000,
+        duration: 1500,
         color: 'medium'
       });
       return;
@@ -809,7 +809,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   private async showErrorToast(message: string) {
     await this.toastService.showToast({
       message,
-      duration: 3000,
+      duration: 1500,
       color: 'medium'
     });
   }

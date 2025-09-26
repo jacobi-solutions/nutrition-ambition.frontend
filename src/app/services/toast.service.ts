@@ -21,7 +21,7 @@ export class ToastService {
   async showToast(options: ToastOptions): Promise<HTMLIonToastElement> {
     const toast = await this.toastController.create({
       message: options.message,
-      duration: options.duration || 3000,
+      duration: options.duration || 1500,
       color: options.color || 'success',
       position: options.position || 'middle',
       buttons: options.buttons || [],

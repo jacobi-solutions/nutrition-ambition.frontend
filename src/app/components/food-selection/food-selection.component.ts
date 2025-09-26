@@ -791,7 +791,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       
       await this.toastService.showToast({
         message: `${itemName} removed`,
-        duration: 3000,
+        duration: 1500,
         color: 'medium',
         buttons: [
           {
@@ -842,7 +842,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Show toast with undo
     await this.toastService.showToast({
       message: `${foodName} removed`,
-      duration: 3000,
+      duration: 1500,
       color: 'medium',
       buttons: [{
         text: 'Undo',
@@ -869,7 +869,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Show toast with undo option
     const toast = await this.toastService.showToast({
       message: 'Food logging canceled',
-      duration: 3000,
+      duration: 1500,
       color: 'medium',
       buttons: [
         {
@@ -893,7 +893,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.selectionCanceled.emit();
       this.cancelTimeout = null;
       // Note: isCanceling will be reset by parent when API response comes back
-    }, 3000);
+    }, 1500);
 
     // Listen for toast dismissal (if user dismisses manually)
     toast.onDidDismiss().then((result) => {

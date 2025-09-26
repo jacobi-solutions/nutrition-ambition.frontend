@@ -241,7 +241,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       } else if (serving.pluralUnit) {
         unitText = serving.pluralUnit;
       } else {
-        unitText = serving.baseUnit || '';
+        unitText = serving.measurementDescription || '';
       }
 
       // Create new ComponentServingDisplay object
@@ -312,7 +312,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     } else if (serving?.pluralUnit) {
       return serving.pluralUnit;
     }
-    return serving?.baseUnit || '';
+    return serving?.measurementDescription || '';
   }
 
   getCalories(): number | null {
@@ -343,7 +343,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     // Use proper singular/plural units
     const unitText = roundedQuantity === 1 && serving.singularUnit
       ? serving.singularUnit
-      : (serving.pluralUnit || serving.baseUnit || '');
+      : (serving.pluralUnit || serving.measurementDescription || '');
 
     return `${roundedQuantity} ${unitText}`;
   }
