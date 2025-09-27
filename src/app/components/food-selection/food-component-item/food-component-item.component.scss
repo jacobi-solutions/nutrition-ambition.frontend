@@ -286,9 +286,8 @@
         .food-select-container {
           margin-bottom: 16px;
 
-          ion-select {
-            width: 100%;
-          }
+          // The autocomplete component has its own styling,
+          // so we just need the container spacing
         }
 
         .more-options-list {

@@ -61,20 +61,20 @@ isSubmittingNewFood = false;
     }
   }
 
-  onBlur(event: FocusEvent): void {
-    // Don't cancel if user clicked the send button
-    const relatedTarget = event.relatedTarget as HTMLElement;
-    if (relatedTarget && relatedTarget.classList.contains('send-button')) {
-      return;
-    }
+  // onBlur(event: FocusEvent): void {
+  //   // Don't cancel if user clicked the send button
+  //   const relatedTarget = event.relatedTarget as HTMLElement;
+  //   if (relatedTarget && relatedTarget.classList.contains('send-button')) {
+  //     return;
+  //   }
 
-    // Small timeout to allow for button clicks
-    setTimeout(() => {
+  //   // Small timeout to allow for button clicks
+  //   setTimeout(() => {
       
-        this.cancel();
+  //       this.cancel();
       
-    }, 150);
-  }
+  //   }, 150);
+  // }
 
   onTextareaInput(event: Event): void {
     const target = event.target as HTMLTextAreaElement;

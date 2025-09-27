@@ -1,0 +1,62 @@
+<ng-select
+  [bindLabel]="'cleanDisplayText'"
+  [clearable]="false"
+  [searchable]="searchable"
+  [searchFn]="customSearchFn"
+  [loading]="loading"
+  [ngModel]="dummyDisplayItem"
+  [trackByFn]="trackByValue"
+  [closeOnSelect]="true"
+  (ngModelChange)="onSelectionChange($event)"
+  (search)="onSearch($event)"
+  (clear)="onClear()"
+  (focus)="onFocus()"
+  (blur)="onBlur()"
+  (open)="onOpen()"
+  (close)="onClose()">
+
+  <!-- Custom option template for displaying complex objects -->
+  <ng-container *ngFor="let displayItem of displayItems; trackBy: trackByDisplayItem">
+    <ng-option
+      *ngIf="displayItem.showInDropdown"
+      [value]="displayItem.value"
+      [disabled]="displayItem.disabled">
+
+      <!-- If item has displayName and brandName (like food items) -->
+      <span *ngIf="displayItem.hasDisplayName && displayItem.hasBrandName" class="option-content">
+        <span class="option-name">{{ displayItem.displayName }}</span>
+        <span class="option-brand"> – {{ displayItem.brandName }}</span>
+      </span>
+
+      <!-- If item has name and brand properties -->
+      <span *ngIf="!displayItem.hasDisplayName && displayItem.hasName && displayItem.hasBrand" class="option-content">
+        <span class="option-name">{{ displayItem.name }}</span>
+        <span class="option-brand"> – {{ displayItem.brand }}</span>
+      </span>
+
+      <!-- Everything else - use cleanDisplayText -->
+      <span *ngIf="!displayItem.hasDisplayName || !displayItem.hasBrandName" class="option-content">
+        {{ displayItem.cleanDisplayText }}
+      </span>
+
+    </ng-option>
+  </ng-container>
+
+  <!-- Loading template -->
+  <ng-option
+    *ngIf="loading"
+    value="loading"
+    [disabled]="true"
+    class="loading-option">
+    <span class="loading-text">Loading...</span>
+  </ng-option>
+
+  <!-- No items found template -->
+  <ng-option
+    *ngIf="!loading && items.length === 0"
+    value="no-items"
+    [disabled]="true"
+    class="no-items-option">
+    <span class="no-items-text">No items found</span>
+  </ng-option>
+</ng-select>

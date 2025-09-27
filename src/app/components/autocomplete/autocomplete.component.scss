@@ -1,0 +1,340 @@
+// Autocomplete Component styles - matches NutritionAmbition design
+:host {
+  display: block;
+  width: 100%;
+  position: relative;
+}
+
+// Main ng-select container styling
+::ng-deep .ng-select {
+  width: 100%;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  margin: 0;
+
+  .ng-select-container {
+    border: 1px solid var(--color-sage, #8ba981);
+    border-radius: 8px;
+    background: white;
+    box-sizing: border-box;
+    padding: 12px 1.75rem 12px 12px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    color: var(--ion-color-dark);
+
+    &:hover {
+      border-color: var(--color-olive, #7a9570);
+    }
+
+    &.ng-select-focused {
+      border-color: var(--color-sage, #8ba981);
+      box-shadow: 0 0 0 2px rgba(139, 169, 129, 0.1);
+      outline: none;
+    }
+
+    &.ng-select-disabled {
+      background: var(--color-light-smoke, #f5f5f5);
+      border-color: var(--ion-color-medium, #ccc);
+      color: var(--ion-color-medium);
+      cursor: not-allowed;
+    }
+  }
+
+  // Value container (where selected value appears)
+  .ng-value-container {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    flex: 1;
+
+    .ng-value {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      font-size: 0.9rem;
+      color: var(--ion-color-dark);
+    }
+
+    .ng-input {
+      width: 100%;
+
+      > input {
+        padding: 0 !important;
+        margin: 0 !important;
+        line-height: 1.4 !important;
+        height: auto !important;
+        display: block !important;
+        font-size: 0.9rem !important;
+        font-family: 'Poppins', sans-serif !important;
+        font-weight: 500 !important;
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        color: var(--ion-color-dark) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+
+        &::placeholder {
+          color: var(--ion-color-medium) !important;
+          font-weight: 400 !important;
+        }
+      }
+    }
+  }
+
+  // When focused/editing, hide the selected value display to show the input
+  &.ng-select-focused .ng-value-container {
+    .ng-value {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .ng-input > input {
+      opacity: 1;
+      z-index: 2;
+    }
+  }
+
+  // Placeholder styling
+  .ng-placeholder {
+    color: var(--ion-color-medium);
+    font-size: 0.9rem;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    height: 100%;
+  }
+
+  // Clear button styling
+  .ng-clear-wrapper {
+    position: absolute;
+    right: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    pointer-events: auto;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: var(--ion-color-medium);
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--color-error, #e74c3c);
+    }
+
+    .ng-clear {
+      font-size: 14px;
+      font-weight: bold;
+    }
+  }
+
+  // Dropdown arrow styling
+  .ng-arrow-wrapper {
+    right: -.5rem;
+    pointer-events: none;
+    width: 0;
+    height: 20px;
+    display: flex;
+    align-items: center;
+
+    .ng-arrow {
+      border-style: solid;
+      border-width: 5px 4px 0 4px;
+      border-color: var(--ion-color-medium) transparent transparent transparent;
+      transition: transform 0.2s ease;
+    }
+
+    &.ng-arrow-top .ng-arrow {
+      transform: rotate(180deg);
+    }
+  }
+
+  // Remove tag styling for single select - show as plain text
+  .ng-value-container .ng-value {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    color: var(--ion-color-dark) !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    .ng-value-label {
+      color: var(--ion-color-dark) !important;
+      background: transparent !important;
+      border: none !important;
+      font-weight: 500 !important;
+    }
+
+    .ng-value-icon {
+      display: none !important; // Hide the X button on single select values
+    }
+  }
+
+  // Multi-select tag styling (only for multiple mode)
+  &.multiple .ng-value-container .ng-value {
+    background: var(--color-sage) !important;
+    border: 1px solid var(--color-sage) !important;
+    border-radius: 4px !important;
+    color: white !important;
+    font-size: 0.8rem !important;
+    padding: 2px 8px !important;
+    margin: 2px 4px 2px 0 !important;
+
+    .ng-value-label {
+      color: white !important;
+    }
+
+    .ng-value-icon {
+      display: inline !important;
+      color: white !important;
+      cursor: pointer;
+
+      &:hover {
+        color: var(--color-error);
+      }
+    }
+  }
+}
+
+// Dropdown panel styling
+::ng-deep .ng-dropdown-panel {
+  z-index: 9999 !important;
+  position: absolute !important;
+  background: white;
+  border: 1px solid var(--color-sage, #8ba981);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-top: 4px;
+  width: 95vw !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  max-width: 95vw !important;
+  min-width: 95vw !important;
+
+  .ng-dropdown-panel-items {
+    background: white;
+  }
+
+  // Individual option styling
+  .ng-option {
+    padding: 8px 16px;
+    background: white;
+    border-bottom: 1px solid var(--color-light-smoke, #f5f5f5);
+    cursor: pointer;
+    color: var(--ion-color-dark);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover,
+    &.ng-option-highlighted {
+      background: var(--color-light-smoke, #f5f5f5);
+    }
+
+    &.ng-option-selected {
+      background: rgba(139, 169, 129, 0.1);
+      color: var(--color-olive);
+      font-weight: 500;
+    }
+
+    &.ng-option-disabled {
+      background: var(--color-light-smoke);
+      color: var(--ion-color-medium);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    // Custom option content styling
+    .option-content {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+
+      .option-name {
+        font-weight: 500;
+        color: var(--ion-color-dark);
+      }
+
+      .option-brand {
+        font-weight: 600;
+        color: var(--ion-color-primary);
+        font-size: 0.85rem;
+      }
+    }
+
+    // Loading and no items states
+    &.loading-option,
+    &.no-items-option {
+      text-align: center;
+      font-style: italic;
+      color: var(--ion-color-medium);
+      cursor: default;
+
+      &:hover {
+        background: white;
+      }
+    }
+
+    .loading-text,
+    .no-items-text {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+  }
+}
+
+// Loading state for the main component
+:host(.loading) ::ng-deep .ng-select .ng-select-container {
+  .ng-spinner-loader {
+    position: absolute;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+// Responsive adjustments for mobile
+@media (max-width: 768px) {
+  ::ng-deep .ng-select .ng-select-container {
+    min-height: 52px; // Slightly larger touch target on mobile
+    padding: 14px 1.75rem 14px 14px;
+  }
+
+  ::ng-deep .ng-dropdown-panel .ng-option {
+    padding: 14px 16px; // Larger touch targets
+    font-size: 1rem; // Slightly larger text on mobile
+  }
+}
+
+// Animations
+
+// Utility classes for special use cases
+:host(.compact) ::ng-deep .ng-select .ng-select-container {
+  min-height: 40px;
+  padding: 8px 36px 8px 12px;
+  font-size: 0.85rem;
+}
+
+:host(.large) ::ng-deep .ng-select .ng-select-container {
+  min-height: 56px;
+  padding: 16px 48px 16px 16px;
+  font-size: 1rem;
+}

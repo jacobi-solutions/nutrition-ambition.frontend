@@ -180,7 +180,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         this.handleFoodSelected(event.payload);
         break;
       case 'instantOptionsRequested':
-        this.onDropdownWillOpen(event.payload.componentId);
+        this.onSearchRequested(event.payload.componentId, event.payload.searchTerm);
         break;
     }
   }
@@ -612,7 +612,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           showingMoreOptions: false,
           loadingMoreOptions: false,
           loadingInstantOptions: false,
-          moreOptions: [],
         });
       }) || [];
 
@@ -1081,7 +1080,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         id: comp.id,
         isExpanded: comp.isExpanded,
         showingMoreOptions: comp.showingMoreOptions,
-        moreOptions: comp.moreOptions,
         isEditing: comp.isEditing,
         editingValue: comp.editingValue,
         loadingMoreOptions: comp.loadingMoreOptions,
@@ -1101,7 +1099,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           this.onComponentChanged(foodIndex, savedState.id, {
             isExpanded: savedState.isExpanded,
             showingMoreOptions: savedState.showingMoreOptions,
-            moreOptions: savedState.moreOptions,
             isEditing: savedState.isEditing,
             editingValue: savedState.editingValue,
             loadingMoreOptions: savedState.loadingMoreOptions,
@@ -1210,7 +1207,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       return;
     }
 
-    const hasOptions = component?.moreOptions?.length ?? 0;
+    const hasOptions = 0;
     if (hasOptions > 0) {
       // Show more options
       const foodIndex = this.findFoodIndexForComponent(componentId);
@@ -1224,6 +1221,105 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // Need to fetch more options
     await this.fetchMoreOptions(componentId);
+  }
+
+  // Handle search requests with custom search terms (debounced from autocomplete)
+  async onSearchRequested(componentId: string, searchTerm: string): Promise<void> {
+    // Only search if we have a meaningful search term
+    if (!searchTerm || searchTerm.length < 3) {
+      return;
+    }
+
+    try {
+      // Set loading state
+      const foodIndex = this.findFoodIndexForComponent(componentId);
+      if (foodIndex >= 0) {
+        this.onComponentChanged(foodIndex, componentId, {
+          loadingInstantOptions: true
+        });
+      }
+
+      const request = new GetInstantAlternativesRequest({
+        originalPhrase: searchTerm, // Use the search term instead of original phrase
+        componentId: componentId,
+        localDateKey: this.dateService.getSelectedDate()
+      });
+
+      const response = await this.apiService.getInstantAlternatives(request).toPromise();
+
+      if (response?.isSuccess && response.alternatives) {
+        // Get currently selected food to preserve it
+        const foodIndex = this.findFoodIndexForComponent(componentId);
+        let currentSelectedFood = null;
+        if (foodIndex >= 0) {
+          currentSelectedFood = this.getSelectedFood(componentId);
+        }
+
+        // Transform alternatives to match the expected format (same as computeAllFoods)
+        const transformedMatches = response.alternatives.map((match: any) => {
+          const transformedServings = match.servings?.map((serving: any) => {
+            const effectiveQuantity = serving.userConfirmedQuantity ||
+              ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1));
+            return new ComponentServingDisplay({
+              ...serving,
+              effectiveQuantity: effectiveQuantity,
+              isSelected: false,
+              unitText: serving.singularUnit || serving.baseUnit || '',
+              servingLabel: `${effectiveQuantity} ${serving.singularUnit || serving.baseUnit || ''}`,
+              userSelectedQuantity: effectiveQuantity,
+              servingMultiplier: 1
+            });
+          }) || [];
+
+          return new ComponentMatchDisplay({
+            ...match,
+            servings: transformedServings
+          });
+        });
+
+        // Preserve currently selected food if it's not in the search results
+        let finalMatches = transformedMatches;
+        if (currentSelectedFood) {
+          const isCurrentInResults = transformedMatches.some(match =>
+            match.providerFoodId === currentSelectedFood.providerFoodId
+          );
+
+          if (!isCurrentInResults) {
+            // Prepend current selection to the search results
+            finalMatches = [currentSelectedFood, ...transformedMatches];
+          }
+        }
+
+        // Update the component's matches with preserved selection + search results
+        if (foodIndex >= 0) {
+          this.onComponentChanged(foodIndex, componentId, {
+            matches: finalMatches,
+            loadingInstantOptions: false
+          });
+          // Trigger change detection to update UI immediately
+          this.cdr.detectChanges();
+        }
+      } else {
+        // Clear loading state even if no results
+        const foodIndex = this.findFoodIndexForComponent(componentId);
+        if (foodIndex >= 0) {
+          this.onComponentChanged(foodIndex, componentId, {
+            loadingInstantOptions: false
+          });
+          this.cdr.detectChanges();
+        }
+      }
+    } catch (error) {
+      console.error('Failed to search for options:', error);
+      // Clear loading state on error
+      const foodIndex = this.findFoodIndexForComponent(componentId);
+      if (foodIndex >= 0) {
+        this.onComponentChanged(foodIndex, componentId, {
+          loadingInstantOptions: false
+        });
+        this.cdr.detectChanges();
+      }
+    }
   }
 
   // Fetch more options from the backend
@@ -1258,7 +1354,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         if (foodIndex >= 0) {
           this.onComponentChanged(foodIndex, componentId, {
             showingMoreOptions: true,
-            moreOptions: response.alternatives
+            matches: response.alternatives
           });
         }
       } else {
@@ -1291,7 +1387,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.recentDropdownOpens[componentId] = now;
 
     const component = this.findComponentById(componentId);
-    const hasOptions = component?.moreOptions?.length ?? 0;
+    const hasOptions = 0;
     const isLoading = component?.loadingInstantOptions ?? false;
 
     if (!hasOptions && !isLoading) {
@@ -1310,7 +1406,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       if (foodIndex >= 0) {
         this.onComponentChanged(foodIndex, componentId, {
           loadingInstantOptions: true,
-          moreOptions: [loadingMatch]
+          matches: [loadingMatch]
         });
       }
 
@@ -1348,7 +1444,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         const foodIndex = this.findFoodIndexForComponent(componentId);
         if (foodIndex >= 0) {
           this.onComponentChanged(foodIndex, componentId, {
-            moreOptions: response.alternatives
+            matches: response.alternatives
           });
         }
       } else {
@@ -1356,7 +1452,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         const foodIndex = this.findFoodIndexForComponent(componentId);
         if (foodIndex >= 0) {
           this.onComponentChanged(foodIndex, componentId, {
-            moreOptions: []
+            matches: []
           });
         }
       }

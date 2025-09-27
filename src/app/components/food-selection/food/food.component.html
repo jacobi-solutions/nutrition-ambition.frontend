@@ -31,7 +31,7 @@
           (removeComponent)="onRemoveComponent($event)"
           (moreOptionsRequested)="onMoreOptionsRequested($event)"
           (foodSelected)="onFoodSelected($event)"
-          (instantOptionsRequested)="onInstantOptionsRequested($event.componentId)">
+          (instantOptionsRequested)="onInstantOptionsRequested($event)">
         </app-food-component-item>
       </ng-container>
     </div> <!-- Close expanded-food-components -->
@@ -54,7 +54,7 @@
         (removeComponent)="onRemoveComponent($event)"
         (moreOptionsRequested)="onMoreOptionsRequested($event)"
         (foodSelected)="onFoodSelected($event)"
-        (instantOptionsRequested)="onInstantOptionsRequested($event.componentId)">
+        (instantOptionsRequested)="onInstantOptionsRequested($event)">
       </app-food-component-item>
     </ng-container>
   </ng-container> <!-- Close single-component food -->

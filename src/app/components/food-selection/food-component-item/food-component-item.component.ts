@@ -1,21 +1,21 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
+import { IonRadioGroup, IonRadio, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
 import { ComponentMatch, ComponentServing } from 'src/app/services/nutrition-ambition-api.service';
 import { ServingQuantityInputComponent } from 'src/app/components/food-selection/serving-quantity-input.component/serving-quantity-input.component';
-import { SearchFoodComponent } from '../search-food/search-food.component';
-import { ComponentDisplay, ComponentServingDisplay } from 'src/app/models/food-selection-display';
+import { ComponentServingDisplay } from 'src/app/models/food-selection-display';
 import { ServingIdentifierUtil, NutrientScalingUtil } from '../food-selection.util';
+import { AutocompleteComponent } from '../../autocomplete/autocomplete.component';
 
 @Component({
   selector: 'app-food-component-item',
   templateUrl: './food-component-item.component.html',
   styleUrls: ['./food-component-item.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, IonRadioGroup, IonRadio, IonSelect, IonSelectOption, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, ServingQuantityInputComponent, SearchFoodComponent],
+  imports: [CommonModule, FormsModule, IonRadioGroup, IonRadio, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel, ServingQuantityInputComponent, AutocompleteComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FoodComponentItemComponent implements OnInit, OnChanges {
@@ -50,7 +50,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   isSearching: boolean = false;
   showingMoreOptions: boolean = false;
   loadingMoreOptions: boolean = false;
-  moreOptions: ComponentMatch[] = [];
   loadingInstantOptions: boolean = false;
 
   // Output events for parent coordination
@@ -63,9 +62,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Output() foodSelected = new EventEmitter<{componentId: string, food: ComponentMatch}>();
   @Output() instantOptionsRequested = new EventEmitter<{componentId: string, searchTerm: string}>();
 
-  constructor(
-    private cdr: ChangeDetectorRef
-  ) {
+  constructor() {
     addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal });
   }
 
@@ -121,6 +118,17 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     this.instantOptionsRequested.emit({componentId: this.component.id, searchTerm});
   }
 
+  onFoodSearchChange(searchTerm: string) {
+    // Trigger instant options search when user types in autocomplete
+    this.instantOptionsRequested.emit({componentId: this.component.id, searchTerm});
+  }
+
+  onFoodSelectedFromAutocomplete(selectedItem: ComponentMatch | ComponentMatch[] | null) {
+    if (selectedItem && !Array.isArray(selectedItem)) {
+      this.foodSelected.emit({componentId: this.component.id, food: selectedItem});
+    }
+  }
+
   // Compute all display values when data changes
   private computeDisplayValues(): void {
     this.selectedFood = this.computeSelectedFood();
@@ -155,9 +163,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
         this.servingLabel = `${quantity} ${unit}`;
       } else {
         const baseQuantity = this.selectedServing.baseQuantity || 1;
-        const finalQuantity = this.isSingleComponentFood && this.parentQuantity > 1
-          ? baseQuantity * this.parentQuantity
-          : baseQuantity;
+        // For single-component foods, multiply by parent quantity if needed
         // Calculate display quantity and use proper singular/plural units
         const displayQuantity = baseQuantity * (this.selectedServing.aiRecommendedScaleNumerator || 1) / (this.selectedServing.aiRecommendedScaleDenominator || 1);
         const unitText = displayQuantity === 1 && this.selectedServing.singularUnit
@@ -180,7 +186,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     this.isSearching = this.component?.isSearching || false;
     this.showingMoreOptions = this.component?.showingMoreOptions || false;
     this.loadingMoreOptions = this.component?.loadingMoreOptions || false;
-    this.moreOptions = this.component?.moreOptions || [];
     this.loadingInstantOptions = this.component?.loadingInstantOptions || false;
 
     // Compute additional precomputed values
@@ -399,9 +404,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     }
   }
 
-  onDropdownWillOpen(): void {
-    this.instantOptionsRequested.emit({componentId: this.component.id, searchTerm: ''});
-  }
 
   onMoreOptionSelected(alternative: ComponentMatch): void {
     this.foodSelected.emit({componentId: this.component.id, food: alternative});

@@ -57,9 +57,9 @@
   <div class="drilldown-content">
     <div class="food-item-row">
       <div class="food-name">
+        <!-- TEMPORARILY DISABLED: Original phrase editing section
         <div class="original-phrase-header">
           <div class="phrase-edit-container" [attr.data-component-id]="component.componentId">
-            <!-- Display mode: Bold text with edit icon -->
             <div *ngIf="!isEditing" class="phrase-display-mode">
               <strong class="phrase-text">{{ displayName | titlecase}}</strong>
               <span *ngIf="isInferred" class="inferred-badge">(inferred)</span>
@@ -70,7 +70,6 @@
               </ion-icon>
             </div>
 
-            <!-- Edit mode: Use SearchFoodComponent -->
             <app-search-food
               *ngIf="isEditing"
               [initialPhrase]="originalPhrase"
@@ -80,26 +79,18 @@
             </app-search-food>
           </div>
         </div>
+        END TEMPORARILY DISABLED -->
         <div class="food-select-container">
-          <ion-select
-            interface="popover"
-            [interfaceOptions]="{ cssClass: 'wide-select-popover scrollable-popover' }"
-            [value]="selectedFoodId"
-            (ionChange)="onFoodSelectedFromDropdown($event.detail.value)"
-            (ionFocus)="onDropdownWillOpen()"
+          <app-autocomplete
+            [items]="displayMatches"
+            bindLabel="displayName"
             [disabled]="isReadOnly"
-            id="foodSelect-{{ component.componentId }}">
-            <ion-select-option
-              *ngFor="let match of displayMatches"
-              [value]="match.providerFoodId"
-              [disabled]="match.providerFoodId === 'loading'">
-              <span *ngIf="match.providerFoodId === 'loading'" class="loading-dots">...</span>
-              <span *ngIf="match.providerFoodId !== 'loading'">
-                {{ match.displayName }}
-                <span *ngIf="match.brandName" class="brand-name"> – {{ match.brandName }}</span>
-              </span>
-            </ion-select-option>
-          </ion-select>
+            [loading]="loadingInstantOptions"
+            [searchable]="true"
+            [initialSearchText]="originalPhrase"
+            (selectionChange)="onFoodSelectedFromAutocomplete($event)"
+            (searchChange)="onFoodSearchChange($event)">
+          </app-autocomplete>
         </div>
 
         <!-- More options list -->
@@ -107,7 +98,7 @@
           <div class="more-options-header">More options for "{{ originalPhrase }}":</div>
           <ion-list class="more-options-items">
             <ion-item
-              *ngFor="let alternative of moreOptions"
+              *ngFor="let alternative of displayMatches"
               button
               (click)="onMoreOptionSelected(alternative)">
               <ion-label>

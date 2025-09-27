@@ -121,7 +121,7 @@ export class FoodComponent implements OnInit, OnChanges {
     this.actionRequested.emit({ action: 'foodSelected', payload: event });
   }
 
-  onInstantOptionsRequested(componentId: string): void {
-    this.actionRequested.emit({ action: 'instantOptionsRequested', payload: { componentId } });
+  onInstantOptionsRequested(event: {componentId: string, searchTerm: any}): void {
+    this.actionRequested.emit({ action: 'instantOptionsRequested', payload: event });
   }
 }
