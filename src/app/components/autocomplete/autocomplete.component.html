@@ -1,11 +1,9 @@
 <ng-select
-  [bindLabel]="'cleanDisplayText'"
   [clearable]="false"
   [searchable]="searchable"
   [searchFn]="customSearchFn"
   [loading]="loading"
-  [ngModel]="dummyDisplayItem"
-  [trackByFn]="trackByValue"
+  [ngModel]="internalValue"
   [closeOnSelect]="true"
   (ngModelChange)="onSelectionChange($event)"
   (search)="onSearch($event)"
@@ -14,6 +12,11 @@
   (blur)="onBlur()"
   (open)="onOpen()"
   (close)="onClose()">
+
+  <!-- Custom label template to show currentDisplayText -->
+  <ng-template ng-label-tmp let-item="item">
+    <span>{{ currentDisplayText || placeholder }}</span>
+  </ng-template>
 
   <!-- Custom option template for displaying complex objects -->
   <ng-container *ngFor="let displayItem of displayItems; trackBy: trackByDisplayItem">
@@ -35,7 +38,7 @@
       </span>
 
       <!-- Everything else - use cleanDisplayText -->
-      <span *ngIf="!displayItem.hasDisplayName || !displayItem.hasBrandName" class="option-content">
+      <span *ngIf="(!displayItem.hasDisplayName || !displayItem.hasBrandName) && (!displayItem.hasName || !displayItem.hasBrand)" class="option-content">
         {{ displayItem.cleanDisplayText }}
       </span>
 

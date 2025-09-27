@@ -63,8 +63,11 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
   internalValue: T | T[] | null = null;
   isFocused = false;
 
-  // Dummy object to show as selected to display the search phrase
-  dummyDisplayItem: any = null;
+  // Track the actual selected value separately from what ng-select displays
+  actualSelectedValue: T | T[] | null = null;
+
+  // Flag to prevent search when we're just setting display text
+  private isSettingDisplayText = false;
 
   @ViewChild(NgSelectComponent) ngSelect?: NgSelectComponent;
 
@@ -89,13 +92,12 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    // Initialize internal value
-    this.internalValue = null;
-    this.updateDisplayItems();
-
-    // Initialize display text with initial search text
+    // Initialize display text
     this.currentDisplayText = this.initialSearchText || '';
-    this.updateDummyDisplayItem();
+
+    // Create a dummy object so ng-label-tmp template renders
+    this.internalValue = { isSearchText: true } as any;
+    this.updateDisplayItems();
 
     // Set up debounced search
     this.searchSubscription = this.searchSubject.pipe(
@@ -167,20 +169,21 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
 
   // Event handlers
   onSelectionChange(value: any): void {
-    // Don't process dummy selections
-    if (value === this.dummyDisplayItem || value === '__dummy_display__') {
-      return;
-    }
+    // Store the actual selected value separately
+    this.actualSelectedValue = value;
+    this.onChange(value);
+
+    // Keep internalValue as dummy object so ng-select only shows our template
+    this.internalValue = { isSearchText: true } as any;
 
     // Update the display text to the selected item's name for future searches
     if (value) {
       const selectedItem = this.displayItems.find(item => item.value === value);
       if (selectedItem) {
         this.currentDisplayText = selectedItem.cleanDisplayText;
-        this.updateDummyDisplayItem();
-        // Force immediate update
-        this.cdr.detectChanges();
       }
+    } else {
+      this.currentDisplayText = '';
     }
 
     // Emit the selection for parent to handle
@@ -191,14 +194,22 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
   }
 
   onSearch(searchTerm: { term: string }): void {
+    // Don't search if we're just setting display text
+    if (this.isSettingDisplayText) {
+      return;
+    }
+
     // Push search term through debounce pipeline instead of emitting immediately
     this.searchSubject.next(searchTerm.term);
   }
 
   onClear(): void {
+    this.actualSelectedValue = null;
     this.internalValue = null;
-    this.onChange(this.internalValue);
-    this.selectionChange.emit(this.internalValue);
+    this.currentDisplayText = '';
+    this.onChange(null);
+    this.selectionChange.emit(null);
+    this.clear.emit();
   }
 
   onFocus(): void {
@@ -216,9 +227,8 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
   onOpen(): void {
     this.isDropdownOpen = true;
 
-    // Immediately remove dummy and force change detection
-    this.dummyDisplayItem = null;
-    this.displayItems = this.displayItems.filter(item => item.value !== '__dummy_display__');
+    // Force ng-select to use our dummy object so it doesn't show selected item text
+    this.internalValue = { isSearchText: true } as any;
     this.cdr.detectChanges();
 
     // Pre-populate search input with current display text
@@ -226,24 +236,28 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
       if (this.ngSelect?.searchInput && this.currentDisplayText) {
         const searchInputElement = this.ngSelect.searchInput()?.nativeElement;
         if (searchInputElement) {
+          // Set flag to prevent search during display text setting
+          this.isSettingDisplayText = true;
+
           searchInputElement.value = this.currentDisplayText;
           // Move cursor to end of text
           searchInputElement.setSelectionRange(this.currentDisplayText.length, this.currentDisplayText.length);
+
+          // Also trigger input event to make sure ng-select recognizes the change
+          searchInputElement.dispatchEvent(new Event('input', { bubbles: true }));
+
+          // Reset flag after a short delay
+          setTimeout(() => {
+            this.isSettingDisplayText = false;
+          }, 100);
         }
       }
-    }, 10);
+    }, 50); // Increased timeout to ensure ng-select is fully rendered
     this.open.emit();
   }
 
   onClose(): void {
     this.isDropdownOpen = false;
-
-    // Add dummy back when closing if we have display text
-    // if (this.currentDisplayText) {
-    //   this.updateDummyDisplayItem();
-    //   this.cdr.detectChanges();
-    // }
-
   }
 
   // Public methods
@@ -263,22 +277,13 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
     this.onClear();
   }
 
-  // Helper method for trackBy
-  trackByValue = (_index: number, item: any) => {
-    // Handle displayItem structure
-    if (item && typeof item === 'object' && 'originalItem' in item) {
-      const originalItem = item.originalItem || item.value;
-      if (originalItem && originalItem.id) {
-        return originalItem.id;
-      }
-      return item.cleanDisplayText || item.value;
+  // Helper method for trackBy - should match trackByDisplayItem
+  trackByValue = (index: number, displayItem: DisplayItem) => {
+    const originalItem = displayItem.originalItem || displayItem.value;
+    if (originalItem && originalItem.id) {
+      return originalItem.id;
     }
-
-    // Fallback for direct item tracking
-    if (this.bindValue && item) {
-      return item[this.bindValue];
-    }
-    return item;
+    return displayItem.cleanDisplayText || `item_${index}`;
   };
 
 
@@ -326,50 +331,15 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
       };
     });
 
-    // Only add dummy display item if we have text to show and dropdown is closed
-    this.updateDummyDisplayItem();
   }
 
-  private updateDummyDisplayItem(): void {
-    if (this.currentDisplayText) {
-      this.dummyDisplayItem = {
-        value: '__dummy_display__',
-        disabled: false,
-        hasDisplayName: true,
-        hasBrandName: false,
-        hasName: false,
-        hasBrand: false,
-        displayName: this.currentDisplayText,
-        brandName: '',
-        name: '',
-        brand: '',
-        label: this.currentDisplayText,
-        displayText: this.currentDisplayText,
-        cleanDisplayText: this.currentDisplayText,
-        originalItem: null,
-        showInDropdown: false
-      };
-
-      // Remove any existing dummy item and add new one at beginning
-      // this.displayItems = this.displayItems.filter(item => item.value !== '__dummy_display__');
-      // this.displayItems.unshift(this.dummyDisplayItem);
-    } else {
-      this.dummyDisplayItem = null;
-      // this.displayItems = this.displayItems.filter(item => item.value !== '__dummy_display__');
-    }
-  }
 
   trackByDisplayItem = (index: number, displayItem: DisplayItem) => {
-    // Use the unique id from the original item if it's a ComponentMatchDisplay
     const originalItem = displayItem.originalItem || displayItem.value;
-    let key;
     if (originalItem && originalItem.id) {
-      key = originalItem.id;
-    } else {
-      // Fallback to cleanDisplayText or index
-      key = displayItem.cleanDisplayText || index;
+      return originalItem.id;
     }
-    return key;
+    return displayItem.cleanDisplayText || `item_${index}`;
   };
 
   // Custom search function - disable ng-select's default filtering
