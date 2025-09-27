@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, LogMealToolResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood, HydrateAlternateSelectionRequest } from 'src/app/services/nutrition-ambition-api.service';
 import { Subject } from 'rxjs';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
@@ -177,7 +177,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         this.toggleMoreOptions(event.payload);
         break;
       case 'foodSelected':
-        this.handleFoodSelected(event.payload);
+        this.handleFoodSelected(event.payload.foodIndex, event.payload.componentId, event.payload.food);
         break;
       case 'instantOptionsRequested':
         this.onSearchRequested(event.payload.componentId, event.payload.searchTerm);
@@ -245,6 +245,153 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     if (selectedMatch) {
       // Selection state is now managed in the data structure via isBestMatch flag
       // and selectedServingId property - no need for external caches
+
+      // Set loading state to show dots while we get full nutrition data
+      (component as any).isEditing = true;
+
+      // Trigger change detection to show loading state immediately
+      this.cdr.detectChanges();
+
+      // Call backend to finalize the food selection with full nutrition data
+      this.hydrateAlternateSelection(component.id, selectedMatch);
+    }
+  }
+
+  private async hydrateAlternateSelection(componentId: string, selectedMatch: ComponentMatch): Promise<void> {
+
+    try {
+      // Convert ComponentMatchDisplay to plain object to avoid toJSON issues
+      const plainMatch = {
+        id: selectedMatch.id,
+        provider: selectedMatch.provider,
+        providerFoodId: selectedMatch.providerFoodId,
+        displayName: selectedMatch.displayName,
+        brandName: selectedMatch.brandName,
+        originalText: selectedMatch.originalText,
+        description: selectedMatch.description,
+        cookingMethod: selectedMatch.cookingMethod,
+        size: selectedMatch.size,
+        rank: selectedMatch.rank,
+        selectedServingId: selectedMatch.selectedServingId ? {
+          provider: selectedMatch.selectedServingId.provider,
+          foodType: selectedMatch.selectedServingId.foodType,
+          foodName: selectedMatch.selectedServingId.foodName,
+          variantIndex: selectedMatch.selectedServingId.variantIndex,
+          servingType: selectedMatch.selectedServingId.servingType
+        } : null,
+        totalGrams: selectedMatch.totalGrams,
+        servings: selectedMatch.servings?.map(serving => ({
+          id: serving.id,
+          servingId: serving.servingId ? {
+            provider: serving.servingId.provider,
+            foodType: serving.servingId.foodType,
+            foodName: serving.servingId.foodName,
+            variantIndex: serving.servingId.variantIndex,
+            servingType: serving.servingId.servingType
+          } : null,
+          description: serving.description,
+          baseQuantity: serving.baseQuantity,
+          baseUnit: serving.baseUnit,
+          aiRecommendedScaleNumerator: serving.aiRecommendedScaleNumerator,
+          aiRecommendedScaleDenominator: serving.aiRecommendedScaleDenominator,
+          userConfirmedQuantity: serving.userConfirmedQuantity,
+          singularUnit: serving.singularUnit,
+          pluralUnit: serving.pluralUnit,
+          metricServingAmount: serving.metricServingAmount,
+          metricServingUnit: serving.metricServingUnit,
+          numberOfUnits: serving.numberOfUnits,
+          measurementDescription: serving.measurementDescription,
+          weightGramsPerUnit: serving.weightGramsPerUnit,
+          nutrients: serving.nutrients,
+          apiServingKind: serving.apiServingKind
+        })),
+        effectiveMultiplier: selectedMatch.effectiveMultiplier,
+        effectiveQuantity: selectedMatch.effectiveQuantity,
+        inferred: selectedMatch.inferred,
+        inferredReason: selectedMatch.inferredReason,
+        searchText: selectedMatch.searchText,
+        culinaryRole: selectedMatch.culinaryRole
+      };
+
+      // Create request with plain objects - following established pattern
+      const request = {
+        componentId,
+        selectedMatch: plainMatch,
+        localDateKey: '' // Will be set by service
+      } as HydrateAlternateSelectionRequest;
+
+      console.log('📋 Created request object:', request);
+      console.log('🔄 About to call foodSelectionService.hydrateAlternateSelection...');
+
+      this.foodSelectionService.hydrateAlternateSelection(request).subscribe({
+        next: (response) => {
+          if (response.isSuccess && response.foodOptions && response.foodOptions.length > 0) {
+            // Update the component with the hydrated food data
+            const hydratedFood = response.foodOptions[0];
+            const hydratedComponent = hydratedFood.components?.[0];
+
+            if (hydratedComponent) {
+              // Find the component in our display data and update it
+              const component = this.findComponentById(componentId);
+              if (component) {
+                // Update the component matches with the hydrated data
+                const hydratedMatch = hydratedComponent.matches?.[0];
+                if (hydratedMatch) {
+                  // Find and replace the existing match
+                  const existingMatchIndex = component.matches?.findIndex((m: ComponentMatchDisplay) =>
+                    m.providerFoodId === selectedMatch.providerFoodId);
+                  if (existingMatchIndex !== undefined && existingMatchIndex >= 0 && component.matches) {
+                    // Convert to ComponentMatchDisplay
+                    const transformedServings = hydratedMatch.servings?.map((serving: any) => {
+                      const effectiveQuantity = serving.userConfirmedQuantity ||
+                        ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1));
+                      return new ComponentServingDisplay({
+                        ...serving,
+                        effectiveQuantity: effectiveQuantity,
+                        isSelected: false,
+                        unitText: serving.singularUnit || serving.baseUnit || '',
+                        servingLabel: `${effectiveQuantity} ${serving.singularUnit || serving.baseUnit || ''}`,
+                        userSelectedQuantity: effectiveQuantity,
+                        servingMultiplier: 1
+                      });
+                    }) || [];
+
+                    component.matches[existingMatchIndex] = new ComponentMatchDisplay({
+                      ...hydratedMatch,
+                      servings: transformedServings
+                    });
+                  }
+                }
+              }
+            }
+          }
+
+          // Find the component and clear loading state
+          const component = this.findComponentById(componentId);
+          if (component) {
+            (component as any).isEditing = false;
+            this.cdr.detectChanges();
+          }
+        },
+        error: (error) => {
+          console.error('Error finalizing selected food:', error);
+          // Clear loading state on error
+          const component = this.findComponentById(componentId);
+          if (component) {
+            (component as any).isEditing = false;
+            this.cdr.detectChanges();
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error finalizing selected food:', error);
+      // Clear loading state on error
+      const component = this.findComponentById(componentId);
+      if (component) {
+        (component as any).isEditing = false;
+        this.cdr.detectChanges();
+      }
     }
   }
 
@@ -1475,10 +1622,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  handleFoodSelected(event: {componentId: string, food: ComponentMatch}): void {
-    const foodId = event.food.providerFoodId;
+  handleFoodSelected(foodIndex: number,componentId: string, food: ComponentMatch): void {
+    const foodId = food.providerFoodId;
     if (foodId) {
-      this.onFoodSelected(event.componentId, foodId);
+      this.onFoodSelected(componentId, foodId);
     }
   }
 

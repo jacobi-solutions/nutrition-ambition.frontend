@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { NutritionAmbitionApiService, SubmitServingSelectionRequest, CancelServingSelectionRequest, ChatMessagesResponse, ErrorDto, EditFoodSelectionRequest, SubmitEditServingSelectionRequest, CancelEditSelectionRequest, SearchFoodPhraseRequest, SearchFoodPhraseResponse, HydrateFoodSelectionRequest, HydrateFoodSelectionResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ComponentServing } from '../services/nutrition-ambition-api.service';
+import { NutritionAmbitionApiService, SubmitServingSelectionRequest, CancelServingSelectionRequest, ChatMessagesResponse, ErrorDto, EditFoodSelectionRequest, SubmitEditServingSelectionRequest, CancelEditSelectionRequest, SearchFoodPhraseRequest, SearchFoodPhraseResponse, HydrateFoodSelectionRequest, HydrateFoodSelectionResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ComponentServing, HydrateAlternateSelectionRequest } from '../services/nutrition-ambition-api.service';
 import { DateService } from './date.service';
 import { ComponentServingDisplay } from '../models/food-selection-display';
 
@@ -208,5 +208,20 @@ export class FoodSelectionService {
   }
 
   // Helper method to enhance servings with display properties
-  
+
+  hydrateAlternateSelection(request: HydrateAlternateSelectionRequest): Observable<SearchFoodPhraseResponse> {
+
+    // Ensure localDateKey is set
+    request.localDateKey = this.dateService.getSelectedDate();
+    
+    return this.apiService.hydrateAlternateSelection(request).pipe(
+      catchError(err => {
+        console.error('❌ Error hydrating alternate selection:', err);
+        const errorDto = new ErrorDto();
+        errorDto.errorMessage = 'Failed to hydrate selected food';
+        return of(new SearchFoodPhraseResponse({ isSuccess: false, errors: [errorDto] }));
+      })
+    );
+  }
+
 }

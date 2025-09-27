@@ -24,7 +24,7 @@
       *ngIf="displayItem.showInDropdown"
       [value]="displayItem.value"
       [disabled]="displayItem.disabled"
-      (click)="onOptionClick()">
+>
 
       <!-- If item has displayName and brandName (like food items) -->
       <span *ngIf="displayItem.hasDisplayName && displayItem.hasBrandName" class="option-content">

@@ -117,7 +117,8 @@ export class FoodComponent implements OnInit, OnChanges {
     this.actionRequested.emit({ action: 'moreOptionsRequested', payload: componentId });
   }
 
-  onFoodSelected(event: {componentId: string, food: any}): void {
+  onFoodSelected(event: any): void {
+    event.foodIndex = this.foodIndex;
     this.actionRequested.emit({ action: 'foodSelected', payload: event });
   }
 

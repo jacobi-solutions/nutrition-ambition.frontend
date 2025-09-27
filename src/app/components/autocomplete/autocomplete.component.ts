@@ -181,13 +181,6 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
 
   // Event handlers
   onSelectionChange(value: any): void {
-    // Only process selections that are user-initiated (clicked)
-    if (!this.isUserInitiatedSelection) {
-      // This is an auto-selection from ng-select, ignore it
-      this.internalValue = { isSearchText: true } as any;
-      return;
-    }
-
     // Mark that user has made an actual selection
     this.hasUserMadeSelection = true;
 
@@ -210,9 +203,6 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
 
     // Emit the selection for parent to handle
     this.selectionChange.emit(value);
-
-    // Reset the flag
-    this.isUserInitiatedSelection = false;
 
     // Close the dropdown after selection
     this.closeDropdown();
