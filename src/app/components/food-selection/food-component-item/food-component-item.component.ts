@@ -36,6 +36,9 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   computedIsNewAddition: boolean = false;
   macroSummary: string = '';
 
+  // Flag to track if user explicitly selected something vs just searching
+  private isExplicitSelection = false;
+
   // Additional precomputed values
   originalPhrase: string = '';
   selectedFoodId: string = '';
@@ -119,19 +122,26 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   }
 
   onFoodSearchChange(searchTerm: string) {
+    // Mark this as just a search, not an explicit selection
+    this.isExplicitSelection = false;
     // Trigger instant options search when user types in autocomplete
     this.instantOptionsRequested.emit({componentId: this.component.id, searchTerm});
   }
 
   onFoodSelectedFromAutocomplete(selectedItem: ComponentMatch | ComponentMatch[] | null) {
     if (selectedItem && !Array.isArray(selectedItem)) {
+      // Mark this as an explicit user selection
+      this.isExplicitSelection = true;
       this.foodSelected.emit({componentId: this.component.id, food: selectedItem});
     }
   }
 
   // Compute all display values when data changes
   private computeDisplayValues(): void {
-    this.selectedFood = this.computeSelectedFood();
+    // Only update selectedFood if user explicitly selected, not during search
+    if (this.isExplicitSelection || !this.selectedFood) {
+      this.selectedFood = this.computeSelectedFood();
+    }
     this.selectedServing = this.computeSelectedServing();
 
     // Compute display name
