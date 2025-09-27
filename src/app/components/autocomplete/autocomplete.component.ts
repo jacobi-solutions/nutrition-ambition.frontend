@@ -69,6 +69,12 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
   // Flag to prevent search when we're just setting display text
   private isSettingDisplayText = false;
 
+  // Store previous state to restore when user clicks away without selecting
+  private previousDisplayText = '';
+  private previousSearchResults: T[] = [];
+  private hasUserMadeSelection = false;
+  private shouldShowPreviousResults = false;
+
   @ViewChild(NgSelectComponent) ngSelect?: NgSelectComponent;
 
   // Track the current display text for inline editing
@@ -79,6 +85,11 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
   // Computed properties for template
   ngModelOptions = { standalone: true };
   displayItems: DisplayItem[] = [];
+
+  // Get the items to display - either current items or previous items if restoring
+  get itemsToDisplay(): T[] {
+    return this.shouldShowPreviousResults ? this.previousSearchResults : this.items;
+  }
 
   // Debouncing for search
   private searchSubject = new Subject<string>();
@@ -169,6 +180,9 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
 
   // Event handlers
   onSelectionChange(value: any): void {
+    // Mark that user has made an actual selection
+    this.hasUserMadeSelection = true;
+
     // Store the actual selected value separately
     this.actualSelectedValue = value;
     this.onChange(value);
@@ -199,6 +213,12 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
       return;
     }
 
+    // Update current display text to match what user is typing
+    this.currentDisplayText = searchTerm.term;
+
+    // Force ng-select to keep our dummy object selected (not auto-select first result)
+    this.internalValue = { isSearchText: true } as any;
+
     // Push search term through debounce pipeline instead of emitting immediately
     this.searchSubject.next(searchTerm.term);
   }
@@ -226,6 +246,12 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
 
   onOpen(): void {
     this.isDropdownOpen = true;
+
+    // Save current state before user starts editing
+    this.previousDisplayText = this.currentDisplayText;
+    this.previousSearchResults = [...this.items];
+    this.hasUserMadeSelection = false;
+    this.shouldShowPreviousResults = false; // Show current results while dropdown is open
 
     // Force ng-select to use our dummy object so it doesn't show selected item text
     this.internalValue = { isSearchText: true } as any;
@@ -258,6 +284,15 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
 
   onClose(): void {
     this.isDropdownOpen = false;
+
+    // If user didn't select anything, restore previous state
+    if (!this.hasUserMadeSelection) {
+      this.currentDisplayText = this.previousDisplayText;
+      this.shouldShowPreviousResults = true;
+      this.updateDisplayItems(); // Refresh display with previous results
+    } else {
+      this.shouldShowPreviousResults = false;
+    }
   }
 
   // Public methods
@@ -289,8 +324,8 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
 
 
   private updateDisplayItems(): void {
-    // Start with regular items
-    this.displayItems = this.items.map(item => {
+    // Start with regular items (use computed property)
+    this.displayItems = this.itemsToDisplay.map(item => {
       const itemObj = item && typeof item === 'object' ? item as any : {};
 
       // Compute plain display text for the input field (clean, readable text)
