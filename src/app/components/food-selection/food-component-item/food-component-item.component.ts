@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonRadioGroup, IonRadio, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
@@ -22,6 +22,8 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Input() component: any; // Component data from parent
   @Input() componentIndex: number = 0;
   @Input() isReadOnly: boolean = false;
+
+  @ViewChild(AutocompleteComponent) autocomplete!: AutocompleteComponent;
   @Input() isEditMode: boolean = false;
   @Input() isSingleComponentFood: boolean = false;
   @Input() parentQuantity: number = 1;
@@ -54,6 +56,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   showingMoreOptions: boolean = false;
   loadingMoreOptions: boolean = false;
   loadingInstantOptions: boolean = false;
+  isHydratingSelection: boolean = false;
 
   // Output events for parent coordination
   @Output() toggleExpansion = new EventEmitter<string>();
@@ -132,6 +135,11 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     if (selectedItem && !Array.isArray(selectedItem)) {
       // Mark this as an explicit user selection
       this.isExplicitSelection = true;
+
+      // Close the dropdown immediately using established pattern
+      this.autocomplete.closeDropdown();
+      
+
       this.foodSelected.emit({componentId: this.component.id, food: selectedItem});
     }
   }
@@ -197,6 +205,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     this.showingMoreOptions = this.component?.showingMoreOptions || false;
     this.loadingMoreOptions = this.component?.loadingMoreOptions || false;
     this.loadingInstantOptions = this.component?.loadingInstantOptions || false;
+    this.isHydratingSelection = this.component?.isHydratingAlternateSelection || false;
 
     // Compute additional precomputed values
     this.originalPhrase = this.computeOriginalPhrase();

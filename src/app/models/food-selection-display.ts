@@ -15,6 +15,7 @@ export class ComponentDisplay extends Component {
   showingMoreOptions?: boolean;
   loadingMoreOptions?: boolean;
   loadingInstantOptions?: boolean;
+  isHydratingAlternateSelection?: boolean;
   moreOptions?: ComponentMatch[] | undefined;
 
   // Enhanced matches with display flags
@@ -29,6 +30,7 @@ export class ComponentDisplay extends Component {
     this.showingMoreOptions = data.showingMoreOptions;
     this.loadingMoreOptions = data.loadingMoreOptions;
     this.loadingInstantOptions = data.loadingInstantOptions;
+    this.isHydratingAlternateSelection = data.isHydratingAlternateSelection;
     this.moreOptions = data.moreOptions;
     this.matches = data.matches;
     this.isNewAddition = data.isNewAddition;
@@ -44,6 +46,7 @@ export class ComponentDisplay extends Component {
       this.showingMoreOptions = _data["showingMoreOptions"];
       this.loadingMoreOptions = _data["loadingMoreOptions"];
       this.loadingInstantOptions = _data["loadingInstantOptions"];
+      this.isHydratingAlternateSelection = _data["isHydratingAlternateSelection"];
       this.moreOptions = _data["moreOptions"];
       this.isNewAddition = _data["isNewAddition"];
       if (Array.isArray(_data["matches"])) {
@@ -63,6 +66,7 @@ export class ComponentDisplay extends Component {
     data["showingMoreOptions"] = this.showingMoreOptions;
     data["loadingMoreOptions"] = this.loadingMoreOptions;
     data["loadingInstantOptions"] = this.loadingInstantOptions;
+    data["isHydratingAlternateSelection"] = this.isHydratingAlternateSelection;
     data["moreOptions"] = this.moreOptions;
     data["isNewAddition"] = this.isNewAddition;
     if (Array.isArray(this.matches)) {

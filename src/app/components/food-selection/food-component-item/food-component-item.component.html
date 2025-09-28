@@ -88,6 +88,7 @@
             [loading]="loadingInstantOptions"
             [searchable]="true"
             [initialSearchText]="originalPhrase"
+            [ngModel]="selectedFood"
             (selectionChange)="onFoodSelectedFromAutocomplete($event)"
             (searchChange)="onFoodSearchChange($event)">
           </app-autocomplete>
@@ -111,7 +112,18 @@
       </div>
 
       <div class="serving-options-inline">
+        <!-- Show loading dots when hydrating alternate selection -->
+        <div *ngIf="component.isHydratingAlternateSelection" class="hydrating-servings-overlay">
+          <div class="loading-text">Loading nutrition details</div>
+          <div class="typing-indicator-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+        </div>
+
         <ion-radio-group
+          *ngIf="!component.isHydratingAlternateSelection"
           [value]="selectedServingId"
           (ionChange)="onServingSelectedFromRadio($event.detail.value)">
           <ion-radio

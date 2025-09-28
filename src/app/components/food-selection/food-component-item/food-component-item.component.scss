@@ -316,6 +316,29 @@
       }
 
       .serving-options-inline {
+        position: relative;
+
+        .hydrating-servings-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(255, 255, 255, 0.95);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          z-index: 10;
+          min-height: 60px;
+
+          .loading-text {
+            font-size: 0.75rem;
+            color: var(--ion-color-medium);
+            margin-bottom: 8px;
+          }
+        }
+
         .serving-row-content {
           display: flex;
           align-items: center;
