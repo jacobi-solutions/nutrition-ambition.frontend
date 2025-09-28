@@ -341,24 +341,58 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         if (responseFood.id === 'hydrated-component' && responseFood.components?.[0]) {
           // This is a component update - merge the hydrated component into existing food
           const hydratedComponent = responseFood.components[0];
+          const hydratedMatch = hydratedComponent.matches?.[0];
           const currentFood = this.computedFoods[foodIndex];
+          const currentComponent = currentFood.components?.find(c => c.id === componentId);
 
-          // Update only the specific component while preserving the rest of the food
-          const updatedComponents = currentFood.components?.map(comp =>
-            comp.id === componentId ? new ComponentDisplay(hydratedComponent) : comp
-          ) || [];
+          if (currentComponent && hydratedMatch) {
+            // Preserve all existing matches and update only the selected one with hydrated data
+            const updatedMatches = currentComponent.matches?.map(match => {
+              if (match.providerFoodId === hydratedMatch.providerFoodId) {
+                // Replace with hydrated version while preserving original search context
+                return new ComponentMatchDisplay({
+                  ...hydratedMatch,
+                  searchText: match.searchText || match.originalText,
+                  originalText: match.originalText || hydratedMatch.originalText
+                });
+              }
+              return match;
+            }) || [];
 
-          const updatedFood = new FoodDisplay({
-            ...currentFood,
-            components: updatedComponents
-          });
+            // Move the selected (hydrated) item to the top of the list for visibility
+            const selectedMatchIndex = updatedMatches.findIndex(match =>
+              match.providerFoodId === hydratedMatch.providerFoodId
+            );
+            if (selectedMatchIndex > 0) {
+              const selectedMatch = updatedMatches.splice(selectedMatchIndex, 1)[0];
+              updatedMatches.unshift(selectedMatch);
+            }
 
-          // Replace the food in the array
-          this.computedFoods = [
-            ...this.computedFoods.slice(0, foodIndex),
-            updatedFood,
-            ...this.computedFoods.slice(foodIndex + 1)
-          ];
+            // Create updated component with preserved matches and updated selection
+            const updatedComponent = new ComponentDisplay({
+              ...currentComponent,
+              matches: updatedMatches,
+              selectedComponentId: hydratedMatch.providerFoodId || currentComponent.selectedComponentId,
+              isSearching: false // Clear loading state
+            });
+
+            // Update only the specific component while preserving the rest of the food
+            const updatedComponents = currentFood.components?.map(comp =>
+              comp.id === componentId ? updatedComponent : comp
+            ) || [];
+
+            const updatedFood = new FoodDisplay({
+              ...currentFood,
+              components: updatedComponents
+            });
+
+            // Replace the food in the array
+            this.computedFoods = [
+              ...this.computedFoods.slice(0, foodIndex),
+              updatedFood,
+              ...this.computedFoods.slice(foodIndex + 1)
+            ];
+          }
         } else {
           // This is a full food replacement (like onFoodAdded pattern)
           const newFood = new FoodDisplay(responseFood);
