@@ -87,7 +87,7 @@
             [disabled]="isReadOnly"
             [loading]="loadingInstantOptions"
             [searchable]="true"
-            [initialSearchText]="originalPhrase"
+            [initialSearchText]="displayName"
             [ngModel]="selectedFood"
             (selectionChange)="onFoodSelectedFromAutocomplete($event)"
             (searchChange)="onFoodSearchChange($event)">
@@ -113,8 +113,7 @@
 
       <div class="serving-options-inline">
         <!-- Show loading dots when hydrating alternate selection -->
-        <div *ngIf="component.isHydratingAlternateSelection" class="hydrating-servings-overlay">
-          <div class="loading-text">Loading nutrition details</div>
+        <div *ngIf="component.isHydratingAlternateSelection">
           <div class="typing-indicator-dots">
             <div class="dot"></div>
             <div class="dot"></div>

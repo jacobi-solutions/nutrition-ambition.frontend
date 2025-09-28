@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonRadioGroup, IonRadio, IonIcon, IonGrid, IonRow, IonCol, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
@@ -47,6 +47,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   selectedServingId: string = '';
   displayMatches: ComponentMatch[] = [];
   servingOptions: ComponentServingDisplay[] = [];
+  moreOptions: ComponentMatch[] = [];
 
   // Precomputed ComponentDisplay flags
   isExpanded: boolean = false;
@@ -68,7 +69,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   @Output() foodSelected = new EventEmitter<{componentId: string, food: ComponentMatch}>();
   @Output() instantOptionsRequested = new EventEmitter<{componentId: string, searchTerm: string}>();
 
-  constructor() {
+  constructor(private cdr: ChangeDetectorRef) {
     addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal });
   }
 
@@ -136,11 +137,20 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       // Mark this as an explicit user selection
       this.isExplicitSelection = true;
 
-      // Close the dropdown immediately using established pattern
-      this.autocomplete.closeDropdown();
-      
+      // Immediately update displayName to ensure autocomplete shows selected food name
+      this.displayName = selectedItem.displayName || '';
+
+      // Trigger change detection so the [initialSearchText]="displayName" binding updates
+      this.cdr.detectChanges();
 
       this.foodSelected.emit({componentId: this.component.id, food: selectedItem});
+
+      // Force update display values to refresh autocomplete display
+      // This is needed because the parent component updates selectedFood but
+      // the autocomplete doesn't immediately reflect the change
+      setTimeout(() => {
+        this.computeDisplayValues();
+      }, 0);
     }
   }
 
@@ -213,6 +223,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     this.selectedServingId = this.computeSelectedServingId();
     this.displayMatches = this.computeDisplayMatches();
     this.servingOptions = this.computeServingOptions();
+    this.moreOptions = this.component?.moreOptions || [];
   }
 
   private computeOriginalPhrase(): string {

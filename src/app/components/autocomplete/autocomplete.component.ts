@@ -130,15 +130,16 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
     if (changes['items']) {
       this.updateDisplayItems();
     }
-    if (changes['items'] && this.internalValue !== null) {
-      // Slight delay to ensure items are populated before updating display
-      setTimeout(() => this.cdr.detectChanges(), 0);
-    }
     if (changes['initialSearchText']) {
       // Update display text when initial search text changes
       this.currentDisplayText = this.initialSearchText || '';
       // this.updateDummyDisplayItem();
     }
+    if ((changes['items'] || changes['initialSearchText']) && this.internalValue !== null) {
+      // Slight delay to ensure items are populated before updating display
+      setTimeout(() => this.cdr.detectChanges(), 0);
+    }
+    this.onBlur();
   }
 
   ngAfterViewInit(): void {
@@ -188,17 +189,24 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
     this.actualSelectedValue = value;
     this.onChange(value);
 
-    // Keep internalValue as dummy object so ng-select only shows our template
-    this.internalValue = { isSearchText: true } as any;
-
     // Update the display text to the selected item's name for future searches
     if (value) {
-      const selectedItem = this.displayItems.find(item => item.value === value);
+      // Compare by providerFoodId instead of object reference to handle object reference mismatches
+      const selectedItem = this.displayItems.find(item => {
+        if (item.value?.providerFoodId && value?.providerFoodId) {
+          return item.value.providerFoodId === value.providerFoodId;
+        }
+        // Fallback to reference comparison for non-ComponentMatch items
+        return item.value === value;
+      });
       if (selectedItem) {
         this.currentDisplayText = selectedItem.cleanDisplayText;
+        // Set internalValue to the actual selectedItem so ng-label-tmp template shows
+        this.internalValue = selectedItem.value;
       }
     } else {
       this.currentDisplayText = '';
+      this.internalValue = null;
     }
 
     // Emit the selection for parent to handle

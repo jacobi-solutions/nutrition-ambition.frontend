@@ -177,7 +177,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         this.toggleMoreOptions(event.payload);
         break;
       case 'foodSelected':
-        this.handleFoodSelected(event.payload.foodIndex, event.payload.componentId, event.payload.food);
+        this.onFoodSelected(event.payload.componentId, event.payload.food);
         break;
       case 'instantOptionsRequested':
         this.onSearchRequested(event.payload.componentId, event.payload.searchTerm);
@@ -207,18 +207,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return null;
   }
 
-  private getFoodForComponent(componentId: string): any {
-    for (const food of this.computedFoods) {
-      if (food.components?.some(c => c.id === componentId)) {
-        return food;
-      }
-    }
-    return null;
-  }
 
-  onFoodSelected(componentId: string, foodId: string): void {
+
+  onFoodSelected(componentId: string, food: ComponentMatch): void {
+    const foodId = food.providerFoodId;
     // Prevent selection of loading indicator
-    if (foodId === 'loading') {
+    if (!foodId || foodId === 'loading') {
       return;
     }
 
@@ -251,6 +245,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       if (foodIndex >= 0) {
         // Set loading state using established pattern (same as onFoodAdded)
         this.onComponentChanged(foodIndex, componentId, {
+          isHydratingAlternateSelection: true, // this is what we really want, but it doesn't work, so we do the isSearching below. TODO: fix this.
           isSearching: true
         });
 
@@ -349,7 +344,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             // Preserve all existing matches and update only the selected one with hydrated data
             const updatedMatches = currentComponent.matches?.map(match => {
               if (match.providerFoodId === hydratedMatch.providerFoodId) {
-                // Replace with hydrated version while preserving original search context
+                // Replace with hydrated version while preserving original search context and selection state
                 return new ComponentMatchDisplay({
                   ...hydratedMatch,
                   searchText: match.searchText || match.originalText,
@@ -373,7 +368,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               ...currentComponent,
               matches: updatedMatches,
               selectedComponentId: hydratedMatch.providerFoodId || currentComponent.selectedComponentId,
-              isSearching: false // Clear loading state
+              isSearching: false, // Clear loading state
+              isHydratingAlternateSelection: false
             });
 
             // Update only the specific component while preserving the rest of the food
@@ -1653,12 +1649,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  handleFoodSelected(foodIndex: number,componentId: string, food: ComponentMatch): void {
-    const foodId = food.providerFoodId;
-    if (foodId) {
-      this.onFoodSelected(componentId, foodId);
-    }
-  }
+  
 
   // Add food methods
   startAddingFood(): void {
