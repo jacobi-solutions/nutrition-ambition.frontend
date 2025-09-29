@@ -35,7 +35,7 @@ export class NutrientScalingUtil {
    */
   static getScaledNutrients(serving: ComponentServingDisplay, selectedFood: ComponentMatch | null): { [key: string]: number } | null {
     // Get the effective quantity from the ComponentServingDisplay object
-    const currentQuantity = serving.effectiveQuantity || serving.baseQuantity || 1;
+    const currentQuantity = serving.effectiveQuantity || ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1)) || 1;
 
     // All servings now have nutrient data from backend
     if (serving.nutrients && this.hasNutrientData(serving.nutrients)) {

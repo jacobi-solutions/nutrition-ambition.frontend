@@ -152,11 +152,6 @@ export interface INutritionAmbitionApiService {
      */
     getInstantAlternatives(body: GetInstantAlternativesRequest | undefined): Observable<GetInstantAlternativesResponse>;
     /**
-     * @param body (optional) 
-     * @return Success
-     */
-    hydrateFoodSelection(body: HydrateFoodSelectionRequest | undefined): Observable<HydrateFoodSelectionResponse>;
-    /**
      * @return Success
      */
     ip(): Observable<void>;
@@ -1683,62 +1678,6 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<GetInstantAlternativesResponse>(null as any);
-    }
-
-    /**
-     * @param body (optional) 
-     * @return Success
-     */
-    hydrateFoodSelection(body: HydrateFoodSelectionRequest | undefined): Observable<HydrateFoodSelectionResponse> {
-        let url_ = this.baseUrl + "/api/FoodSelection/HydrateFoodSelection";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "text/plain"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processHydrateFoodSelection(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processHydrateFoodSelection(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<HydrateFoodSelectionResponse>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<HydrateFoodSelectionResponse>;
-        }));
-    }
-
-    protected processHydrateFoodSelection(response: HttpResponseBase): Observable<HydrateFoodSelectionResponse> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = HydrateFoodSelectionResponse.fromJS(resultData200);
-            return _observableOf(result200);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf<HydrateFoodSelectionResponse>(null as any);
     }
 
     /**
@@ -4609,6 +4548,8 @@ export class HydrateAlternateSelectionRequest implements IHydrateAlternateSelect
     componentId!: string;
     selectedMatch!: ComponentMatch;
     localDateKey!: string;
+    messageId?: string | undefined;
+    foodEntryId?: string | undefined;
 
     constructor(data?: IHydrateAlternateSelectionRequest) {
         if (data) {
@@ -4627,6 +4568,8 @@ export class HydrateAlternateSelectionRequest implements IHydrateAlternateSelect
             this.componentId = _data["componentId"];
             this.selectedMatch = _data["selectedMatch"] ? ComponentMatch.fromJS(_data["selectedMatch"]) : new ComponentMatch();
             this.localDateKey = _data["localDateKey"];
+            this.messageId = _data["messageId"];
+            this.foodEntryId = _data["foodEntryId"];
         }
     }
 
@@ -4642,6 +4585,8 @@ export class HydrateAlternateSelectionRequest implements IHydrateAlternateSelect
         data["componentId"] = this.componentId;
         data["selectedMatch"] = this.selectedMatch ? this.selectedMatch.toJSON() : <any>undefined;
         data["localDateKey"] = this.localDateKey;
+        data["messageId"] = this.messageId;
+        data["foodEntryId"] = this.foodEntryId;
         return data;
     }
 }
@@ -4650,118 +4595,8 @@ export interface IHydrateAlternateSelectionRequest {
     componentId: string;
     selectedMatch: ComponentMatch;
     localDateKey: string;
-}
-
-export class HydrateFoodSelectionRequest implements IHydrateFoodSelectionRequest {
     messageId?: string | undefined;
-    phrase?: string | undefined;
-    providerFoodId?: string | undefined;
-    servingId?: ServingIdentifier;
-
-    constructor(data?: IHydrateFoodSelectionRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.messageId = _data["messageId"];
-            this.phrase = _data["phrase"];
-            this.providerFoodId = _data["providerFoodId"];
-            this.servingId = _data["servingId"] ? ServingIdentifier.fromJS(_data["servingId"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): HydrateFoodSelectionRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new HydrateFoodSelectionRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["messageId"] = this.messageId;
-        data["phrase"] = this.phrase;
-        data["providerFoodId"] = this.providerFoodId;
-        data["servingId"] = this.servingId ? this.servingId.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IHydrateFoodSelectionRequest {
-    messageId?: string | undefined;
-    phrase?: string | undefined;
-    providerFoodId?: string | undefined;
-    servingId?: ServingIdentifier;
-}
-
-export class HydrateFoodSelectionResponse implements IHydrateFoodSelectionResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    updatedMessage?: ChatMessage;
-
-    constructor(data?: IHydrateFoodSelectionResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(ErrorDto.fromJS(item));
-            }
-            this.isSuccess = _data["isSuccess"];
-            this.correlationId = _data["correlationId"];
-            this.stackTrace = _data["stackTrace"];
-            this.accountId = _data["accountId"];
-            this.updatedMessage = _data["updatedMessage"] ? ChatMessage.fromJS(_data["updatedMessage"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): HydrateFoodSelectionResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new HydrateFoodSelectionResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item.toJSON());
-        }
-        data["isSuccess"] = this.isSuccess;
-        data["correlationId"] = this.correlationId;
-        data["stackTrace"] = this.stackTrace;
-        data["accountId"] = this.accountId;
-        data["updatedMessage"] = this.updatedMessage ? this.updatedMessage.toJSON() : <any>undefined;
-        return data;
-    }
-}
-
-export interface IHydrateFoodSelectionResponse {
-    errors?: ErrorDto[] | undefined;
-    isSuccess?: boolean;
-    correlationId?: string | undefined;
-    stackTrace?: string | undefined;
-    accountId?: string | undefined;
-    updatedMessage?: ChatMessage;
+    foodEntryId?: string | undefined;
 }
 
 export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {

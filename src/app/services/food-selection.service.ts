@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { NutritionAmbitionApiService, SubmitServingSelectionRequest, CancelServingSelectionRequest, ChatMessagesResponse, ErrorDto, EditFoodSelectionRequest, SubmitEditServingSelectionRequest, CancelEditSelectionRequest, SearchFoodPhraseRequest, SearchFoodPhraseResponse, HydrateFoodSelectionRequest, HydrateFoodSelectionResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ComponentServing, HydrateAlternateSelectionRequest } from '../services/nutrition-ambition-api.service';
+import { NutritionAmbitionApiService, SubmitServingSelectionRequest, CancelServingSelectionRequest, ChatMessagesResponse, ErrorDto, EditFoodSelectionRequest, SubmitEditServingSelectionRequest, CancelEditSelectionRequest, SearchFoodPhraseRequest, SearchFoodPhraseResponse, GetInstantAlternativesRequest, GetInstantAlternativesResponse, HydrateAlternateSelectionRequest } from '../services/nutrition-ambition-api.service';
 import { DateService } from './date.service';
 import { ComponentServingDisplay } from '../models/food-selection-display';
 
@@ -120,16 +120,6 @@ export class FoodSelectionService {
     );
 
     return response;
-  }
-
-  hydrateFoodSelection(request: HydrateFoodSelectionRequest): Observable<HydrateFoodSelectionResponse> {
-    return this.apiService.hydrateFoodSelection(request).pipe(
-      catchError(err => {
-        const errorDto = new ErrorDto();
-        errorDto.errorMessage = 'Hydration failed';
-        return of(new HydrateFoodSelectionResponse({ isSuccess: false, errors: [errorDto] }));
-      })
-    );
   }
 
   getInstantAlternatives(request: GetInstantAlternativesRequest): Observable<GetInstantAlternativesResponse> {

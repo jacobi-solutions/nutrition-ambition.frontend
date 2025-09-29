@@ -323,6 +323,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const request = {
         componentId,
         selectedMatch: plainMatch,
+        messageId: this.message?.id, // Provide message context for parent food lookup
+        foodEntryId: undefined, // TODO: Set this if we're in edit mode
         localDateKey: '' // Will be set by service
       } as HydrateAlternateSelectionRequest;
 
@@ -348,7 +350,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                 return new ComponentMatchDisplay({
                   ...hydratedMatch,
                   searchText: match.searchText || match.originalText,
-                  originalText: match.originalText || hydratedMatch.originalText
+                  originalText: match.originalText || hydratedMatch.originalText,
+                  servings: hydratedMatch.servings?.map(s => new ComponentServingDisplay(s))
                 });
               }
               return match;
@@ -756,14 +759,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           const transformedServings = match.servings?.map((serving: any) => {
             // Convert to ComponentServingDisplay with initial effectiveQuantity
             // Use UserConfirmedQuantity if available, otherwise calculate from AI fractions
-            const effectiveQuantity = serving.userConfirmedQuantity ||
-              ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1));
+            const effectiveQuantity = Math.round((serving.userConfirmedQuantity ||
+              ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1))) * 100) / 100;
             return new ComponentServingDisplay({
               ...serving,
               effectiveQuantity: effectiveQuantity,
               isSelected: false,
               unitText: serving.singularUnit || serving.baseUnit || '',
-              servingLabel: `${effectiveQuantity} ${serving.singularUnit || serving.baseUnit || ''}`,
+              servingLabel: `${Math.round(effectiveQuantity * 100) / 100} ${serving.singularUnit || serving.baseUnit || ''}`,
               userSelectedQuantity: effectiveQuantity,
               servingMultiplier: 1
             });
@@ -1432,14 +1435,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         // Transform alternatives to match the expected format (same as computeAllFoods)
         const transformedMatches = response.alternatives.map((match: any) => {
           const transformedServings = match.servings?.map((serving: any) => {
-            const effectiveQuantity = serving.userConfirmedQuantity ||
-              ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1));
+            const effectiveQuantity = Math.round((serving.userConfirmedQuantity ||
+              ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1))) * 100) / 100;
             return new ComponentServingDisplay({
               ...serving,
               effectiveQuantity: effectiveQuantity,
               isSelected: false,
               unitText: serving.singularUnit || serving.baseUnit || '',
-              servingLabel: `${effectiveQuantity} ${serving.singularUnit || serving.baseUnit || ''}`,
+              servingLabel: `${Math.round(effectiveQuantity * 100) / 100} ${serving.singularUnit || serving.baseUnit || ''}`,
               userSelectedQuantity: effectiveQuantity,
               servingMultiplier: 1
             });

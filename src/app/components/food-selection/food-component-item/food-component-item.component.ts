@@ -188,7 +188,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       }
 
       if (quantity && unit) {
-        this.servingLabel = `${quantity} ${unit}`;
+        this.servingLabel = `${Math.round(quantity * 100) / 100} ${unit}`;
       } else {
         const baseQuantity = this.selectedServing.baseQuantity || 1;
         // For single-component foods, multiply by parent quantity if needed
@@ -197,7 +197,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
         const unitText = displayQuantity === 1 && this.selectedServing.singularUnit
           ? this.selectedServing.singularUnit
           : (this.selectedServing.pluralUnit || this.selectedServing.baseUnit || '');
-        this.servingLabel = `${displayQuantity} ${unitText}`;
+        this.servingLabel = `${Math.round(displayQuantity * 100) / 100} ${unitText}`;
       }
     } else {
       this.servingLabel = '';
@@ -265,7 +265,8 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     // Create ComponentServingDisplay objects with proper UI state
     return servings.map(serving => {
       const servingId = serving.id || '';
-      const effectiveQuantity = (serving as any).effectiveQuantity || 1;
+      const effectiveQuantity = Math.round(((serving as any).effectiveQuantity ||
+        ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1))) * 100) / 100;
       const isSelected = servingId === selectedServingId;
 
       // Determine unit text for current quantity
@@ -284,7 +285,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
         effectiveQuantity: effectiveQuantity,
         isSelected: isSelected,
         unitText: unitText,
-        servingLabel: `${effectiveQuantity} ${unitText}`,
+        servingLabel: `${Math.round(effectiveQuantity * 100) / 100} ${unitText}`,
         userSelectedQuantity: effectiveQuantity,
         servingMultiplier: 1
       });
@@ -333,7 +334,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     if (!serving) return 1;
 
     // ComponentServingDisplay always has effectiveQuantity
-    const effectiveQuantity = serving.effectiveQuantity || serving.baseQuantity || 1;
+    const effectiveQuantity = serving.effectiveQuantity || ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1)) || 1;
     return Math.round(effectiveQuantity * 100) / 100; // Round to 2 decimal places
   }
 
