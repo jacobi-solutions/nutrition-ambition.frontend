@@ -2650,6 +2650,8 @@ export class ComponentMatch implements IComponentMatch {
     inferredReason?: string | undefined;
     searchText?: string | undefined;
     culinaryRole?: string | undefined;
+    photoThumb?: string | undefined;
+    photoHighRes?: string | undefined;
 
     constructor(data?: IComponentMatch) {
         if (data) {
@@ -2685,6 +2687,8 @@ export class ComponentMatch implements IComponentMatch {
             this.inferredReason = _data["inferredReason"];
             this.searchText = _data["searchText"];
             this.culinaryRole = _data["culinaryRole"];
+            this.photoThumb = _data["photoThumb"];
+            this.photoHighRes = _data["photoHighRes"];
         }
     }
 
@@ -2720,6 +2724,8 @@ export class ComponentMatch implements IComponentMatch {
         data["inferredReason"] = this.inferredReason;
         data["searchText"] = this.searchText;
         data["culinaryRole"] = this.culinaryRole;
+        data["photoThumb"] = this.photoThumb;
+        data["photoHighRes"] = this.photoHighRes;
         return data;
     }
 }
@@ -2744,6 +2750,8 @@ export interface IComponentMatch {
     inferredReason?: string | undefined;
     searchText?: string | undefined;
     culinaryRole?: string | undefined;
+    photoThumb?: string | undefined;
+    photoHighRes?: string | undefined;
 }
 
 export class ComponentServing implements IComponentServing {
@@ -5048,7 +5056,7 @@ export class ParsedComponent implements IParsedComponent {
     id?: string | undefined;
     name?: string | undefined;
     brand?: string | undefined;
-    quantity?: number;
+    quantity?: number | undefined;
     singularUnit?: string | undefined;
     pluralUnit?: string | undefined;
     description?: string | undefined;
@@ -5122,7 +5130,7 @@ export interface IParsedComponent {
     id?: string | undefined;
     name?: string | undefined;
     brand?: string | undefined;
-    quantity?: number;
+    quantity?: number | undefined;
     singularUnit?: string | undefined;
     pluralUnit?: string | undefined;
     description?: string | undefined;
@@ -5183,7 +5191,7 @@ export interface IParsedFoodAttributes {
 export class ParsedFoodItem implements IParsedFoodItem {
     name?: string | undefined;
     brand?: string | undefined;
-    quantity?: number;
+    quantity?: number | undefined;
     singularUnit?: string | undefined;
     pluralUnit?: string | undefined;
     description?: string | undefined;
@@ -5253,7 +5261,7 @@ export class ParsedFoodItem implements IParsedFoodItem {
 export interface IParsedFoodItem {
     name?: string | undefined;
     brand?: string | undefined;
-    quantity?: number;
+    quantity?: number | undefined;
     singularUnit?: string | undefined;
     pluralUnit?: string | undefined;
     description?: string | undefined;

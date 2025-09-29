@@ -26,22 +26,43 @@
       [disabled]="displayItem.disabled"
 >
 
-      <!-- If item has displayName and brandName (like food items) -->
-      <span *ngIf="displayItem.hasDisplayName && displayItem.hasBrandName" class="option-content">
-        <span class="option-name">{{ displayItem.displayName }}</span>
-        <span class="option-brand"> – {{ displayItem.brandName }}</span>
-      </span>
+      <!-- 2-column layout: photo + content -->
+      <div class="option-layout">
+        <!-- Left column: Photo -->
+        <div class="option-photo">
+          <img
+            *ngIf="displayItem.value?.photoThumb"
+            [src]="displayItem.value.photoThumb"
+            [alt]="displayItem.displayName || displayItem.name || 'Food photo'"
+            class="food-thumbnail"
+            loading="lazy">
+          <div
+            *ngIf="!displayItem.value?.photoThumb"
+            class="food-thumbnail-placeholder">
+            🍽️
+          </div>
+        </div>
 
-      <!-- If item has name and brand properties -->
-      <span *ngIf="!displayItem.hasDisplayName && displayItem.hasName && displayItem.hasBrand" class="option-content">
-        <span class="option-name">{{ displayItem.name }}</span>
-        <span class="option-brand"> – {{ displayItem.brand }}</span>
-      </span>
+        <!-- Right column: Text content -->
+        <div class="option-content">
+          <!-- If item has displayName and brandName (like food items) -->
+          <ng-container *ngIf="displayItem.hasDisplayName && displayItem.hasBrandName">
+            <div class="option-name">{{ displayItem.displayName }}</div>
+            <div class="option-brand">– {{ displayItem.brandName }}</div>
+          </ng-container>
 
-      <!-- Everything else - use cleanDisplayText -->
-      <span *ngIf="(!displayItem.hasDisplayName || !displayItem.hasBrandName) && (!displayItem.hasName || !displayItem.hasBrand)" class="option-content">
-        {{ displayItem.cleanDisplayText }}
-      </span>
+          <!-- If item has name and brand properties -->
+          <ng-container *ngIf="!displayItem.hasDisplayName && displayItem.hasName && displayItem.hasBrand">
+            <div class="option-name">{{ displayItem.name }}</div>
+            <div class="option-brand">– {{ displayItem.brand }}</div>
+          </ng-container>
+
+          <!-- Everything else - use cleanDisplayText -->
+          <div *ngIf="(!displayItem.hasDisplayName || !displayItem.hasBrandName) && (!displayItem.hasName || !displayItem.hasBrand)" class="option-name">
+            {{ displayItem.cleanDisplayText }}
+          </div>
+        </div>
+      </div>
 
     </ng-option>
   </ng-container>
