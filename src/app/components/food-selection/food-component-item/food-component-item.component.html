@@ -16,7 +16,22 @@
 
   <ion-grid class="row-grid" *ngIf="!isSearching">
     <ion-row class="top-row" align-items-start>
-      <ion-col size="10" class="left">
+      <ion-col size="1.5" class="photo-col">
+        <div class="food-photo">
+          <img
+            *ngIf="photoThumb"
+            [src]="photoThumb"
+            [alt]="displayName || 'Food photo'"
+            class="food-thumbnail"
+            loading="lazy">
+          <div
+            *ngIf="!photoThumb"
+            class="food-thumbnail-placeholder">
+            🍽️
+          </div>
+        </div>
+      </ion-col>
+      <ion-col size="8.5" class="left">
         <div class="name-section">
           <span class="name">{{ displayName | titlecase}}</span>
           <span *ngIf="isInferred" class="inferred-badge">(inferred)</span>

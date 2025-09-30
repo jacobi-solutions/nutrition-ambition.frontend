@@ -37,6 +37,8 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   selectedServing: ComponentServingDisplay | null = null;
   computedIsNewAddition: boolean = false;
   macroSummary: string = '';
+  photoThumb: string = '';
+  photoHighRes: string = '';
 
   // Flag to track if user explicitly selected something vs just searching
   private isExplicitSelection = false;
@@ -176,6 +178,10 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
     // Compute brand name
     this.brandName = this.selectedFood?.brandName || '';
+
+    // Compute photo URLs
+    this.photoThumb = this.selectedFood?.photoThumb || '';
+    this.photoHighRes = this.selectedFood?.photoHighRes || '';
 
     // Compute serving label
     if (this.selectedServing) {
