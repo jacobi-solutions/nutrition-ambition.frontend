@@ -279,6 +279,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         cookingMethod: selectedMatch.cookingMethod,
         size: selectedMatch.size,
         rank: selectedMatch.rank,
+        photoThumb: selectedMatch.photoThumb,
+        photoHighRes: selectedMatch.photoHighRes,
         selectedServingId: selectedMatch.selectedServingId ? {
           provider: selectedMatch.selectedServingId.provider,
           foodType: selectedMatch.selectedServingId.foodType,
