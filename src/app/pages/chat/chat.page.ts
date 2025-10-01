@@ -19,7 +19,7 @@ import {
     CancelServingSelectionRequest,
     CancelEditSelectionRequest,
     SubmitEditServingSelectionRequest,
-    LogMealToolResponse,
+    MealSelection,
     UserSelectedServing,
     SearchFoodPhraseRequest
 } from '../../services/nutrition-ambition-api.service';
@@ -405,8 +405,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
               isUser: msg.role === MessageRoleTypes.User,
               timestamp: msg.createdDateUtc || new Date(),
               // foodOptions removed - use logMealToolResponse.foods instead
-              mealName: msg.logMealToolResponse?.mealName || null,
-              logMealToolResponse: msg.logMealToolResponse || null,
+              mealName: msg.mealSelections?.[0]?.mealName || null,
+              logMealToolResponse: msg.mealSelections?.[0] || null,
               role: msg.role
             }));
             
@@ -752,8 +752,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             isUser: msg.role === MessageRoleTypes.User,
             timestamp: msg.createdDateUtc || new Date(),
             // foodOptions removed - use logMealToolResponse.foods instead
-            mealName: msg.logMealToolResponse?.mealName || null,
-            logMealToolResponse: msg.logMealToolResponse || null,
+            mealName: msg.mealSelections?.[0]?.mealName || null,
+            logMealToolResponse: msg.mealSelections?.[0] || null,
             role: msg.role
           };
         }
@@ -799,14 +799,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         // Firebase Analytics: Track successful food entry creation
         if (response.messages && response.messages.length > 0) {
           // Look for a completed food selection message with food entry details
-          const completedMessage = response.messages.find(msg => 
-            msg.role === MessageRoleTypes.CompletedFoodSelection && 
-            msg.logMealToolResponse?.foodEntryId
+          const completedMessage = response.messages.find(msg =>
+            msg.role === MessageRoleTypes.CompletedFoodSelection &&
+            msg.mealSelections?.[0]?.foodEntryId
           );
-          
-          if (completedMessage?.logMealToolResponse) {
-            const entryId = completedMessage.logMealToolResponse.foodEntryId || 'unknown';
-            const mealName = completedMessage.logMealToolResponse.mealName || 'unknown';
+
+          if (completedMessage?.mealSelections?.[0]) {
+            const entryId = completedMessage.mealSelections[0].foodEntryId || 'unknown';
+            const mealName = completedMessage.mealSelections[0].mealName || 'unknown';
             this.analytics.trackFoodEntryAdded(entryId, mealName);
           }
         }
@@ -896,8 +896,8 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       isUser: chatMessage.role === MessageRoleTypes.User,
       timestamp: chatMessage.createdDateUtc || new Date(),
       // foodOptions removed - use logMealToolResponse.foods instead
-      mealName: chatMessage.logMealToolResponse?.mealName || null,
-      logMealToolResponse: chatMessage.logMealToolResponse || null,
+      mealName: chatMessage.mealSelections?.[0]?.mealName || null,
+      logMealToolResponse: chatMessage.mealSelections?.[0] || null,
       role: chatMessage.role
     };
   }

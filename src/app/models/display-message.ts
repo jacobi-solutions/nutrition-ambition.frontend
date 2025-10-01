@@ -1,4 +1,4 @@
-import { ComponentMatch, LogMealToolResponse, MessageRoleTypes } from "../services/nutrition-ambition-api.service";
+import { ComponentMatch, MealSelection, MessageRoleTypes } from "../services/nutrition-ambition-api.service";
 
 export interface DisplayMessage {
     id?: string;
@@ -7,9 +7,9 @@ export interface DisplayMessage {
     isContextNote?: boolean;
     timestamp: Date;
     role?: MessageRoleTypes;
-  
+
     // keep full payload from backend
-    logMealToolResponse?: LogMealToolResponse | null;
+    logMealToolResponse?: MealSelection | null;
   
     // optional convenience fields
     mealName?: string | null;

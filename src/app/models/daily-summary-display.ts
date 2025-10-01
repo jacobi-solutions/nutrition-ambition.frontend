@@ -45,6 +45,7 @@ export class FoodBreakdownDisplay extends FoodBreakdown {
   displayName?: string;
   servingDisplay?: string;
   isSelected?: boolean;
+  showingNutrients?: boolean;  // New state for showing nutrients via info icon
   isMultiComponent?: boolean;
   isSingleComponent?: boolean;
 

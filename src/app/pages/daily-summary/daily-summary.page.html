@@ -250,6 +250,14 @@
                                 (click)="openActionMenu($event, food, 'food')">
                       <ion-icon name="ellipsis-vertical"></ion-icon>
                     </ion-button>
+                    <ion-button fill="clear" slot="end" size="small" class="info-btn"
+                                (click)="showFoodNutrients($event, food)">
+                      <ion-icon
+                        [name]="foodShowingNutrients?.foodId === food.foodId
+                                ? 'information-circle'
+                                : 'information-circle-outline'">
+                      </ion-icon>
+                    </ion-button>
                     <ion-button fill="clear" slot="end" size="small" class="chevron-btn">
                       <ion-icon
                         [name]="food.isSelected
@@ -287,11 +295,11 @@
                                       (click)="openActionMenu($event, food, 'food', component)">
                             <ion-icon name="ellipsis-vertical"></ion-icon>
                           </ion-button>
-                          <ion-button fill="clear" slot="end" size="small" class="chevron-btn">
+                          <ion-button fill="clear" slot="end" size="small" class="info-btn">
                             <ion-icon
                               [name]="component.isSelected
-                                      ? 'chevron-down-outline'
-                                      : 'chevron-forward-outline'">
+                                      ? 'information-circle'
+                                      : 'information-circle-outline'">
                             </ion-icon>
                           </ion-button>
                         </ion-item>
@@ -340,16 +348,16 @@
                     </div>
                   </ng-container>
 
-                    <!-- Single-component food drilldown (existing behavior) -->
-                    <ng-container *ngIf="food.isSelected && food.isSingleComponent">
+                    <!-- Nutrient drilldown when info icon is clicked -->
+                    <ng-container *ngIf="foodShowingNutrients?.foodId === food.foodId">
                     <ion-item lines="none" class="drilldown-row food-drilldown">
                       <div class="drilldown-content">
-                        <ng-container *ngIf="selectedFood?.nutrients?.length">
+                        <ng-container *ngIf="foodShowingNutrients?.nutrients?.length">
                           
                           <!-- Macronutrients -->
-                          <div *ngIf="selectedFoodMacronutrients.length" class="nutrient-section">
+                          <div *ngIf="foodShowingNutrientsMacros.length" class="nutrient-section">
                             <h4 class="nutrient-section-title">Macronutrients</h4>
-                            <ng-container *ngFor="let nutrient of selectedFoodMacronutrients; trackBy: trackById">
+                            <ng-container *ngFor="let nutrient of foodShowingNutrientsMacros; trackBy: trackById">
                               <div class="detail-item clickable-nutrient"
                                   (click)="navigateToNutrient(nutrient.nutrientKey)">
                                 <span class="detail-name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
@@ -359,9 +367,9 @@
                           </div>
 
                           <!-- Micronutrients -->
-                          <div *ngIf="selectedFoodMicronutrients.length" class="nutrient-section">
+                          <div *ngIf="foodShowingNutrientsMicros.length" class="nutrient-section">
                             <h4 class="nutrient-section-title">Micronutrients</h4>
-                            <ng-container *ngFor="let nutrient of selectedFoodMicronutrients; trackBy: trackById">
+                            <ng-container *ngFor="let nutrient of foodShowingNutrientsMicros; trackBy: trackById">
                               <div class="detail-item clickable-nutrient"
                                   (click)="navigateToNutrient(nutrient.nutrientKey)">
                                 <span class="detail-name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
@@ -373,7 +381,7 @@
                         </ng-container>
 
                         <!-- Fallback if no nutrients -->
-                        <div *ngIf="selectedFood && !selectedFood.nutrients?.length" 
+                        <div *ngIf="foodShowingNutrients && !foodShowingNutrients.nutrients?.length"
                             class="empty-detail-message">
                           <span>No nutrient data available for this food.</span>
                         </div>

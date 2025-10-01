@@ -2034,7 +2034,7 @@ export class ChatMessage implements IChatMessage {
     role?: MessageRoleTypes;
     content?: string | undefined;
     localDateKey?: string | undefined;
-    foodEntryId?: string | undefined;
+    foodEntryIds?: string[] | undefined;
     isRead?: boolean;
     toolCallId?: string | undefined;
     toolFunctionName?: string | undefined;
@@ -2042,7 +2042,7 @@ export class ChatMessage implements IChatMessage {
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
-    logMealToolResponse?: LogMealToolResponse;
+    mealSelections?: MealSelection[] | undefined;
     modelUsed?: string | undefined;
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
@@ -2066,7 +2066,11 @@ export class ChatMessage implements IChatMessage {
             this.role = _data["role"];
             this.content = _data["content"];
             this.localDateKey = _data["localDateKey"];
-            this.foodEntryId = _data["foodEntryId"];
+            if (Array.isArray(_data["foodEntryIds"])) {
+                this.foodEntryIds = [] as any;
+                for (let item of _data["foodEntryIds"])
+                    this.foodEntryIds!.push(item);
+            }
             this.isRead = _data["isRead"];
             this.toolCallId = _data["toolCallId"];
             this.toolFunctionName = _data["toolFunctionName"];
@@ -2074,7 +2078,11 @@ export class ChatMessage implements IChatMessage {
             this.responseId = _data["responseId"];
             this.assistantMode = _data["assistantMode"];
             this.assistantPhase = _data["assistantPhase"];
-            this.logMealToolResponse = _data["logMealToolResponse"] ? LogMealToolResponse.fromJS(_data["logMealToolResponse"]) : <any>undefined;
+            if (Array.isArray(_data["mealSelections"])) {
+                this.mealSelections = [] as any;
+                for (let item of _data["mealSelections"])
+                    this.mealSelections!.push(MealSelection.fromJS(item));
+            }
             this.modelUsed = _data["modelUsed"];
             this.promptTokens = _data["promptTokens"];
             this.completionTokens = _data["completionTokens"];
@@ -2098,7 +2106,11 @@ export class ChatMessage implements IChatMessage {
         data["role"] = this.role;
         data["content"] = this.content;
         data["localDateKey"] = this.localDateKey;
-        data["foodEntryId"] = this.foodEntryId;
+        if (Array.isArray(this.foodEntryIds)) {
+            data["foodEntryIds"] = [];
+            for (let item of this.foodEntryIds)
+                data["foodEntryIds"].push(item);
+        }
         data["isRead"] = this.isRead;
         data["toolCallId"] = this.toolCallId;
         data["toolFunctionName"] = this.toolFunctionName;
@@ -2106,7 +2118,11 @@ export class ChatMessage implements IChatMessage {
         data["responseId"] = this.responseId;
         data["assistantMode"] = this.assistantMode;
         data["assistantPhase"] = this.assistantPhase;
-        data["logMealToolResponse"] = this.logMealToolResponse ? this.logMealToolResponse.toJSON() : <any>undefined;
+        if (Array.isArray(this.mealSelections)) {
+            data["mealSelections"] = [];
+            for (let item of this.mealSelections)
+                data["mealSelections"].push(item.toJSON());
+        }
         data["modelUsed"] = this.modelUsed;
         data["promptTokens"] = this.promptTokens;
         data["completionTokens"] = this.completionTokens;
@@ -2123,7 +2139,7 @@ export interface IChatMessage {
     role?: MessageRoleTypes;
     content?: string | undefined;
     localDateKey?: string | undefined;
-    foodEntryId?: string | undefined;
+    foodEntryIds?: string[] | undefined;
     isRead?: boolean;
     toolCallId?: string | undefined;
     toolFunctionName?: string | undefined;
@@ -2131,7 +2147,7 @@ export interface IChatMessage {
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
-    logMealToolResponse?: LogMealToolResponse;
+    mealSelections?: MealSelection[] | undefined;
     modelUsed?: string | undefined;
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
@@ -4723,7 +4739,7 @@ export interface ILogEntryDto {
     extra?: { [key: string]: string; } | undefined;
 }
 
-export class LogMealToolResponse implements ILogMealToolResponse {
+export class MealSelection implements IMealSelection {
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
     foods?: Food[] | undefined;
@@ -4731,7 +4747,7 @@ export class LogMealToolResponse implements ILogMealToolResponse {
     foodId?: string | undefined;
     componentId?: string | undefined;
 
-    constructor(data?: ILogMealToolResponse) {
+    constructor(data?: IMealSelection) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -4755,9 +4771,9 @@ export class LogMealToolResponse implements ILogMealToolResponse {
         }
     }
 
-    static fromJS(data: any): LogMealToolResponse {
+    static fromJS(data: any): MealSelection {
         data = typeof data === 'object' ? data : {};
-        let result = new LogMealToolResponse();
+        let result = new MealSelection();
         result.init(data);
         return result;
     }
@@ -4778,7 +4794,7 @@ export class LogMealToolResponse implements ILogMealToolResponse {
     }
 }
 
-export interface ILogMealToolResponse {
+export interface IMealSelection {
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
     foods?: Food[] | undefined;

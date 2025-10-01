@@ -36,7 +36,9 @@ import {
   closeOutline,
   ellipsisVertical,
   alertCircleOutline,
-  nutritionOutline
+  nutritionOutline,
+  informationCircleOutline,
+  informationCircle
 } from 'ionicons/icons';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
 import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-action-menu/entry-action-menu.component';
@@ -91,6 +93,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   selectedNutrient: NutrientBreakdownDisplay | null = null;
   selectedFood: FoodBreakdownDisplay | null = null;
   selectedComponent: ComponentBreakdownDisplay | null = null;
+  foodShowingNutrients: FoodBreakdownDisplay | null = null;  // Track which food is showing nutrients via info icon
   detailedLoading = false;
   detailedError: string | null = null;
   // Local date only — uses 'yyyy-MM-dd' format
@@ -133,7 +136,9 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       closeOutline,
       ellipsisVertical,
       alertCircleOutline,
-      nutritionOutline
+      nutritionOutline,
+      informationCircleOutline,
+      informationCircle
     });
   }
 
@@ -272,6 +277,25 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       });
   }
 
+  // Get macronutrients for food showing nutrients
+  get foodShowingNutrientsMacros(): any[] {
+    if (!this.foodShowingNutrients?.nutrients) return [];
+    const order = ['calories', 'protein', 'fat', 'carbohydrate'];
+    return order
+      .map(key => this.foodShowingNutrients?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
+      .filter((n): n is any => !!n);
+  }
+
+  // Get micronutrients for food showing nutrients
+  get foodShowingNutrientsMicros(): any[] {
+    if (!this.foodShowingNutrients?.nutrients) return [];
+    return this.foodShowingNutrients.nutrients
+      .filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
+      .sort((a, b) => {
+        return ((a as any)['sortOrder'] ?? 9999) - ((b as any)['sortOrder'] ?? 9999);
+      });
+  }
+
   formatConsumedTarget(nutrient: NutrientBreakdown): string {
     const amount = nutrient.totalAmount || 0;
     const unit = nutrient.unit || 'mg';
@@ -368,6 +392,16 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     this.updateAllSelectionStates();
 
     // No auto-scroll when opening drilldown in the same tab
+  }
+
+  showFoodNutrients(event: Event, food: FoodBreakdownDisplay) {
+    event.stopPropagation();
+    // Toggle the nutrient display state
+    if (this.foodShowingNutrients?.foodId === food.foodId) {
+      this.foodShowingNutrients = null;
+    } else {
+      this.foodShowingNutrients = food;
+    }
   }
 
   selectComponent(component: ComponentBreakdownDisplay) {
