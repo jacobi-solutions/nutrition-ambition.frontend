@@ -9,7 +9,7 @@ export interface DisplayMessage {
     role?: MessageRoleTypes;
 
     // keep full payload from backend
-    logMealToolResponse?: MealSelection | null;
+    mealSelection?: MealSelection | null;
   
     // optional convenience fields
     mealName?: string | null;

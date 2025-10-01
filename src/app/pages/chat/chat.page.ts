@@ -753,7 +753,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             timestamp: msg.createdDateUtc || new Date(),
             // foodOptions removed - use logMealToolResponse.foods instead
             mealName: msg.mealSelections?.[0]?.mealName || null,
-            logMealToolResponse: msg.mealSelections?.[0] || null,
+            mealSelection: msg.mealSelections?.[0] || null,
             role: msg.role
           };
         }
@@ -897,7 +897,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       timestamp: chatMessage.createdDateUtc || new Date(),
       // foodOptions removed - use logMealToolResponse.foods instead
       mealName: chatMessage.mealSelections?.[0]?.mealName || null,
-      logMealToolResponse: chatMessage.mealSelections?.[0] || null,
+      mealSelection: chatMessage.mealSelections?.[0] || null,
       role: chatMessage.role
     };
   }
@@ -914,12 +914,12 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
   // Create a loading message by replacing the target component with a loading placeholder
   createLoadingMessageForComponent(originalMessage: DisplayMessage, componentId?: string, isAddingNew: boolean = false): DisplayMessage {
-    if (!originalMessage.logMealToolResponse?.foods) {
+    if (!originalMessage.mealSelection?.foods) {
       return originalMessage;
     }
 
     // Deep clone the message structure
-    const clonedResponse = JSON.parse(JSON.stringify(originalMessage.logMealToolResponse));
+    const clonedResponse = JSON.parse(JSON.stringify(originalMessage.mealSelection));
     
     if (isAddingNew) {
       // For adding new foods, add a new loading component to the foods array
@@ -965,7 +965,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
     const loadingMessage: DisplayMessage = {
       ...originalMessage,
-      logMealToolResponse: clonedResponse
+      mealSelection: clonedResponse
     };
 
     return loadingMessage;

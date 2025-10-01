@@ -563,10 +563,12 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     this.isLoadingEdit = true;
     this.editingMessage = null;
 
+    // Always load the entire food entry for editing to prevent data loss
+    // Users can edit any component/food and all changes will be saved together
     const req = new EditFoodSelectionRequest({
       foodEntryId: editTarget.foodEntryId,
-      foodId: editTarget.foodId || '',
-      componentId: editTarget.componentId || '',
+      foodId: '', // Empty to load entire entry
+      componentId: '', // Empty to load entire entry
       localDateKey: this.dateService.getSelectedDate(),
       isInlineEdit: true
     });
@@ -585,9 +587,10 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
           );
 
           if (foodSelectionMessage) {
-            // Ensure the meal name is set correctly
+            // Map mealSelections array to single mealSelection for UI components
             this.editingMessage = {
               ...foodSelectionMessage,
+              mealSelection: foodSelectionMessage.mealSelections?.[0] || null,
               mealName: entryName
             };
 

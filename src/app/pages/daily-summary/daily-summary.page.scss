@@ -593,6 +593,48 @@ ion-card {
   }
 }
 
+// Chevron button styles
+.info-btn {
+  --padding-start: 4px;
+  --padding-end: 4px;
+  margin: 0;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+  --border-radius: 50%;
+  border-radius: 50%;
+  
+  &:hover {
+    opacity: 1;
+  }
+  
+  ion-icon {
+    
+    color: var(--color-smoke);
+  }
+}
+
+// Chevron button styles
+.chevron-btn {
+  --padding-start: 4px;
+  --padding-end: 4px;
+  margin: 0;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  z-index: 1;
+  --border-radius: 50%;
+  border-radius: 50%;
+  
+  &:hover {
+    opacity: 1;
+  }
+  
+  ion-icon {
+    
+    color: var(--color-smoke);
+  }
+}
+
 // Target ion-item with button attribute for the native part padding
 ion-item[button]::part(native) {
   padding-right: 1rem;
@@ -620,26 +662,7 @@ ion-item[button]::part(native) {
   }
 }
 
-// Chevron button styles
-.chevron-btn {
-  --padding-start: 0;
-  --padding-end: 1rem;
-  margin: 0;
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
-  z-index: 1;
-  --border-radius: 50%;
-  border-radius: 50%;
-  
-  &:hover {
-    opacity: 1;
-  }
-  
-  ion-icon {
-    
-    color: var(--color-smoke);
-  }
-}
+
 
 // Icon Styling
 ion-icon[name="ellipsis-vertical"],

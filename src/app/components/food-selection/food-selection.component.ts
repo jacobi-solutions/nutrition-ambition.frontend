@@ -635,9 +635,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       req.pendingMessageId = this.message.id;
     }
 
-    req.foodEntryId = this.message.logMealToolResponse?.foodEntryId ?? '';
-    req.foodId = this.message.logMealToolResponse?.foodId ?? '';
-    req.componentId = this.message.logMealToolResponse?.componentId ?? '';
+    req.foodEntryId = this.message.mealSelection?.foodEntryId ?? '';
+    req.foodId = this.message.mealSelection?.foodId ?? '';
+    req.componentId = this.message.mealSelection?.componentId ?? '';
     req.localDateKey = this.dateService.getSelectedDate() || undefined;
 
     // Build selections array just like confirmRegularSelections
@@ -751,7 +751,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   // Compute all foods as FoodDisplay objects with embedded state
   private computeAllFoods(): void {
-    const rawFoods = this.message?.logMealToolResponse?.foods || [];
+    const rawFoods = this.message?.mealSelection?.foods || [];
 
     // Only rebuild from raw data - no state preservation needed
     this.computedFoods = rawFoods.map((food, foodIndex) => {
@@ -1223,7 +1223,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       searchPhrase: newPhrase.trim(),
       messageId: this.message.id || '',
       componentId: componentId,
-      foodEntryId: this.message.logMealToolResponse?.foodEntryId,
+      foodEntryId: this.message.mealSelection?.foodEntryId,
       localDateKey: this.dateService.getSelectedDate()
     });
 
@@ -1266,7 +1266,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       })) || [];
 
       // Update the raw message data with the new food
-      const rawFoods = this.message?.logMealToolResponse?.foods || [];
+      const rawFoods = this.message?.mealSelection?.foods || [];
       rawFoods[foodIndex] = response.foodOptions[0];
 
       // Rebuild all foods using the same pipeline as initial load (ensures proper effectiveQuantity calculation)

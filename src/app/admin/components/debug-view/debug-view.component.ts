@@ -368,15 +368,15 @@ export class DebugViewComponent implements OnInit, OnDestroy {
     return role === 'CompletedFoodSelection' || role === 'CompletedEditFoodSelection';
   }
 
-  getFoodSelectionItems(logMealToolResponse: any): any[] {
-    if (!logMealToolResponse?.foods) {
+  getFoodSelectionItems(mealSelection: any): any[] {
+    if (!mealSelection?.foods) {
       return [];
     }
 
     const items: any[] = [];
     
     // Iterate through foods → components → matches
-    logMealToolResponse.foods.forEach((food: any) => {
+    mealSelection.foods.forEach((food: any) => {
       if (food.components) {
         food.components.forEach((component: any) => {
           if (component.matches && component.matches.length > 0) {
