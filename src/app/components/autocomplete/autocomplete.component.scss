@@ -266,8 +266,16 @@
     font-size: 0.9rem;
     transition: all 0.2s ease;
     min-height: 48px;
+    height: auto !important; // Allow height to grow with content
     display: flex;
     align-items: center;
+
+    // Override ng-select default ellipsis behavior
+    .ng-option-label {
+      white-space: normal !important;
+      overflow: visible !important;
+      text-overflow: clip !important;
+    }
 
     &:last-child {
       border-bottom: none;
@@ -297,6 +305,8 @@
       align-items: center;
       gap: 12px;
       width: 100%;
+      max-width: 100%;
+      overflow: hidden; // Prevent layout from expanding beyond container
     }
 
     // Left column: Photo
@@ -338,13 +348,16 @@
       align-items: flex-start;
       gap: 2px;
       line-height: 1.3;
-      min-width: 0; // Allow text to shrink and wrap
+      min-width: 0; // Critical: allows flex item to shrink below content size
+      max-width: 100%; // Constrain to container width
 
       .option-name {
         font-weight: 500;
         color: var(--ion-color-dark);
         word-wrap: break-word;
         overflow-wrap: break-word;
+        white-space: normal !important;
+        text-overflow: clip !important;
         width: 100%;
         margin: 0;
       }
@@ -355,6 +368,8 @@
         font-size: 0.8rem;
         word-wrap: break-word;
         overflow-wrap: break-word;
+        white-space: normal !important;
+        text-overflow: clip !important;
         width: 100%;
         margin: 0;
       }

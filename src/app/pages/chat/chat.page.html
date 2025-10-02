@@ -46,7 +46,7 @@
           <!-- Standalone food selection cards for pending and completed selection messages -->
           <div *ngIf="!message.isContextNote && (message.role === MessageRoleTypes.PendingFoodSelection || message.role === MessageRoleTypes.CompletedFoodSelection || message.role === MessageRoleTypes.PendingEditFoodSelection || message.role === MessageRoleTypes.CompletedEditFoodSelection)" class="standalone-food-selection">
             <app-food-selection
-              *ngIf="message?.mealSelection?.foods && (message?.role === MessageRoleTypes.PendingFoodSelection || message?.role === MessageRoleTypes.PendingEditFoodSelection || message?.role === MessageRoleTypes.CompletedFoodSelection || message?.role === MessageRoleTypes.CompletedEditFoodSelection)"
+              *ngIf="message?.mealSelection?.foods"
               [message]="message"
               [isEditingPhrase]="message.isEditingPhrase || false"
               (selectionConfirmed)="onFoodSelectionConfirmed($event)"

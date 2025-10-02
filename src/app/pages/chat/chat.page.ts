@@ -404,9 +404,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
               text: msg.content || '',
               isUser: msg.role === MessageRoleTypes.User,
               timestamp: msg.createdDateUtc || new Date(),
-              // foodOptions removed - use logMealToolResponse.foods instead
               mealName: msg.mealSelections?.[0]?.mealName || null,
-              logMealToolResponse: msg.mealSelections?.[0] || null,
+              mealSelection: msg.mealSelections?.[0] || null,
               role: msg.role
             }));
             
@@ -751,7 +750,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             text: msg.content || '',
             isUser: msg.role === MessageRoleTypes.User,
             timestamp: msg.createdDateUtc || new Date(),
-            // foodOptions removed - use logMealToolResponse.foods instead
             mealName: msg.mealSelections?.[0]?.mealName || null,
             mealSelection: msg.mealSelections?.[0] || null,
             role: msg.role
@@ -895,7 +893,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       text: chatMessage.content || '',
       isUser: chatMessage.role === MessageRoleTypes.User,
       timestamp: chatMessage.createdDateUtc || new Date(),
-      // foodOptions removed - use logMealToolResponse.foods instead
       mealName: chatMessage.mealSelections?.[0]?.mealName || null,
       mealSelection: chatMessage.mealSelections?.[0] || null,
       role: chatMessage.role

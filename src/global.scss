@@ -419,3 +419,13 @@ ion-toast.toast-positioned-middle {
   top: 50% !important;
   position: fixed !important;
 }
+
+/* Position toast above the chat input */
+ion-toast.toast-above-input {
+  position: fixed !important;
+  bottom: 25vh !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  --width: calc(100% - 32px) !important;
+  --max-width: 500px !important;
+}

@@ -23,9 +23,9 @@ export class ToastService {
       message: options.message,
       duration: options.duration || 1500,
       color: options.color || 'success',
-      position: options.position || 'middle',
+      position: options.position || 'bottom',
       buttons: options.buttons || [],
-      cssClass: 'custom-toast'
+      cssClass: 'custom-toast toast-above-input'
     });
 
     await toast.present();

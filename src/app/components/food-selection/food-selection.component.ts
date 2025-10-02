@@ -581,16 +581,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             const servingId = this.getOriginalServingId(component?.id ?? '');
             const selectedServing = this.getSelectedServing(component?.id ?? '');
 
-            console.log('🔍 COMPONENT CHECK:', {
-              componentId: component?.id,
-              hasSelectedFood: !!selectedFood,
-              providerFoodId: (selectedFood as any)?.providerFoodId,
-              hasServingId: !!servingId,
-              servingId: servingId,
-              hasSelectedServing: !!selectedServing,
-              selectedServingId: selectedServing?.id,
-              effectiveQuantity: (selectedServing as any)?.effectiveQuantity
-            });
 
             if ((selectedFood as any)?.providerFoodId && servingId && selectedServing) {
               // Use effectiveQuantity for both values - it's what the user sees/edited
@@ -612,16 +602,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
     }
 
-    console.log('🔥 CONFIRM REQUEST:', {
-      pendingMessageId: req.pendingMessageId,
-      selectionsCount: req.selections?.length || 0,
-      selections: req.selections,
-      foodQuantitiesCount: req.foodQuantities?.length || 0,
-      foodQuantities: req.foodQuantities,
-      computedFoodsCount: this.computedFoods?.length || 0,
-      computedFoods: this.computedFoods
-    });
-
+ 
     this.isSubmitting = true;
     this.selectionConfirmed.emit(req);
   }
