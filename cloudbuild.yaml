@@ -2,24 +2,17 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1️⃣ Install dependencies
+  # 1️⃣ Install dependencies and build in a single step
   - name: 'node:20'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        npm ci
+        npm ci --legacy-peer-deps
         npm install -g @angular/cli
-
-  # 2️⃣ Build Angular app with production fixes
-  - name: 'node:20'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
         npm run build:prod
 
-  # 3️⃣ Deploy to Firebase Hosting (install firebase-tools here)
+  # 2️⃣ Deploy to Firebase Hosting
   - name: 'node:20'
     entrypoint: 'bash'
     args:
