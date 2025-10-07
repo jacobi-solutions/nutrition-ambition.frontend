@@ -36,7 +36,7 @@ ion-grid {
       .target-label {
         position: absolute;
         top: 0;
-        font-size: 11px;
+        font-size: .75rem;
         color: var(--ion-color-medium);
         font-weight: 500;
         opacity: 0;
@@ -204,6 +204,7 @@ ion-grid {
       }
 
       &.actual-label {
+        color: white;
         animation: showAndHide 1.2s ease-in-out 1.4s forwards;
       }
     }
@@ -384,17 +385,21 @@ ion-grid {
         box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
         animation: pulse 2s infinite;
 
+        // &.calories-dot {
+        //   background-color: var(--color-sage);
+        // }
+
         &.protein-dot {
-          background-color: #4E6E5D;
+          background-color: var(--color-olive);
         }
 
         &.fat-dot {
-          background-color: #FF8A5C;
+          background-color: var(--color-salmon);
           animation-delay: 0.2s;
         }
 
         &.carbs-dot {
-          background-color: #D64933;
+          background-color: var(--color-tomato);
           animation-delay: 0.4s;
         }
       }
