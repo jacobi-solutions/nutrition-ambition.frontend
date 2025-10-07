@@ -197,7 +197,7 @@ ion-grid {
 
     .animation-label {
       position: absolute;
-      top: 50%;
+      top: 100px;  // Center of the 200px chart
       left: 50%;
       transform: translate(-50%, -50%);
       font-size: 18px;

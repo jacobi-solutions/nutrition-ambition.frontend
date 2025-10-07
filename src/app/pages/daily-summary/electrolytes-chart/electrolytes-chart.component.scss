@@ -1,5 +1,226 @@
+ion-grid {
+  --ion-grid-padding: 0;
+  --ion-grid-column-padding: 4px;
+}
+
 .chart-wrapper {
   padding: 16px;
   background: white;
   height: 100%;
+
+  > .chart-tip {
+    margin-top: 12px;
+    font-size: 10px;
+    color: var(--ion-color-medium);
+    line-height: 1.4;
+    text-align: center;
+  }
+}
+
+// Electrolytes Chart Styles
+.electrolytes-chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+
+  .animation-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+
+    &.targets-label {
+      animation: showAndHide 1.2s ease-in-out 0s forwards;
+    }
+
+    &.actual-label {
+      color: white;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      animation: showAndHide 1.2s ease-in-out 1.4s forwards;
+    }
+  }
+
+  .chart-tip {
+    margin-top: 12px;
+    padding: 0 12px;
+    font-size: 10px;
+    color: var(--ion-color-medium);
+    line-height: 1.4;
+    text-align: center;
+  }
+}
+
+.electrolytes-chart {
+  width: 250px;
+  height: 250px;
+  margin: 0 auto;
+  animation: scaleIn 0.5s ease-out;
+
+  svg {
+    width: 100%;
+    height: 100%;
+
+    .target-rings {
+      .target-ring {
+        fill: none;
+        stroke-width: 2;
+        opacity: 0.5;
+        filter: blur(0.5px);
+        animation: drawSegment 0.8s ease-out 0.2s both;
+      }
+    }
+
+    .actual-segments {
+      .segment {
+        opacity: 0;
+        animation: fadeIn 0.6s ease-out 1.4s forwards;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+
+        &:hover {
+          transform: scale(1.05);
+          transform-origin: center;
+          filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                  drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))
+                  brightness(1.1);
+        }
+      }
+    }
+
+    .percentage-labels {
+      .percentage-label {
+        fill: white;
+        font-size: 4px;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        animation: fadeIn 0.4s ease-out 2s forwards;
+        pointer-events: none;
+      }
+    }
+  }
+}
+
+// Legend/Values
+.chart-values {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+
+  .value-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    opacity: 0;
+    animation: fadeIn 0.4s ease-out forwards;
+
+    &:nth-child(1) {
+      animation-delay: 2.2s;
+    }
+
+    &:nth-child(2) {
+      animation-delay: 2.3s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 2.4s;
+    }
+
+    &:nth-child(4) {
+      animation-delay: 2.5s;
+    }
+
+    &:nth-child(5) {
+      animation-delay: 2.6s;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .value-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .value-label {
+      flex: 1;
+      color: var(--ion-color-medium);
+      font-weight: 500;
+    }
+
+    .value-number {
+      font-weight: 600;
+      color: var(--ion-text-color);
+    }
+  }
+}
+
+// Empty state
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  color: var(--ion-color-medium);
+  font-size: 14px;
+}
+
+// Animations
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drawSegment {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+@keyframes showAndHide {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }

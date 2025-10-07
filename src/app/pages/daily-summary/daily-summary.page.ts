@@ -264,17 +264,16 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   // Get electrolytes list
   get electrolyteList(): NutrientBreakdownDisplay[] {
-    const electrolyteKeys = ['sodium', 'calcium', 'magnesium', 'potassium', 'chloride'];
-    return this.nutrientsDisplay
-      .filter(n => electrolyteKeys.includes(n.nutrientKey?.toLowerCase() || ''))
-      .sort((a, b) => {
-        return ((a as any)['sortOrder'] ?? 9999) - ((b as any)['sortOrder'] ?? 9999);
-      });
+    const electrolyteKeys = ['sodium', 'potassium', 'magnesium', 'calcium'];
+    // Sort by the order defined in electrolyteKeys array
+    return electrolyteKeys
+      .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
+      .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
   }
 
   // Sort micronutrients using sortOrder field (set by backend)
   get micronutrientList(): NutrientBreakdownDisplay[] {
-    const electrolyteKeys = ['sodium', 'calcium', 'magnesium', 'potassium', 'chloride'];
+    const electrolyteKeys = ['sodium', 'potassium', 'magnesium', 'calcium'];
     return this.nutrientsDisplay
       .filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || '') && !electrolyteKeys.includes(n.nutrientKey?.toLowerCase() || ''))
       .sort((a, b) => {
