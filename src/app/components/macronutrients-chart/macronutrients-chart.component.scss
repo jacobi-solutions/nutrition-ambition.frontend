@@ -1,6 +1,6 @@
 ion-grid {
   --ion-grid-padding: 0;
-  --ion-grid-column-padding: 8px;
+  --ion-grid-column-padding: 4px;
 }
 
 .chart-wrapper {
@@ -21,7 +21,7 @@ ion-grid {
     display: flex;
     justify-content: space-evenly;
     align-items: flex-end;
-    height: 150px;
+    height: 200px;
     padding: 10px;
     margin-bottom: 12px;
 
@@ -97,16 +97,57 @@ ion-grid {
 
   // Donut Chart Styles
   .donut-chart {
-    width: 150px;
-    height: 150px;
-    margin: 0 auto 12px;
+    width: 200px;
+    height: 200px;
+    margin: 0 0 12px -10px;
     animation: scaleIn 0.5s ease-out;
 
     svg {
       transform: rotate(-90deg);
       width: 100%;
       height: 100%;
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+
+      .donut-target-outer {
+        fill: none;
+        stroke-width: 10;
+        opacity: 0.5;
+        stroke-linecap: butt;
+        animation: drawSegment 0.8s ease-out 0.1s both;
+        filter: blur(1px);
+
+        &.protein-target-outer {
+          stroke: #8BA89C; // Lighter version of olive
+        }
+
+        &.fat-target-outer {
+          stroke: #FFB896; // Lighter version of salmon
+        }
+
+        &.carbs-target-outer {
+          stroke: #E88273; // Lighter version of tomato
+        }
+      }
+
+      .donut-target-inner {
+        fill: none;
+        stroke-width: 7;
+        opacity: 0.5;
+        stroke-linecap: butt;
+        animation: drawSegment 0.8s ease-out 0.1s both;
+        filter: blur(1px);
+
+        &.protein-target-inner {
+          stroke: #8BA89C; // Lighter version of olive
+        }
+
+        &.fat-target-inner {
+          stroke: #FFB896; // Lighter version of salmon
+        }
+
+        &.carbs-target-inner {
+          stroke: #E88273; // Lighter version of tomato
+        }
+      }
 
       .donut-segment {
         fill: none;
@@ -114,6 +155,9 @@ ion-grid {
         transition: all 0.3s ease;
         cursor: pointer;
         stroke-linecap: butt;
+        filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 
         &.protein-segment {
           stroke: #4E6E5D;
@@ -121,7 +165,10 @@ ion-grid {
 
           &:hover {
             stroke-width: 22;
-            filter: brightness(1.1);
+            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))
+                    brightness(1.1);
           }
         }
 
@@ -131,7 +178,10 @@ ion-grid {
 
           &:hover {
             stroke-width: 22;
-            filter: brightness(1.1);
+            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))
+                    brightness(1.1);
           }
         }
 
@@ -141,7 +191,10 @@ ion-grid {
 
           &:hover {
             stroke-width: 22;
-            filter: brightness(1.1);
+            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))
+                    brightness(1.1);
           }
         }
       }
@@ -154,8 +207,15 @@ ion-grid {
         animation: fadeIn 0.4s ease-out 1.2s forwards;
         pointer-events: none;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        transform-origin: center;
-        transform: rotate(90deg);
+      }
+
+      .target-percentage-label {
+        fill: var(--color-smoke);
+        font-size: 11px;
+        font-weight: 700;
+        opacity: 0;
+        animation: fadeIn 0.4s ease-out 1.2s forwards;
+        pointer-events: none;
       }
     }
   }
