@@ -857,3 +857,59 @@ ion-item {
     font-size: 14px;
   }
 }
+
+// Chart styling
+.card-header-with-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+  ion-card-title {
+    flex: 1;
+  }
+
+  ion-button {
+    margin: 0;
+  }
+}
+
+.macro-charts-container {
+  padding: 0;
+
+  ion-row {
+    --ion-grid-column-padding: 8px;
+  }
+
+  .chart-wrapper {
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    height: 100%;
+
+    .chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      color: var(--ion-text-color);
+      text-align: center;
+    }
+
+    canvas {
+      max-height: 200px;
+    }
+  }
+
+  .calories-chart {
+    canvas {
+      max-height: 180px;
+    }
+  }
+
+  .macro-doughnut-chart {
+    canvas {
+      max-height: 160px;
+    }
+  }
+}

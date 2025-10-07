@@ -47,10 +47,16 @@
         <!-- Macronutrients Card -->
         <ion-card [class.expanded]="selectedNutrient">
           <ion-card-header>
-            <ion-card-title>Macronutrients</ion-card-title>
+            <div class="card-header-with-toggle">
+              <ion-card-title>Macronutrients</ion-card-title>
+              <ion-button fill="clear" size="small" (click)="toggleMacroChartView()">
+                <ion-icon [name]="showMacroCharts ? 'list-outline' : 'bar-chart-outline'"></ion-icon>
+              </ion-button>
+            </div>
           </ion-card-header>
           <ion-card-content>
-            <ion-list [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, macronutrientList)">
+            <!-- List View -->
+            <ion-list *ngIf="!showMacroCharts" [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, macronutrientList)">
               <ng-container *ngFor="let nutrient of macronutrientList; trackBy: trackById">
                 <ion-item
                   class="nutrient-entry"
@@ -102,10 +108,16 @@
                     </div>
                   </ion-item>
                 </ng-container>
-                
-                
+
+
               </ng-container>
             </ion-list>
+
+            <!-- Chart View -->
+            <app-macronutrients-chart
+              *ngIf="showMacroCharts"
+              [nutrients]="nutrientsDisplay">
+            </app-macronutrients-chart>
           </ion-card-content>
         </ion-card>
 

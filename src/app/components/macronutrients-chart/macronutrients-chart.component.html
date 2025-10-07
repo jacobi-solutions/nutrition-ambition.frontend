@@ -1,0 +1,76 @@
+<ion-grid *ngIf="hasData">
+  <ion-row>
+    <!-- Calories Bar Chart -->
+    <ion-col size="6">
+      <div class="chart-wrapper">
+        <h3 class="chart-title">Calories</h3>
+        <div class="bar-chart">
+          <div class="bar-group">
+            <div class="bar consumed-bar" [style.height.%]="caloriesPercentage"></div>
+            <span class="bar-label">Consumed</span>
+          </div>
+          <div class="bar-group" *ngIf="caloriesTarget > 0">
+            <div class="bar target-bar" [style.height.%]="targetPercentage"></div>
+            <span class="bar-label">Target</span>
+          </div>
+        </div>
+        <div class="chart-values">
+          <div class="value-item">
+            <span class="value-label">Consumed:</span>
+            <span class="value-number">{{ calories }} kcal</span>
+          </div>
+          <div class="value-item" *ngIf="caloriesTarget > 0">
+            <span class="value-label">Target:</span>
+            <span class="value-number">{{ caloriesTarget }} kcal</span>
+          </div>
+        </div>
+      </div>
+    </ion-col>
+
+    <!-- Macro Distribution Donut Chart -->
+    <ion-col size="6">
+      <div class="chart-wrapper">
+        <h3 class="chart-title">Macro Distribution</h3>
+        <div class="donut-chart">
+          <svg viewBox="0 0 100 100">
+            <circle class="donut-segment protein-segment" cx="50" cy="50" r="30"
+                    [attr.stroke-dasharray]="proteinPercentage * 1.885 + ' ' + 188.5"
+                    [attr.stroke-dashoffset]="0"></circle>
+            <circle class="donut-segment fat-segment" cx="50" cy="50" r="30"
+                    [attr.stroke-dasharray]="fatPercentage * 1.885 + ' ' + 188.5"
+                    [attr.stroke-dashoffset]="-proteinPercentage * 1.885"></circle>
+            <circle class="donut-segment carbs-segment" cx="50" cy="50" r="30"
+                    [attr.stroke-dasharray]="carbsPercentage * 1.885 + ' ' + 188.5"
+                    [attr.stroke-dashoffset]="-(proteinPercentage + fatPercentage) * 1.885"></circle>
+            <!-- Percentage labels on donut - dynamically positioned on segment centers -->
+            <text class="percentage-label protein-label" [attr.x]="proteinLabelX" [attr.y]="proteinLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(90, ' + proteinLabelX + ', ' + proteinLabelY + ')'">{{ proteinPercentage }}%</text>
+            <text class="percentage-label fat-label" [attr.x]="fatLabelX" [attr.y]="fatLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(90, ' + fatLabelX + ', ' + fatLabelY + ')'">{{ fatPercentage }}%</text>
+            <text class="percentage-label carbs-label" [attr.x]="carbsLabelX" [attr.y]="carbsLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(90, ' + carbsLabelX + ', ' + carbsLabelY + ')'">{{ carbsPercentage }}%</text>
+          </svg>
+        </div>
+        <div class="chart-values">
+          <div class="value-item">
+            <span class="value-dot protein-dot"></span>
+            <span class="value-label">Protein:</span>
+            <span class="value-number">{{ proteinGrams }}g</span>
+          </div>
+          <div class="value-item">
+            <span class="value-dot fat-dot"></span>
+            <span class="value-label">Fat:</span>
+            <span class="value-number">{{ fatGrams }}g</span>
+          </div>
+          <div class="value-item">
+            <span class="value-dot carbs-dot"></span>
+            <span class="value-label">Carbs:</span>
+            <span class="value-number">{{ carbsGrams }}g</span>
+          </div>
+        </div>
+      </div>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+
+<!-- Empty state -->
+<div class="empty-state" *ngIf="!hasData">
+  <span>No macronutrient data available</span>
+</div>

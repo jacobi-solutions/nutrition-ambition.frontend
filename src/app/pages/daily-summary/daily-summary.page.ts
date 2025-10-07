@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import {
   IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
   IonSpinner, IonSegment, IonSegmentButton, IonLabel, IonList,
-  IonItem, IonIcon, IonButton, IonPopover, IonRefresher, IonRefresherContent
+  IonItem, IonIcon, IonButton, IonPopover, IonRefresher, IonRefresherContent,
+  IonRow, IonCol
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import {
@@ -38,16 +39,25 @@ import {
   alertCircleOutline,
   nutritionOutline,
   informationCircleOutline,
-  informationCircle
+  informationCircle,
+  listOutline,
+  barChartOutline
 } from 'ionicons/icons';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
 import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-action-menu/entry-action-menu.component';
 import { FoodSelectionComponent } from 'src/app/components/food-selection/food-selection.component';
+import { MacronutrientsChartComponent } from 'src/app/components/macronutrients-chart/macronutrients-chart.component';
 import { ToastService } from 'src/app/services/toast.service';
 import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { AnalyticsService } from 'src/app/services/analytics.service';
+import { BaseChartDirective } from 'ng2-charts';
+import { Chart, ChartConfiguration, BarElement, BarController, CategoryScale, LinearScale, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js';
+import { NutritionChartService } from 'src/app/services/nutrition-chart.service';
+
+// Register Chart.js components
+Chart.register(BarElement, BarController, CategoryScale, LinearScale, ArcElement, Tooltip, Legend, DoughnutController);
 
 @Component({
   selector: 'app-daily-summary',
@@ -75,7 +85,8 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
     IonRefresherContent,
     AppHeaderComponent,
     EntryActionMenuComponent,
-    FoodSelectionComponent
+    FoodSelectionComponent,
+    MacronutrientsChartComponent
   ]
 })
 export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
@@ -117,6 +128,13 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   editingMessage: any | null = null;
   isLoadingEdit = false;
 
+  // Chart state
+  showMacroCharts = false;
+  caloriesChartData: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
+  caloriesChartOptions: ChartConfiguration<'bar'>['options'] = {};
+  macroChartData: ChartConfiguration<'doughnut'>['data'] = { labels: [], datasets: [] };
+  macroChartOptions: ChartConfiguration<'doughnut'>['options'] = {};
+
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);
   private dateService = inject(DateService);
@@ -124,9 +142,10 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   private foodEntryService = inject(FoodEntryService);
   private router = inject(Router);
   private toastService = inject(ToastService);
+  private chartService = inject(NutritionChartService);
 
   constructor(
-    private elementRef: ElementRef, 
+    private elementRef: ElementRef,
     private foodSelectionService: FoodSelectionService,
     private analytics: AnalyticsService // Firebase Analytics tracking
   ) {
@@ -138,8 +157,11 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       alertCircleOutline,
       nutritionOutline,
       informationCircleOutline,
-      informationCircle
+      informationCircle,
+      listOutline,
+      barChartOutline
     });
+    this.initializeChartOptions();
   }
 
   ngOnInit() {
@@ -972,7 +994,122 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     if (selectedItem.name && lastItem.name) {
       return selectedItem.name === lastItem.name;
     }
-    
+
     return false;
+  }
+
+  // Chart methods
+  toggleMacroChartView(): void {
+    this.showMacroCharts = !this.showMacroCharts;
+    if (this.showMacroCharts) {
+      this.updateMacroCharts();
+    }
+  }
+
+  private initializeChartOptions(): void {
+    // Calories bar chart options
+    this.caloriesChartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              return `${context.parsed.y} kcal`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            display: false
+          },
+          ticks: {
+            display: false
+          }
+        }
+      }
+    };
+
+    // Macro doughnut chart options
+    this.macroChartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 10,
+            font: {
+              size: 11
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              return `${label}: ${value}%`;
+            }
+          }
+        }
+      }
+    };
+  }
+
+  private updateMacroCharts(): void {
+    const macroData = this.chartService.getMacroChartData(this.nutrientsDisplay);
+
+    if (!macroData) return;
+
+    // Round values for display
+    const calories = Math.round((macroData.calories || 0) * 10) / 10;
+    const caloriesTarget = macroData.caloriesTarget ? Math.round(macroData.caloriesTarget * 10) / 10 : 0;
+
+    // Update calories bar chart
+    this.caloriesChartData = {
+      labels: ['Calories'],
+      datasets: [
+        {
+          label: 'Consumed',
+          data: [calories],
+          backgroundColor: '#D64933'
+        },
+        {
+          label: 'Target',
+          data: [caloriesTarget],
+          backgroundColor: '#A9C8B2'
+        }
+      ]
+    };
+
+    // Update macro doughnut chart
+    const proteinPercentage = Math.round(macroData.macroAmounts.protein.percentage || 0);
+    const fatPercentage = Math.round(macroData.macroAmounts.fat.percentage || 0);
+    const carbsPercentage = Math.round(macroData.macroAmounts.carbs.percentage || 0);
+
+    this.macroChartData = {
+      labels: ['Protein', 'Fat', 'Carbs'],
+      datasets: [{
+        data: [proteinPercentage, fatPercentage, carbsPercentage],
+        backgroundColor: [
+          '#4E6E5D', // Olive for protein
+          '#FF8A5C', // Salmon for fat
+          '#D64933'  // Tomato for carbs
+        ],
+        borderWidth: 0
+      }]
+    };
   }
 }
