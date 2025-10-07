@@ -231,7 +231,7 @@ ion-grid {
 
       .donut-target {
         fill: none;
-        stroke-width: 30;
+        stroke-width: 50;
         opacity: 0.5;
         stroke-linecap: butt;
         animation: drawSegment 0.8s ease-out 0.2s both;
@@ -304,7 +304,7 @@ ion-grid {
 
       .percentage-label {
         fill: white;
-        font-size: 10px;
+        font-size: .5rem;
         font-weight: 700;
         opacity: 0;
         animation: fadeIn 0.4s ease-out 2.4s forwards;
@@ -314,7 +314,7 @@ ion-grid {
 
       .target-percentage-label {
         fill: var(--color-smoke);
-        font-size: 11px;
+        font-size: .5rem;
         font-weight: 700;
         opacity: 0;
         animation: fadeIn 0.4s ease-out 0.8s forwards;

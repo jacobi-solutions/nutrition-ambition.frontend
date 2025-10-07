@@ -36,15 +36,15 @@
           <div class="donut-chart" [style.transform]="'scale(' + donutScale + ')'">
             <svg viewBox="-10 -10 120 120">
             <!-- Single target ring -->
-            <circle class="donut-target protein-target" cx="50" cy="50" r="30"
-                    [attr.stroke-dasharray]="proteinTargetPercentage * 1.885 + ' ' + 188.5"
+            <circle class="donut-target protein-target" cx="50" cy="50" r="25"
+                    [attr.stroke-dasharray]="proteinTargetPercentage * 1.571 + ' ' + 157.1"
                     [attr.stroke-dashoffset]="0"></circle>
-            <circle class="donut-target fat-target" cx="50" cy="50" r="30"
-                    [attr.stroke-dasharray]="fatTargetPercentage * 1.885 + ' ' + 188.5"
-                    [attr.stroke-dashoffset]="-proteinTargetPercentage * 1.885"></circle>
-            <circle class="donut-target carbs-target" cx="50" cy="50" r="30"
-                    [attr.stroke-dasharray]="carbsTargetPercentage * 1.885 + ' ' + 188.5"
-                    [attr.stroke-dashoffset]="-(proteinTargetPercentage + fatTargetPercentage) * 1.885"></circle>
+            <circle class="donut-target fat-target" cx="50" cy="50" r="25"
+                    [attr.stroke-dasharray]="fatTargetPercentage * 1.571 + ' ' + 157.1"
+                    [attr.stroke-dashoffset]="-proteinTargetPercentage * 1.571"></circle>
+            <circle class="donut-target carbs-target" cx="50" cy="50" r="25"
+                    [attr.stroke-dasharray]="carbsTargetPercentage * 1.571 + ' ' + 157.1"
+                    [attr.stroke-dashoffset]="-(proteinTargetPercentage + fatTargetPercentage) * 1.571"></circle>
 
             <!-- Actual consumption ring (appears after target) -->
             <circle class="donut-segment protein-segment" cx="50" cy="50" r="30"

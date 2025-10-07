@@ -121,7 +121,7 @@ export class MacronutrientsChartComponent implements OnChanges {
     // The donut has radius 30 with stroke-width 20
     // SVG circles start at 3 o'clock (0 degrees), but we rotate -90deg so they start at 12 o'clock (top)
     const labelRadius = 28; // Slightly inside the middle of the ring for better centering
-    const targetLabelRadius = 52; // Outside of the outer ring
+    const targetLabelRadius = 45; // Between actual ring (outer edge at ~40) and ghost ring outer edge (at ~60)
 
     // ALGORITHM EXPLANATION:
     // 1. The SVG is rotated -90deg, so segments start at 12 o'clock (top) instead of 3 o'clock (right)
