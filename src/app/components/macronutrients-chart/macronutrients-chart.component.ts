@@ -26,6 +26,7 @@ export class MacronutrientsChartComponent implements OnChanges {
   caloriesTarget = 0;
   caloriesPercentage = 0;
   targetPercentage = 0;
+  caloriesTargetGhostPercentage = 0;
   proteinPercentage = 0;
   proteinGrams = 0;
   proteinTargetGrams = 0;
@@ -56,6 +57,12 @@ export class MacronutrientsChartComponent implements OnChanges {
   carbsTargetLabelX = 50;
   carbsTargetLabelY = 50;
   carbsTargetLabelRotation = 0;
+  targetHeaderLabelX = 50;
+  targetHeaderLabelY = 50;
+  targetHeaderLabelRotation = 0;
+
+  // Scale factor for donut chart (adjust this to resize the entire chart)
+  donutScale = 1.2;
 
   constructor(private chartService: NutritionChartService) {}
 
@@ -80,10 +87,8 @@ export class MacronutrientsChartComponent implements OnChanges {
     this.calories = Math.round((macroData.calories || 0) * 10) / 10;
     this.caloriesTarget = macroData.caloriesTarget ? Math.round(macroData.caloriesTarget * 10) / 10 : 0;
 
-    // Calculate bar heights as percentages (relative to the max value)
-    const maxCalories = Math.max(this.calories, this.caloriesTarget, 100); // At least 100 for scale
-    this.caloriesPercentage = Math.max((this.calories / maxCalories) * 100, 15); // Minimum 15% height
-    this.targetPercentage = this.caloriesTarget > 0 ? (this.caloriesTarget / maxCalories) * 100 : 0;
+    // Calculate bar heights as percentages (relative to target)
+    this.caloriesPercentage = this.caloriesTarget > 0 ? Math.max((this.calories / this.caloriesTarget) * 100, 5) : 15; // Minimum 5% height
 
     // Macro percentages and gram amounts
     this.proteinPercentage = Math.round(macroData.macroAmounts.protein.percentage || 0);
@@ -95,30 +100,21 @@ export class MacronutrientsChartComponent implements OnChanges {
     this.carbsPercentage = Math.round(macroData.macroAmounts.carbs.percentage || 0);
     this.carbsGrams = Math.round((macroData.macroAmounts.carbs.amount || 0) * 10) / 10;
 
-    // Calculate target percentages (if targets exist)
-    let proteinTargetCals = (macroData.macroAmounts.protein.target || 0) * 4;
-    let fatTargetCals = (macroData.macroAmounts.fat.target || 0) * 9;
-    let carbsTargetCals = (macroData.macroAmounts.carbs.target || 0) * 4;
-    let totalTargetCals = proteinTargetCals + fatTargetCals + carbsTargetCals;
-
-    // TODO: Remove fake targets once real targets are available
-    if (totalTargetCals === 0) {
-      // Fake targets for demonstration: 40% protein, 30% fat, 30% carbs
-      proteinTargetCals = 400; // 100g * 4 cal/g
-      fatTargetCals = 270;     // 30g * 9 cal/g
-      carbsTargetCals = 300;   // 75g * 4 cal/g
-      totalTargetCals = proteinTargetCals + fatTargetCals + carbsTargetCals;
-    }
+    // Calculate target percentages and grams from real targets
+    const proteinTargetCals = (macroData.macroAmounts.protein.target || 0) * 4;
+    const fatTargetCals = (macroData.macroAmounts.fat.target || 0) * 9;
+    const carbsTargetCals = (macroData.macroAmounts.carbs.target || 0) * 4;
+    const totalTargetCals = proteinTargetCals + fatTargetCals + carbsTargetCals;
 
     if (totalTargetCals > 0) {
       this.proteinTargetPercentage = Math.round((proteinTargetCals / totalTargetCals) * 100);
       this.fatTargetPercentage = Math.round((fatTargetCals / totalTargetCals) * 100);
       this.carbsTargetPercentage = Math.round((carbsTargetCals / totalTargetCals) * 100);
 
-      // Calculate target grams from calories
-      this.proteinTargetGrams = Math.round((proteinTargetCals / 4) * 10) / 10;
-      this.fatTargetGrams = Math.round((fatTargetCals / 9) * 10) / 10;
-      this.carbsTargetGrams = Math.round((carbsTargetCals / 4) * 10) / 10;
+      // Calculate target grams
+      this.proteinTargetGrams = Math.round((macroData.macroAmounts.protein.target || 0) * 10) / 10;
+      this.fatTargetGrams = Math.round((macroData.macroAmounts.fat.target || 0) * 10) / 10;
+      this.carbsTargetGrams = Math.round((macroData.macroAmounts.carbs.target || 0) * 10) / 10;
     }
 
     // Calculate label positions at the midpoint of each segment
@@ -174,5 +170,13 @@ export class MacronutrientsChartComponent implements OnChanges {
     this.carbsTargetLabelX = 50 + targetLabelRadius * Math.cos((carbsTargetMidAngle * Math.PI) / 180);
     this.carbsTargetLabelY = 50 + targetLabelRadius * Math.sin((carbsTargetMidAngle * Math.PI) / 180);
     this.carbsTargetLabelRotation = carbsTargetMidPercent * 3.6 + 90;
+
+    // Position "Target %" label between carbs end and protein start (top of circle)
+    // The gap is between 100% (end of carbs) and 0% (start of protein), which wraps around at top
+    // Since we want it at the top, use 0 degrees (top of rotated circle)
+    const targetHeaderAngle = 0; // Top of the circle in our rotated coordinate system
+    this.targetHeaderLabelX = 50 + targetLabelRadius * Math.cos((targetHeaderAngle * Math.PI) / 180);
+    this.targetHeaderLabelY = 50 + targetLabelRadius * Math.sin((targetHeaderAngle * Math.PI) / 180);
+    this.targetHeaderLabelRotation = targetHeaderAngle + 90; // Perpendicular to radius
   }
 }

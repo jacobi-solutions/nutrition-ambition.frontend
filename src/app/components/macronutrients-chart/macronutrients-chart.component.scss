@@ -19,9 +19,9 @@ ion-grid {
   // Bar Chart Styles
   .bar-chart {
     display: flex;
-    justify-content: space-evenly;
+    justify-content: center;
     align-items: flex-end;
-    height: 200px;
+    height: 170px;
     padding: 10px;
     margin-bottom: 12px;
 
@@ -29,48 +29,108 @@ ion-grid {
       display: flex;
       flex-direction: column;
       align-items: center;
-      flex: 1;
-      max-width: 60px;
-      animation: slideUp 0.6s ease-out;
+      min-width: 100px;
+      position: relative;
+      height: 100%;
 
-      &:nth-child(2) {
-        animation-delay: 0.1s;
-      }
-
-      .bar {
-        width: 50px;
-        min-height: 10px;
-        border-radius: 6px 6px 0 0;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        cursor: pointer;
-
-        &.consumed-bar {
-          background: linear-gradient(180deg, #FF6B52 0%, #D64933 100%);
-
-          &:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 8px rgba(214, 73, 51, 0.3);
-          }
-        }
-
-        &.target-bar {
-          background: linear-gradient(180deg, #BED9C6 0%, #A9C8B2 100%);
-
-          &:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 8px rgba(169, 200, 178, 0.3);
-          }
-        }
-      }
-
-      .bar-label {
-        margin-top: 8px;
+      .target-label {
+        position: absolute;
+        top: 0;
         font-size: 11px;
         color: var(--ion-color-medium);
         font-weight: 500;
         opacity: 0;
-        animation: fadeIn 0.4s ease-out 0.3s forwards;
+        animation: fadeIn 0.4s ease-out 0.6s forwards;
+        z-index: 10;
+        white-space: nowrap;
+      }
+
+      .bar {
+        min-height: 10px;
+        border-radius: 6px 6px 0 0;
+        transition: all 0.3s ease;
+
+        &.ghost-bar {
+          position: absolute;
+          bottom: 0;
+          width: 65px;
+          height: 130px;
+          opacity: 0.5;
+          filter: blur(1px);
+          background: linear-gradient(180deg, #FFB896 0%, #E88273 100%);
+          animation: slideUp 0.6s ease-out 0s both;
+          cursor: default;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        &.consumed-bar {
+          position: absolute;
+          bottom: 0;
+          width: 55px;
+          background: linear-gradient(180deg, #8BA89C 0%, var(--color-sage) 100%);
+          animation: growUp 1.2s ease-out 0.8s both;
+          box-shadow: 0 0 1px rgba(255, 255, 255, 0.8),
+                      0 2px 4px rgba(0, 0, 0, 0.15);
+          cursor: pointer;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          padding-top: 8px;
+
+          .bar-value-label {
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            animation: fadeIn 0.4s ease-out 1.8s forwards;
+            white-space: nowrap;
+          }
+
+          &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 8px rgba(139, 168, 156, 0.3);
+          }
+        }
+
+        // &.ghost-bar {
+        //   position: absolute;
+        //   bottom: 0;
+        //   width: 65px;
+        //   height: 130px;
+        //   opacity: 0.5;
+        //   filter: blur(1px);
+        //   background: linear-gradient(180deg, #BED9C6 0%, #A9C8B2 100%);
+        //   animation: slideUp 0.6s ease-out 0s both;
+        //   cursor: default;
+        //   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        // }
+
+        // &.consumed-bar {
+        //   position: absolute;
+        //   bottom: 0;
+        //   width: 50px;
+        //   background: linear-gradient(180deg, #8BA89C 0%, var(--color-sage) 100%);
+        //   animation: slideUp 0.6s ease-out 0.8s both;
+        //   box-shadow: 0 0 1px rgba(255, 255, 255, 0.8),
+        //               0 2px 4px rgba(0, 0, 0, 0.15);
+        //   cursor: pointer;
+
+        //   &:hover {
+        //     transform: translateY(-4px);
+        //     box-shadow: 0 4px 8px rgba(139, 168, 156, 0.3);
+        //   }
+        // }
+      }
+
+      .bar-label {
+        position: absolute;
+        bottom: -30px;
+        font-size: 1rem;
+        color: var(--ion-text-color);
+        font-weight: 500;
+        opacity: 0;
+        animation: fadeIn 0.4s ease-out 1.4s forwards;
       }
     }
   }
@@ -86,6 +146,16 @@ ion-grid {
     }
   }
 
+  @keyframes growUp {
+    from {
+      height: 0;
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -95,11 +165,63 @@ ion-grid {
     }
   }
 
+  @keyframes showAndHide {
+    0% {
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
   // Donut Chart Styles
+  .donut-chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+
+    .animation-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ion-color-medium);
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+
+      &.targets-label {
+        animation: showAndHide 1.2s ease-in-out 0s forwards;
+      }
+
+      &.actual-label {
+        animation: showAndHide 1.2s ease-in-out 1.4s forwards;
+      }
+    }
+
+    .chart-label {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--ion-color-medium);
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn 0.4s ease-out 2.8s forwards;
+    }
+  }
+
   .donut-chart {
     width: 200px;
     height: 200px;
-    margin: 0 0 12px -10px;
+    margin: 0 0 0 -10px;
     animation: scaleIn 0.5s ease-out;
 
     svg {
@@ -107,45 +229,26 @@ ion-grid {
       width: 100%;
       height: 100%;
 
-      .donut-target-outer {
+      .donut-target {
         fill: none;
-        stroke-width: 10;
+        stroke-width: 30;
         opacity: 0.5;
         stroke-linecap: butt;
-        animation: drawSegment 0.8s ease-out 0.1s both;
+        animation: drawSegment 0.8s ease-out 0.2s both;
         filter: blur(1px);
 
-        &.protein-target-outer {
+        &.protein-target {
           stroke: #8BA89C; // Lighter version of olive
         }
 
-        &.fat-target-outer {
+        &.fat-target {
           stroke: #FFB896; // Lighter version of salmon
+          animation-delay: 0.4s;
         }
 
-        &.carbs-target-outer {
+        &.carbs-target {
           stroke: #E88273; // Lighter version of tomato
-        }
-      }
-
-      .donut-target-inner {
-        fill: none;
-        stroke-width: 7;
-        opacity: 0.5;
-        stroke-linecap: butt;
-        animation: drawSegment 0.8s ease-out 0.1s both;
-        filter: blur(1px);
-
-        &.protein-target-inner {
-          stroke: #8BA89C; // Lighter version of olive
-        }
-
-        &.fat-target-inner {
-          stroke: #FFB896; // Lighter version of salmon
-        }
-
-        &.carbs-target-inner {
-          stroke: #E88273; // Lighter version of tomato
+          animation-delay: 0.6s;
         }
       }
 
@@ -161,7 +264,7 @@ ion-grid {
 
         &.protein-segment {
           stroke: #4E6E5D;
-          animation: drawSegment 0.8s ease-out 0.2s both;
+          animation: drawSegment 0.8s ease-out 1.4s both;
 
           &:hover {
             stroke-width: 22;
@@ -174,7 +277,7 @@ ion-grid {
 
         &.fat-segment {
           stroke: #FF8A5C;
-          animation: drawSegment 0.8s ease-out 0.4s both;
+          animation: drawSegment 0.8s ease-out 1.6s both;
 
           &:hover {
             stroke-width: 22;
@@ -187,7 +290,7 @@ ion-grid {
 
         &.carbs-segment {
           stroke: #D64933;
-          animation: drawSegment 0.8s ease-out 0.6s both;
+          animation: drawSegment 0.8s ease-out 1.8s both;
 
           &:hover {
             stroke-width: 22;
@@ -204,7 +307,7 @@ ion-grid {
         font-size: 10px;
         font-weight: 700;
         opacity: 0;
-        animation: fadeIn 0.4s ease-out 1.2s forwards;
+        animation: fadeIn 0.4s ease-out 2.4s forwards;
         pointer-events: none;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
@@ -214,7 +317,7 @@ ion-grid {
         font-size: 11px;
         font-weight: 700;
         opacity: 0;
-        animation: fadeIn 0.4s ease-out 1.2s forwards;
+        animation: fadeIn 0.4s ease-out 0.8s forwards;
         pointer-events: none;
       }
     }
@@ -297,13 +400,13 @@ ion-grid {
       }
 
       .value-label {
-        color: var(--ion-color-medium);
+        color: var(--ion-text-color);
         font-weight: 500;
         flex: 1;
       }
 
       .value-number {
-        color: var(--ion-text-color);
+        color: var(--ion-color-medium);
         font-weight: 600;
       }
     }

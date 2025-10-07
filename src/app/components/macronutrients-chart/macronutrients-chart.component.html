@@ -1,20 +1,20 @@
 <ion-grid *ngIf="hasData">
   <ion-row>
     <!-- Calories Bar Chart -->
-    <ion-col size="5">
+    <ion-col size="4.5">
       <div class="chart-wrapper">
         
         <div class="bar-chart">
           <div class="bar-group">
-            <div class="bar consumed-bar" [style.height.%]="caloriesPercentage"></div>
-            <span class="bar-label">Consumed</span>
-          </div>
-          <div class="bar-group" *ngIf="caloriesTarget > 0">
-            <div class="bar target-bar" [style.height.%]="targetPercentage"></div>
-            <span class="bar-label">Target</span>
+            <span class="target-label">Target: {{ caloriesTarget || 'N/A' }} cal</span>
+            <div class="bar ghost-bar"></div>
+            <div class="bar consumed-bar" [style.height.%]="caloriesPercentage">
+              <span class="bar-value-label">{{ calories }} cal</span>
+            </div>
+            <span class="bar-label">Calories</span>
           </div>
         </div>
-        <div class="chart-values">
+        <!-- <div class="chart-values">
           <div class="value-item">
             <span class="value-label">Consumed:</span>
             <span class="value-number">{{ calories }} kcal</span>
@@ -23,27 +23,30 @@
             <span class="value-label">Target:</span>
             <span class="value-number">{{ caloriesTarget }} kcal</span>
           </div>
-        </div>
+        </div> -->
       </div>
     </ion-col>
 
     <!-- Macro Distribution Donut Chart -->
-    <ion-col size="7">
+    <ion-col size="7.5">
       <div class="chart-wrapper">
-        <div class="donut-chart">
-          <svg viewBox="-10 -10 120 120">
-            <!-- Outer target ring (thinner, lighter) -->
-            <circle class="donut-target-outer protein-target-outer" cx="50" cy="50" r="42"
-                    [attr.stroke-dasharray]="proteinTargetPercentage * 2.64 + ' ' + 264"
+        <div class="donut-chart-container">
+          <span class="animation-label targets-label">Targets</span>
+          <span class="animation-label actual-label">Actual</span>
+          <div class="donut-chart" [style.transform]="'scale(' + donutScale + ')'">
+            <svg viewBox="-10 -10 120 120">
+            <!-- Single target ring -->
+            <circle class="donut-target protein-target" cx="50" cy="50" r="30"
+                    [attr.stroke-dasharray]="proteinTargetPercentage * 1.885 + ' ' + 188.5"
                     [attr.stroke-dashoffset]="0"></circle>
-            <circle class="donut-target-outer fat-target-outer" cx="50" cy="50" r="42"
-                    [attr.stroke-dasharray]="fatTargetPercentage * 2.64 + ' ' + 264"
-                    [attr.stroke-dashoffset]="-proteinTargetPercentage * 2.64"></circle>
-            <circle class="donut-target-outer carbs-target-outer" cx="50" cy="50" r="42"
-                    [attr.stroke-dasharray]="carbsTargetPercentage * 2.64 + ' ' + 264"
-                    [attr.stroke-dashoffset]="-(proteinTargetPercentage + fatTargetPercentage) * 2.64"></circle>
+            <circle class="donut-target fat-target" cx="50" cy="50" r="30"
+                    [attr.stroke-dasharray]="fatTargetPercentage * 1.885 + ' ' + 188.5"
+                    [attr.stroke-dashoffset]="-proteinTargetPercentage * 1.885"></circle>
+            <circle class="donut-target carbs-target" cx="50" cy="50" r="30"
+                    [attr.stroke-dasharray]="carbsTargetPercentage * 1.885 + ' ' + 188.5"
+                    [attr.stroke-dashoffset]="-(proteinTargetPercentage + fatTargetPercentage) * 1.885"></circle>
 
-            <!-- Middle actual consumption ring -->
+            <!-- Actual consumption ring (appears after target) -->
             <circle class="donut-segment protein-segment" cx="50" cy="50" r="30"
                     [attr.stroke-dasharray]="proteinPercentage * 1.885 + ' ' + 188.5"
                     [attr.stroke-dashoffset]="0"></circle>
@@ -54,17 +57,6 @@
                     [attr.stroke-dasharray]="carbsPercentage * 1.885 + ' ' + 188.5"
                     [attr.stroke-dashoffset]="-(proteinPercentage + fatPercentage) * 1.885"></circle>
 
-            <!-- Inner target ring (thinner, lighter) -->
-            <circle class="donut-target-inner protein-target-inner" cx="50" cy="50" r="16.5"
-                    [attr.stroke-dasharray]="proteinTargetPercentage * 1.037 + ' ' + 103.7"
-                    [attr.stroke-dashoffset]="0"></circle>
-            <circle class="donut-target-inner fat-target-inner" cx="50" cy="50" r="16.5"
-                    [attr.stroke-dasharray]="fatTargetPercentage * 1.037 + ' ' + 103.7"
-                    [attr.stroke-dashoffset]="-proteinTargetPercentage * 1.037"></circle>
-            <circle class="donut-target-inner carbs-target-inner" cx="50" cy="50" r="16.5"
-                    [attr.stroke-dasharray]="carbsTargetPercentage * 1.037 + ' ' + 103.7"
-                    [attr.stroke-dashoffset]="-(proteinTargetPercentage + fatTargetPercentage) * 1.037"></circle>
-
             <!-- Actual percentage labels (white, on middle ring) -->
             <text class="percentage-label protein-label" [attr.x]="proteinLabelX" [attr.y]="proteinLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + proteinLabelRotation + ', ' + proteinLabelX + ', ' + proteinLabelY + ')'">{{ proteinPercentage }}%</text>
             <text class="percentage-label fat-label" [attr.x]="fatLabelX" [attr.y]="fatLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + fatLabelRotation + ', ' + fatLabelX + ', ' + fatLabelY + ')'">{{ fatPercentage }}%</text>
@@ -74,7 +66,12 @@
             <text class="target-percentage-label protein-target-label" [attr.x]="proteinTargetLabelX" [attr.y]="proteinTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + proteinTargetLabelRotation + ', ' + proteinTargetLabelX + ', ' + proteinTargetLabelY + ')'">{{ proteinTargetPercentage }}%</text>
             <text class="target-percentage-label fat-target-label" [attr.x]="fatTargetLabelX" [attr.y]="fatTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + fatTargetLabelRotation + ', ' + fatTargetLabelX + ', ' + fatTargetLabelY + ')'">{{ fatTargetPercentage }}%</text>
             <text class="target-percentage-label carbs-target-label" [attr.x]="carbsTargetLabelX" [attr.y]="carbsTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + carbsTargetLabelRotation + ', ' + carbsTargetLabelX + ', ' + carbsTargetLabelY + ')'">{{ carbsTargetPercentage }}%</text>
+
+            <!-- Target header label -->
+            <!-- <text class="target-percentage-label target-header-label" [attr.x]="targetHeaderLabelX" [attr.y]="targetHeaderLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + targetHeaderLabelRotation + ', ' + targetHeaderLabelX + ', ' + targetHeaderLabelY + ')'">Target %</text> -->
           </svg>
+          </div>
+          <!-- <span class="chart-label">Macros Breakdown</span> -->
         </div>
         <div class="chart-values">
           <div class="value-item">

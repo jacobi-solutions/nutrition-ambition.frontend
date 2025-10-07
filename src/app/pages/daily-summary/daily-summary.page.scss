@@ -311,9 +311,26 @@ ion-card {
     font-weight: 600;
     margin-bottom: 0;
   }
-  
+
   ion-card-header {
     padding-bottom: 8px;
+  }
+
+  .card-header-with-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    ion-card-title {
+      flex: 1;
+    }
+
+    ion-button {
+      position: absolute;
+      right: 0;
+      color: var(--color-sage);
+    }
   }
 }
 

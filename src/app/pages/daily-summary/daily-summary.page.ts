@@ -40,8 +40,8 @@ import {
   nutritionOutline,
   informationCircleOutline,
   informationCircle,
-  listOutline,
-  barChartOutline
+  list,
+  barChart
 } from 'ionicons/icons';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
 import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-action-menu/entry-action-menu.component';
@@ -158,8 +158,8 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       nutritionOutline,
       informationCircleOutline,
       informationCircle,
-      listOutline,
-      barChartOutline
+      list,
+      barChart
     });
     this.initializeChartOptions();
   }
