@@ -16,6 +16,14 @@ ion-grid {
     text-align: center;
   }
 
+  > .chart-tip {
+    margin-top: 12px;
+    font-size: 10px;
+    color: var(--ion-color-medium);
+    line-height: 1.4;
+    text-align: center;
+  }
+
   // Bar Chart Styles
   .bar-chart {
     display: flex;
@@ -216,6 +224,14 @@ ion-grid {
       font-weight: 500;
       opacity: 0;
       animation: fadeIn 0.4s ease-out 2.8s forwards;
+    }
+
+    .chart-tip {
+      margin-top: 1.25rem !important;
+      font-size: 10px;
+      color: var(--ion-color-medium);
+      line-height: 1.4;
+      text-align: center;
     }
   }
 

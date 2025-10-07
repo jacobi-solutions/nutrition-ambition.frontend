@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
-import { NutrientBreakdown } from '../../services/nutrition-ambition-api.service';
-import { NutritionChartService } from '../../services/nutrition-chart.service';
+import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.service';
+import { NutritionChartService } from 'src/app/services/nutrition-chart.service';
 
 @Component({
   selector: 'app-macronutrients-chart',
