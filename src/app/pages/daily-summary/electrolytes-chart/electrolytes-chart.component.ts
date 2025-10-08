@@ -39,10 +39,10 @@ export class ElectrolytesChartComponent implements OnChanges {
 
   // Color palette for electrolytes - matching app theme
   private colors = {
-    sodium: '#D64933',      // Tomato (high alert for sodium)
-    potassium: '#4E6E5D',   // Olive (earthy/balanced)
-    magnesium: '#FF8A5C',   // Sage (calm/balanced)
-    calcium: '#A9C8B2'      // Bone (fitting for calcium)
+    sodium: '#A9C8B2',    // sage (high alert for sodium)
+    potassium: '#FF8A5C',   // salmon (earthy/balanced)
+    magnesium: '#4E6E5D',   // olive (calm/balanced)
+    calcium: '#D64933'      // tomato (fitting for calcium)
   };
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -66,8 +66,12 @@ export class ElectrolytesChartComponent implements OnChanges {
 
     this.hasData = true;
 
-    // Calculate total for angle distribution (equal slices)
-    const anglePerSegment = 360 / electrolyteNutrients.length;
+    // Calculate total target for proportional angle distribution
+    const totalTarget = electrolyteNutrients.reduce((sum, n) => {
+      return sum + (n.maxTarget || n.minTarget || 0);
+    }, 0);
+
+    let cumulativeAngle = 0;
 
     this.electrolytes = electrolyteNutrients.map((nutrient, index) => {
       const key = nutrient.nutrientKey?.toLowerCase() || '';
@@ -86,11 +90,15 @@ export class ElectrolytesChartComponent implements OnChanges {
         radius = this.targetRingRadius + ((this.maxRadius - this.targetRingRadius) * (overage / 50));
       }
 
-      const startAngle = index * anglePerSegment;
-      const endAngle = (index + 1) * anglePerSegment;
+      // Calculate angle proportional to target amount
+      const angleForThisSegment = (target / totalTarget) * 360;
+      const startAngle = cumulativeAngle;
+      const endAngle = cumulativeAngle + angleForThisSegment;
+      cumulativeAngle = endAngle;
+
       const color = this.colors[key as keyof typeof this.colors] || '#A3A3A3';
 
-      // Precompute SVG path
+      // Precompute SVG path for actual consumption (variable radius)
       const segmentPath = this.computeSegmentPath(radius, startAngle, endAngle);
 
       // Precompute target ring stroke-dasharray and offset

@@ -26,7 +26,7 @@ ion-grid {
 
   .animation-label {
     position: absolute;
-    top: 50%;
+    top: 125px;  // Center of the 250px chart
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 18px;
@@ -159,13 +159,13 @@ ion-grid {
 
     .value-label {
       flex: 1;
-      color: var(--ion-color-medium);
+      color: var(--ion-text-color);
       font-weight: 500;
     }
 
     .value-number {
       font-weight: 600;
-      color: var(--ion-text-color);
+      color: var(--ion-color-medium);
     }
   }
 }
@@ -206,7 +206,7 @@ ion-grid {
     opacity: 0;
   }
   to {
-    opacity: 0.5;
+    opacity: 1;
   }
 }
 
