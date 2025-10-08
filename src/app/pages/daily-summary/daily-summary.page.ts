@@ -124,9 +124,9 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   editingMessage: any | null = null;
   isLoadingEdit = false;
 
-  // Chart state
-  showMacroCharts = false;
-  showElectrolyteCharts = false;
+  // Chart state - default to chart mode
+  showMacroCharts = true;
+  showElectrolyteCharts = true;
 
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);

@@ -48,7 +48,6 @@ ion-grid {
         color: var(--ion-color-medium);
         font-weight: 500;
         opacity: 0;
-        animation: fadeIn 0.4s ease-out 0.6s forwards;
         z-index: 10;
         white-space: nowrap;
       }
@@ -63,10 +62,9 @@ ion-grid {
           bottom: 0;
           width: 65px;
           height: 143px;
-          opacity: 0.5;
+          opacity: 0;
           filter: blur(1px);
           background: linear-gradient(180deg, #FFB896 0%, #E88273 100%);
-          animation: slideUp 0.6s ease-out 0s both;
           cursor: default;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
@@ -75,8 +73,8 @@ ion-grid {
           position: absolute;
           bottom: 0;
           width: 55px;
+          height: 0;
           background: linear-gradient(180deg, #8BA89C 0%, var(--color-sage) 100%);
-          animation: growUp 1.2s ease-out 0.8s both;
           box-shadow: 0 0 1px rgba(255, 255, 255, 0.8),
                       0 2px 4px rgba(0, 0, 0, 0.15);
           cursor: pointer;
@@ -91,7 +89,6 @@ ion-grid {
             font-weight: 700;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
             opacity: 0;
-            animation: fadeIn 0.4s ease-out 1.8s forwards;
             white-space: nowrap;
           }
 
@@ -138,7 +135,6 @@ ion-grid {
         color: var(--ion-text-color);
         font-weight: 500;
         opacity: 0;
-        animation: fadeIn 0.4s ease-out 1.4s forwards;
       }
     }
   }
@@ -462,4 +458,105 @@ ion-grid {
   text-align: center;
   color: var(--ion-color-medium);
   font-size: 14px;
+}
+
+// Animation triggers - only apply when .animate class is present
+ion-grid.animate {
+  .target-label {
+    animation: fadeIn 0.4s ease-out 0.6s forwards;
+  }
+
+  .ghost-bar {
+    animation: slideUp 0.6s ease-out 0s both;
+  }
+
+  .consumed-bar {
+    animation: growUp 1.2s ease-out 0.8s both;
+
+    .bar-value-label {
+      animation: fadeIn 0.4s ease-out 1.8s forwards;
+    }
+  }
+
+  .bar-label {
+    animation: fadeIn 0.4s ease-out 1.4s forwards;
+  }
+
+  .animation-label.targets-label {
+    animation: showAndHide 1.2s ease-in-out 0s forwards;
+  }
+
+  .animation-label.actual-label {
+    animation: showAndHide 1.2s ease-in-out 1.4s forwards;
+  }
+
+  .chart-label {
+    animation: fadeIn 0.4s ease-out 2.8s forwards;
+  }
+
+  .donut-target {
+    animation: drawSegment 0.8s ease-out 0.2s both;
+
+    &.fat-target {
+      animation-delay: 0.4s;
+    }
+
+    &.carbs-target {
+      animation-delay: 0.6s;
+    }
+  }
+
+  .donut-segment {
+    &.protein-segment {
+      animation: drawSegment 0.8s ease-out 1.4s both;
+    }
+
+    &.fat-segment {
+      animation: drawSegment 0.8s ease-out 1.6s both;
+    }
+
+    &.carbs-segment {
+      animation: drawSegment 0.8s ease-out 1.8s both;
+    }
+  }
+
+  .percentage-label {
+    animation: fadeIn 0.4s ease-out 2.4s forwards;
+  }
+
+  .target-percentage-label {
+    animation: fadeIn 0.4s ease-out 0.8s forwards;
+  }
+
+  .donut-chart {
+    animation: scaleIn 0.5s ease-out;
+  }
+
+  .value-item {
+    animation: fadeInSlide 0.4s ease-out forwards;
+
+    &:nth-child(1) {
+      animation-delay: 0.7s;
+    }
+
+    &:nth-child(2) {
+      animation-delay: 0.8s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.9s;
+    }
+
+    .value-dot {
+      animation: pulse 2s infinite;
+
+      &.fat-dot {
+        animation-delay: 0.2s;
+      }
+
+      &.carbs-dot {
+        animation-delay: 0.4s;
+      }
+    }
+  }
 }

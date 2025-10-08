@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.service';
@@ -16,10 +16,12 @@ import { NutritionChartService } from 'src/app/services/nutrition-chart.service'
     IonCol
   ]
 })
-export class MacronutrientsChartComponent implements OnChanges {
+export class MacronutrientsChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() nutrients: NutrientBreakdown[] = [];
 
   hasData = false;
+  isVisible = false;
+  private observer: IntersectionObserver | null = null;
 
   // Display values
   calories = 0;
@@ -64,7 +66,33 @@ export class MacronutrientsChartComponent implements OnChanges {
   // Scale factor for donut chart (adjust this to resize the entire chart)
   donutScale = 1.2;
 
-  constructor(private chartService: NutritionChartService) {}
+  constructor(
+    private chartService: NutritionChartService,
+    private elementRef: ElementRef
+  ) {}
+
+  ngAfterViewInit(): void {
+    // Set up Intersection Observer to trigger animations when chart is visible
+    // rootMargin: '-50% 0px -50% 0px' means only trigger when element is in middle 50% of viewport
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !this.isVisible) {
+          this.isVisible = true;
+        }
+      });
+    }, {
+      threshold: 0,
+      rootMargin: '-50% 0px -50% 0px'  // Only trigger when element is halfway up the screen
+    });
+
+    this.observer.observe(this.elementRef.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['nutrients'] && this.nutrients?.length > 0) {

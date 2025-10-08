@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.service';
@@ -28,14 +28,16 @@ interface ElectrolyteData {
   standalone: true,
   imports: [CommonModule, IonGrid, IonRow, IonCol]
 })
-export class ElectrolytesChartComponent implements OnChanges {
+export class ElectrolytesChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() nutrients: NutrientBreakdown[] = [];
 
   hasData = false;
+  isVisible = false;
   electrolytes: ElectrolyteData[] = [];
   maxRadius = 45; // Maximum radius for 100%+ consumption
   minRadius = 15; // Minimum radius for low consumption
   targetRingRadius = 45; // Fixed outer ring showing 100% target
+  private observer: IntersectionObserver | null = null;
 
   // Color palette for electrolytes - matching app theme
   private colors = {
@@ -44,6 +46,31 @@ export class ElectrolytesChartComponent implements OnChanges {
     magnesium: '#4E6E5D',   // olive (calm/balanced)
     calcium: '#D64933'      // tomato (fitting for calcium)
   };
+
+  constructor(private elementRef: ElementRef) {}
+
+  ngAfterViewInit(): void {
+    // Set up Intersection Observer to trigger animations when chart is visible
+    // rootMargin: '-50% 0px -50% 0px' means only trigger when element is in middle 50% of viewport
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !this.isVisible) {
+          this.isVisible = true;
+        }
+      });
+    }, {
+      threshold: 0,
+      rootMargin: '-50% 0px -50% 0px'  // Only trigger when element is halfway up the screen
+    });
+
+    this.observer.observe(this.elementRef.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['nutrients'] && this.nutrients?.length > 0) {
