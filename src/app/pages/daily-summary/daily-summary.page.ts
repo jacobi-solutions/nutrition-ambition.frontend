@@ -274,9 +274,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
   }
 
-  // Precomputed vitamin data with colors
-  vitaminSquares: Array<{label: string, key: string, color: string}> = [];
-
   // Get vitamins list
   get vitaminList(): NutrientBreakdownDisplay[] {
     const vitaminKeys = [
@@ -977,9 +974,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       return display;
     });
 
-    // Precompute vitamin squares
-    this.computeVitaminSquares();
-
     // Update selection states
     this.updateAllSelectionStates();
   }
@@ -1031,40 +1025,5 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   toggleVitaminChartView(): void {
     this.showVitaminCharts = !this.showVitaminCharts;
-  }
-
-  // Precompute vitamin squares with colors
-  private computeVitaminSquares(): void {
-    const vitaminData = [
-      { label: 'A', key: 'vitamin_a' },
-      { label: 'C', key: 'vitamin_c' },
-      { label: 'D', key: 'vitamin_d' },
-      { label: 'E', key: 'vitamin_e' },
-      { label: 'K', key: 'vitamin_k' },
-      { label: 'B1', key: 'thiamin' },
-      { label: 'B2', key: 'riboflavin' },
-      { label: 'B3', key: 'niacin' },
-      { label: 'B6', key: 'vitamin_b6' },
-      { label: 'B9', key: 'folate' },
-      { label: 'B12', key: 'vitamin_b12' },
-      { label: 'B5', key: 'pantothenic_acid' }
-    ];
-
-    this.vitaminSquares = vitaminData.map(v => {
-      const vitamin = this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === v.key.toLowerCase());
-      let color = '#D64933'; // Default tomato
-
-      if (vitamin) {
-        const consumed = vitamin.totalAmount || 0;
-        const target = vitamin.maxTarget || vitamin.minTarget || 1;
-        const percentage = (consumed / target) * 100;
-
-        if (percentage < 50) color = '#D64933'; // Tomato
-        else if (percentage < 100) color = '#FF8A5C'; // Salmon
-        else color = '#4E6E5D'; // Olive
-      }
-
-      return { label: v.label, key: v.key, color };
-    });
   }
 }

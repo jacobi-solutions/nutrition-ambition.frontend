@@ -1,136 +1,78 @@
-.vitamins-grid {
-  padding: 0;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-
-  ion-row {
-    margin: 0;
-  }
-
-  ion-col {
-    padding: 4px;
-  }
+.vitamin-heatmap-container {
+  padding: 20px;
 }
 
-.vitamin-square {
-  position: relative;
-  width: 100%;
-  padding-bottom: 100%; // Makes it square (1:1 aspect ratio)
-  border-radius: 8px;
+.vitamin-heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-width: 400px;
+  margin: 0 auto 16px;
+}
+
+.vitamin-heatmap-tile {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: visible;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  transition: background-color 0.4s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  opacity: 0;
+  animation: fadeInTile 0.3s ease-out forwards;
 
   &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 10;
-
-    .vitamin-tooltip {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(-50%) scale(1);
-    }
+    transform: scale(1.03);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   }
 }
 
-.vitamin-label {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  pointer-events: none;
-}
-
-.vitamin-percentage {
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  pointer-events: none;
-}
-
-.vitamin-tooltip {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translateY(-50%) scale(0.9);
-  transform-origin: left center;
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  white-space: nowrap;
-  font-size: 0.875rem;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  pointer-events: none;
-  z-index: 100;
-  margin-left: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-
-  .tooltip-name {
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .tooltip-values {
-    font-size: 0.75rem;
-    opacity: 0.9;
-  }
-}
-
-.no-data {
-  padding: 20px;
-  text-align: center;
-  color: var(--ion-color-medium);
-  font-style: italic;
-}
-
-// Animation classes
-ion-grid.animate {
-  .vitamin-square {
-    animation: fadeInScale 0.4s ease forwards;
-    opacity: 0;
-  }
-
-  // Stagger animation for each square
-  ion-row:nth-child(1) ion-col:nth-child(1) .vitamin-square { animation-delay: 0.05s; }
-  ion-row:nth-child(1) ion-col:nth-child(2) .vitamin-square { animation-delay: 0.1s; }
-  ion-row:nth-child(1) ion-col:nth-child(3) .vitamin-square { animation-delay: 0.15s; }
-  ion-row:nth-child(1) ion-col:nth-child(4) .vitamin-square { animation-delay: 0.2s; }
-
-  ion-row:nth-child(2) ion-col:nth-child(1) .vitamin-square { animation-delay: 0.25s; }
-  ion-row:nth-child(2) ion-col:nth-child(2) .vitamin-square { animation-delay: 0.3s; }
-  ion-row:nth-child(2) ion-col:nth-child(3) .vitamin-square { animation-delay: 0.35s; }
-  ion-row:nth-child(2) ion-col:nth-child(4) .vitamin-square { animation-delay: 0.4s; }
-
-  ion-row:nth-child(3) ion-col:nth-child(1) .vitamin-square { animation-delay: 0.45s; }
-  ion-row:nth-child(3) ion-col:nth-child(2) .vitamin-square { animation-delay: 0.5s; }
-  ion-row:nth-child(3) ion-col:nth-child(3) .vitamin-square { animation-delay: 0.55s; }
-  ion-row:nth-child(3) ion-col:nth-child(4) .vitamin-square { animation-delay: 0.6s; }
-
-  ion-row:nth-child(4) ion-col:nth-child(1) .vitamin-square { animation-delay: 0.65s; }
-}
-
-@keyframes fadeInScale {
+@keyframes fadeInTile {
   from {
     opacity: 0;
-    transform: scale(0.8);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
+  }
+}
+
+.vitamin-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 13px;
+  color: var(--ion-text-color);
+  margin-top: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+
+  &.low {
+    background: #D64933;
+  }
+
+  &.medium {
+    background: #FF8A5C;
+  }
+
+  &.high {
+    background: #A9C8B2;
   }
 }

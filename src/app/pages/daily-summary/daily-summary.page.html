@@ -265,15 +265,7 @@
             </ion-list>
 
             <!-- Chart View -->
-            <div *ngIf="showVitaminCharts" style="padding: 20px;">
-              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 400px; margin: 0 auto;">
-                <div *ngFor="let vitamin of vitaminSquares"
-                     [style.background-color]="vitamin.color"
-                     style="aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: bold;">
-                  {{ vitamin.label }}
-                </div>
-              </div>
-            </div>
+            <app-vitamins-chart *ngIf="showVitaminCharts" [nutrients]="nutrientsDisplay"></app-vitamins-chart>
           </ion-card-content>
         </ion-card>
 
