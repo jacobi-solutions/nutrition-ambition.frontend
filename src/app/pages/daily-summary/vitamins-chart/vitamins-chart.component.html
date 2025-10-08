@@ -1,0 +1,20 @@
+<ion-grid class="vitamins-grid" *ngIf="hasData">
+  <ion-row *ngFor="let row of vitaminRows">
+    <ion-col size="3" *ngFor="let vitamin of row">
+      <div class="vitamin-square"
+           [style.background-color]="vitamin.color"
+           [attr.data-percentage]="vitamin.percentage">
+        <div class="vitamin-label">{{ vitamin.displayName }}</div>
+        <div class="vitamin-percentage">{{ vitamin.percentage }}%</div>
+        <div class="vitamin-tooltip">
+          <div class="tooltip-name">{{ vitamin.name }}</div>
+          <div class="tooltip-values">{{ vitamin.consumed }} / {{ vitamin.target }} {{ vitamin.unit }}</div>
+        </div>
+      </div>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+
+<div class="no-data" *ngIf="!hasData">
+  <p>No vitamin data available</p>
+</div>

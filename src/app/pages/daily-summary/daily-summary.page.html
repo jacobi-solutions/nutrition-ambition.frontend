@@ -197,6 +197,86 @@
           </ion-card-content>
         </ion-card>
 
+        <!-- Vitamins Card -->
+        <ion-card [class.expanded]="selectedNutrient">
+          <ion-card-header>
+            <div class="card-header-with-toggle">
+              <ion-card-title>Vitamins</ion-card-title>
+              <ion-button fill="clear" size="small" class="toggle-btn" (click)="toggleVitaminChartView()">
+                <ion-icon [name]="showVitaminCharts ? 'list' : 'bar-chart'"></ion-icon>
+              </ion-button>
+            </div>
+          </ion-card-header>
+          <ion-card-content>
+            <!-- List View -->
+            <ion-list *ngIf="!showVitaminCharts" [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, vitaminList)">
+              <ng-container *ngFor="let nutrient of vitaminList; trackBy: trackById">
+                <ion-item
+                  class="nutrient-entry"
+                  (click)="selectNutrient(nutrient)"
+                  [class.selected]="nutrient.isSelected">
+                  <div class="breakdown-item">
+                    <div class="primary-info">
+                      <span class="name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
+                      <span class="amount">{{ formatConsumedTarget(nutrient) }}</span>
+                    </div>
+                  </div>
+
+                  <ion-button
+                    fill="clear"
+                    slot="end"
+                    size="small"
+                    class="action-btn"
+                    (click)="openActionMenu($event, nutrient, 'nutrient')">
+                    <ion-icon name="ellipsis-vertical"></ion-icon>
+                  </ion-button>
+
+                  <ion-button
+                    fill="clear"
+                    slot="end"
+                    size="small"
+                    class="chevron-btn">
+                    <ion-icon
+                      [name]="nutrient.isSelected ? 'chevron-down-outline' : 'chevron-forward-outline'">
+                    </ion-icon>
+                  </ion-button>
+                </ion-item>
+
+                <ng-container *ngIf="selectedNutrient?.nutrientKey === nutrient.nutrientKey">
+                  <ion-item lines="none" class="drilldown-row nutrient-drilldown">
+                    <div class="drilldown-content">
+                      <ng-container *ngIf="selectedNutrient && selectedNutrient.foods?.length">
+                        <ng-container *ngFor="let food of selectedNutrient.foods; trackBy: trackById">
+                          <div class="detail-item clickable-food" (click)="food.name && navigateToFood(food.name)">
+                            <span class="detail-name">
+                              <span *ngIf="food.brandName" class="brand-name">{{ food.brandName }} - </span>{{ food.name }}
+                            </span>
+                            <span class="detail-amount">{{ formatAmountWithFoodUnit(food) }}</span>
+                          </div>
+                        </ng-container>
+                      </ng-container>
+                      <div *ngIf="selectedNutrient && !selectedNutrient.foods?.length" class="empty-detail-message">
+                        <span>No foods logged for this nutrient yet.</span>
+                      </div>
+                    </div>
+                  </ion-item>
+                </ng-container>
+              </ng-container>
+            </ion-list>
+
+            <!-- Chart View -->
+            <div *ngIf="showVitaminCharts" style="padding: 20px;">
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 400px; margin: 0 auto;">
+                <div *ngFor="let vitamin of vitaminSquares"
+                     [style.background-color]="vitamin.color"
+                     style="aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: bold;">
+                  {{ vitamin.label }}
+                </div>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+
         <!-- Micronutrients Card -->
         <ion-card [class.expanded]="selectedNutrient">
           <ion-card-header>

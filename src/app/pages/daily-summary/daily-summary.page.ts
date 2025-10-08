@@ -48,6 +48,7 @@ import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-
 import { FoodSelectionComponent } from 'src/app/components/food-selection/food-selection.component';
 import { MacronutrientsChartComponent } from './macronutrients-chart/macronutrients-chart.component';
 import { ElectrolytesChartComponent } from './electrolytes-chart/electrolytes-chart.component';
+import { VitaminsChartComponent } from './vitamins-chart/vitamins-chart.component';
 import { ToastService } from 'src/app/services/toast.service';
 import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
@@ -82,7 +83,8 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
     EntryActionMenuComponent,
     FoodSelectionComponent,
     MacronutrientsChartComponent,
-    ElectrolytesChartComponent
+    ElectrolytesChartComponent,
+    VitaminsChartComponent
   ]
 })
 export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
@@ -127,6 +129,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   // Chart state - default to chart mode
   showMacroCharts = true;
   showElectrolyteCharts = true;
+  showVitaminCharts = true;
 
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);
@@ -267,6 +270,21 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     const electrolyteKeys = ['sodium', 'potassium', 'magnesium', 'calcium'];
     // Sort by the order defined in electrolyteKeys array
     return electrolyteKeys
+      .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
+      .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
+  }
+
+  // Precomputed vitamin data with colors
+  vitaminSquares: Array<{label: string, key: string, color: string}> = [];
+
+  // Get vitamins list
+  get vitaminList(): NutrientBreakdownDisplay[] {
+    const vitaminKeys = [
+      'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_e', 'vitamin_k',
+      'thiamin', 'riboflavin', 'niacin', 'vitamin_b6',
+      'folate', 'vitamin_b12', 'pantothenic_acid'
+    ];
+    return vitaminKeys
       .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
       .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
   }
@@ -959,6 +977,9 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       return display;
     });
 
+    // Precompute vitamin squares
+    this.computeVitaminSquares();
+
     // Update selection states
     this.updateAllSelectionStates();
   }
@@ -1006,5 +1027,44 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   toggleElectrolyteChartView(): void {
     this.showElectrolyteCharts = !this.showElectrolyteCharts;
+  }
+
+  toggleVitaminChartView(): void {
+    this.showVitaminCharts = !this.showVitaminCharts;
+  }
+
+  // Precompute vitamin squares with colors
+  private computeVitaminSquares(): void {
+    const vitaminData = [
+      { label: 'A', key: 'vitamin_a' },
+      { label: 'C', key: 'vitamin_c' },
+      { label: 'D', key: 'vitamin_d' },
+      { label: 'E', key: 'vitamin_e' },
+      { label: 'K', key: 'vitamin_k' },
+      { label: 'B1', key: 'thiamin' },
+      { label: 'B2', key: 'riboflavin' },
+      { label: 'B3', key: 'niacin' },
+      { label: 'B6', key: 'vitamin_b6' },
+      { label: 'B9', key: 'folate' },
+      { label: 'B12', key: 'vitamin_b12' },
+      { label: 'B5', key: 'pantothenic_acid' }
+    ];
+
+    this.vitaminSquares = vitaminData.map(v => {
+      const vitamin = this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === v.key.toLowerCase());
+      let color = '#D64933'; // Default tomato
+
+      if (vitamin) {
+        const consumed = vitamin.totalAmount || 0;
+        const target = vitamin.maxTarget || vitamin.minTarget || 1;
+        const percentage = (consumed / target) * 100;
+
+        if (percentage < 50) color = '#D64933'; // Tomato
+        else if (percentage < 100) color = '#FF8A5C'; // Salmon
+        else color = '#4E6E5D'; // Olive
+      }
+
+      return { label: v.label, key: v.key, color };
+    });
   }
 }
