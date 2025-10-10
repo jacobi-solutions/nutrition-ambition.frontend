@@ -49,6 +49,7 @@ import { FoodSelectionComponent } from 'src/app/components/food-selection/food-s
 import { MacronutrientsChartComponent } from './macronutrients-chart/macronutrients-chart.component';
 import { ElectrolytesChartComponent } from './electrolytes-chart/electrolytes-chart.component';
 import { VitaminsChartComponent } from './vitamins-chart/vitamins-chart.component';
+import { FatsChartComponent } from './fats-chart/fats-chart.component';
 import { ToastService } from 'src/app/services/toast.service';
 import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
@@ -84,7 +85,8 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
     FoodSelectionComponent,
     MacronutrientsChartComponent,
     ElectrolytesChartComponent,
-    VitaminsChartComponent
+    VitaminsChartComponent,
+    FatsChartComponent
   ]
 })
 export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
@@ -130,6 +132,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   showMacroCharts = true;
   showElectrolyteCharts = true;
   showVitaminCharts = true;
+  showFatsCharts = true;
 
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);
@@ -286,11 +289,31 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
   }
 
+  // Get fats list
+  get fatsList(): NutrientBreakdownDisplay[] {
+    const fatsKeys = ['saturated_fat', 'trans_fat', 'polyunsaturated_fat', 'monounsaturated_fat'];
+    return fatsKeys
+      .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
+      .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
+  }
+
   // Sort micronutrients using sortOrder field (set by backend)
   get micronutrientList(): NutrientBreakdownDisplay[] {
     const electrolyteKeys = ['sodium', 'potassium', 'magnesium', 'calcium'];
+    const fatsKeys = ['saturated_fat', 'trans_fat', 'polyunsaturated_fat', 'monounsaturated_fat'];
+    const vitaminKeys = [
+      'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_e', 'vitamin_k',
+      'thiamin', 'riboflavin', 'niacin', 'vitamin_b6',
+      'folate', 'vitamin_b12', 'pantothenic_acid'
+    ];
     return this.nutrientsDisplay
-      .filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || '') && !electrolyteKeys.includes(n.nutrientKey?.toLowerCase() || ''))
+      .filter(n => {
+        const key = n.nutrientKey?.toLowerCase() || '';
+        return !['calories', 'protein', 'fat', 'carbohydrate'].includes(key)
+          && !electrolyteKeys.includes(key)
+          && !fatsKeys.includes(key)
+          && !vitaminKeys.includes(key);
+      })
       .sort((a, b) => {
         return ((a as any)['sortOrder'] ?? 9999) - ((b as any)['sortOrder'] ?? 9999);
       });
@@ -1025,5 +1048,9 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   toggleVitaminChartView(): void {
     this.showVitaminCharts = !this.showVitaminCharts;
+  }
+
+  toggleFatsChartView(): void {
+    this.showFatsCharts = !this.showFatsCharts;
   }
 }

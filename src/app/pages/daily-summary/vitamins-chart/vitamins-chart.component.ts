@@ -65,8 +65,6 @@ export class VitaminsChartComponent implements OnChanges {
         backgroundColor = '#A9C8B2'; // sage
       }
 
-      // Debug logging
-      console.log(`${v.label}: ${percentage.toFixed(1)}% -> ${backgroundColor}`);
 
       // Original gradient logic (commented out)
       // if (p < 50) {
