@@ -110,7 +110,7 @@ ion-grid {
     }
   }
 
-  @keyframes slideUp {
+  @keyframes fats-slideUp {
     from {
       opacity: 0;
       transform: translateY(20px);
@@ -121,7 +121,7 @@ ion-grid {
     }
   }
 
-  @keyframes growUp {
+  @keyframes fats-growUp {
     from {
       height: 0;
       opacity: 1;
@@ -131,7 +131,7 @@ ion-grid {
     }
   }
 
-  @keyframes fadeIn {
+  @keyframes fats-fadeIn {
     from {
       opacity: 0;
     }
@@ -140,7 +140,7 @@ ion-grid {
     }
   }
 
-  @keyframes showAndHide {
+  @keyframes fats-showAndHide {
     0% {
       opacity: 0;
     }
@@ -175,12 +175,12 @@ ion-grid {
       opacity: 0;
 
       &.targets-label {
-        animation: showAndHide 1.2s ease-in-out 0s forwards;
+        animation: fats-showAndHide 1.2s ease-in-out 0s forwards;
       }
 
       &.actual-label {
         color: white;
-        animation: showAndHide 1.2s ease-in-out 1.4s forwards;
+        animation: fats-showAndHide 1.2s ease-in-out 1.4s forwards;
       }
     }
 
@@ -190,7 +190,7 @@ ion-grid {
       color: var(--ion-color-medium);
       font-weight: 500;
       opacity: 0;
-      animation: fadeIn 0.4s ease-out 2.8s forwards;
+      animation: fats-fadeIn 0.4s ease-out 2.8s forwards;
     }
 
     .chart-tip {
@@ -206,7 +206,7 @@ ion-grid {
     width: 200px;
     height: 200px;
     margin: 0 0 0 -10px;
-    animation: scaleIn 0.5s ease-out;
+    animation: fats-scaleIn 0.5s ease-out;
 
     svg {
       transform: rotate(-90deg);
@@ -218,7 +218,7 @@ ion-grid {
         stroke-width: 50;
         opacity: 0.5;
         stroke-linecap: butt;
-        animation: drawSegment 0.8s ease-out 0.2s both;
+        animation: fats-drawSegment 0.8s ease-out 0.2s both;
         filter: blur(1px);
 
         &.trans-target {
@@ -253,7 +253,7 @@ ion-grid {
 
         &.trans-segment {
           stroke: #D64933;
-          animation: drawSegment 0.8s ease-out 1.4s both;
+          animation: fats-drawSegment 0.8s ease-out 1.4s both;
 
           &:hover {
             stroke-width: 22;
@@ -266,7 +266,7 @@ ion-grid {
 
         &.saturated-segment {
           stroke: #FF8A5C;
-          animation: drawSegment 0.8s ease-out 1.6s both;
+          animation: fats-drawSegment 0.8s ease-out 1.6s both;
 
           &:hover {
             stroke-width: 22;
@@ -279,7 +279,7 @@ ion-grid {
 
         &.poly-segment {
           stroke: #A9C8B2;
-          animation: drawSegment 0.8s ease-out 1.8s both;
+          animation: fats-drawSegment 0.8s ease-out 1.8s both;
 
           &:hover {
             stroke-width: 22;
@@ -292,7 +292,7 @@ ion-grid {
 
         &.mono-segment {
           stroke: #4E6E5D;
-          animation: drawSegment 0.8s ease-out 2.0s both;
+          animation: fats-drawSegment 0.8s ease-out 2.0s both;
 
           &:hover {
             stroke-width: 22;
@@ -309,7 +309,7 @@ ion-grid {
         font-size: .5rem;
         font-weight: 700;
         opacity: 0;
-        animation: fadeIn 0.4s ease-out 2.4s forwards;
+        animation: fats-fadeIn 0.4s ease-out 2.4s forwards;
         pointer-events: none;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       }
@@ -319,13 +319,13 @@ ion-grid {
         font-size: .5rem;
         font-weight: 700;
         opacity: 0;
-        animation: fadeIn 0.4s ease-out 0.8s forwards;
+        animation: fats-fadeIn 0.4s ease-out 0.8s forwards;
         pointer-events: none;
       }
     }
   }
 
-  @keyframes scaleIn {
+  @keyframes fats-scaleIn {
     from {
       opacity: 0;
       transform: scale(0.8);
@@ -336,7 +336,7 @@ ion-grid {
     }
   }
 
-  @keyframes drawSegment {
+  @keyframes fats-drawSegment {
     from {
       stroke-dasharray: 0 188.5;
     }
@@ -354,7 +354,7 @@ ion-grid {
       margin-bottom: 6px;
       font-size: 13px;
       opacity: 0;
-      animation: fadeInSlide 0.4s ease-out forwards;
+      animation: fats-fadeInSlide 0.4s ease-out forwards;
       transition: transform 0.2s ease;
 
       &:nth-child(1) {
@@ -388,7 +388,7 @@ ion-grid {
         margin-right: 8px;
         flex-shrink: 0;
         box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
-        animation: pulse 2s infinite;
+        animation: fats-pulse 2s infinite;
 
         &.trans-dot {
           background-color: #D64933;
@@ -423,7 +423,7 @@ ion-grid {
     }
   }
 
-  @keyframes fadeInSlide {
+  @keyframes fats-fadeInSlide {
     from {
       opacity: 0;
       transform: translateX(-10px);
@@ -434,7 +434,7 @@ ion-grid {
     }
   }
 
-  @keyframes pulse {
+  @keyframes fats-pulse {
     0% {
       box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
     }
@@ -457,39 +457,39 @@ ion-grid {
 // Animation triggers - only apply when .animate class is present
 ion-grid.animate {
   .target-label {
-    animation: fadeIn 0.4s ease-out 0.6s forwards;
+    animation: fats-fadeIn 0.4s ease-out 0.6s forwards;
   }
 
   .ghost-bar {
-    animation: slideUp 0.6s ease-out 0s both;
+    animation: fats-slideUp 0.6s ease-out 0s both;
   }
 
   .consumed-bar {
-    animation: growUp 1.2s ease-out 0.8s both;
+    animation: fats-growUp 1.2s ease-out 0.8s both;
 
     .bar-value-label {
-      animation: fadeIn 0.4s ease-out 1.8s forwards;
+      animation: fats-fadeIn 0.4s ease-out 1.8s forwards;
     }
   }
 
   .bar-label {
-    animation: fadeIn 0.4s ease-out 1.4s forwards;
+    animation: fats-fadeIn 0.4s ease-out 1.4s forwards;
   }
 
   .animation-label.targets-label {
-    animation: showAndHide 1.2s ease-in-out 0s forwards;
+    animation: fats-showAndHide 1.2s ease-in-out 0s forwards;
   }
 
   .animation-label.actual-label {
-    animation: showAndHide 1.2s ease-in-out 1.4s forwards;
+    animation: fats-showAndHide 1.2s ease-in-out 1.4s forwards;
   }
 
   .chart-label {
-    animation: fadeIn 0.4s ease-out 2.8s forwards;
+    animation: fats-fadeIn 0.4s ease-out 2.8s forwards;
   }
 
   .donut-target {
-    animation: drawSegment 0.8s ease-out 0.2s both;
+    animation: fats-drawSegment 0.8s ease-out 0.2s both;
 
     &.saturated-target {
       animation-delay: 0.4s;
@@ -506,36 +506,36 @@ ion-grid.animate {
 
   .donut-segment {
     &.trans-segment {
-      animation: drawSegment 0.8s ease-out 1.4s both;
+      animation: fats-drawSegment 0.8s ease-out 1.4s both;
     }
 
     &.saturated-segment {
-      animation: drawSegment 0.8s ease-out 1.6s both;
+      animation: fats-drawSegment 0.8s ease-out 1.6s both;
     }
 
     &.poly-segment {
-      animation: drawSegment 0.8s ease-out 1.8s both;
+      animation: fats-drawSegment 0.8s ease-out 1.8s both;
     }
 
     &.mono-segment {
-      animation: drawSegment 0.8s ease-out 2.0s both;
+      animation: fats-drawSegment 0.8s ease-out 2.0s both;
     }
   }
 
   .percentage-label {
-    animation: fadeIn 0.4s ease-out 2.4s forwards;
+    animation: fats-fadeIn 0.4s ease-out 2.4s forwards;
   }
 
   .target-percentage-label {
-    animation: fadeIn 0.4s ease-out 0.8s forwards;
+    animation: fats-fadeIn 0.4s ease-out 0.8s forwards;
   }
 
   .donut-chart {
-    animation: scaleIn 0.5s ease-out;
+    animation: fats-scaleIn 0.5s ease-out;
   }
 
   .value-item {
-    animation: fadeInSlide 0.4s ease-out forwards;
+    animation: fats-fadeInSlide 0.4s ease-out forwards;
 
     &:nth-child(1) {
       animation-delay: 0.7s;
@@ -554,7 +554,7 @@ ion-grid.animate {
     }
 
     .value-dot {
-      animation: pulse 2s infinite;
+      animation: fats-pulse 2s infinite;
 
       &.saturated-dot {
         animation-delay: 0.2s;
