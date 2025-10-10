@@ -281,7 +281,7 @@
           </ion-card-header>
           <ion-card-content>
             <!-- List View -->
-            <ion-list *ngIf="!showFatsCharts" [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, fatsList)">
+            <ion-list *ngIf="true" [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, fatsList)">
               <ng-container *ngFor="let nutrient of fatsList; trackBy: trackById">
                 <ion-item
                   class="nutrient-entry"
@@ -338,7 +338,7 @@
             </ion-list>
 
             <!-- Chart View -->
-            <app-fats-chart *ngIf="showFatsCharts" [nutrients]="nutrientsDisplay"></app-fats-chart>
+            <!-- <app-fats-chart *ngIf="showFatsCharts" [nutrients]="nutrientsDisplay"></app-fats-chart> -->
           </ion-card-content>
         </ion-card>
 

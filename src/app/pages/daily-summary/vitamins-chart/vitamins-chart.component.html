@@ -1,16 +1,43 @@
-<div class="vitamin-heatmap-container">
-  <div class="vitamin-heatmap-grid">
-    <div *ngFor="let vitamin of vitaminSquares; let i = index"
-         class="vitamin-heatmap-tile"
-         [style.background-color]="vitamin.backgroundColor"
-         [style.color]="vitamin.textColor"
-         [style.animation-delay]="(i * 0.1) + 's'">
-      {{ vitamin.label }}
+<div class="vitamins-bar-chart-container">
+  <!-- Fat-Soluble Vitamins (A, D, E, K) -->
+  <div class="vitamin-group">
+    <div class="group-header">
+      <div class="group-title">Fat-Soluble Vitamins</div>
+      <div class="group-subtitle">Stored in the body — aim near 100%</div>
+    </div>
+    <div class="vitamin-bar-row" *ngFor="let vitamin of fatSolubleVitamins">
+      <div class="vitamin-label">{{ vitamin.label }}</div>
+      <div class="bar-container">
+        <div class="bar-background">
+          <div class="bar-fill"
+               [style.width]="vitamin.barWidth"
+               [style.background-color]="vitamin.barColor">
+          </div>
+          <div class="target-line"></div>
+        </div>
+      </div>
+      <div class="vitamin-percentage">{{ vitamin.percentOfTarget }}%</div>
     </div>
   </div>
-  <div class="vitamin-legend">
-    <span class="legend-item"><span class="legend-dot low"></span>Low</span>
-    <span class="legend-item"><span class="legend-dot medium"></span>Close</span>
-    <span class="legend-item"><span class="legend-dot high"></span>On Target</span>
+
+  <!-- Water-Soluble Vitamins (C, B vitamins) -->
+  <div class="vitamin-group">
+    <div class="group-header">
+      <div class="group-title">Water-Soluble Vitamins</div>
+      <div class="group-subtitle">Used daily — small overages are fine</div>
+    </div>
+    <div class="vitamin-bar-row" *ngFor="let vitamin of waterSolubleVitamins">
+      <div class="vitamin-label">{{ vitamin.label }}</div>
+      <div class="bar-container">
+        <div class="bar-background">
+          <div class="bar-fill"
+               [style.width]="vitamin.barWidth"
+               [style.background-color]="vitamin.barColor">
+          </div>
+          <div class="target-line"></div>
+        </div>
+      </div>
+      <div class="vitamin-percentage">{{ vitamin.percentOfTarget }}%</div>
+    </div>
   </div>
 </div>

@@ -6,9 +6,12 @@ import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.servi
 interface VitaminData {
   label: string;
   key: string;
+  consumed: number;
+  target: number;
   percentOfTarget: number;
-  backgroundColor: string;
-  textColor: string;
+  barWidth: string;
+  barColor: string;
+  isFatSoluble: boolean;
 }
 
 @Component({
@@ -21,7 +24,8 @@ interface VitaminData {
 export class VitaminsChartComponent implements OnChanges {
   @Input() nutrients: NutrientBreakdown[] = [];
 
-  vitaminSquares: VitaminData[] = [];
+  fatSolubleVitamins: VitaminData[] = [];
+  waterSolubleVitamins: VitaminData[] = [];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['nutrients']) {
@@ -30,63 +34,54 @@ export class VitaminsChartComponent implements OnChanges {
   }
 
   private computeVitamins(): void {
-    const vitaminData = [
+    // Fat-soluble vitamins: A, D, E, K (sage color)
+    const fatSolubleData = [
       { label: 'A', key: 'vitamin_a' },
-      { label: 'C', key: 'vitamin_c' },
       { label: 'D', key: 'vitamin_d' },
       { label: 'E', key: 'vitamin_e' },
-      { label: 'K', key: 'vitamin_k' },
+      { label: 'K', key: 'vitamin_k' }
+    ];
+
+    // Water-soluble vitamins: B vitamins and C (salmon color)
+    const waterSolubleData = [
+      { label: 'C', key: 'vitamin_c' },
       { label: 'B1', key: 'thiamin' },
       { label: 'B2', key: 'riboflavin' },
       { label: 'B3', key: 'niacin' },
+      { label: 'B5', key: 'pantothenic_acid' },
       { label: 'B6', key: 'vitamin_b6' },
       { label: 'B9', key: 'folate' },
-      { label: 'B12', key: 'vitamin_b12' },
-      { label: 'B5', key: 'pantothenic_acid' }
+      { label: 'B12', key: 'vitamin_b12' }
     ];
 
-    this.vitaminSquares = vitaminData.map(v => {
-      const vitamin = this.nutrients.find(n => n.nutrientKey?.toLowerCase() === v.key.toLowerCase());
+    this.fatSolubleVitamins = fatSolubleData.map(v => this.createVitaminData(v, true));
+    this.waterSolubleVitamins = waterSolubleData.map(v => this.createVitaminData(v, false));
+  }
 
-      const consumed = vitamin?.totalAmount || 0;
-      const target = vitamin?.maxTarget || vitamin?.minTarget || 1;
-      const percentage = (consumed / target) * 100;
+  private createVitaminData(vitaminInfo: {label: string, key: string}, isFatSoluble: boolean): VitaminData {
+    const vitamin = this.nutrients.find(n => n.nutrientKey?.toLowerCase() === vitaminInfo.key.toLowerCase());
 
-      // Clamp to 0-120%
-      const p = Math.min(Math.max(percentage, 0), 120);
+    const consumed = vitamin?.totalAmount || 0;
+    const target = vitamin?.maxTarget || vitamin?.minTarget || 1;
+    const percentage = (consumed / target) * 100;
 
-      let backgroundColor: string;
-      // Simplified 3-color palette
-      if (p < 60) {
-        backgroundColor = '#D64933'; // tomato
-      } else if (p < 100) {
-        backgroundColor = '#FF8A5C'; // salmon
-      } else {
-        backgroundColor = '#A9C8B2'; // sage
-      }
+    // Clamp to 0-150% for bar display
+    const cappedPercentage = Math.min(percentage, 150);
+    const barWidth = `${cappedPercentage}%`;
 
+    // Color based on vitamin type
+    const barColor = isFatSoluble ? '#A9C8B2' : '#FF8A5C'; // sage for fat-soluble, salmon for water-soluble
 
-      // Original gradient logic (commented out)
-      // if (p < 50) {
-      //   backgroundColor = this.interpolateColor('#F8D9CC', '#F7B28A', p / 50);
-      // } else if (p < 90) {
-      //   backgroundColor = this.interpolateColor('#F7B28A', '#97AF99', (p - 50) / 40);
-      // } else if (p < 110) {
-      //   backgroundColor = '#97AF99';
-      // } else {
-      //   backgroundColor = '#7AA786';
-      // }
-
-      const textColor = '#FFFFFF'; // Always white text for these colors
-
-      return {
-        label: v.label,
-        key: v.key,
-        percentOfTarget: Math.round(percentage),
-        backgroundColor,
-        textColor
-      };
-    });
+    return {
+      label: vitaminInfo.label,
+      key: vitaminInfo.key,
+      consumed: Math.round(consumed * 10) / 10,
+      target: Math.round(target * 10) / 10,
+      percentOfTarget: Math.round(percentage),
+      barWidth,
+      barColor,
+      isFatSoluble
+    };
   }
 
   private interpolateColor(startHex: string, endHex: string, ratio: number): string {
