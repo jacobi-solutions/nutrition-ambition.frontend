@@ -100,7 +100,7 @@ export class FatsChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   }
 
   private computeDisplayValues(): void {
-    // Get fat nutrients
+    // Get fat nutrients (trans fat only for display in value list, not in donut)
     const totalFatNutrient = this.nutrients.find(n =>
       n.nutrientKey?.toLowerCase() === 'total_fat' ||
       n.nutrientKey?.toLowerCase() === 'fat'
@@ -122,91 +122,78 @@ export class FatsChartComponent implements OnChanges, AfterViewInit, OnDestroy {
     this.totalFatTarget = Math.round((totalFatNutrient.maxTarget || totalFatNutrient.minTarget || 0) * 10) / 10;
     this.totalFatPercentage = this.totalFatTarget > 0 ? Math.max((this.totalFat / this.totalFatTarget) * 100, 5) : 15;
 
-    // Get grams for each fat type
+    // Get grams for each fat type (trans fat only for display, not in donut calculations)
     this.transGrams = Math.round((transNutrient?.totalAmount || 0) * 10) / 10;
     this.saturatedGrams = Math.round((saturatedNutrient?.totalAmount || 0) * 10) / 10;
     this.polyGrams = Math.round((polyNutrient?.totalAmount || 0) * 10) / 10;
     this.monoGrams = Math.round((monoNutrient?.totalAmount || 0) * 10) / 10;
 
-    // Get target grams for each fat type
+    // Get target grams for each fat type (trans fat only for display, not in donut calculations)
     this.transTargetGrams = Math.round((transNutrient?.maxTarget || transNutrient?.minTarget || 0) * 10) / 10;
     this.saturatedTargetGrams = Math.round((saturatedNutrient?.maxTarget || saturatedNutrient?.minTarget || 0) * 10) / 10;
     this.polyTargetGrams = Math.round((polyNutrient?.maxTarget || polyNutrient?.minTarget || 0) * 10) / 10;
     this.monoTargetGrams = Math.round((monoNutrient?.maxTarget || monoNutrient?.minTarget || 0) * 10) / 10;
 
-    // Calculate percentages for donut (actual consumption)
-    const totalGrams = this.transGrams + this.saturatedGrams + this.polyGrams + this.monoGrams;
+    // Calculate percentages for donut (actual consumption) - only 3 fats
+    const totalGrams = this.saturatedGrams + this.polyGrams + this.monoGrams;
     if (totalGrams > 0) {
-      this.transPercentage = Math.round((this.transGrams / totalGrams) * 100);
       this.saturatedPercentage = Math.round((this.saturatedGrams / totalGrams) * 100);
       this.polyPercentage = Math.round((this.polyGrams / totalGrams) * 100);
-      this.monoPercentage = Math.round((this.monoGrams / totalGrams) * 100);
+      // Give remainder to last segment to ensure total is exactly 100%
+      this.monoPercentage = 100 - this.saturatedPercentage - this.polyPercentage;
     } else {
-      this.transPercentage = this.saturatedPercentage = this.polyPercentage = this.monoPercentage = 0;
+      this.saturatedPercentage = this.polyPercentage = this.monoPercentage = 0;
     }
 
-    // Calculate target percentages
-    const totalTargetGrams = this.transTargetGrams + this.saturatedTargetGrams + this.polyTargetGrams + this.monoTargetGrams;
+    // Calculate target percentages - only 3 fats
+    const totalTargetGrams = this.saturatedTargetGrams + this.polyTargetGrams + this.monoTargetGrams;
     if (totalTargetGrams > 0) {
-      this.transTargetPercentage = Math.round((this.transTargetGrams / totalTargetGrams) * 100);
       this.saturatedTargetPercentage = Math.round((this.saturatedTargetGrams / totalTargetGrams) * 100);
       this.polyTargetPercentage = Math.round((this.polyTargetGrams / totalTargetGrams) * 100);
-      this.monoTargetPercentage = Math.round((this.monoTargetGrams / totalTargetGrams) * 100);
+      // Give remainder to last segment to ensure total is exactly 100%
+      this.monoTargetPercentage = 100 - this.saturatedTargetPercentage - this.polyTargetPercentage;
     } else {
-      this.transTargetPercentage = this.saturatedTargetPercentage = this.polyTargetPercentage = this.monoTargetPercentage = 0;
+      this.saturatedTargetPercentage = this.polyTargetPercentage = this.monoTargetPercentage = 0;
     }
 
-    // Calculate label positions at the midpoint of each segment
+    // Calculate label positions at the midpoint of each segment (only 3 fats now)
     const labelRadius = 28;
     const targetLabelRadius = 45;
 
-    // Trans: starts at 0%
-    const transMidPercent = this.transPercentage / 2;
-    const transMidAngle = transMidPercent * 3.6;
-    this.transLabelX = 50 + labelRadius * Math.cos((transMidAngle * Math.PI) / 180);
-    this.transLabelY = 50 + labelRadius * Math.sin((transMidAngle * Math.PI) / 180);
-    this.transLabelRotation = transMidPercent * 3.6 + 90;
-
-    const transTargetMidPercent = this.transTargetPercentage / 2;
-    const transTargetMidAngle = transTargetMidPercent * 3.6;
-    this.transTargetLabelX = 50 + targetLabelRadius * Math.cos((transTargetMidAngle * Math.PI) / 180);
-    this.transTargetLabelY = 50 + targetLabelRadius * Math.sin((transTargetMidAngle * Math.PI) / 180);
-    this.transTargetLabelRotation = transTargetMidPercent * 3.6 + 90;
-
-    // Saturated: starts after trans
-    const saturatedMidPercent = this.transPercentage + this.saturatedPercentage / 2;
+    // Saturated: starts at 0%
+    const saturatedMidPercent = this.saturatedPercentage / 2;
     const saturatedMidAngle = saturatedMidPercent * 3.6;
     this.saturatedLabelX = 50 + labelRadius * Math.cos((saturatedMidAngle * Math.PI) / 180);
     this.saturatedLabelY = 50 + labelRadius * Math.sin((saturatedMidAngle * Math.PI) / 180);
     this.saturatedLabelRotation = saturatedMidPercent * 3.6 + 90;
 
-    const saturatedTargetMidPercent = this.transTargetPercentage + this.saturatedTargetPercentage / 2;
+    const saturatedTargetMidPercent = this.saturatedTargetPercentage / 2;
     const saturatedTargetMidAngle = saturatedTargetMidPercent * 3.6;
     this.saturatedTargetLabelX = 50 + targetLabelRadius * Math.cos((saturatedTargetMidAngle * Math.PI) / 180);
     this.saturatedTargetLabelY = 50 + targetLabelRadius * Math.sin((saturatedTargetMidAngle * Math.PI) / 180);
     this.saturatedTargetLabelRotation = saturatedTargetMidPercent * 3.6 + 90;
 
-    // Poly: starts after trans + saturated
-    const polyMidPercent = this.transPercentage + this.saturatedPercentage + this.polyPercentage / 2;
+    // Poly: starts after saturated
+    const polyMidPercent = this.saturatedPercentage + this.polyPercentage / 2;
     const polyMidAngle = polyMidPercent * 3.6;
     this.polyLabelX = 50 + labelRadius * Math.cos((polyMidAngle * Math.PI) / 180);
     this.polyLabelY = 50 + labelRadius * Math.sin((polyMidAngle * Math.PI) / 180);
     this.polyLabelRotation = polyMidPercent * 3.6 + 90;
 
-    const polyTargetMidPercent = this.transTargetPercentage + this.saturatedTargetPercentage + this.polyTargetPercentage / 2;
+    const polyTargetMidPercent = this.saturatedTargetPercentage + this.polyTargetPercentage / 2;
     const polyTargetMidAngle = polyTargetMidPercent * 3.6;
     this.polyTargetLabelX = 50 + targetLabelRadius * Math.cos((polyTargetMidAngle * Math.PI) / 180);
     this.polyTargetLabelY = 50 + targetLabelRadius * Math.sin((polyTargetMidAngle * Math.PI) / 180);
     this.polyTargetLabelRotation = polyTargetMidPercent * 3.6 + 90;
 
-    // Mono: starts after trans + saturated + poly
-    const monoMidPercent = this.transPercentage + this.saturatedPercentage + this.polyPercentage + this.monoPercentage / 2;
+    // Mono: starts after saturated + poly
+    const monoMidPercent = this.saturatedPercentage + this.polyPercentage + this.monoPercentage / 2;
     const monoMidAngle = monoMidPercent * 3.6;
     this.monoLabelX = 50 + labelRadius * Math.cos((monoMidAngle * Math.PI) / 180);
     this.monoLabelY = 50 + labelRadius * Math.sin((monoMidAngle * Math.PI) / 180);
     this.monoLabelRotation = monoMidPercent * 3.6 + 90;
 
-    const monoTargetMidPercent = this.transTargetPercentage + this.saturatedTargetPercentage + this.polyTargetPercentage + this.monoTargetPercentage / 2;
+    const monoTargetMidPercent = this.saturatedTargetPercentage + this.polyTargetPercentage + this.monoTargetPercentage / 2;
     const monoTargetMidAngle = monoTargetMidPercent * 3.6;
     this.monoTargetLabelX = 50 + targetLabelRadius * Math.cos((monoTargetMidAngle * Math.PI) / 180);
     this.monoTargetLabelY = 50 + targetLabelRadius * Math.sin((monoTargetMidAngle * Math.PI) / 180);
