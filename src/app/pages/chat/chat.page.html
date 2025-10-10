@@ -58,12 +58,13 @@
           </div>
 
           <!-- Regular chat message -->
-          <app-chat-message 
+          <app-chat-message
             *ngIf="!message.isContextNote && message.role !== MessageRoleTypes.PendingFoodSelection && message.role !== MessageRoleTypes.CompletedFoodSelection && message.role !== MessageRoleTypes.PendingEditFoodSelection && message.role !== MessageRoleTypes.CompletedEditFoodSelection"
             [text]="message.text"
             [isUser]="message.isUser"
             [timestamp]="message.timestamp"
-            [role]="message.role">
+            [role]="message.role"
+            [isStreaming]="message.isStreaming || false">
           </app-chat-message>
         </ng-container>
         

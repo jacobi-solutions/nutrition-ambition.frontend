@@ -21,6 +21,7 @@ export class ChatMessageComponent {
   @Input() timestamp: Date = new Date();
   @Input() message?: ChatMessage; // Message object with id
   @Input() role?: string;
+  @Input() isStreaming: boolean = false;
 
   constructor(
     private sanitizer: DomSanitizer

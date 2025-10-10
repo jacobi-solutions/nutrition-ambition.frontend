@@ -18,4 +18,7 @@ export interface DisplayMessage {
     isEditingPhrase?: boolean;
     editingPhrase?: string;
     newPhrase?: string;
+
+    // streaming state
+    isStreaming?: boolean;
   }

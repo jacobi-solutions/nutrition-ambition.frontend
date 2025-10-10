@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
@@ -70,6 +70,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   contextNote: string | null = null;
   private dateSubscription: Subscription;
 
+  // Streaming optimization
+  private streamUpdateTimeout: any;
+  private isUserScrolledUp = false;
+  private lastScrollTime = 0;
+  private scrollDebounceMs = 1000; // Only autoscroll once per second
+
   // Track messages by ID to preserve component instances during updates
   trackMessage(index: number, message: DisplayMessage): string {
     return message.id || `${index}`;
@@ -93,7 +99,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     private router: Router,
     private toastService: ToastService,
     private cdr: ChangeDetectorRef,
-    private analytics: AnalyticsService // Firebase Analytics tracking
+    private analytics: AnalyticsService, // Firebase Analytics tracking
+    private ngZone: NgZone
   ) {
     // Add the icons explicitly to the library
     addIcons({
@@ -200,17 +207,22 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     if (this.dateSubscription) {
       this.dateSubscription.unsubscribe();
     }
-    
+
     if (this.contextNoteSubscription) {
       this.contextNoteSubscription.unsubscribe();
     }
-    
+
     if (this.learnMoreAboutSubscription) {
       this.learnMoreAboutSubscription.unsubscribe();
     }
-    
+
     if (this.editFoodSelectionStartedSubscription) {
       this.editFoodSelectionStartedSubscription.unsubscribe();
+    }
+
+    // Clean up streaming timeout
+    if (this.streamUpdateTimeout) {
+      clearTimeout(this.streamUpdateTimeout);
     }
   }
 
@@ -468,81 +480,142 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       this.router.navigate(['/login']);
       return;
     }
-    
+
     // Get message text before clearing the input
     const sentMessage = this.userMessage;
     const messageDate = new Date();
-    
+
     // Track analytics for message sending
     this.analytics.trackChatMessageSent(sentMessage.length);
-    
+
     // Add user message to UI
     this.messages.push({
       text: sentMessage,
       isUser: true,
       timestamp: messageDate
     });
-    
+
     // Remove any persisted draft and clear input. Then show loading
     localStorage.removeItem(this.draftStorageKey);
     this.userMessage = '';
     this.isLoading = true;
-    
+
     // Reset textarea height
     if (this.messageInput && this.messageInput.nativeElement) {
       this.messageInput.nativeElement.style.height = 'auto';
     }
-    
+
     // Scroll for user's message
     this.scrollToBottom();
-    
-    // Send the message - authentication token will be added by the AuthInterceptor
-    this.chatService.sendMessage(sentMessage).subscribe({
-      next: (response: ChatMessagesResponse) => {
-        this.isLoading = false;
 
-        if (response.isSuccess) {
-          
-          // Firebase Analytics: Track successful message sent
-          this.analytics.trackChatMessageSent(sentMessage.length);
-          
-          this.analytics.trackPageView('Chat');
-          
-          // Process the returned messages and add them to the chat
-          if (response.messages && response.messages.length > 0) {
-            this.processAndAddNewMessages(response.messages);
+    // Track if we've added the assistant message yet
+    let streamingMessageIndex = -1;
+    let pendingContent = '';
+
+    // Send the message with streaming
+    await this.chatService.sendMessageStream(
+      sentMessage,
+      (chunk: ChatMessagesResponse) => {
+        // Handle both camelCase and PascalCase (backend sends PascalCase)
+        const messages = (chunk as any).messages || (chunk as any).Messages;
+
+        if (messages && messages.length > 0) {
+          const assistantMessage = messages[0];
+          const content = assistantMessage.content || assistantMessage.Content;
+          pendingContent = content;
+
+          // Clear existing timeout
+          if (this.streamUpdateTimeout) {
+            clearTimeout(this.streamUpdateTimeout);
           }
-          
-          // Only focus the input if response doesn't contain pending food selection messages
-          // This prevents mobile keyboard from opening when user needs to interact with food selection cards
-          if (!this.containsPendingFoodSelection(response.messages)) {
-            setTimeout(() => this.focusInput(), 300);
-          }
-        } else {
-          this.messages.push({
-            text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
-            isUser: false,
-            timestamp: new Date()
-          });
-          this.scrollToBottom();
-          this.focusInput();
+
+          // Throttle UI updates to every 50ms for smoother rendering
+          this.streamUpdateTimeout = setTimeout(() => {
+            this.ngZone.run(() => {
+              // Create the assistant message bubble on first chunk
+              if (streamingMessageIndex === -1) {
+                streamingMessageIndex = this.messages.length;
+                const streamingMessageId = `streaming-${Date.now()}`;
+                this.messages = [...this.messages, {
+                  id: streamingMessageId,
+                  text: pendingContent || '',
+                  isUser: false,
+                  timestamp: new Date(),
+                  role: MessageRoleTypes.Assistant,
+                  isStreaming: true
+                }];
+                // Always scroll on first chunk
+                this.scrollToBottom();
+              } else {
+                // Update existing message by replacing the array
+                const updatedMessages = [...this.messages];
+                const existingMessage = updatedMessages[streamingMessageIndex];
+                updatedMessages[streamingMessageIndex] = {
+                  ...existingMessage,
+                  text: pendingContent || '',
+                  isStreaming: true
+                };
+                this.messages = updatedMessages;
+
+                // Only auto-scroll if user hasn't scrolled up
+                if (!this.isUserScrolledUp) {
+                  this.scrollToBottom();
+                }
+              }
+
+              this.cdr.detectChanges();
+            });
+          }, 50); // 50ms throttle - adjust for smoothness vs responsiveness
         }
       },
-      error: (error: any) => {
+      () => {
+        // Stream complete - ensure final update is rendered
+        if (this.streamUpdateTimeout) {
+          clearTimeout(this.streamUpdateTimeout);
+        }
+
+        // Force final update immediately
+        this.ngZone.run(() => {
+          if (streamingMessageIndex !== -1 && pendingContent) {
+            const updatedMessages = [...this.messages];
+            const existingMessage = updatedMessages[streamingMessageIndex];
+            updatedMessages[streamingMessageIndex] = {
+              ...existingMessage,
+              text: pendingContent,
+              isStreaming: false // Remove streaming indicator
+            };
+            this.messages = updatedMessages;
+            this.cdr.detectChanges();
+
+            // Scroll to bottom on completion if not scrolled up
+            if (!this.isUserScrolledUp) {
+              this.scrollToBottom();
+            }
+          }
+
+          this.isLoading = false;
+
+          // Firebase Analytics: Track successful message sent
+          this.analytics.trackChatMessageSent(sentMessage.length);
+          this.analytics.trackPageView('Chat');
+
+          // Focus the input after completion
+          setTimeout(() => this.focusInput(), 300);
+        });
+      },
+      (error: any) => {
+        // Stream error
         this.isLoading = false;
-        this.messages.push({
+        this.messages[streamingMessageIndex] = {
           text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
           isUser: false,
           timestamp: new Date()
-        });
-        
-        // Scroll for error message
+        };
+        this.cdr.detectChanges();
         this.scrollToBottom();
-        
-        // Focus the input after error message is posted
         this.focusInput();
       }
-    });
+    );
   }
   
   // Handle keydown events for textarea
@@ -585,13 +658,44 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   }
   
   // Handle scroll events
-  onScroll(event: any) {
-    // This method can be used for implementing "load more" when scrolling up
-    // For now, we just use it to enable the scroll events
+  async onScroll(event: any) {
+    // Check if user has scrolled up from the bottom
+    if (this.content) {
+      const scrollElement = await this.content.getScrollElement();
+      const scrollTop = scrollElement.scrollTop;
+      const scrollHeight = scrollElement.scrollHeight;
+      const clientHeight = scrollElement.clientHeight;
+
+      // Consider user at bottom if within 100px of bottom
+      const threshold = 100;
+      this.isUserScrolledUp = (scrollTop + clientHeight + threshold) < scrollHeight;
+    }
   }
 
-  private scrollToBottom() {
-    
+  private async scrollToBottom() {
+    // Debounce: only autoscroll once per second during streaming
+    const now = Date.now();
+    if (now - this.lastScrollTime < this.scrollDebounceMs) {
+      return; // Skip if we scrolled recently
+    }
+
+    // Check if already at bottom before scrolling
+    if (this.content) {
+      const scrollElement = await this.content.getScrollElement();
+      const scrollTop = scrollElement.scrollTop;
+      const scrollHeight = scrollElement.scrollHeight;
+      const clientHeight = scrollElement.clientHeight;
+      const threshold = 100;
+
+      // If user is scrolled up, don't autoscroll
+      if ((scrollTop + clientHeight + threshold) < scrollHeight) {
+        return;
+      }
+    }
+
+    // Update last scroll time
+    this.lastScrollTime = now;
+
     // Single timeout to allow DOM rendering, then handle scrolling
     setTimeout(async () => {
       if (!this.content) {

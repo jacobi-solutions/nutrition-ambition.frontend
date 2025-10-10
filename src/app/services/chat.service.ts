@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, map, catchError, throwError, of, Subject, switchMap, BehaviorSubject, finalize } from 'rxjs';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 import { AuthService } from './auth.service';
-import { 
+import {
   GetChatMessagesRequest,
   ChatMessagesResponse,
   RunChatRequest,
@@ -13,6 +13,7 @@ import {
   ChatMessage
 } from './nutrition-ambition-api.service';
 import { DateService } from './date.service';
+import { ChatStreamService } from './chat-stream.service';
 
 @Injectable({
   providedIn: 'root'
@@ -41,19 +42,40 @@ export class ChatService {
   public pendingEdit$ = this.pendingEditSubject.asObservable();
   
 
-  
+
   constructor(
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService,
+    private chatStreamService: ChatStreamService
   ) {}
 
   getFirstTimeWelcomeMessage(): string {
     return "Hi there! I'm your nutrition assistant — here to help you track your meals, understand your nutrients, and stay on track with your goals. You can start right away by telling me what you ate today — no setup needed! We can also talk about your health goals whenever you're ready. 🍎🥦";
   }
 
-  // Send message to the assistant
+  // Send message to the assistant with streaming
+  async sendMessageStream(
+    message: string,
+    onChunk: (data: ChatMessagesResponse) => void,
+    onComplete: () => void,
+    onError: (error: any) => void
+  ): Promise<EventSource | null> {
+    const request = new RunChatRequest({
+      message: message,
+      localDateKey: this.dateService.getSelectedDate(),
+    });
+
+    return this.chatStreamService.runResponsesConversationStream(
+      request,
+      onChunk,
+      onComplete,
+      onError
+    );
+  }
+
+  // Send message to the assistant (non-streaming fallback)
   sendMessage(message: string): Observable<ChatMessagesResponse> {
-    
+
     // Send to the assistant for processing
     // No need to log the message separately - the backend handles this
     return this.runAssistantMessage(message).pipe(

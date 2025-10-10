@@ -14,7 +14,8 @@
   position: relative;
   word-wrap: break-word;
   box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
-  
+  transition: opacity 0.15s ease-in;
+
   // Make messages with food options much wider
   &.has-food-options {
     max-width: 95%;
