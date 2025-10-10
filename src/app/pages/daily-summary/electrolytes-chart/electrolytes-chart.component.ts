@@ -34,9 +34,10 @@ export class ElectrolytesChartComponent implements OnChanges, AfterViewInit, OnD
   hasData = false;
   isVisible = false;
   electrolytes: ElectrolyteData[] = [];
-  maxRadius = 45; // Maximum radius for 100%+ consumption
+  maxRadius = 60; // Maximum visual radius we'll allow (for 200%+)
   minRadius = 15; // Minimum radius for low consumption
   targetRingRadius = 45; // Fixed outer ring showing 100% target
+  viewBox = '0 0 100 100'; // Dynamic viewBox based on max percentage
   private observer: IntersectionObserver | null = null;
 
   // Color palette for electrolytes - matching app theme
@@ -106,15 +107,20 @@ export class ElectrolytesChartComponent implements OnChanges, AfterViewInit, OnD
       const target = nutrient.maxTarget || nutrient.minTarget || 1;
       const percentage = (consumed / target) * 100;
 
-      // Calculate radius based on percentage (capped at maxRadius)
-      // 0% = minRadius, 100% = targetRingRadius, >100% can go up to maxRadius
+      // Calculate radius based on percentage
+      // 0% = minRadius, 100% = targetRingRadius, >100% continues to grow beyond target ring
       let radius: number;
       if (percentage <= 100) {
+        // Below or at 100%: scale from minRadius to targetRingRadius
         radius = this.minRadius + ((this.targetRingRadius - this.minRadius) * (percentage / 100));
       } else {
-        // Beyond 100%, can grow slightly more
-        const overage = Math.min(percentage - 100, 50); // Cap at 150%
-        radius = this.targetRingRadius + ((this.maxRadius - this.targetRingRadius) * (overage / 50));
+        // Beyond 100%: continue growing proportionally beyond the target ring
+        // Each additional 100% adds another (maxRadius - targetRingRadius) to the radius
+        const overage = percentage - 100;
+        const additionalRadius = ((this.maxRadius - this.targetRingRadius) * (overage / 100));
+        radius = this.targetRingRadius + additionalRadius;
+        // Cap at reasonable visual limit
+        radius = Math.min(radius, this.maxRadius);
       }
 
       // Calculate angle proportional to target amount
@@ -156,6 +162,17 @@ export class ElectrolytesChartComponent implements OnChanges, AfterViewInit, OnD
         labelY: labelPosition.y
       };
     });
+
+    // Calculate dynamic viewBox based on max percentage
+    const maxPercentage = Math.max(...this.electrolytes.map(e => e.percentage));
+
+    if (maxPercentage > 120) {
+      // Expand viewBox to show extended slices
+      this.viewBox = '-15 -15 130 130';
+    } else {
+      // Default viewBox when all under 120%
+      this.viewBox = '0 0 100 100';
+    }
   }
 
   // Compute SVG path for a pie segment with variable radius

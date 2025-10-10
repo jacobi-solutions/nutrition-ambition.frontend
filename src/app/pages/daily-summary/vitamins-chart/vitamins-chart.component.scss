@@ -68,8 +68,8 @@
 .bar-fill {
   height: 100%;
   border-radius: 12px;
-  transition: width 0.6s ease-out;
   position: relative;
+  transition: width 1.2s ease-out;
 }
 
 .target-line {
@@ -89,4 +89,35 @@
   font-weight: 500;
   color: var(--ion-color-medium);
   text-align: right;
+}
+
+// Animations
+.vitamins-bar-chart-container:not(.animate) {
+  .bar-fill {
+    width: 0 !important;
+  }
+}
+
+.vitamins-bar-chart-container.animate {
+  .vitamin-bar-row {
+    .bar-fill {
+      animation: fillBar 10s ease-out forwards;
+    }
+
+    // Stagger animations for each bar
+    @for $i from 1 through 12 {
+      &:nth-child(#{$i + 1}) .bar-fill {
+        animation-delay: #{$i * 0.08}s;
+      }
+    }
+  }
+}
+
+@keyframes fillBar {
+  from {
+    width: 0 !important;
+  }
+  to {
+    // Width is set by inline style binding
+  }
 }

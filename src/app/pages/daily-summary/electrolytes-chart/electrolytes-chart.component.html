@@ -8,8 +8,18 @@
           <span class="animation-label actual-label">Actual</span>
 
           <div class="electrolytes-chart">
-            <svg viewBox="0 0 100 100">
-              <!-- Target rings (thin outer rings at 100%) -->
+            <svg [attr.viewBox]="viewBox">
+              <!-- Actual consumption segments (variable radius) - render first -->
+              <g class="actual-segments">
+                <path *ngFor="let electrolyte of electrolytes"
+                      class="segment"
+                      [attr.class]="'segment ' + electrolyte.key + '-segment'"
+                      [attr.d]="electrolyte.segmentPath"
+                      [attr.fill]="electrolyte.color">
+                </path>
+              </g>
+
+              <!-- Target rings (thin outer rings at 100%) - render on top -->
               <g class="target-rings">
                 <circle *ngFor="let electrolyte of electrolytes"
                         class="target-ring"
@@ -23,17 +33,7 @@
                 </circle>
               </g>
 
-              <!-- Actual consumption segments (variable radius) -->
-              <g class="actual-segments">
-                <path *ngFor="let electrolyte of electrolytes"
-                      class="segment"
-                      [attr.class]="'segment ' + electrolyte.key + '-segment'"
-                      [attr.d]="electrolyte.segmentPath"
-                      [attr.fill]="electrolyte.color">
-                </path>
-              </g>
-
-              <!-- Percentage labels -->
+              <!-- Percentage labels - render last on top of everything -->
               <g class="percentage-labels">
                 <text *ngFor="let electrolyte of electrolytes"
                       class="percentage-label"

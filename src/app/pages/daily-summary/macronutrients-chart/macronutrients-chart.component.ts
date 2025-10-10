@@ -29,6 +29,7 @@ export class MacronutrientsChartComponent implements OnChanges, AfterViewInit, O
   caloriesPercentage = 0;
   targetPercentage = 0;
   caloriesTargetGhostPercentage = 0;
+  caloriesLeft = 0;
   proteinPercentage = 0;
   proteinGrams = 0;
   proteinTargetGrams = 0;
@@ -114,9 +115,14 @@ export class MacronutrientsChartComponent implements OnChanges, AfterViewInit, O
     // Round values to 1 decimal and store for display
     this.calories = Math.round((macroData.calories || 0) * 10) / 10;
     this.caloriesTarget = macroData.caloriesTarget ? Math.round(macroData.caloriesTarget * 10) / 10 : 0;
+    this.caloriesLeft = this.caloriesTarget - this.calories;
 
-    // Calculate bar heights as percentages (relative to target)
+    // Calculate bar height as percentage of target (100% target = 100% height)
+    // If calories exceed target, bar height will proportionally exceed 100%
     this.caloriesPercentage = this.caloriesTarget > 0 ? Math.max((this.calories / this.caloriesTarget) * 100, 5) : 15; // Minimum 5% height
+
+    // Target is always at 100% height
+    this.targetPercentage = 100;
 
     // Macro percentages and gram amounts
     this.proteinPercentage = Math.round(macroData.macroAmounts.protein.percentage || 0);

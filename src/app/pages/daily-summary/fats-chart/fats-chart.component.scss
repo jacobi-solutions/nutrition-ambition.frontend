@@ -1,6 +1,572 @@
-.fats-chart-placeholder {
-  padding: 20px;
+ion-grid {
+  --ion-grid-padding: 0;
+  --ion-grid-column-padding: 4px;
+}
+
+.chart-wrapper {
+  padding: 16px;
+  background: white;
+  height: 100%;
+
+  .chart-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: var(--ion-text-color);
+    text-align: center;
+  }
+
+  > .chart-tip {
+    margin-top: 12px;
+    font-size: 10px;
+    color: var(--ion-color-medium);
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  // Bar Chart Styles
+  .bar-chart {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    height: 187px;
+    padding: 10px;
+    margin-bottom: 12px;
+
+    .bar-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 100px;
+      position: relative;
+      height: 100%;
+
+      .target-label {
+        position: absolute;
+        top: 0;
+        font-size: .75rem;
+        color: var(--ion-color-medium);
+        font-weight: 500;
+        opacity: 0;
+        z-index: 10;
+        white-space: nowrap;
+      }
+
+      .bar {
+        min-height: 10px;
+        border-radius: 6px 6px 0 0;
+        transition: all 0.3s ease;
+
+        &.ghost-bar {
+          position: absolute;
+          bottom: 0;
+          width: 65px;
+          height: 143px;
+          opacity: 0;
+          filter: blur(1px);
+          background: linear-gradient(180deg, #FFB896 0%, #E88273 100%);
+          cursor: default;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        &.consumed-bar {
+          position: absolute;
+          bottom: 0;
+          width: 55px;
+          height: 0;
+          background: linear-gradient(180deg, #8BA89C 0%, var(--color-sage) 100%);
+          box-shadow: 0 0 1px rgba(255, 255, 255, 0.8),
+                      0 2px 4px rgba(0, 0, 0, 0.15);
+          cursor: pointer;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          padding-top: 8px;
+
+          .bar-value-label {
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            white-space: nowrap;
+          }
+
+          &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 8px rgba(139, 168, 156, 0.3);
+          }
+        }
+      }
+
+      .bar-label {
+        position: absolute;
+        bottom: -30px;
+        font-size: 1rem;
+        color: var(--ion-text-color);
+        font-weight: 500;
+        opacity: 0;
+      }
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes growUp {
+    from {
+      height: 0;
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes showAndHide {
+    0% {
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  // Donut Chart Styles
+  .donut-chart-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+
+    .animation-label {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ion-color-medium);
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+
+      &.targets-label {
+        animation: showAndHide 1.2s ease-in-out 0s forwards;
+      }
+
+      &.actual-label {
+        color: white;
+        animation: showAndHide 1.2s ease-in-out 1.4s forwards;
+      }
+    }
+
+    .chart-label {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--ion-color-medium);
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn 0.4s ease-out 2.8s forwards;
+    }
+
+    .chart-tip {
+      margin-top: 1.25rem !important;
+      font-size: 10px;
+      color: var(--ion-color-medium);
+      line-height: 1.4;
+      text-align: center;
+    }
+  }
+
+  .donut-chart {
+    width: 200px;
+    height: 200px;
+    margin: 0 0 0 -10px;
+    animation: scaleIn 0.5s ease-out;
+
+    svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+
+      .donut-target {
+        fill: none;
+        stroke-width: 50;
+        opacity: 0.5;
+        stroke-linecap: butt;
+        animation: drawSegment 0.8s ease-out 0.2s both;
+        filter: blur(1px);
+
+        &.trans-target {
+          stroke: #E88273;
+        }
+
+        &.saturated-target {
+          stroke: #FFB896;
+          animation-delay: 0.4s;
+        }
+
+        &.poly-target {
+          stroke: #BED9C6;
+          animation-delay: 0.6s;
+        }
+
+        &.mono-target {
+          stroke: #8BA89C;
+          animation-delay: 0.8s;
+        }
+      }
+
+      .donut-segment {
+        fill: none;
+        stroke-width: 20;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        stroke-linecap: butt;
+        filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+
+        &.trans-segment {
+          stroke: #D64933;
+          animation: drawSegment 0.8s ease-out 1.4s both;
+
+          &:hover {
+            stroke-width: 22;
+            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))
+                    brightness(1.1);
+          }
+        }
+
+        &.saturated-segment {
+          stroke: #FF8A5C;
+          animation: drawSegment 0.8s ease-out 1.6s both;
+
+          &:hover {
+            stroke-width: 22;
+            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))
+                    brightness(1.1);
+          }
+        }
+
+        &.poly-segment {
+          stroke: #A9C8B2;
+          animation: drawSegment 0.8s ease-out 1.8s both;
+
+          &:hover {
+            stroke-width: 22;
+            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))
+                    brightness(1.1);
+          }
+        }
+
+        &.mono-segment {
+          stroke: #4E6E5D;
+          animation: drawSegment 0.8s ease-out 2.0s both;
+
+          &:hover {
+            stroke-width: 22;
+            filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 0 1px rgba(255, 255, 255, 0.8))
+                    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))
+                    brightness(1.1);
+          }
+        }
+      }
+
+      .percentage-label {
+        fill: white;
+        font-size: .5rem;
+        font-weight: 700;
+        opacity: 0;
+        animation: fadeIn 0.4s ease-out 2.4s forwards;
+        pointer-events: none;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .target-percentage-label {
+        fill: var(--color-smoke);
+        font-size: .5rem;
+        font-weight: 700;
+        opacity: 0;
+        animation: fadeIn 0.4s ease-out 0.8s forwards;
+        pointer-events: none;
+      }
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes drawSegment {
+    from {
+      stroke-dasharray: 0 188.5;
+    }
+  }
+
+  .chart-values {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+
+    .value-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 13px;
+      opacity: 0;
+      animation: fadeInSlide 0.4s ease-out forwards;
+      transition: transform 0.2s ease;
+
+      &:nth-child(1) {
+        animation-delay: 0.7s;
+      }
+
+      &:nth-child(2) {
+        animation-delay: 0.8s;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 0.9s;
+      }
+
+      &:nth-child(4) {
+        animation-delay: 1.0s;
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      &:hover {
+        transform: translateX(4px);
+      }
+
+      .value-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+        animation: pulse 2s infinite;
+
+        &.trans-dot {
+          background-color: #D64933;
+        }
+
+        &.saturated-dot {
+          background-color: #FF8A5C;
+          animation-delay: 0.2s;
+        }
+
+        &.poly-dot {
+          background-color: #A9C8B2;
+          animation-delay: 0.4s;
+        }
+
+        &.mono-dot {
+          background-color: #4E6E5D;
+          animation-delay: 0.6s;
+        }
+      }
+
+      .value-label {
+        color: var(--ion-text-color);
+        font-weight: 500;
+        flex: 1;
+      }
+
+      .value-number {
+        color: var(--ion-color-medium);
+        font-weight: 600;
+      }
+    }
+  }
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(0, 0, 0, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+  }
+}
+
+.empty-state {
+  padding: 40px 20px;
   text-align: center;
   color: var(--ion-color-medium);
-  font-style: italic;
+  font-size: 14px;
+}
+
+// Animation triggers - only apply when .animate class is present
+ion-grid.animate {
+  .target-label {
+    animation: fadeIn 0.4s ease-out 0.6s forwards;
+  }
+
+  .ghost-bar {
+    animation: slideUp 0.6s ease-out 0s both;
+  }
+
+  .consumed-bar {
+    animation: growUp 1.2s ease-out 0.8s both;
+
+    .bar-value-label {
+      animation: fadeIn 0.4s ease-out 1.8s forwards;
+    }
+  }
+
+  .bar-label {
+    animation: fadeIn 0.4s ease-out 1.4s forwards;
+  }
+
+  .animation-label.targets-label {
+    animation: showAndHide 1.2s ease-in-out 0s forwards;
+  }
+
+  .animation-label.actual-label {
+    animation: showAndHide 1.2s ease-in-out 1.4s forwards;
+  }
+
+  .chart-label {
+    animation: fadeIn 0.4s ease-out 2.8s forwards;
+  }
+
+  .donut-target {
+    animation: drawSegment 0.8s ease-out 0.2s both;
+
+    &.saturated-target {
+      animation-delay: 0.4s;
+    }
+
+    &.poly-target {
+      animation-delay: 0.6s;
+    }
+
+    &.mono-target {
+      animation-delay: 0.8s;
+    }
+  }
+
+  .donut-segment {
+    &.trans-segment {
+      animation: drawSegment 0.8s ease-out 1.4s both;
+    }
+
+    &.saturated-segment {
+      animation: drawSegment 0.8s ease-out 1.6s both;
+    }
+
+    &.poly-segment {
+      animation: drawSegment 0.8s ease-out 1.8s both;
+    }
+
+    &.mono-segment {
+      animation: drawSegment 0.8s ease-out 2.0s both;
+    }
+  }
+
+  .percentage-label {
+    animation: fadeIn 0.4s ease-out 2.4s forwards;
+  }
+
+  .target-percentage-label {
+    animation: fadeIn 0.4s ease-out 0.8s forwards;
+  }
+
+  .donut-chart {
+    animation: scaleIn 0.5s ease-out;
+  }
+
+  .value-item {
+    animation: fadeInSlide 0.4s ease-out forwards;
+
+    &:nth-child(1) {
+      animation-delay: 0.7s;
+    }
+
+    &:nth-child(2) {
+      animation-delay: 0.8s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0.9s;
+    }
+
+    &:nth-child(4) {
+      animation-delay: 1.0s;
+    }
+
+    .value-dot {
+      animation: pulse 2s infinite;
+
+      &.saturated-dot {
+        animation-delay: 0.2s;
+      }
+
+      &.poly-dot {
+        animation-delay: 0.4s;
+      }
+
+      &.mono-dot {
+        animation-delay: 0.6s;
+      }
+    }
+  }
 }

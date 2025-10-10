@@ -1,6 +1,5 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.service';
 
 interface VitaminData {
@@ -19,13 +18,38 @@ interface VitaminData {
   templateUrl: './vitamins-chart.component.html',
   styleUrls: ['./vitamins-chart.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonGrid, IonRow, IonCol]
+  imports: [CommonModule]
 })
-export class VitaminsChartComponent implements OnChanges {
+export class VitaminsChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() nutrients: NutrientBreakdown[] = [];
 
   fatSolubleVitamins: VitaminData[] = [];
   waterSolubleVitamins: VitaminData[] = [];
+  isVisible = false;
+  private observer: IntersectionObserver | null = null;
+
+  constructor(private elementRef: ElementRef) {}
+
+  ngAfterViewInit(): void {
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !this.isVisible) {
+          this.isVisible = true;
+        }
+      });
+    }, {
+      threshold: 0,
+      rootMargin: '-50% 0px -50% 0px'
+    });
+
+    this.observer.observe(this.elementRef.nativeElement);
+  }
+
+  ngOnDestroy(): void {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['nutrients']) {

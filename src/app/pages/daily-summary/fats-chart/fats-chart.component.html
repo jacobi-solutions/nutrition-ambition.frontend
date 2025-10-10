@@ -1,3 +1,105 @@
-<div class="fats-chart-placeholder">
-  <p>Fats chart coming soon</p>
+<ion-grid *ngIf="hasData" [class.animate]="isVisible">
+  <ion-row>
+    <!-- Total Fat Bar Chart -->
+    <ion-col size="4.5">
+      <div class="chart-wrapper">
+        <div class="bar-chart">
+          <div class="bar-group">
+            <span class="target-label">Target: {{ totalFatTarget || 'N/A' }} g</span>
+            <div class="bar ghost-bar"></div>
+            <div class="bar consumed-bar" [style.height.%]="totalFatPercentage">
+              <span class="bar-value-label">{{ totalFat }} g</span>
+            </div>
+            <span class="bar-label">Total Fat</span>
+          </div>
+        </div>
+        <div class="chart-tip">
+          Healthy fats are essential for nutrient absorption
+        </div>
+      </div>
+    </ion-col>
+
+    <!-- Fat Types Donut Chart -->
+    <ion-col size="7.5">
+      <div class="chart-wrapper">
+        <div class="donut-chart-container">
+          <span class="animation-label targets-label">Targets</span>
+          <span class="animation-label actual-label">Actual</span>
+          <div class="donut-chart" [style.transform]="'scale(' + donutScale + ')'">
+            <svg viewBox="-10 -10 120 120">
+              <!-- Target ring -->
+              <circle class="donut-target trans-target" cx="50" cy="50" r="25"
+                      [attr.stroke-dasharray]="transTargetPercentage * 1.571 + ' ' + 157.1"
+                      [attr.stroke-dashoffset]="0"></circle>
+              <circle class="donut-target saturated-target" cx="50" cy="50" r="25"
+                      [attr.stroke-dasharray]="saturatedTargetPercentage * 1.571 + ' ' + 157.1"
+                      [attr.stroke-dashoffset]="-transTargetPercentage * 1.571"></circle>
+              <circle class="donut-target poly-target" cx="50" cy="50" r="25"
+                      [attr.stroke-dasharray]="polyTargetPercentage * 1.571 + ' ' + 157.1"
+                      [attr.stroke-dashoffset]="-(transTargetPercentage + saturatedTargetPercentage) * 1.571"></circle>
+              <circle class="donut-target mono-target" cx="50" cy="50" r="25"
+                      [attr.stroke-dasharray]="monoTargetPercentage * 1.571 + ' ' + 157.1"
+                      [attr.stroke-dashoffset]="-(transTargetPercentage + saturatedTargetPercentage + polyTargetPercentage) * 1.571"></circle>
+
+              <!-- Actual consumption ring -->
+              <circle class="donut-segment trans-segment" cx="50" cy="50" r="30"
+                      [attr.stroke-dasharray]="transPercentage * 1.885 + ' ' + 188.5"
+                      [attr.stroke-dashoffset]="0"></circle>
+              <circle class="donut-segment saturated-segment" cx="50" cy="50" r="30"
+                      [attr.stroke-dasharray]="saturatedPercentage * 1.885 + ' ' + 188.5"
+                      [attr.stroke-dashoffset]="-transPercentage * 1.885"></circle>
+              <circle class="donut-segment poly-segment" cx="50" cy="50" r="30"
+                      [attr.stroke-dasharray]="polyPercentage * 1.885 + ' ' + 188.5"
+                      [attr.stroke-dashoffset]="-(transPercentage + saturatedPercentage) * 1.885"></circle>
+              <circle class="donut-segment mono-segment" cx="50" cy="50" r="30"
+                      [attr.stroke-dasharray]="monoPercentage * 1.885 + ' ' + 188.5"
+                      [attr.stroke-dashoffset]="-(transPercentage + saturatedPercentage + polyPercentage) * 1.885"></circle>
+
+              <!-- Actual percentage labels -->
+              <text *ngIf="transPercentage > 0" class="percentage-label trans-label" [attr.x]="transLabelX" [attr.y]="transLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + transLabelRotation + ', ' + transLabelX + ', ' + transLabelY + ')'">{{ transPercentage }}%</text>
+              <text *ngIf="saturatedPercentage > 0" class="percentage-label saturated-label" [attr.x]="saturatedLabelX" [attr.y]="saturatedLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + saturatedLabelRotation + ', ' + saturatedLabelX + ', ' + saturatedLabelY + ')'">{{ saturatedPercentage }}%</text>
+              <text *ngIf="polyPercentage > 0" class="percentage-label poly-label" [attr.x]="polyLabelX" [attr.y]="polyLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + polyLabelRotation + ', ' + polyLabelX + ', ' + polyLabelY + ')'">{{ polyPercentage }}%</text>
+              <text *ngIf="monoPercentage > 0" class="percentage-label mono-label" [attr.x]="monoLabelX" [attr.y]="monoLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + monoLabelRotation + ', ' + monoLabelX + ', ' + monoLabelY + ')'">{{ monoPercentage }}%</text>
+
+              <!-- Target percentage labels -->
+              <text *ngIf="transTargetPercentage > 0" class="target-percentage-label trans-target-label" [attr.x]="transTargetLabelX" [attr.y]="transTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + transTargetLabelRotation + ', ' + transTargetLabelX + ', ' + transTargetLabelY + ')'">{{ transTargetPercentage }}%</text>
+              <text *ngIf="saturatedTargetPercentage > 0" class="target-percentage-label saturated-target-label" [attr.x]="saturatedTargetLabelX" [attr.y]="saturatedTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + saturatedTargetLabelRotation + ', ' + saturatedTargetLabelX + ', ' + saturatedTargetLabelY + ')'">{{ saturatedTargetPercentage }}%</text>
+              <text *ngIf="polyTargetPercentage > 0" class="target-percentage-label poly-target-label" [attr.x]="polyTargetLabelX" [attr.y]="polyTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + polyTargetLabelRotation + ', ' + polyTargetLabelX + ', ' + polyTargetLabelY + ')'">{{ polyTargetPercentage }}%</text>
+              <text *ngIf="monoTargetPercentage > 0" class="target-percentage-label mono-target-label" [attr.x]="monoTargetLabelX" [attr.y]="monoTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + monoTargetLabelRotation + ', ' + monoTargetLabelX + ', ' + monoTargetLabelY + ')'">{{ monoTargetPercentage }}%</text>
+            </svg>
+          </div>
+          <div class="chart-tip">
+            Limit trans & saturated fats; focus on poly & mono
+          </div>
+        </div>
+        <div class="chart-values">
+          <div class="value-item">
+            <span class="value-dot trans-dot"></span>
+            <span class="value-label">Trans:</span>
+            <span class="value-number">{{ transGrams }}g / {{ transTargetGrams }}g</span>
+          </div>
+          <div class="value-item">
+            <span class="value-dot saturated-dot"></span>
+            <span class="value-label">Saturated:</span>
+            <span class="value-number">{{ saturatedGrams }}g / {{ saturatedTargetGrams }}g</span>
+          </div>
+          <div class="value-item">
+            <span class="value-dot poly-dot"></span>
+            <span class="value-label">Poly:</span>
+            <span class="value-number">{{ polyGrams }}g / {{ polyTargetGrams }}g</span>
+          </div>
+          <div class="value-item">
+            <span class="value-dot mono-dot"></span>
+            <span class="value-label">Mono:</span>
+            <span class="value-number">{{ monoGrams }}g / {{ monoTargetGrams }}g</span>
+          </div>
+        </div>
+      </div>
+    </ion-col>
+  </ion-row>
+</ion-grid>
+
+<!-- Empty state -->
+<div class="empty-state" *ngIf="!hasData">
+  <span>No fat data available</span>
 </div>

@@ -14,9 +14,15 @@
             <span class="bar-label">Calories</span>
           </div>
         </div>
+        <div class="bar-label">
+          <span *ngIf="caloriesLeft > 0">{{ caloriesLeft | number:'1.0-0' }} cal left</span>
+          <span *ngIf="caloriesLeft <= 0">Over target by {{ -caloriesLeft | number:'1.0-0' }} cal</span>
+        </div>
         <div class="chart-tip">
           Keep your calories on target to complete the day
         </div>
+        
+
         <!-- <div class="chart-values">
           <div class="value-item">
             <span class="value-label">Consumed:</span>

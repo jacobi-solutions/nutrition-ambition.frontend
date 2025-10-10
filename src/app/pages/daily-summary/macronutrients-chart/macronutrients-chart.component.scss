@@ -33,6 +33,14 @@ ion-grid {
     padding: 10px;
     margin-bottom: 12px;
 
+    + .bar-label {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--ion-color-medium);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
     .bar-group {
       display: flex;
       flex-direction: column;
@@ -135,6 +143,8 @@ ion-grid {
         color: var(--ion-text-color);
         font-weight: 500;
         opacity: 0;
+        text-align: center;
+        width: 100%;
       }
     }
   }
