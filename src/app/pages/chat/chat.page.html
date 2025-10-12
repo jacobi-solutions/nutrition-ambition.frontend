@@ -125,7 +125,7 @@
     </div>
     <button
       class="send-btn"
-      [disabled]="isLoading || !userMessage.trim()"
+      [disabled]="isLoading || !userMessage.trim() || isStreamingActive"
       (click)="sendMessage()"
       aria-label="Send message">
       <ion-icon name="paper-plane-sharp"></ion-icon>

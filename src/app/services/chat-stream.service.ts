@@ -8,6 +8,10 @@ import { DateService } from './date.service';
 export class ChatStreamService {
   private baseUrl = `${environment.backendApiUrl}/api/conversation`;
 
+  // Streaming timeout configuration
+  private readonly STREAM_TIMEOUT_MS = 30000; // 30 seconds of inactivity
+  private readonly TIMEOUT_CHECK_INTERVAL_MS = 5000; // Check every 5 seconds
+
   constructor(
     private authService: AuthService,
     private dateService: DateService
@@ -62,6 +66,18 @@ export class ChatStreamService {
 
       let buffer = '';
 
+      // Add timeout tracking
+      let lastChunkTime = Date.now();
+
+      const timeoutCheck = setInterval(() => {
+        if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
+          console.error('Stream timeout - no data for 30 seconds');
+          clearInterval(timeoutCheck);
+          reader.cancel();
+          onError(new Error('Stream timeout - no data received for 30 seconds'));
+        }
+      }, this.TIMEOUT_CHECK_INTERVAL_MS);
+
       // Process the stream
       const processStream = async () => {
         try {
@@ -70,9 +86,13 @@ export class ChatStreamService {
 
             if (done) {
               console.log('Stream complete');
+              clearInterval(timeoutCheck);
               onComplete();
               break;
             }
+
+            // Update activity timestamp
+            lastChunkTime = Date.now();
 
             // Decode the chunk and add to buffer
             const chunk = decoder.decode(value, { stream: true });
@@ -89,6 +109,15 @@ export class ChatStreamService {
                 try {
                   const jsonData = line.substring(6);
                   const parsed = JSON.parse(jsonData) as ChatMessagesResponse;
+
+                  // Check for error responses from backend
+                  if (!parsed.isSuccess && parsed.errors?.length > 0) {
+                    clearInterval(timeoutCheck);
+                    reader.cancel();
+                    onError(new Error(parsed.errors[0].errorMessage || 'Server error'));
+                    return;
+                  }
+
                   onChunk(parsed);
                 } catch (err) {
                   console.error('Stream parse error for line:', line, err);
@@ -98,6 +127,7 @@ export class ChatStreamService {
           }
         } catch (err) {
           console.error('Stream read error', err);
+          clearInterval(timeoutCheck);
           onError(err);
         }
       };
@@ -105,9 +135,12 @@ export class ChatStreamService {
       // Start processing
       processStream();
 
-      // Return a mock EventSource-like object for compatibility
+      // Return cleanup function
       return {
-        close: () => reader.cancel(),
+        close: () => {
+          clearInterval(timeoutCheck);
+          reader.cancel();
+        },
         readyState: 1
       } as any;
 

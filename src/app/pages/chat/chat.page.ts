@@ -32,6 +32,12 @@ import { ToastService } from '../../services/toast.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { AnalyticsService } from '../../services/analytics.service';
 
+// Type for handling both camelCase and PascalCase responses from backend
+type ChatMessagesResponseVariant = ChatMessagesResponse | {
+  Messages: Array<{ Content: string; content?: string }>;
+  messages?: Array<{ Content: string; content?: string }>;
+};
+
 
 
 @Component({
@@ -75,6 +81,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private isUserScrolledUp = false;
   private lastScrollTime = 0;
   private scrollDebounceMs = 1000; // Only autoscroll once per second
+  private isStreamingActive = false; // Prevent multiple concurrent messages
+
+  // Streaming configuration constants
+  private readonly STREAM_THROTTLE_MS = 50;
+  private readonly FOCUS_INPUT_DELAY_MS = 300;
 
   // Track messages by ID to preserve component instances during updates
   trackMessage(index: number, message: DisplayMessage): string {
@@ -485,9 +496,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     const sentMessage = this.userMessage;
     const messageDate = new Date();
 
-    // Track analytics for message sending
-    this.analytics.trackChatMessageSent(sentMessage.length);
-
     // Add user message to UI
     this.messages.push({
       text: sentMessage,
@@ -499,6 +507,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     localStorage.removeItem(this.draftStorageKey);
     this.userMessage = '';
     this.isLoading = true;
+    this.isStreamingActive = true; // Disable sending while streaming
 
     // Reset textarea height
     if (this.messageInput && this.messageInput.nativeElement) {
@@ -516,12 +525,23 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     await this.chatService.sendMessageStream(
       sentMessage,
       (chunk: ChatMessagesResponse) => {
+        // Check for error response and bail out early
+        if (!chunk.isSuccess && chunk.errors?.length > 0) {
+          console.error('Received error chunk from backend:', chunk.errors);
+          return; // Let the error be handled by stream completion or dedicated error handler
+        }
+
         // Handle both camelCase and PascalCase (backend sends PascalCase)
-        const messages = (chunk as any).messages || (chunk as any).Messages;
+        const chunkVariant = chunk as ChatMessagesResponseVariant;
+        const messages = 'messages' in chunkVariant
+          ? chunkVariant.messages
+          : (chunkVariant as any).Messages;
 
         if (messages && messages.length > 0) {
           const assistantMessage = messages[0];
-          const content = assistantMessage.content || assistantMessage.Content;
+          const content = 'content' in assistantMessage
+            ? assistantMessage.content
+            : (assistantMessage as any).Content;
           pendingContent = content;
 
           // Clear existing timeout
@@ -532,6 +552,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           // Throttle UI updates to every 50ms for smoother rendering
           this.streamUpdateTimeout = setTimeout(() => {
             this.ngZone.run(() => {
+              // Skip if content is empty or whitespace
+              if (!pendingContent || pendingContent.trim().length === 0) {
+                return;
+              }
+
               // Create the assistant message bubble on first chunk
               if (streamingMessageIndex === -1) {
                 streamingMessageIndex = this.messages.length;
@@ -565,7 +590,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
               this.cdr.detectChanges();
             });
-          }, 50); // 50ms throttle - adjust for smoothness vs responsiveness
+          }, this.STREAM_THROTTLE_MS);
         }
       },
       () => {
@@ -594,23 +619,42 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           }
 
           this.isLoading = false;
+          this.isStreamingActive = false; // Re-enable sending
 
           // Firebase Analytics: Track successful message sent
           this.analytics.trackChatMessageSent(sentMessage.length);
           this.analytics.trackPageView('Chat');
 
           // Focus the input after completion
-          setTimeout(() => this.focusInput(), 300);
+          setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
         });
       },
       (error: any) => {
-        // Stream error
+        // Stream error - clean up timeout and streaming state
+        if (this.streamUpdateTimeout) {
+          clearTimeout(this.streamUpdateTimeout);
+          this.streamUpdateTimeout = null;
+        }
+
         this.isLoading = false;
-        this.messages[streamingMessageIndex] = {
-          text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
-          isUser: false,
-          timestamp: new Date()
-        };
+        this.isStreamingActive = false; // Re-enable sending
+
+        // Only update message if we created one, otherwise add new error message
+        if (streamingMessageIndex !== -1) {
+          this.messages[streamingMessageIndex] = {
+            text: "Sorry, I'm having trouble right now. Please try again.",
+            isUser: false,
+            timestamp: new Date()
+          };
+        } else {
+          // No streaming message created yet, add error as new message
+          this.messages = [...this.messages, {
+            text: "Sorry, I'm having trouble right now. Please try again.",
+            isUser: false,
+            timestamp: new Date()
+          }];
+        }
+
         this.cdr.detectChanges();
         this.scrollToBottom();
         this.focusInput();

@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SecurityContext } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { IonText } from '@ionic/angular/standalone';
 import { ChatMessage, ComponentMatch } from '../../services/nutrition-ambition-api.service';
@@ -29,19 +29,30 @@ export class ChatMessageComponent {
 
 
   /**
-   * Converts the message content to Markdown and sanitizes it
+   * Converts the message content to Markdown and sanitizes it properly
    * to prevent XSS attacks
    */
   get formattedContent(): SafeHtml {
-    if (!this.text) return this.sanitizer.bypassSecurityTrustHtml('');
-    
-    // Only apply markdown formatting to bot and tool messages
+    if (!this.text) return '';
+
     if (this.isUser) {
-      return this.sanitizer.bypassSecurityTrustHtml(this.text);
+      // For user messages: escape HTML but preserve line breaks
+      const escaped = this.text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\n/g, '<br>');
+
+      // Use sanitize instead of bypassSecurityTrustHtml
+      return this.sanitizer.sanitize(SecurityContext.HTML, escaped) || '';
     }
 
-    // Convert Markdown to HTML and sanitize it
-    const htmlContent = marked.parse(this.text);
-    return this.sanitizer.bypassSecurityTrustHtml(htmlContent as string);
+    // For bot messages: convert markdown and sanitize
+    const htmlContent = marked.parse(this.text) as string;
+
+    // Use sanitize instead of bypassSecurityTrustHtml
+    return this.sanitizer.sanitize(SecurityContext.HTML, htmlContent) || '';
   }
 } 
