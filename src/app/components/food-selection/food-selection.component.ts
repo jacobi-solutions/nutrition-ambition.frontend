@@ -56,7 +56,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   get hasPayload(): boolean {
-    return !!this.computedFoods && this.computedFoods.length > 0;
+    // Show card even when empty during streaming (isPartial=true means loading)
+    // This allows progressive loading UI to display immediately
+    return this.message.isPartial || (!!this.computedFoods && this.computedFoods.length > 0);
   }
 
   get statusText(): string {
@@ -732,7 +734,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   // Compute all foods as FoodDisplay objects with embedded state
   private computeAllFoods(): void {
+    console.log('🔍 computeAllFoods called');
+    console.log('🔍 message:', this.message);
+    console.log('🔍 mealSelection:', this.message?.mealSelection);
     const rawFoods = this.message?.mealSelection?.foods || [];
+    console.log('🔍 rawFoods:', rawFoods);
+    console.log('🔍 rawFoods length:', rawFoods.length);
 
     // Only rebuild from raw data - no state preservation needed
     this.computedFoods = rawFoods.map((food, foodIndex) => {
@@ -784,6 +791,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       });
     });
 
+    console.log('🔍 computedFoods after mapping:', this.computedFoods);
+    console.log('🔍 computedFoods.length:', this.computedFoods.length);
   }
 
 

@@ -562,53 +562,68 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           // Always show meal selection card when role is PendingFoodSelection, even if empty (for progressive loading)
           if (isPendingFood && mealSelections) {
             const mealSelection = mealSelections[0];
+            console.log('🟢 Processing meal selection chunk');
+            console.log('🟢 streamingMessageIndex:', streamingMessageIndex);
+            console.log('🟢 mealSelection:', mealSelection);
+            console.log('🟢 mealSelection.Foods length:', mealSelection?.Foods?.length);
+            console.log('🟢 mealSelection.foods length:', mealSelection?.foods?.length);
 
             // Clear existing timeout
             if (this.streamUpdateTimeout) {
               clearTimeout(this.streamUpdateTimeout);
             }
 
-            // Throttle UI updates
-            this.streamUpdateTimeout = setTimeout(() => {
-              this.ngZone.run(() => {
-                // Create or update the meal selection message
-                if (streamingMessageIndex === -1) {
-                  streamingMessageIndex = this.messages.length;
-                  const streamingMessageId = `streaming-meal-${Date.now()}`;
-                  this.messages = [...this.messages, {
-                    id: streamingMessageId,
-                    text: content || '',
-                    isUser: false,
-                    timestamp: new Date(),
-                    role: MessageRoleTypes.PendingFoodSelection,
-                    mealSelection: mealSelection,
-                    isStreaming: true,
-                    isPartial: isPartial,
-                    processingStage: processingStage
-                  }];
+            // Create or update the meal selection message immediately (no throttle for meal selection)
+            this.ngZone.run(() => {
+              console.log('🟡 Updating UI - streamingMessageIndex:', streamingMessageIndex);
+              // Create or update the meal selection message
+              if (streamingMessageIndex === -1) {
+                console.log('🆕 Creating new streaming message');
+                streamingMessageIndex = this.messages.length;
+                const streamingMessageId = `streaming-meal-${Date.now()}`;
+                this.messages = [...this.messages, {
+                  id: streamingMessageId,
+                  text: content || '',
+                  isUser: false,
+                  timestamp: new Date(),
+                  role: MessageRoleTypes.PendingFoodSelection,
+                  mealSelection: mealSelection,
+                  mealName: mealSelection?.mealName,
+                  isStreaming: true,
+                  isPartial: isPartial,
+                  processingStage: processingStage
+                }];
+                this.scrollToBottom();
+              } else {
+                // Update existing message
+                console.log('🔄 Updating existing message with mealSelection:', mealSelection);
+                console.log('🔄 mealSelection.Foods:', mealSelection?.Foods);
+                console.log('🔄 mealSelection.foods:', mealSelection?.foods);
+                const updatedMessages = [...this.messages];
+                const existingMessage = updatedMessages[streamingMessageIndex];
+                updatedMessages[streamingMessageIndex] = {
+                  ...existingMessage,
+                  text: content || '',
+                  mealSelection: mealSelection,
+                  mealName: mealSelection?.mealName,
+                  isStreaming: isPartial,
+                  isPartial: isPartial,
+                  processingStage: processingStage
+                };
+                console.log('🔄 Updated message:', updatedMessages[streamingMessageIndex]);
+                this.messages = updatedMessages;
+
+                console.log('📜 isUserScrolledUp:', this.isUserScrolledUp);
+                if (!this.isUserScrolledUp) {
+                  console.log('📜 Scrolling to bottom after update');
                   this.scrollToBottom();
                 } else {
-                  // Update existing message
-                  const updatedMessages = [...this.messages];
-                  const existingMessage = updatedMessages[streamingMessageIndex];
-                  updatedMessages[streamingMessageIndex] = {
-                    ...existingMessage,
-                    text: content || '',
-                    mealSelection: mealSelection,
-                    isStreaming: isPartial,
-                    isPartial: isPartial,
-                    processingStage: processingStage
-                  };
-                  this.messages = updatedMessages;
-
-                  if (!this.isUserScrolledUp) {
-                    this.scrollToBottom();
-                  }
+                  console.log('📜 Skipping scroll - user scrolled up');
                 }
+              }
 
-                this.cdr.detectChanges();
-              });
-            }, this.STREAM_THROTTLE_MS);
+              this.cdr.detectChanges();
+            });
           } else {
             // Regular text streaming (existing logic)
             pendingContent = content;
@@ -788,28 +803,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   }
 
   private async scrollToBottom() {
-    // Debounce: only autoscroll once per second during streaming
-    const now = Date.now();
-    if (now - this.lastScrollTime < this.scrollDebounceMs) {
-      return; // Skip if we scrolled recently
-    }
-
-    // Check if already at bottom before scrolling
-    if (this.content) {
-      const scrollElement = await this.content.getScrollElement();
-      const scrollTop = scrollElement.scrollTop;
-      const scrollHeight = scrollElement.scrollHeight;
-      const clientHeight = scrollElement.clientHeight;
-      const threshold = 100;
-
-      // If user is scrolled up, don't autoscroll
-      if ((scrollTop + clientHeight + threshold) < scrollHeight) {
-        return;
-      }
-    }
-
+    // Note: Caller is responsible for checking isUserScrolledUp before calling this
     // Update last scroll time
-    this.lastScrollTime = now;
+    this.lastScrollTime = Date.now();
 
     // Single timeout to allow DOM rendering, then handle scrolling
     setTimeout(async () => {

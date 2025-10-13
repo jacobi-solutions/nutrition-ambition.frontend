@@ -68,9 +68,9 @@
             [isStreaming]="message.isStreaming || false">
           </app-chat-message>
         </ng-container>
-        
-        <!-- Typing indicator positioned where next message will appear -->
-        <div *ngIf="isLoading" class="typing-indicator bot-message-container">
+
+        <!-- Typing indicator positioned where next message will appear (only before streaming starts) -->
+        <div *ngIf="isLoading && !isStreamingActive" class="typing-indicator bot-message-container">
           <div class="typing-indicator-dots">
             <div class="dot"></div>
             <div class="dot"></div>
