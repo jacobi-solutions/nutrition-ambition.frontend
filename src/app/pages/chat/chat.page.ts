@@ -559,7 +559,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           // Handle streaming meal selection differently
           // Check both string and numeric enum values
           const isPendingFood = role === MessageRoleTypes.PendingFoodSelection || role === 'PendingFoodSelection' || role === 5;
-          if (isPendingFood && mealSelections && mealSelections.length > 0) {
+          // Always show meal selection card when role is PendingFoodSelection, even if empty (for progressive loading)
+          if (isPendingFood && mealSelections) {
             const mealSelection = mealSelections[0];
 
             // Clear existing timeout

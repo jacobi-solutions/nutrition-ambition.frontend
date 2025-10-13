@@ -12,7 +12,7 @@
     <!-- Normal content -->
       <!-- Food items list -->
       <div *ngIf="hasPayload" class="card-header">
-        <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Items') | titlecase }}</strong></label>
+        <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Meal') | titlecase }}</strong></label>
       </div>
 
       <div *ngIf="hasPayload" class="food-items-list">
@@ -54,6 +54,7 @@
     [isCanceling]="isCanceling"
     [isReadOnly]="isReadOnly"
     [isEditMode]="isEditMode"
+    [isLoading]="message.isPartial || false"
     [statusText]="statusText"
     (confirmSelection)="confirmSelections()"
     (cancelSelection)="cancelSelection()">

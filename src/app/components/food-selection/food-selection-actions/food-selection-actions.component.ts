@@ -14,6 +14,7 @@ export class FoodSelectionActionsComponent implements OnInit, OnChanges {
   @Input() isCanceling: boolean = false;
   @Input() isReadOnly: boolean = false;
   @Input() isEditMode: boolean = false;
+  @Input() isLoading: boolean = false; // Streaming/loading state
   @Input() statusText: string = '';
 
   // Precomputed values for performance
@@ -42,9 +43,11 @@ export class FoodSelectionActionsComponent implements OnInit, OnChanges {
   }
 
   private computeDisplayValues(): void {
-    this.computedShowTypingIndicator = (this.isSubmitting || this.isCanceling) && !this.isReadOnly;
-    this.computedShowStatusText = !this.isSubmitting && !this.isCanceling && this.isReadOnly;
-    this.computedShowActionButtons = !this.isSubmitting && !this.isCanceling && !this.isReadOnly;
+    // Show typing indicator when submitting, canceling, or loading (streaming)
+    this.computedShowTypingIndicator = (this.isSubmitting || this.isCanceling || this.isLoading) && !this.isReadOnly;
+    this.computedShowStatusText = !this.isSubmitting && !this.isCanceling && !this.isLoading && this.isReadOnly;
+    // Hide action buttons during loading/streaming
+    this.computedShowActionButtons = !this.isSubmitting && !this.isCanceling && !this.isReadOnly && !this.isLoading;
     this.computedConfirmButtonText = this.isEditMode ? 'Confirm Edit' : 'Confirm Selection';
   }
 
