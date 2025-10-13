@@ -81,7 +81,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private isUserScrolledUp = false;
   private lastScrollTime = 0;
   private scrollDebounceMs = 1000; // Only autoscroll once per second
-  private isStreamingActive = false; // Prevent multiple concurrent messages
+  isStreamingActive = false; // Prevent multiple concurrent messages (public for template)
 
   // Streaming configuration constants
   private readonly STREAM_THROTTLE_MS = 50;
@@ -525,8 +525,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     await this.chatService.sendMessageStream(
       sentMessage,
       (chunk: ChatMessagesResponse) => {
+        // Debug log the entire chunk
+        console.log('Raw chunk received:', chunk);
+
         // Check for error response and bail out early
-        if (!chunk.isSuccess && chunk.errors?.length > 0) {
+        if (!chunk.isSuccess && chunk.errors && chunk.errors.length > 0) {
           console.error('Received error chunk from backend:', chunk.errors);
           return; // Let the error be handled by stream completion or dedicated error handler
         }
@@ -542,55 +545,121 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           const content = 'content' in assistantMessage
             ? assistantMessage.content
             : (assistantMessage as any).Content;
-          pendingContent = content;
+          // Backend sends Role (capital R), check both cases
+          const role = (assistantMessage as any).Role || (assistantMessage as any).role || MessageRoleTypes.Assistant;
+          const mealSelections = (assistantMessage as any).MealSelections || (assistantMessage as any).mealSelections;
 
-          // Clear existing timeout
-          if (this.streamUpdateTimeout) {
-            clearTimeout(this.streamUpdateTimeout);
-          }
+          // Debug logging
+          console.log('Streaming chunk:', { role, roleType: typeof role, isPartial: chunk.isPartial, hasMealSelections: !!mealSelections });
 
-          // Throttle UI updates to every 50ms for smoother rendering
-          this.streamUpdateTimeout = setTimeout(() => {
-            this.ngZone.run(() => {
-              // Skip if content is empty or whitespace
-              if (!pendingContent || pendingContent.trim().length === 0) {
-                return;
-              }
+          // Check if this is a streaming meal selection
+          const isPartial = chunk.isPartial || false;
+          const processingStage = chunk.processingStage;
 
-              // Create the assistant message bubble on first chunk
-              if (streamingMessageIndex === -1) {
-                streamingMessageIndex = this.messages.length;
-                const streamingMessageId = `streaming-${Date.now()}`;
-                this.messages = [...this.messages, {
-                  id: streamingMessageId,
-                  text: pendingContent || '',
-                  isUser: false,
-                  timestamp: new Date(),
-                  role: MessageRoleTypes.Assistant,
-                  isStreaming: true
-                }];
-                // Always scroll on first chunk
-                this.scrollToBottom();
-              } else {
-                // Update existing message by replacing the array
-                const updatedMessages = [...this.messages];
-                const existingMessage = updatedMessages[streamingMessageIndex];
-                updatedMessages[streamingMessageIndex] = {
-                  ...existingMessage,
-                  text: pendingContent || '',
-                  isStreaming: true
-                };
-                this.messages = updatedMessages;
+          // Handle streaming meal selection differently
+          // Check both string and numeric enum values
+          const isPendingFood = role === MessageRoleTypes.PendingFoodSelection || role === 'PendingFoodSelection' || role === 5;
+          if (isPendingFood && mealSelections && mealSelections.length > 0) {
+            const mealSelection = mealSelections[0];
 
-                // Only auto-scroll if user hasn't scrolled up
-                if (!this.isUserScrolledUp) {
+            // Clear existing timeout
+            if (this.streamUpdateTimeout) {
+              clearTimeout(this.streamUpdateTimeout);
+            }
+
+            // Throttle UI updates
+            this.streamUpdateTimeout = setTimeout(() => {
+              this.ngZone.run(() => {
+                // Create or update the meal selection message
+                if (streamingMessageIndex === -1) {
+                  streamingMessageIndex = this.messages.length;
+                  const streamingMessageId = `streaming-meal-${Date.now()}`;
+                  this.messages = [...this.messages, {
+                    id: streamingMessageId,
+                    text: content || '',
+                    isUser: false,
+                    timestamp: new Date(),
+                    role: MessageRoleTypes.PendingFoodSelection,
+                    mealSelection: mealSelection,
+                    isStreaming: true,
+                    isPartial: isPartial,
+                    processingStage: processingStage
+                  }];
                   this.scrollToBottom();
-                }
-              }
+                } else {
+                  // Update existing message
+                  const updatedMessages = [...this.messages];
+                  const existingMessage = updatedMessages[streamingMessageIndex];
+                  updatedMessages[streamingMessageIndex] = {
+                    ...existingMessage,
+                    text: content || '',
+                    mealSelection: mealSelection,
+                    isStreaming: isPartial,
+                    isPartial: isPartial,
+                    processingStage: processingStage
+                  };
+                  this.messages = updatedMessages;
 
-              this.cdr.detectChanges();
-            });
-          }, this.STREAM_THROTTLE_MS);
+                  if (!this.isUserScrolledUp) {
+                    this.scrollToBottom();
+                  }
+                }
+
+                this.cdr.detectChanges();
+              });
+            }, this.STREAM_THROTTLE_MS);
+          } else {
+            // Regular text streaming (existing logic)
+            pendingContent = content;
+
+            // Clear existing timeout
+            if (this.streamUpdateTimeout) {
+              clearTimeout(this.streamUpdateTimeout);
+            }
+
+            // Throttle UI updates to every 50ms for smoother rendering
+            this.streamUpdateTimeout = setTimeout(() => {
+              this.ngZone.run(() => {
+                // Skip if content is empty or whitespace
+                if (!pendingContent || pendingContent.trim().length === 0) {
+                  return;
+                }
+
+                // Create the assistant message bubble on first chunk
+                if (streamingMessageIndex === -1) {
+                  streamingMessageIndex = this.messages.length;
+                  const streamingMessageId = `streaming-${Date.now()}`;
+                  this.messages = [...this.messages, {
+                    id: streamingMessageId,
+                    text: pendingContent || '',
+                    isUser: false,
+                    timestamp: new Date(),
+                    role: MessageRoleTypes.Assistant,
+                    isStreaming: true
+                  }];
+                  // Always scroll on first chunk
+                  this.scrollToBottom();
+                } else {
+                  // Update existing message by replacing the array
+                  const updatedMessages = [...this.messages];
+                  const existingMessage = updatedMessages[streamingMessageIndex];
+                  updatedMessages[streamingMessageIndex] = {
+                    ...existingMessage,
+                    text: pendingContent || '',
+                    isStreaming: true
+                  };
+                  this.messages = updatedMessages;
+
+                  // Only auto-scroll if user hasn't scrolled up
+                  if (!this.isUserScrolledUp) {
+                    this.scrollToBottom();
+                  }
+                }
+
+                this.cdr.detectChanges();
+              });
+            }, this.STREAM_THROTTLE_MS);
+          }
         }
       },
       () => {
@@ -601,13 +670,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
         // Force final update immediately
         this.ngZone.run(() => {
-          if (streamingMessageIndex !== -1 && pendingContent) {
+          if (streamingMessageIndex !== -1) {
             const updatedMessages = [...this.messages];
             const existingMessage = updatedMessages[streamingMessageIndex];
             updatedMessages[streamingMessageIndex] = {
               ...existingMessage,
-              text: pendingContent,
-              isStreaming: false // Remove streaming indicator
+              text: existingMessage.text || pendingContent,
+              isStreaming: false, // Remove streaming indicator
+              isPartial: false // Mark as complete
             };
             this.messages = updatedMessages;
             this.cdr.detectChanges();

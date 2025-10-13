@@ -13,7 +13,7 @@ import { ComponentDisplay, ComponentMatchDisplay, ComponentServingDisplay, FoodD
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
-import { IonIcon } from '@ionic/angular/standalone';
+import { IonIcon, IonSpinner } from '@ionic/angular/standalone';
 import { ServingIdentifierUtil } from './food-selection.util';
 
 @Component({
@@ -21,7 +21,7 @@ import { ServingIdentifierUtil } from './food-selection.util';
   templateUrl: './food-selection.component.html',
   styleUrls: ['./food-selection.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, SearchFoodComponent, FoodSelectionActionsComponent, FoodComponent, IonIcon],
+  imports: [CommonModule, FormsModule, SearchFoodComponent, FoodSelectionActionsComponent, FoodComponent, IonIcon, IonSpinner],
   schemas: [NO_ERRORS_SCHEMA],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

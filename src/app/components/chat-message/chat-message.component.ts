@@ -1,6 +1,6 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, SecurityContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DomSanitizer, SafeHtml, SecurityContext } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
 import { IonText } from '@ionic/angular/standalone';
 import { ChatMessage, ComponentMatch } from '../../services/nutrition-ambition-api.service';

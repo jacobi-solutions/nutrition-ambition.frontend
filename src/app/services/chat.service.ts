@@ -88,30 +88,15 @@ export class ChatService {
     );
   }
   
-  // Run assistant message
+  // Run assistant message (DEPRECATED - use streaming version instead)
+  // This method is kept for backwards compatibility but should not be used
   runAssistantMessage(message: string): Observable<ChatMessagesResponse> {
-    const request = new RunChatRequest({
-      message: message,
-      localDateKey: this.dateService.getSelectedDate(),
-    });
-    
-    return this.apiService.runResponsesConversation(request).pipe(
-      map(response => {
-        
-        // No need to map response properties as the API now returns ChatMessagesResponse directly
-        const botResponse = response;
-        
-        // Note: Meal logging events are now handled by individual service methods
-        
-        return botResponse;
-      }),
-      catchError(error => {
-        const errorResponse = new ChatMessagesResponse();
-        errorResponse.isSuccess = false;
-        errorResponse.messages = [];
-        return of(errorResponse);
-      })
-    );
+    // Since the backend now always streams, this method returns an empty response
+    // All message sending should go through the streaming path
+    const emptyResponse = new ChatMessagesResponse();
+    emptyResponse.isSuccess = false;
+    emptyResponse.messages = [];
+    return of(emptyResponse);
   }
 
   getMessageHistoryByDate(localDateKey: string): Observable<ChatMessagesResponse> {

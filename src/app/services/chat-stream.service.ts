@@ -81,11 +81,17 @@ export class ChatStreamService {
       // Process the stream
       const processStream = async () => {
         try {
+          console.log('🔵 Stream started - reader:', !!reader, 'response.body:', !!response.body);
+          let iterationCount = 0;
+
           while (true) {
+            iterationCount++;
+            console.log(`🔵 Read iteration ${iterationCount} starting...`);
             const { done, value } = await reader.read();
+            console.log(`🔵 Read result ${iterationCount}:`, { done, hasValue: !!value, valueLength: value?.length });
 
             if (done) {
-              console.log('Stream complete');
+              console.log('🟢 Stream complete after', iterationCount, 'iterations. Buffer remaining:', buffer.length, 'chars');
               clearInterval(timeoutCheck);
               onComplete();
               break;
@@ -96,25 +102,29 @@ export class ChatStreamService {
 
             // Decode the chunk and add to buffer
             const chunk = decoder.decode(value, { stream: true });
+            console.log('🟡 Raw stream chunk length:', chunk.length, 'preview:', chunk.substring(0, 100));
             buffer += chunk;
 
             // Process complete lines
             const lines = buffer.split('\n');
             buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
+            console.log('Processing', lines.length, 'lines');
             for (const line of lines) {
               if (line.trim() === '') continue;
 
               if (line.startsWith('data: ')) {
                 try {
                   const jsonData = line.substring(6);
+                  console.log('SSE raw data:', jsonData.substring(0, 200)); // Log first 200 chars
                   const parsed = JSON.parse(jsonData) as ChatMessagesResponse;
+                  console.log('SSE parsed chunk:', parsed);
 
                   // Check for error responses from backend
-                  if (!parsed.isSuccess && parsed.errors?.length > 0) {
+                  if (!parsed.isSuccess && parsed.errors && parsed.errors.length > 0) {
                     clearInterval(timeoutCheck);
                     reader.cancel();
-                    onError(new Error(parsed.errors[0].errorMessage || 'Server error'));
+                    onError(new Error(parsed.errors[0]?.errorMessage || 'Server error'));
                     return;
                   }
 

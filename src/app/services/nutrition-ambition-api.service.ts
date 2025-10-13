@@ -85,7 +85,12 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    runResponsesConversation(body: RunChatRequest | undefined): Observable<ChatMessagesResponse>;
+    types(body: RunChatRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    runResponsesConversation(body: RunChatRequest | undefined): Observable<void>;
     /**
      * @param body (optional) 
      * @return Success
@@ -895,8 +900,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    runResponsesConversation(body: RunChatRequest | undefined): Observable<ChatMessagesResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/RunResponsesConversation";
+    types(body: RunChatRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/RunResponsesConversation/types";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -912,11 +917,11 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processRunResponsesConversation(response_);
+            return this.processTypes(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processRunResponsesConversation(response_ as any);
+                    return this.processTypes(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
@@ -925,7 +930,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         }));
     }
 
-    protected processRunResponsesConversation(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+    protected processTypes(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -945,6 +950,58 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    runResponsesConversation(body: RunChatRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/RunResponsesConversation";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRunResponsesConversation(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRunResponsesConversation(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processRunResponsesConversation(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
     }
 
     /**
@@ -1745,6 +1802,8 @@ export class AccountResponse implements IAccountResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     account?: Account;
 
     constructor(data?: IAccountResponse) {
@@ -1767,6 +1826,8 @@ export class AccountResponse implements IAccountResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.account = _data["account"] ? Account.fromJS(_data["account"]) : <any>undefined;
         }
     }
@@ -1789,6 +1850,8 @@ export class AccountResponse implements IAccountResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["account"] = this.account ? this.account.toJSON() : <any>undefined;
         return data;
     }
@@ -1800,6 +1863,8 @@ export interface IAccountResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     account?: Account;
 }
 
@@ -2099,6 +2164,8 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     messages?: ChatMessage[] | undefined;
 
     constructor(data?: IChatMessagesResponse) {
@@ -2121,6 +2188,8 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -2147,6 +2216,8 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -2162,6 +2233,8 @@ export interface IChatMessagesResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     messages?: ChatMessage[] | undefined;
 }
 
@@ -2211,6 +2284,8 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -2236,6 +2311,8 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.dataCleared = _data["dataCleared"];
             this.clearedAccountId = _data["clearedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -2267,6 +2344,8 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["dataCleared"] = this.dataCleared;
         data["clearedAccountId"] = this.clearedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -2287,6 +2366,8 @@ export interface IClearAccountDataResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -2343,6 +2424,8 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     feedbackEntry?: FeedbackEntry;
 
     constructor(data?: ICompleteFeedbackResponse) {
@@ -2365,6 +2448,8 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.feedbackEntry = _data["feedbackEntry"] ? FeedbackEntry.fromJS(_data["feedbackEntry"]) : <any>undefined;
         }
     }
@@ -2387,6 +2472,8 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["feedbackEntry"] = this.feedbackEntry ? this.feedbackEntry.toJSON() : <any>undefined;
         return data;
     }
@@ -2398,6 +2485,8 @@ export interface ICompleteFeedbackResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     feedbackEntry?: FeedbackEntry;
 }
 
@@ -2406,6 +2495,7 @@ export class Component implements IComponent {
     selectedComponentId?: string | undefined;
     matches?: ComponentMatch[] | undefined;
     culinaryRole?: string | undefined;
+    isPending?: boolean;
 
     constructor(data?: IComponent) {
         if (data) {
@@ -2426,6 +2516,7 @@ export class Component implements IComponent {
                     this.matches!.push(ComponentMatch.fromJS(item));
             }
             this.culinaryRole = _data["culinaryRole"];
+            this.isPending = _data["isPending"];
         }
     }
 
@@ -2446,6 +2537,7 @@ export class Component implements IComponent {
                 data["matches"].push(item.toJSON());
         }
         data["culinaryRole"] = this.culinaryRole;
+        data["isPending"] = this.isPending;
         return data;
     }
 }
@@ -2455,6 +2547,7 @@ export interface IComponent {
     selectedComponentId?: string | undefined;
     matches?: ComponentMatch[] | undefined;
     culinaryRole?: string | undefined;
+    isPending?: boolean;
 }
 
 export class ComponentBreakdown implements IComponentBreakdown {
@@ -2607,6 +2700,7 @@ export class ComponentMatch implements IComponentMatch {
     culinaryRole?: string | undefined;
     photoThumb?: string | undefined;
     photoHighRes?: string | undefined;
+    isPending?: boolean;
 
     constructor(data?: IComponentMatch) {
         if (data) {
@@ -2644,6 +2738,7 @@ export class ComponentMatch implements IComponentMatch {
             this.culinaryRole = _data["culinaryRole"];
             this.photoThumb = _data["photoThumb"];
             this.photoHighRes = _data["photoHighRes"];
+            this.isPending = _data["isPending"];
         }
     }
 
@@ -2681,6 +2776,7 @@ export class ComponentMatch implements IComponentMatch {
         data["culinaryRole"] = this.culinaryRole;
         data["photoThumb"] = this.photoThumb;
         data["photoHighRes"] = this.photoHighRes;
+        data["isPending"] = this.isPending;
         return data;
     }
 }
@@ -2707,6 +2803,7 @@ export interface IComponentMatch {
     culinaryRole?: string | undefined;
     photoThumb?: string | undefined;
     photoHighRes?: string | undefined;
+    isPending?: boolean;
 }
 
 export class ComponentServing implements IComponentServing {
@@ -2727,6 +2824,7 @@ export class ComponentServing implements IComponentServing {
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
+    isPending?: boolean;
 
     constructor(data?: IComponentServing) {
         if (data) {
@@ -2762,6 +2860,7 @@ export class ComponentServing implements IComponentServing {
                 }
             }
             this.apiServingKind = _data["apiServingKind"];
+            this.isPending = _data["isPending"];
         }
     }
 
@@ -2797,6 +2896,7 @@ export class ComponentServing implements IComponentServing {
             }
         }
         data["apiServingKind"] = this.apiServingKind;
+        data["isPending"] = this.isPending;
         return data;
     }
 }
@@ -2819,6 +2919,7 @@ export interface IComponentServing {
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
+    isPending?: boolean;
 }
 
 export class DailySummary implements IDailySummary {
@@ -2955,6 +3056,8 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -2980,6 +3083,8 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.accountDeleted = _data["accountDeleted"];
             this.deletedAccountId = _data["deletedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -3011,6 +3116,8 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["accountDeleted"] = this.accountDeleted;
         data["deletedAccountId"] = this.deletedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -3031,6 +3138,8 @@ export interface IDeleteAccountResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -3079,6 +3188,8 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     deleted?: boolean;
 
     constructor(data?: IDeleteFeedbackResponse) {
@@ -3101,6 +3212,8 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.deleted = _data["deleted"];
         }
     }
@@ -3123,6 +3236,8 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["deleted"] = this.deleted;
         return data;
     }
@@ -3134,6 +3249,8 @@ export interface IDeleteFeedbackResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     deleted?: boolean;
 }
 
@@ -3187,6 +3304,8 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
 
     constructor(data?: IDeleteFoodEntryResponse) {
         if (data) {
@@ -3208,6 +3327,8 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
         }
     }
 
@@ -3229,6 +3350,8 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         return data;
     }
 }
@@ -3239,6 +3362,8 @@ export interface IDeleteFoodEntryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
 }
 
 export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
@@ -3479,6 +3604,7 @@ export class Food implements IFood {
     brand?: string | undefined;
     originalPhrase?: string | undefined;
     components?: Component[] | undefined;
+    isPending?: boolean;
 
     constructor(data?: IFood) {
         if (data) {
@@ -3504,6 +3630,7 @@ export class Food implements IFood {
                 for (let item of _data["components"])
                     this.components!.push(Component.fromJS(item));
             }
+            this.isPending = _data["isPending"];
         }
     }
 
@@ -3529,6 +3656,7 @@ export class Food implements IFood {
             for (let item of this.components)
                 data["components"].push(item.toJSON());
         }
+        data["isPending"] = this.isPending;
         return data;
     }
 }
@@ -3543,6 +3671,7 @@ export interface IFood {
     brand?: string | undefined;
     originalPhrase?: string | undefined;
     components?: Component[] | undefined;
+    isPending?: boolean;
 }
 
 export class FoodBreakdown implements IFoodBreakdown {
@@ -3822,6 +3951,8 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -3845,6 +3976,8 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
             this.isSuccess = _data["isSuccess"];
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.accountId = _data["accountId"];
             if (_data["dataCounts"]) {
                 this.dataCounts = {} as any;
@@ -3874,6 +4007,8 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
         data["isSuccess"] = this.isSuccess;
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["accountId"] = this.accountId;
         if (this.dataCounts) {
             data["dataCounts"] = {};
@@ -3892,6 +4027,8 @@ export interface IGetAccountDataCountsResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -3933,6 +4070,8 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accounts?: Account[] | undefined;
 
     constructor(data?: IGetAllAccountsResponse) {
@@ -3955,6 +4094,8 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["accounts"])) {
                 this.accounts = [] as any;
                 for (let item of _data["accounts"])
@@ -3981,6 +4122,8 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.accounts)) {
             data["accounts"] = [];
             for (let item of this.accounts)
@@ -3996,6 +4139,8 @@ export interface IGetAllAccountsResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accounts?: Account[] | undefined;
 }
 
@@ -4077,6 +4222,8 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     dailySummary?: DailySummary;
 
     constructor(data?: IGetDetailedSummaryResponse) {
@@ -4099,6 +4246,8 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.dailySummary = _data["dailySummary"] ? DailySummary.fromJS(_data["dailySummary"]) : <any>undefined;
         }
     }
@@ -4121,6 +4270,8 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["dailySummary"] = this.dailySummary ? this.dailySummary.toJSON() : <any>undefined;
         return data;
     }
@@ -4132,6 +4283,8 @@ export interface IGetDetailedSummaryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     dailySummary?: DailySummary;
 }
 
@@ -4193,6 +4346,8 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 
     constructor(data?: IGetFeedbackWithAccountInfoResponse) {
@@ -4215,6 +4370,8 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["feedbackWithAccounts"])) {
                 this.feedbackWithAccounts = [] as any;
                 for (let item of _data["feedbackWithAccounts"])
@@ -4241,6 +4398,8 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.feedbackWithAccounts)) {
             data["feedbackWithAccounts"] = [];
             for (let item of this.feedbackWithAccounts)
@@ -4256,6 +4415,8 @@ export interface IGetFeedbackWithAccountInfoResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 }
 
@@ -4309,6 +4470,8 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
@@ -4334,6 +4497,8 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.originalPhrase = _data["originalPhrase"];
             this.componentId = _data["componentId"];
             if (Array.isArray(_data["alternatives"])) {
@@ -4363,6 +4528,8 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["originalPhrase"] = this.originalPhrase;
         data["componentId"] = this.componentId;
         if (Array.isArray(this.alternatives)) {
@@ -4381,6 +4548,8 @@ export interface IGetInstantAlternativesResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
@@ -4436,6 +4605,8 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -4459,6 +4630,8 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
             this.isSuccess = _data["isSuccess"];
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -4486,6 +4659,8 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
         data["isSuccess"] = this.isSuccess;
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -4502,6 +4677,8 @@ export interface IGetUserChatMessagesResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -4975,6 +5152,8 @@ export class Response implements IResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
 
     constructor(data?: IResponse) {
         if (data) {
@@ -4996,6 +5175,8 @@ export class Response implements IResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
         }
     }
 
@@ -5017,6 +5198,8 @@ export class Response implements IResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         return data;
     }
 }
@@ -5027,6 +5210,8 @@ export interface IResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
 }
 
 export class RunChatRequest implements IRunChatRequest {
@@ -5155,6 +5340,8 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 
@@ -5178,6 +5365,8 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.searchPhrase = _data["searchPhrase"];
             if (Array.isArray(_data["foodOptions"])) {
                 this.foodOptions = [] as any;
@@ -5205,6 +5394,8 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["searchPhrase"] = this.searchPhrase;
         if (Array.isArray(this.foodOptions)) {
             data["foodOptions"] = [];
@@ -5221,6 +5412,8 @@ export interface ISearchFoodPhraseResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 }
@@ -5295,6 +5488,8 @@ export class SearchLogsResponse implements ISearchLogsResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 
@@ -5318,6 +5513,8 @@ export class SearchLogsResponse implements ISearchLogsResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["items"])) {
                 this.items = [] as any;
                 for (let item of _data["items"])
@@ -5345,6 +5542,8 @@ export class SearchLogsResponse implements ISearchLogsResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.items)) {
             data["items"] = [];
             for (let item of this.items)
@@ -5361,6 +5560,8 @@ export interface ISearchLogsResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 }

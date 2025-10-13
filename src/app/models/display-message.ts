@@ -21,4 +21,6 @@ export interface DisplayMessage {
 
     // streaming state
     isStreaming?: boolean;
+    isPartial?: boolean;
+    processingStage?: string;
   }
