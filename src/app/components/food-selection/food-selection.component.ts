@@ -64,11 +64,42 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   get statusText(): string {
     const mealName = this.message.mealName && this.message.mealName.trim().length > 0 ? this.message.mealName : 'Food';
     const capitalizedMealName = mealName.charAt(0).toUpperCase() + mealName.slice(1).toLowerCase();
-    
+
     if (this.message.role === MessageRoleTypes.CompletedEditFoodSelection) {
       return `${capitalizedMealName} edited`;
     }
     return `${capitalizedMealName} logged`;
+  }
+
+  get hasAnyPending(): boolean {
+    // Check if any food, component, or match has isPending = true
+    if (!this.computedFoods || this.computedFoods.length === 0) {
+      return false;
+    }
+
+    for (const food of this.computedFoods) {
+      if (food.isPending) {
+        return true;
+      }
+
+      if (food.components) {
+        for (const component of food.components) {
+          if (component.isPending) {
+            return true;
+          }
+
+          if (component.matches) {
+            for (const match of component.matches) {
+              if (match.isPending) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   ngOnInit(): void {

@@ -54,7 +54,7 @@
     [isCanceling]="isCanceling"
     [isReadOnly]="isReadOnly"
     [isEditMode]="isEditMode"
-    [isLoading]="message.isPartial || false"
+    [isLoading]="message.isPartial || hasAnyPending"
     [statusText]="statusText"
     (confirmSelection)="confirmSelections()"
     (cancelSelection)="cancelSelection()">
