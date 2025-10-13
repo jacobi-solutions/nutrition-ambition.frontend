@@ -58,7 +58,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   get hasPayload(): boolean {
     // Show card even when empty during streaming (isPartial=true means loading)
     // This allows progressive loading UI to display immediately
-    return this.message.isPartial || (!!this.computedFoods && this.computedFoods.length > 0);
+    // Also show when mealSelection is pending (Stage 0)
+    return this.message.isPartial || this.message.mealSelectionIsPending || (!!this.computedFoods && this.computedFoods.length > 0);
   }
 
   get statusText(): string {
@@ -72,7 +73,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   get hasAnyPending(): boolean {
-    // Check if any food, component, or match has isPending = true
+    // Check if meal selection itself is pending (Stage 0)
+    if (this.message.mealSelectionIsPending) {
+      return true;
+    }
+
+    // Check if any food, component, match, or serving has isPending = true
     if (!this.computedFoods || this.computedFoods.length === 0) {
       return false;
     }
@@ -92,6 +98,19 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             for (const match of component.matches) {
               if (match.isPending) {
                 return true;
+              }
+
+              // Check servings for isPending or lack of data
+              if (match.servings) {
+                for (const serving of match.servings) {
+                  // Serving is pending if explicitly marked OR if it lacks actual data
+                  const hasServingData = serving &&
+                                        (serving.baseQuantity || 0) > 0 &&
+                                        (serving.measurementDescription || serving.baseUnit);
+                  if (serving.isPending || !hasServingData) {
+                    return true;
+                  }
+                }
               }
             }
           }

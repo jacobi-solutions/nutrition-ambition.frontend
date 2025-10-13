@@ -15,7 +15,17 @@
         <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Meal') | titlecase }}</strong></label>
       </div>
 
-      <div *ngIf="hasPayload" class="food-items-list">
+      <!-- Meal selection thinking dots (Stage 0) -->
+      <div *ngIf="hasPayload && message.mealSelectionIsPending" class="meal-thinking-indicator">
+        <div class="analyzing-text">{{ message.text || 'Analyzing food entry' }}</div>
+        <div class="typing-indicator-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+
+      <div *ngIf="hasPayload && !message.mealSelectionIsPending" class="food-items-list">
       <!-- Loop over foods using new intermediate food component -->
       <ng-container *ngFor="let food of computedFoods; let foodIndex = index; let isLast = last; trackBy: trackByFood">
         <div class="food-item-container" [class.is-last]="isLast">
@@ -32,7 +42,7 @@
     </div>
 
     <!-- Add something row -->
-    <div *ngIf="hasPayload && !isReadOnly && !isEditMode" class="add-something-row">
+    <div *ngIf="hasPayload && !isReadOnly && !isEditMode && !hasAnyPending" class="add-something-row">
       <div *ngIf="!isAddingFood" class="add-something-display" (click)="startAddingFood()">
         <div class="add-something-text">Add another food</div>
         <ion-icon name="add-circle-outline" class="add-something-icon"></ion-icon>
@@ -55,6 +65,7 @@
     [isReadOnly]="isReadOnly"
     [isEditMode]="isEditMode"
     [isLoading]="message.isPartial || hasAnyPending"
+    [mealSelectionIsPending]="message.mealSelectionIsPending || false"
     [statusText]="statusText"
     (confirmSelection)="confirmSelections()"
     (cancelSelection)="cancelSelection()">

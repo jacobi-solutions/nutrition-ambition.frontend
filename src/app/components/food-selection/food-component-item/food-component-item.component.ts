@@ -39,6 +39,7 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   macroSummary: string = '';
   photoThumb: string = '';
   photoHighRes: string = '';
+  servingIsPending: boolean = false;
 
   // Flag to track if user explicitly selected something vs just searching
   private isExplicitSelection = false;
@@ -209,6 +210,15 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       this.servingLabel = '';
     }
 
+
+    // Check if serving is pending (for streaming UI)
+    // A serving is considered pending if:
+    // 1. It has isPending = true, OR
+    // 2. It lacks actual serving data (baseQuantity, measurementDescription, nutrients)
+    const hasServingData = this.selectedServing &&
+                          (this.selectedServing.baseQuantity || 0) > 0 &&
+                          (this.selectedServing.measurementDescription || this.selectedServing.baseUnit);
+    this.servingIsPending = (this.selectedServing?.isPending || false) || !hasServingData;
 
     // Compute macro summary
     this.macroSummary = this.computeMacroSummary();

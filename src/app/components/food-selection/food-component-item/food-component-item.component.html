@@ -47,10 +47,19 @@
           <span *ngIf="brandName" class="brand-name"> – {{ brandName }}</span>
         </div>
         <div class="serving-line">
-          <span class="inline-amount">{{ servingLabel }}</span>
+          <span *ngIf="!servingIsPending" class="inline-amount">{{ servingLabel }}</span>
+          <!-- Thinking dots for pending serving info -->
+          <span *ngIf="servingIsPending" class="inline-amount-pending">
+            <span class="pending-text">Finding serving size</span>
+            <span class="typing-indicator-dots inline-dots">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </span>
+          </span>
         </div>
       </ion-col>
-      <ion-col size="2" class="right" *ngIf="!isReadOnly">
+      <ion-col size="2" class="right" *ngIf="!isReadOnly && !servingIsPending">
         <div class="action-icons">
           <ion-icon
             [name]="isExpanded ? 'chevron-up-outline' : 'create-outline'"
@@ -66,10 +75,19 @@
         </div>
       </ion-col>
     </ion-row>
-    <ion-row *ngIf="macroSummary" class="macro-row">
+    <ion-row *ngIf="macroSummary || servingIsPending" class="macro-row">
       <ion-col size="12">
-        <div class="macro-summary">
+        <div *ngIf="!servingIsPending" class="macro-summary">
           {{ macroSummary }}
+        </div>
+        <!-- Thinking dots for pending macro info -->
+        <div *ngIf="servingIsPending" class="macro-summary-pending">
+          <span class="pending-text">Finding nutritional info</span>
+          <span class="typing-indicator-dots inline-dots">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </span>
         </div>
       </ion-col>
     </ion-row>

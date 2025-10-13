@@ -23,4 +23,5 @@ export interface DisplayMessage {
     isStreaming?: boolean;
     isPartial?: boolean;
     processingStage?: string;
+    mealSelectionIsPending?: boolean;  // Stage 0 - analyzing food entry
   }

@@ -591,7 +591,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   mealName: mealSelection?.mealName,
                   isStreaming: true,
                   isPartial: isPartial,
-                  processingStage: processingStage
+                  processingStage: processingStage,
+                  mealSelectionIsPending: mealSelection?.isPending || false
                 }];
                 this.scrollToBottom();
               } else {
@@ -606,6 +607,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   text: content || '',
                   mealSelection: mealSelection,
                   mealName: mealSelection?.mealName,
+                  mealSelectionIsPending: mealSelection?.isPending || false,
                   isStreaming: isPartial,
                   isPartial: isPartial,
                   processingStage: processingStage
