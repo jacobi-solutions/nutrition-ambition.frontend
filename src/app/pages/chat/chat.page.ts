@@ -82,6 +82,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private lastScrollTime = 0;
   private scrollDebounceMs = 1000; // Only autoscroll once per second
   isStreamingActive = false; // Prevent multiple concurrent messages (public for template)
+  private activeStream: any = null; // Store active stream for cancellation
 
   // Streaming configuration constants
   private readonly STREAM_THROTTLE_MS = 50;
@@ -522,7 +523,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     let pendingContent = '';
 
     // Send the message with streaming
-    await this.chatService.sendMessageStream(
+    this.activeStream = await this.chatService.sendMessageStream(
       sentMessage,
       (chunk: ChatMessagesResponse) => {
         // Debug log the entire chunk
@@ -708,6 +709,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
           this.isLoading = false;
           this.isStreamingActive = false; // Re-enable sending
+          this.activeStream = null; // Clear stream reference
 
           // Firebase Analytics: Track successful message sent
           this.analytics.trackChatMessageSent(sentMessage.length);
@@ -726,6 +728,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
         this.isLoading = false;
         this.isStreamingActive = false; // Re-enable sending
+        this.activeStream = null; // Clear stream reference
 
         // Only update message if we created one, otherwise add new error message
         if (streamingMessageIndex !== -1) {
@@ -1191,18 +1194,22 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       return;
     }
 
+    // Cancel active stream if one is running
+    if (this.activeStream) {
+      this.activeStream.close();
+      this.activeStream = null;
+      this.isStreamingActive = false;
+    }
+
     // Remove the pending food selection message from UI
     const messageIndex = this.messages.findIndex(m => m.id === message.id);
-    
+
     if (messageIndex !== -1) {
       this.messages.splice(messageIndex, 1);
 
       // Track this message as cancelled to prevent re-adding
       this.cancelledMessageIds.add(message.id);
-      
-      // Show thinking dots while waiting for assistant response
-      this.isLoading = true;
-      
+
       // Force change detection to ensure UI updates immediately
       this.cdr.detectChanges();
     }
@@ -1242,7 +1249,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
   }
 
   private handleCancelResponse(response: ChatMessagesResponse, message: DisplayMessage, messageIndex: number): void {
-    
+
     if (!response.isSuccess) {
       this.showErrorToast('Failed to cancel food selection.');
 
@@ -1251,7 +1258,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         this.messages.splice(messageIndex, 0, message);
         this.cdr.detectChanges();
       }
-      // Turn off loading indicator
       this.isLoading = false;
       return;
     }
@@ -1259,15 +1265,14 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     // Set context note after successful cancellation
     this.chatService.setContextNote('Canceled food logging');
 
-    // Process the returned messages and add them to the chat
-    if (response.messages && response.messages.length > 0) {
-      this.processAndAddNewMessages(response.messages);
-    }
-    
+    // Don't show the AI's acknowledgment message - just remove the card and be done
+    // The backend still sends a tool response to satisfy OpenAI requirements,
+    // but we don't display it to the user
+
     // Turn off loading indicator
     this.isLoading = false;
-    
-    // Focus the input after response is posted
+
+    // Focus the input after cancellation
     this.focusInput();
   }
 
@@ -1279,8 +1284,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       this.messages.splice(messageIndex, 0, message);
       this.cdr.detectChanges();
     }
-    
-    // Turn off loading indicator
     this.isLoading = false;
   }
 

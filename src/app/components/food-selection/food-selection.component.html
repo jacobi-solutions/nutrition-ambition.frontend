@@ -1,18 +1,10 @@
 <div class="food-selection-container" [class.read-only]="isReadOnly">
   <div class="food-selection-container-inner">
 
-    <!-- Streaming status banner -->
-    <div *ngIf="message.isPartial && message.processingStage" class="streaming-banner">
-      <div class="streaming-indicator">
-        <ion-spinner name="dots" class="streaming-spinner"></ion-spinner>
-        <span class="streaming-text">{{ message.text || 'Processing...' }}</span>
-      </div>
-    </div>
-
     <!-- Normal content -->
       <!-- Food items list -->
       <div *ngIf="hasPayload" class="card-header">
-        <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Meal') | titlecase }}</strong></label>
+        <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Entry') | titlecase }}</strong></label>
       </div>
 
       <!-- Meal selection thinking dots (Stage 0) -->

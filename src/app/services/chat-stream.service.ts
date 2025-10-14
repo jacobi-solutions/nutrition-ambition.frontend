@@ -23,9 +23,9 @@ export class ChatStreamService {
     onComplete: () => void,
     onError: (error: any) => void
   ): Promise<EventSource | null> {
-    // TEMPORARY: Use mock endpoint for UI development
-    const url = `${this.baseUrl}/MockStreamBanana`;
-    // const url = `${this.baseUrl}/RunResponsesConversation`;
+    // Use real streaming endpoint
+    const url = `${this.baseUrl}/RunResponsesConversation`;
+    // const url = `${this.baseUrl}/MockStreamBanana`;  // Keep for reference
 
     try {
       // Get auth token
