@@ -40,6 +40,8 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   photoThumb: string = '';
   photoHighRes: string = '';
   servingIsPending: boolean = false;
+  servingStatusText: string = 'Finding serving size';
+  macroStatusText: string = 'Finding nutritional info';
 
   // Flag to track if user explicitly selected something vs just searching
   private isExplicitSelection = false;
@@ -219,6 +221,15 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
                           (this.selectedServing.baseQuantity || 0) > 0 &&
                           (this.selectedServing.measurementDescription || this.selectedServing.baseUnit);
     this.servingIsPending = (this.selectedServing?.isPending || false) || !hasServingData;
+
+    // Extract status text from component or serving
+    if (this.servingIsPending) {
+      // Check for StatusText on serving first, then component, then default to 'Analyzing'
+      this.servingStatusText = (this.selectedServing as any)?.statusText ||
+                               (this.component as any)?.statusText ||
+                               'Analyzing';
+      this.macroStatusText = (this.selectedServing as any)?.statusText || '';
+    }
 
     // Compute macro summary
     this.macroSummary = this.computeMacroSummary();

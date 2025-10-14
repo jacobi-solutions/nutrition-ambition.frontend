@@ -550,12 +550,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           const role = (assistantMessage as any).Role || (assistantMessage as any).role || MessageRoleTypes.Assistant;
           const mealSelections = (assistantMessage as any).MealSelections || (assistantMessage as any).mealSelections;
 
-          // Debug logging
-          console.log('Streaming chunk:', { role, roleType: typeof role, isPartial: chunk.isPartial, hasMealSelections: !!mealSelections });
-
           // Check if this is a streaming meal selection
           const isPartial = chunk.isPartial || false;
           const processingStage = chunk.processingStage;
+          console.log('🎯 STAGE:', processingStage);
 
           // Handle streaming meal selection differently
           // Check both string and numeric enum values
@@ -563,11 +561,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           // Always show meal selection card when role is PendingFoodSelection, even if empty (for progressive loading)
           if (isPendingFood && mealSelections) {
             const mealSelection = mealSelections[0];
-            console.log('🟢 Processing meal selection chunk');
-            console.log('🟢 streamingMessageIndex:', streamingMessageIndex);
-            console.log('🟢 mealSelection:', mealSelection);
-            console.log('🟢 mealSelection.Foods length:', mealSelection?.Foods?.length);
-            console.log('🟢 mealSelection.foods length:', mealSelection?.foods?.length);
 
             // Clear existing timeout
             if (this.streamUpdateTimeout) {
@@ -576,10 +569,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
             // Create or update the meal selection message immediately (no throttle for meal selection)
             this.ngZone.run(() => {
-              console.log('🟡 Updating UI - streamingMessageIndex:', streamingMessageIndex);
               // Create or update the meal selection message
               if (streamingMessageIndex === -1) {
-                console.log('🆕 Creating new streaming message');
                 streamingMessageIndex = this.messages.length;
                 const streamingMessageId = `streaming-meal-${Date.now()}`;
                 this.messages = [...this.messages, {
@@ -598,13 +589,16 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                 this.scrollToBottom();
               } else {
                 // Update existing message
-                console.log('🔄 Updating existing message with mealSelection:', mealSelection);
-                console.log('🔄 mealSelection.Foods:', mealSelection?.Foods);
-                console.log('🔄 mealSelection.foods:', mealSelection?.foods);
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
+
+                // Extract the real message ID from the backend (when streaming completes)
+                const messageId = (assistantMessage as any).Id || (assistantMessage as any).id;
+
                 updatedMessages[streamingMessageIndex] = {
                   ...existingMessage,
+                  // IMPORTANT: Update the message ID when we receive the final chunk with the real database ID
+                  id: messageId || existingMessage.id,
                   text: content || '',
                   mealSelection: mealSelection,
                   mealName: mealSelection?.mealName,
@@ -613,15 +607,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   isPartial: isPartial,
                   processingStage: processingStage
                 };
-                console.log('🔄 Updated message:', updatedMessages[streamingMessageIndex]);
                 this.messages = updatedMessages;
 
-                console.log('📜 isUserScrolledUp:', this.isUserScrolledUp);
                 if (!this.isUserScrolledUp) {
-                  console.log('📜 Scrolling to bottom after update');
                   this.scrollToBottom();
-                } else {
-                  console.log('📜 Skipping scroll - user scrolled up');
                 }
               }
 
@@ -730,14 +719,19 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         this.isStreamingActive = false; // Re-enable sending
         this.activeStream = null; // Clear stream reference
 
-        // Only update message if we created one, otherwise add new error message
-        if (streamingMessageIndex !== -1) {
+        // Check if message was removed by user cancellation
+        // If the message is gone (streamingMessageIndex exists but message not in array), user cancelled intentionally
+        const messageStillExists = streamingMessageIndex !== -1 &&
+                                   this.messages[streamingMessageIndex] !== undefined;
+
+        // Only show error if this wasn't a user-initiated cancellation
+        if (messageStillExists) {
           this.messages[streamingMessageIndex] = {
             text: "Sorry, I'm having trouble right now. Please try again.",
             isUser: false,
             timestamp: new Date()
           };
-        } else {
+        } else if (streamingMessageIndex === -1) {
           // No streaming message created yet, add error as new message
           this.messages = [...this.messages, {
             text: "Sorry, I'm having trouble right now. Please try again.",
@@ -745,6 +739,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             timestamp: new Date()
           }];
         }
+        // else: message was removed (user cancelled) - don't show error
 
         this.cdr.detectChanges();
         this.scrollToBottom();
@@ -1212,6 +1207,13 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
       // Force change detection to ensure UI updates immediately
       this.cdr.detectChanges();
+    }
+
+    // IMPORTANT: Only call backend API if message was persisted (streaming completed)
+    // During streaming, message hasn't been saved to DB yet - closing the connection is sufficient
+    if (message.isStreaming || message.isPartial) {
+      console.log('🚫 Skipping API call - message is still streaming');
+      return;
     }
 
     // Use the appropriate API based on the message type

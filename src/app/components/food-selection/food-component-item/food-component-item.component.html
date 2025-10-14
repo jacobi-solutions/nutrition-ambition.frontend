@@ -50,7 +50,7 @@
           <span *ngIf="!servingIsPending" class="inline-amount">{{ servingLabel }}</span>
           <!-- Thinking dots for pending serving info -->
           <span *ngIf="servingIsPending" class="inline-amount-pending">
-            <span class="pending-text">Finding serving size</span>
+            <span class="pending-text">{{ servingStatusText || 'Analyzing' }}</span>
             <span class="typing-indicator-dots inline-dots">
               <span class="dot"></span>
               <span class="dot"></span>
@@ -81,8 +81,8 @@
           {{ macroSummary }}
         </div>
         <!-- Thinking dots for pending macro info -->
-        <div *ngIf="servingIsPending" class="macro-summary-pending">
-          <span class="pending-text">Finding nutritional info</span>
+        <div *ngIf="servingIsPending && macroStatusText" class="macro-summary-pending">
+          <span class="pending-text">{{ macroStatusText }}</span>
           <span class="typing-indicator-dots inline-dots">
             <span class="dot"></span>
             <span class="dot"></span>

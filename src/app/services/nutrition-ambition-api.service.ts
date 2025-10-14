@@ -2553,6 +2553,7 @@ export class Component implements IComponent {
     matches?: ComponentMatch[] | undefined;
     culinaryRole?: string | undefined;
     isPending?: boolean;
+    statusText?: string | undefined;
 
     constructor(data?: IComponent) {
         if (data) {
@@ -2574,6 +2575,7 @@ export class Component implements IComponent {
             }
             this.culinaryRole = _data["culinaryRole"];
             this.isPending = _data["isPending"];
+            this.statusText = _data["statusText"];
         }
     }
 
@@ -2595,6 +2597,7 @@ export class Component implements IComponent {
         }
         data["culinaryRole"] = this.culinaryRole;
         data["isPending"] = this.isPending;
+        data["statusText"] = this.statusText;
         return data;
     }
 }
@@ -2605,6 +2608,7 @@ export interface IComponent {
     matches?: ComponentMatch[] | undefined;
     culinaryRole?: string | undefined;
     isPending?: boolean;
+    statusText?: string | undefined;
 }
 
 export class ComponentBreakdown implements IComponentBreakdown {
@@ -2758,6 +2762,7 @@ export class ComponentMatch implements IComponentMatch {
     photoThumb?: string | undefined;
     photoHighRes?: string | undefined;
     isPending?: boolean;
+    statusText?: string | undefined;
 
     constructor(data?: IComponentMatch) {
         if (data) {
@@ -2796,6 +2801,7 @@ export class ComponentMatch implements IComponentMatch {
             this.photoThumb = _data["photoThumb"];
             this.photoHighRes = _data["photoHighRes"];
             this.isPending = _data["isPending"];
+            this.statusText = _data["statusText"];
         }
     }
 
@@ -2834,6 +2840,7 @@ export class ComponentMatch implements IComponentMatch {
         data["photoThumb"] = this.photoThumb;
         data["photoHighRes"] = this.photoHighRes;
         data["isPending"] = this.isPending;
+        data["statusText"] = this.statusText;
         return data;
     }
 }
@@ -2861,6 +2868,7 @@ export interface IComponentMatch {
     photoThumb?: string | undefined;
     photoHighRes?: string | undefined;
     isPending?: boolean;
+    statusText?: string | undefined;
 }
 
 export class ComponentServing implements IComponentServing {
@@ -2882,6 +2890,7 @@ export class ComponentServing implements IComponentServing {
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
     isPending?: boolean;
+    statusText?: string | undefined;
 
     constructor(data?: IComponentServing) {
         if (data) {
@@ -2918,6 +2927,7 @@ export class ComponentServing implements IComponentServing {
             }
             this.apiServingKind = _data["apiServingKind"];
             this.isPending = _data["isPending"];
+            this.statusText = _data["statusText"];
         }
     }
 
@@ -2954,6 +2964,7 @@ export class ComponentServing implements IComponentServing {
         }
         data["apiServingKind"] = this.apiServingKind;
         data["isPending"] = this.isPending;
+        data["statusText"] = this.statusText;
         return data;
     }
 }
@@ -2977,6 +2988,7 @@ export interface IComponentServing {
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
     isPending?: boolean;
+    statusText?: string | undefined;
 }
 
 export class DailySummary implements IDailySummary {
@@ -3662,6 +3674,7 @@ export class Food implements IFood {
     originalPhrase?: string | undefined;
     components?: Component[] | undefined;
     isPending?: boolean;
+    statusText?: string | undefined;
 
     constructor(data?: IFood) {
         if (data) {
@@ -3688,6 +3701,7 @@ export class Food implements IFood {
                     this.components!.push(Component.fromJS(item));
             }
             this.isPending = _data["isPending"];
+            this.statusText = _data["statusText"];
         }
     }
 
@@ -3714,6 +3728,7 @@ export class Food implements IFood {
                 data["components"].push(item.toJSON());
         }
         data["isPending"] = this.isPending;
+        data["statusText"] = this.statusText;
         return data;
     }
 }
@@ -3729,6 +3744,7 @@ export interface IFood {
     originalPhrase?: string | undefined;
     components?: Component[] | undefined;
     isPending?: boolean;
+    statusText?: string | undefined;
 }
 
 export class FoodBreakdown implements IFoodBreakdown {
@@ -4919,6 +4935,7 @@ export class MealSelection implements IMealSelection {
     foodEntryId?: string | undefined;
     foodId?: string | undefined;
     componentId?: string | undefined;
+    isPending?: boolean;
 
     constructor(data?: IMealSelection) {
         if (data) {
@@ -4941,6 +4958,7 @@ export class MealSelection implements IMealSelection {
             this.foodEntryId = _data["foodEntryId"];
             this.foodId = _data["foodId"];
             this.componentId = _data["componentId"];
+            this.isPending = _data["isPending"];
         }
     }
 
@@ -4963,6 +4981,7 @@ export class MealSelection implements IMealSelection {
         data["foodEntryId"] = this.foodEntryId;
         data["foodId"] = this.foodId;
         data["componentId"] = this.componentId;
+        data["isPending"] = this.isPending;
         return data;
     }
 }
@@ -4974,6 +4993,7 @@ export interface IMealSelection {
     foodEntryId?: string | undefined;
     foodId?: string | undefined;
     componentId?: string | undefined;
+    isPending?: boolean;
 }
 
 export enum MessageRoleTypes {
