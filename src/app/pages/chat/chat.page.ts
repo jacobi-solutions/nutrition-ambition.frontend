@@ -526,8 +526,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     this.activeStream = await this.chatService.sendMessageStream(
       sentMessage,
       (chunk: ChatMessagesResponse) => {
-        // Debug log the entire chunk
-        console.log('Raw chunk received:', chunk);
 
         // Check for error response and bail out early
         if (!chunk.isSuccess && chunk.errors && chunk.errors.length > 0) {
@@ -553,7 +551,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           // Check if this is a streaming meal selection
           const isPartial = chunk.isPartial || false;
           const processingStage = chunk.processingStage;
-          console.log('🎯 STAGE:', processingStage);
 
           // Handle streaming meal selection differently
           // Check both string and numeric enum values
@@ -569,6 +566,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
             // Create or update the meal selection message immediately (no throttle for meal selection)
             this.ngZone.run(() => {
+              // Hide loading dots when first content arrives
+              this.isLoading = false;
+
               // Create or update the meal selection message
               if (streamingMessageIndex === -1) {
                 streamingMessageIndex = this.messages.length;
@@ -628,6 +628,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             // Throttle UI updates to every 50ms for smoother rendering
             this.streamUpdateTimeout = setTimeout(() => {
               this.ngZone.run(() => {
+                // Hide loading dots when first content arrives
+                this.isLoading = false;
+
                 // Skip if content is empty or whitespace
                 if (!pendingContent || pendingContent.trim().length === 0) {
                   return;
@@ -696,7 +699,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             }
           }
 
-          this.isLoading = false;
           this.isStreamingActive = false; // Re-enable sending
           this.activeStream = null; // Clear stream reference
 
@@ -1212,7 +1214,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     // IMPORTANT: Only call backend API if message was persisted (streaming completed)
     // During streaming, message hasn't been saved to DB yet - closing the connection is sufficient
     if (message.isStreaming || message.isPartial) {
-      console.log('🚫 Skipping API call - message is still streaming');
       return;
     }
 

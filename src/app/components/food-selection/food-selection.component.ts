@@ -789,7 +789,38 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     console.log('🔍 rawFoods:', rawFoods);
     console.log('🔍 rawFoods length:', rawFoods.length);
 
-    // Only rebuild from raw data - no state preservation needed
+    // Capture existing UI state before rebuilding
+    const uiStateMap = new Map<string, any>();
+    if (this.computedFoods) {
+      this.computedFoods.forEach(food => {
+        if (food.id) {
+          const componentStates = new Map();
+          if (food.components) {
+            food.components.forEach(comp => {
+              if (comp.id) {
+                componentStates.set(comp.id, {
+                  isExpanded: comp.isExpanded,
+                  isEditing: comp.isEditing,
+                  editingValue: comp.editingValue,
+                  showingMoreOptions: comp.showingMoreOptions,
+                  isSearching: comp.isSearching
+                });
+              }
+            });
+          }
+          uiStateMap.set(food.id, {
+            isEditingExpanded: food.isEditingExpanded,
+            editingQuantity: food.editingQuantity,
+            isEditing: food.isEditing,
+            isExpanded: food.isExpanded,
+            componentStates
+          });
+          console.log(`🔍 Captured state for food ${food.id}: isEditingExpanded=${food.isEditingExpanded}`);
+        }
+      });
+    }
+
+    // Rebuild from raw data with preserved state
     this.computedFoods = rawFoods.map((food, foodIndex) => {
       const transformedComponents = food.components?.map((component: any) => {
         // Transform matches to include ComponentServingDisplay objects
@@ -816,25 +847,38 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           });
         }) || [];
 
+        // Get preserved state for this component
+        const savedFoodState = food.id ? uiStateMap.get(food.id) : null;
+        const savedCompState = savedFoodState && component.id ? savedFoodState.componentStates.get(component.id) : null;
+
         return new ComponentDisplay({
           ...component,
           matches: transformedMatches,
-          // All UI state starts fresh
-          isSearching: false,
-          isEditing: false,
-          isExpanded: false,
-          editingValue: '',
-          showingMoreOptions: false,
+          // Apply preserved state or use defaults
+          isSearching: savedCompState?.isSearching || false,
+          isEditing: savedCompState?.isEditing || false,
+          isExpanded: savedCompState?.isExpanded || false,
+          editingValue: savedCompState?.editingValue || '',
+          showingMoreOptions: savedCompState?.showingMoreOptions || false,
           loadingMoreOptions: false,
           loadingInstantOptions: false,
         });
       }) || [];
 
+      // Get preserved state for this food
+      const savedFoodState = food.id ? uiStateMap.get(food.id) : null;
+      if (savedFoodState) {
+        console.log(`🔧 Restoring state for food ${food.id}: isEditingExpanded=${savedFoodState.isEditingExpanded}`);
+      }
 
       return new FoodDisplay({
         ...food,
         components: transformedComponents,
-        isEditingExpanded: this.isEditMode, // Auto-expand if in edit mode
+        // Apply preserved state or use defaults
+        isEditingExpanded: savedFoodState?.isEditingExpanded ?? this.isEditMode, // Use preserved state if available, otherwise auto-expand if in edit mode
+        editingQuantity: savedFoodState?.editingQuantity,
+        isEditing: savedFoodState?.isEditing,
+        isExpanded: savedFoodState?.isExpanded,
         initialQuantity: food.quantity, // Store baseline quantity for nutrition calculations (no default)
       });
     });
