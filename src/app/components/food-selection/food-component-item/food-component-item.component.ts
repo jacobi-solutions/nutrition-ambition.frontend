@@ -225,9 +225,9 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     // Extract status text from component or serving
     if (this.servingIsPending) {
       // Check for StatusText on serving first, then component, then default to 'Analyzing'
-      this.servingStatusText = 'Analyzing'; // (this.selectedServing as any)?.statusText ||
-                               //(this.component as any)?.statusText ||
-                               //'Analyzing';
+      this.servingStatusText = (this.selectedServing as any)?.statusText ||
+                               (this.component as any)?.statusText ||
+                               'Analyzing';
       this.macroStatusText = (this.selectedServing as any)?.statusText || '';
     }
 
