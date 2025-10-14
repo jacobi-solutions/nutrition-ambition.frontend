@@ -9,8 +9,8 @@ export class ChatStreamService {
   private baseUrl = `${environment.backendApiUrl}/api/conversation`;
 
   // Streaming timeout configuration
-  private readonly STREAM_TIMEOUT_MS = 30000; // 30 seconds of inactivity
-  private readonly TIMEOUT_CHECK_INTERVAL_MS = 5000; // Check every 5 seconds
+  private readonly STREAM_TIMEOUT_MS = 60000; 
+  private readonly TIMEOUT_CHECK_INTERVAL_MS = 5000; 
 
   constructor(
     private authService: AuthService,

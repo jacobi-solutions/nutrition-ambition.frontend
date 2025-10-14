@@ -559,6 +559,17 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           if (isPendingFood && mealSelections) {
             const mealSelection = mealSelections[0];
 
+            // Diagnostic logging: Show backend streaming data
+            const totalComponents = mealSelection?.foods?.reduce((sum: number, food: any) =>
+              sum + (food.components?.length || 0), 0) || 0;
+            const firstComponentStatusText = mealSelection?.foods?.[0]?.components?.[0]?.matches?.[0]?.servings?.[0]?.statusText;
+            console.log('[STREAM]',
+                        'Stage:', processingStage,
+                        '| Foods:', mealSelection?.foods?.length || 0,
+                        '| Components:', totalComponents,
+                        '| StatusText:', firstComponentStatusText || 'none',
+                        '| isPartial:', isPartial);
+
             // Clear existing timeout
             if (this.streamUpdateTimeout) {
               clearTimeout(this.streamUpdateTimeout);
@@ -592,12 +603,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
 
-                // Extract the real message ID from the backend (when streaming completes)
+                // Extract the message ID from the backend
                 const messageId = (assistantMessage as any).Id || (assistantMessage as any).id;
 
                 updatedMessages[streamingMessageIndex] = {
                   ...existingMessage,
-                  // IMPORTANT: Update the message ID when we receive the final chunk with the real database ID
+                  // Backend now generates stable ID at start of streaming, so ID stays consistent
                   id: messageId || existingMessage.id,
                   text: content || '',
                   mealSelection: mealSelection,
@@ -1224,7 +1235,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         pendingMessageId: message.id,
         localDateKey: this.dateService.getSelectedDate()
       });
-      
+
       this.foodSelectionService.cancelEditSelection(request).subscribe({
         next: (response) => {
           this.handleCancelResponse(response, message, messageIndex);

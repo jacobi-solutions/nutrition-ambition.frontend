@@ -10,10 +10,10 @@ export interface DisplayMessage {
 
     // keep full payload from backend
     mealSelection?: MealSelection | null;
-  
+
     // optional convenience fields
     mealName?: string | null;
-    
+
     // phrase editing state
     isEditingPhrase?: boolean;
     editingPhrase?: string;

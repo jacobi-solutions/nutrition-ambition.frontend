@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
-import { 
-  IonHeader, 
-  IonToolbar, 
-  IonTitle, 
-  IonContent, 
-  IonButtons, 
+import { RouterModule } from '@angular/router';
+import {
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonButtons,
   IonBackButton
 } from '@ionic/angular/standalone';
 
@@ -14,6 +15,7 @@ import {
   styleUrls: ['./terms-of-service.page.scss'],
   standalone: true,
   imports: [
+    RouterModule,
     IonHeader,
     IonToolbar,
     IonTitle,

@@ -47,7 +47,9 @@ export class FoodComponent implements OnInit, OnChanges {
   }
 
   trackByComponent(index: number, component: any): string {
-    return component.id || index.toString();
+    // Use only the stable component ID for trackBy to preserve component instances
+    // Angular will still detect changes via OnPush change detection
+    return component.id || `index-${index}`;
   }
 
   // Event handlers - delegate to parent

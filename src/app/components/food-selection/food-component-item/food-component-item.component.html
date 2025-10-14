@@ -1,6 +1,6 @@
 
 <!-- Individual Component Item -->
-<div *ngIf="component" class="food-item-row-simple" [id]="'row-' + component.componentId" [class.searching]="isSearching">
+<div *ngIf="component" class="food-item-row-simple" [id]="'row-' + component.id" [class.searching]="isSearching">
 
   <!-- Thinking dots when component is pending (streaming) -->
   <div *ngIf="component.isPending && !isSearching" class="component-thinking-indicator">
@@ -83,11 +83,6 @@
         <!-- Thinking dots for pending macro info -->
         <div *ngIf="servingIsPending && macroStatusText" class="macro-summary-pending">
           <span class="pending-text">{{ macroStatusText }}</span>
-          <span class="typing-indicator-dots inline-dots">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-          </span>
         </div>
       </ion-col>
     </ion-row>
@@ -101,7 +96,7 @@
       <div class="food-name">
         <!-- TEMPORARILY DISABLED: Original phrase editing section
         <div class="original-phrase-header">
-          <div class="phrase-edit-container" [attr.data-component-id]="component.componentId">
+          <div class="phrase-edit-container" [attr.data-component-id]="component.id">
             <div *ngIf="!isEditing" class="phrase-display-mode">
               <strong class="phrase-text">{{ displayName | titlecase}}</strong>
               <span *ngIf="isInferred" class="inferred-badge">(inferred)</span>

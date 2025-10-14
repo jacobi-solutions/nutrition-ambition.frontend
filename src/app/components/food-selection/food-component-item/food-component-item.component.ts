@@ -161,8 +161,9 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
   // Compute all display values when data changes
   private computeDisplayValues(): void {
-    // Only update selectedFood if user explicitly selected, not during search
-    if (this.isExplicitSelection || !this.selectedFood) {
+    // Always update selectedFood to pick up new serving data from streaming updates
+    // Only skip during active search to avoid disrupting autocomplete
+    if (this.isExplicitSelection || !this.selectedFood || !this.isSearching) {
       this.selectedFood = this.computeSelectedFood();
     }
     this.selectedServing = this.computeSelectedServing();
@@ -217,10 +218,19 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     // A serving is considered pending if:
     // 1. It has isPending = true, OR
     // 2. It lacks actual serving data (baseQuantity, measurementDescription, nutrients)
-    const hasServingData = this.selectedServing &&
-                          (this.selectedServing.baseQuantity || 0) > 0 &&
-                          (this.selectedServing.measurementDescription || this.selectedServing.baseUnit);
-    this.servingIsPending = (this.selectedServing?.isPending || false) || !hasServingData;
+    // Trust the backend's isPending flag first - if it's explicitly false, serving is complete
+    // Only fall back to checking for serving data if isPending is not explicitly set
+    const backendIsPending = this.selectedServing?.isPending;
+    if (backendIsPending === false) {
+      // Backend explicitly says not pending - trust it
+      this.servingIsPending = false;
+    } else {
+      // Backend says pending OR didn't set flag - check if we have serving data
+      const hasServingData = this.selectedServing &&
+                            (this.selectedServing.baseQuantity || 0) > 0 &&
+                            (this.selectedServing.measurementDescription || this.selectedServing.baseUnit);
+      this.servingIsPending = (backendIsPending || false) || !hasServingData;
+    }
 
     // Extract status text from component or serving
     if (this.servingIsPending) {
@@ -228,7 +238,17 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       this.servingStatusText = (this.selectedServing as any)?.statusText ||
                                (this.component as any)?.statusText ||
                                'Analyzing';
-      this.macroStatusText = (this.selectedServing as any)?.statusText || '';
+      this.macroStatusText = "(?? cal, ?? protein, ?? fat, ?? carbs)" //"(this.selectedServing as any)?.statusText || '';
+
+      // Diagnostic logging: Show backend status vs displayed status
+      const backendServingStatus = (this.selectedServing as any)?.statusText;
+      const backendComponentStatus = (this.component as any)?.statusText;
+      console.log('[STATUS]',
+                  'Component:', this.component?.id?.substring(0, 8),
+                  '| Backend Serving:', backendServingStatus || 'none',
+                  '| Backend Component:', backendComponentStatus || 'none',
+                  '| Displayed:', this.servingStatusText,
+                  '| isPending:', this.servingIsPending);
     }
 
     // Compute macro summary
@@ -349,6 +369,14 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     }
 
     return this.selectedFood.servings[0];
+  }
+
+  // Truncate text to specified length with ellipsis
+  private truncateText(text: string, maxLength: number): string {
+    if (!text || text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + '...';
   }
 
   getServingOptions(): ComponentServing[] {

@@ -126,6 +126,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.computeAllFoods();
   }
 
+  ngOnDestroy(): void {
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['message'] && changes['message'].currentValue) {
       // Update readonly state when message role changes
@@ -782,12 +785,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   // Compute all foods as FoodDisplay objects with embedded state
   private computeAllFoods(): void {
-    console.log('🔍 computeAllFoods called');
-    console.log('🔍 message:', this.message);
-    console.log('🔍 mealSelection:', this.message?.mealSelection);
     const rawFoods = this.message?.mealSelection?.foods || [];
-    console.log('🔍 rawFoods:', rawFoods);
-    console.log('🔍 rawFoods length:', rawFoods.length);
+    const totalComponents = rawFoods.reduce((sum, food) => sum + (food.components?.length || 0), 0);
+
+    // Diagnostic: Log when computeAllFoods is called
+    const firstComponentId = rawFoods[0]?.components?.[0]?.id;
+    const firstComponentIsPending = rawFoods[0]?.components?.[0]?.matches?.[0]?.servings?.[0]?.isPending;
+    const firstComponentStatusText = rawFoods[0]?.components?.[0]?.matches?.[0]?.servings?.[0]?.statusText;
+    console.log('[COMPUTE_FOODS]',
+                'Foods:', rawFoods.length,
+                '| Components:', totalComponents,
+                '| First Component ID:', firstComponentId?.substring(0, 8) || 'none',
+                '| isPending:', firstComponentIsPending,
+                '| StatusText:', firstComponentStatusText || 'none',
+                '| Existing computedFoods:', this.computedFoods?.length || 0);
 
     // Capture existing UI state before rebuilding
     const uiStateMap = new Map<string, any>();
@@ -798,13 +809,18 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           if (food.components) {
             food.components.forEach(comp => {
               if (comp.id) {
-                componentStates.set(comp.id, {
+                const state = {
                   isExpanded: comp.isExpanded,
                   isEditing: comp.isEditing,
                   editingValue: comp.editingValue,
                   showingMoreOptions: comp.showingMoreOptions,
                   isSearching: comp.isSearching
-                });
+                };
+                componentStates.set(comp.id, state);
+                // Log captured state
+                if (comp.isExpanded) {
+                  console.log('[STATE_CAPTURE]', 'Component:', comp.id.substring(0, 8), '| isExpanded:', comp.isExpanded);
+                }
               }
             });
           }
@@ -815,7 +831,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             isExpanded: food.isExpanded,
             componentStates
           });
-          console.log(`🔍 Captured state for food ${food.id}: isEditingExpanded=${food.isEditingExpanded}`);
         }
       });
     }
@@ -825,11 +840,21 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const transformedComponents = food.components?.map((component: any) => {
         // Transform matches to include ComponentServingDisplay objects
         const transformedMatches = component.matches?.map((match: any) => {
-          const transformedServings = match.servings?.map((serving: any) => {
+          const transformedServings = match.servings?.map((serving: any, servingIdx: number) => {
             // Convert to ComponentServingDisplay with initial effectiveQuantity
             // Use UserConfirmedQuantity if available, otherwise calculate from AI fractions
             const effectiveQuantity = Math.round((serving.userConfirmedQuantity ||
               ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1))) * 100) / 100;
+
+            // Log backend serving data
+            if (servingIdx === 0 && component.id) {
+              console.log('[SERVING_TRANSFORM]',
+                          'Component:', component.id.substring(0, 8),
+                          '| Backend isPending:', serving.isPending,
+                          '| Backend statusText:', serving.statusText || 'none',
+                          '| Has baseQuantity:', !!serving.baseQuantity);
+            }
+
             return new ComponentServingDisplay({
               ...serving,
               effectiveQuantity: effectiveQuantity,
@@ -851,7 +876,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         const savedFoodState = food.id ? uiStateMap.get(food.id) : null;
         const savedCompState = savedFoodState && component.id ? savedFoodState.componentStates.get(component.id) : null;
 
-        return new ComponentDisplay({
+        // Log state restoration
+        if (savedCompState?.isExpanded) {
+          console.log('[STATE_RESTORE]', 'Component:', component.id?.substring(0, 8), '| Restoring isExpanded:', savedCompState.isExpanded);
+        }
+
+        const componentDisplay = new ComponentDisplay({
           ...component,
           matches: transformedMatches,
           // Apply preserved state or use defaults
@@ -863,19 +893,19 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           loadingMoreOptions: false,
           loadingInstantOptions: false,
         });
+
+        return componentDisplay;
       }) || [];
 
       // Get preserved state for this food
       const savedFoodState = food.id ? uiStateMap.get(food.id) : null;
-      if (savedFoodState) {
-        console.log(`🔧 Restoring state for food ${food.id}: isEditingExpanded=${savedFoodState.isEditingExpanded}`);
-      }
+      const resolvedEditingExpanded = savedFoodState?.isEditingExpanded ?? this.isEditMode;
 
       return new FoodDisplay({
         ...food,
         components: transformedComponents,
         // Apply preserved state or use defaults
-        isEditingExpanded: savedFoodState?.isEditingExpanded ?? this.isEditMode, // Use preserved state if available, otherwise auto-expand if in edit mode
+        isEditingExpanded: resolvedEditingExpanded, // Use preserved state if available, otherwise auto-expand if in edit mode
         editingQuantity: savedFoodState?.editingQuantity,
         isEditing: savedFoodState?.isEditing,
         isExpanded: savedFoodState?.isExpanded,
@@ -883,8 +913,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       });
     });
 
-    console.log('🔍 computedFoods after mapping:', this.computedFoods);
-    console.log('🔍 computedFoods.length:', this.computedFoods.length);
+    // Force change detection since we use OnPush strategy
+    this.cdr.markForCheck();
   }
 
 
@@ -1444,6 +1474,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Helper to detect if a ComponentMatch represents a common food (no brand name)
   isCommonFood(match: ComponentMatch): boolean {
     return !match.brandName || match.brandName.trim().length === 0;
+  }
+
+  // Truncate text to specified length with ellipsis
+  truncateText(text: string, maxLength: number): string {
+    if (!text || text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + '...';
   }
 
   // Get the original phrase for a component to use in the search
