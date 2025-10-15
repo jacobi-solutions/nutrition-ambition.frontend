@@ -1,13 +1,9 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Terms of Service</ion-title>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/legal"></ion-back-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header
+  [title]="'Terms of Service'"
+  [showBackButton]="true">
+</app-header>
 
-<ion-content class="ion-padding">
+<ion-content [fullscreen]="true" class="ion-padding">
   <div class="terms-container">
     <h1>🧾 TERMS OF SERVICE</h1>
     <p class="last-updated">Effective Date: October 2025</p>

@@ -1,13 +1,9 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Legal</ion-title>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/login"></ion-back-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header
+  [title]="'Legal'"
+  [showBackButton]="true">
+</app-header>
 
-<ion-content class="ion-padding">
+<ion-content [fullscreen]="true" class="ion-padding">
   <div class="legal-container">
     <h1>Legal Information</h1>
     <p>Please review our legal documents below:</p>

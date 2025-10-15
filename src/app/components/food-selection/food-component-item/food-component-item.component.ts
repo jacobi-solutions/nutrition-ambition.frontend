@@ -239,16 +239,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
                                (this.component as any)?.statusText ||
                                'Analyzing';
       this.macroStatusText = "(?? cal, ?? protein, ?? fat, ?? carbs)" //"(this.selectedServing as any)?.statusText || '';
-
-      // Diagnostic logging: Show backend status vs displayed status
-      const backendServingStatus = (this.selectedServing as any)?.statusText;
-      const backendComponentStatus = (this.component as any)?.statusText;
-      console.log('[STATUS]',
-                  'Component:', this.component?.id?.substring(0, 8),
-                  '| Backend Serving:', backendServingStatus || 'none',
-                  '| Backend Component:', backendComponentStatus || 'none',
-                  '| Displayed:', this.servingStatusText,
-                  '| isPending:', this.servingIsPending);
     }
 
     // Compute macro summary

@@ -2,6 +2,11 @@ ion-content {
   --background: var(--color-bone, #f5f3ef);
 }
 
+// Add top padding when using fullscreen to account for header
+ion-content[fullscreen] {
+  --padding-top: 96px; // Approximate height of the two-row header
+}
+
 .legal-container {
   max-width: 600px;
   margin: 0 auto;

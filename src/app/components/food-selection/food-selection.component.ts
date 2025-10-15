@@ -601,6 +601,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
  
 
   confirmSelections(): void {
+    console.log('[CONFIRM] confirmSelections called, isEditMode:', this.isEditMode);
     if (this.isEditMode) {
       this.confirmEditSelections();
     } else {
@@ -609,6 +610,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private confirmRegularSelections(): void {
+    console.log('[CONFIRM] confirmRegularSelections called');
     const req = new SubmitServingSelectionRequest();
     req.pendingMessageId = this.message.id;
     req.selections = [];
@@ -655,9 +657,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
     }
 
- 
+
     this.isSubmitting = true;
+    console.log('[CONFIRM] About to emit selectionConfirmed with', req.selections.length, 'selections, pendingMessageId:', req.pendingMessageId);
     this.selectionConfirmed.emit(req);
+    console.log('[CONFIRM] selectionConfirmed emitted');
   }
 
   private confirmEditSelections(): void {
@@ -786,19 +790,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Compute all foods as FoodDisplay objects with embedded state
   private computeAllFoods(): void {
     const rawFoods = this.message?.mealSelection?.foods || [];
-    const totalComponents = rawFoods.reduce((sum, food) => sum + (food.components?.length || 0), 0);
-
-    // Diagnostic: Log when computeAllFoods is called
-    const firstComponentId = rawFoods[0]?.components?.[0]?.id;
-    const firstComponentIsPending = rawFoods[0]?.components?.[0]?.matches?.[0]?.servings?.[0]?.isPending;
-    const firstComponentStatusText = rawFoods[0]?.components?.[0]?.matches?.[0]?.servings?.[0]?.statusText;
-    console.log('[COMPUTE_FOODS]',
-                'Foods:', rawFoods.length,
-                '| Components:', totalComponents,
-                '| First Component ID:', firstComponentId?.substring(0, 8) || 'none',
-                '| isPending:', firstComponentIsPending,
-                '| StatusText:', firstComponentStatusText || 'none',
-                '| Existing computedFoods:', this.computedFoods?.length || 0);
 
     // Capture existing UI state before rebuilding
     const uiStateMap = new Map<string, any>();
@@ -817,10 +808,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                   isSearching: comp.isSearching
                 };
                 componentStates.set(comp.id, state);
-                // Log captured state
-                if (comp.isExpanded) {
-                  console.log('[STATE_CAPTURE]', 'Component:', comp.id.substring(0, 8), '| isExpanded:', comp.isExpanded);
-                }
               }
             });
           }
@@ -846,15 +833,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             const effectiveQuantity = Math.round((serving.userConfirmedQuantity ||
               ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1))) * 100) / 100;
 
-            // Log backend serving data
-            if (servingIdx === 0 && component.id) {
-              console.log('[SERVING_TRANSFORM]',
-                          'Component:', component.id.substring(0, 8),
-                          '| Backend isPending:', serving.isPending,
-                          '| Backend statusText:', serving.statusText || 'none',
-                          '| Has baseQuantity:', !!serving.baseQuantity);
-            }
-
             return new ComponentServingDisplay({
               ...serving,
               effectiveQuantity: effectiveQuantity,
@@ -875,11 +853,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         // Get preserved state for this component
         const savedFoodState = food.id ? uiStateMap.get(food.id) : null;
         const savedCompState = savedFoodState && component.id ? savedFoodState.componentStates.get(component.id) : null;
-
-        // Log state restoration
-        if (savedCompState?.isExpanded) {
-          console.log('[STATE_RESTORE]', 'Component:', component.id?.substring(0, 8), '| Restoring isExpanded:', savedCompState.isExpanded);
-        }
 
         const componentDisplay = new ComponentDisplay({
           ...component,

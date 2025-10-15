@@ -1,13 +1,9 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Privacy Policy</ion-title>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/legal"></ion-back-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header
+  [title]="'Privacy Policy'"
+  [showBackButton]="true">
+</app-header>
 
-<ion-content class="ion-padding">
+<ion-content [fullscreen]="true" class="ion-padding">
   <div class="privacy-container">
     <h1>🔒 PRIVACY POLICY</h1>
     <p class="last-updated">Effective Date: October 2025</p>

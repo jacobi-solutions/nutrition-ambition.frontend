@@ -4,17 +4,22 @@
       <ion-icon name="key" slot="start"></ion-icon>
       <ion-label>{{ "Change Password" | titlecase }}</ion-label>
     </ion-item>
-    
+
+    <ion-item button routerLink="/legal" (click)="onNavigateToLegal()" detail="false">
+      <ion-icon name="document-text" slot="start"></ion-icon>
+      <ion-label>Legal</ion-label>
+    </ion-item>
+
     <ion-item button (click)="onAction('signout')" detail="false">
       <ion-icon name="log-out" slot="start"></ion-icon>
       <ion-label>{{ "Sign out" | titlecase }}</ion-label>
     </ion-item>
-    
+
     <ion-item button *ngIf="canInstall" (click)="onAction('download', $event)" detail="false">
       <ion-icon name="download" slot="start"></ion-icon>
       <ion-label>{{ "Download" | titlecase }}</ion-label>
     </ion-item>
-    
+
     <ion-item detail="false">
       <ion-icon name="information-circle" slot="start"></ion-icon>
       <ion-label>{{ ("Version " + appVersion) | titlecase }}</ion-label>

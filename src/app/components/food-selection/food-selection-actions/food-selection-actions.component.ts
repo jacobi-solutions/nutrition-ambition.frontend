@@ -29,7 +29,9 @@ export class FoodSelectionActionsComponent implements OnInit, OnChanges {
   @Output() cancelSelection = new EventEmitter<void>();
 
   onConfirmSelection(): void {
+    console.log('[CONFIRM] onConfirmSelection called in actions component');
     this.confirmSelection.emit();
+    console.log('[CONFIRM] confirmSelection emitted from actions component');
   }
 
   onCancelSelection(): void {

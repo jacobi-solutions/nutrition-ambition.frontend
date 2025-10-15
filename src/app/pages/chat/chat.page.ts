@@ -559,17 +559,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           if (isPendingFood && mealSelections) {
             const mealSelection = mealSelections[0];
 
-            // Diagnostic logging: Show backend streaming data
-            const totalComponents = mealSelection?.foods?.reduce((sum: number, food: any) =>
-              sum + (food.components?.length || 0), 0) || 0;
-            const firstComponentStatusText = mealSelection?.foods?.[0]?.components?.[0]?.matches?.[0]?.servings?.[0]?.statusText;
-            console.log('[STREAM]',
-                        'Stage:', processingStage,
-                        '| Foods:', mealSelection?.foods?.length || 0,
-                        '| Components:', totalComponents,
-                        '| StatusText:', firstComponentStatusText || 'none',
-                        '| isPartial:', isPartial);
-
             // Clear existing timeout
             if (this.streamUpdateTimeout) {
               clearTimeout(this.streamUpdateTimeout);
@@ -1014,6 +1003,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Handle food selection confirmation for standalone food selection components
   onFoodSelectionConfirmed(request: SubmitServingSelectionRequest): void {
+    console.log('[CONFIRM] onFoodSelectionConfirmed called with request:', request);
 
     this.foodSelectionService.submitServingSelection(request).subscribe({
       next: (response: ChatMessagesResponse) => {
