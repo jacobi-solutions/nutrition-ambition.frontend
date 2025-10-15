@@ -15,6 +15,10 @@ export const routes: Routes = [
     // Note: AuthGuard might need adjustment if registration is public
   },
   {
+    path: 'beta-signup',
+    loadComponent: () => import('./pages/auth/beta-signup/beta-signup.page').then(m => m.BetaSignupPage)
+  },
+  {
     path: 'legal',
     loadComponent: () => import('./pages/legal/legal.page').then(m => m.LegalPage)
   },

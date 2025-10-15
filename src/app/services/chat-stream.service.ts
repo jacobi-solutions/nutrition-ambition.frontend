@@ -112,7 +112,11 @@ export class ChatStreamService {
               if (line.startsWith('data: ')) {
                 try {
                   const jsonData = line.substring(6);
-                  const parsed = JSON.parse(jsonData) as ChatMessagesResponse;
+                  const rawData = JSON.parse(jsonData);
+
+                  // Use the generated fromJS method to properly deserialize nested objects
+                  // This ensures ServingIdentifier and other complex objects have their toJSON methods
+                  const parsed = ChatMessagesResponse.fromJS(rawData);
 
                   // Check for error responses from backend
                   if (!parsed.isSuccess && parsed.errors && parsed.errors.length > 0) {

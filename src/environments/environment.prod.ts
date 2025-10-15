@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   backendApiUrl: 'https://backend-496562523884.us-central1.run.app',
+  frontendUrl: 'https://nutritionambition.app',
   storageBucketBaseUrl: 'https://storage.googleapis.com/nutritionambition.app',
   authDebug: false,
   firebase: {

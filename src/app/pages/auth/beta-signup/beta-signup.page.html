@@ -47,10 +47,14 @@
           </ion-input>
         </div>
 
-        <p class="form-legal">By using this app, you agree to our <a routerLink="/legal/terms-of-service" class="legal-link">Terms of Use</a> and <a routerLink="/legal/privacy-policy" class="legal-link">Privacy Policy</a>.</p>
+        <div class="terms-checkbox-container">
+          <ion-checkbox [(ngModel)]="termsAccepted" name="termsAccepted" labelPlacement="end">
+            <span class="terms-text">I agree to the <a routerLink="/legal/terms-of-service" class="legal-link">Terms of Use</a> and <a routerLink="/legal/privacy-policy" class="legal-link">Privacy Policy</a></span>
+          </ion-checkbox>
+        </div>
 
-        <ion-button expand="block" type="submit" color="tertiary" class="signup-button" [disabled]="isWorking || !isValidLink">
-          {{ isWorking ? 'Creating Account...' : 'Complete Signup' }}
+        <ion-button expand="block" type="submit" color="tertiary" class="signup-button" [disabled]="!canSubmit()">
+          {{ isWorking ? 'Completing Signup...' : 'Complete Signup' }}
         </ion-button>
       </form>
 

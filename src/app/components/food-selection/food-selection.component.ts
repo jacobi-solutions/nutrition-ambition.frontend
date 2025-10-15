@@ -127,6 +127,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   ngOnDestroy(): void {
+    // Component cleanup
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -601,7 +602,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
  
 
   confirmSelections(): void {
-    console.log('[CONFIRM] confirmSelections called, isEditMode:', this.isEditMode);
     if (this.isEditMode) {
       this.confirmEditSelections();
     } else {
@@ -610,7 +610,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private confirmRegularSelections(): void {
-    console.log('[CONFIRM] confirmRegularSelections called');
     const req = new SubmitServingSelectionRequest();
     req.pendingMessageId = this.message.id;
     req.selections = [];
@@ -641,13 +640,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               // Use effectiveQuantity for both values - it's what the user sees/edited
               const effectiveQuantity = (selectedServing as any).effectiveQuantity || 1;
 
+              // Get servingIdentifier from selected serving (now properly deserialized with toJSON method)
               const servingIdentifier = selectedServing.servingId;
+
               req.selections.push(new UserSelectedServing({
                 componentId: component.id,
                 originalText: this.getComponentDisplayName(component.id || '') || (selectedFood as any)?.originalText || '',
                 provider: (selectedFood as any)?.provider ?? 'nutritionix',
                 providerFoodId: (selectedFood as any)?.providerFoodId,
-                servingId: servingIdentifier,
+                servingId: servingIdentifier, // Pass the ServingIdentifier object directly
                 editedQuantity: effectiveQuantity,
                 scaledQuantity: effectiveQuantity
               }));
@@ -657,11 +658,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
     }
 
-
     this.isSubmitting = true;
-    console.log('[CONFIRM] About to emit selectionConfirmed with', req.selections.length, 'selections, pendingMessageId:', req.pendingMessageId);
     this.selectionConfirmed.emit(req);
-    console.log('[CONFIRM] selectionConfirmed emitted');
   }
 
   private confirmEditSelections(): void {
@@ -703,13 +701,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               // Use effectiveQuantity for both values - it's what the user sees/edited
               const effectiveQuantity = (selectedServing as any).effectiveQuantity || 1;
 
+              // Get servingIdentifier from selected serving (now properly deserialized with toJSON method)
               const servingIdentifier = selectedServing.servingId;
+
               req.selections.push(new UserSelectedServing({
                 componentId: component.id,
                 originalText: this.getComponentDisplayName(component.id || '') || (selectedFood as any)?.originalText || '',
                 provider: (selectedFood as any)?.provider ?? 'nutritionix',
                 providerFoodId: (selectedFood as any)?.providerFoodId,
-                servingId: servingIdentifier,
+                servingId: servingIdentifier, // Pass the ServingIdentifier object directly
                 editedQuantity: effectiveQuantity,
                 scaledQuantity: effectiveQuantity
               }));

@@ -147,14 +147,15 @@ ion-input::placeholder {
 .forgot-password {
   text-align: left;
   margin-bottom: 2rem;
-  
+
   .forgot-link {
     font-family: var(--font-primary);
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--color-olive);
     text-decoration: none;
-    
+    cursor: pointer;
+
     &:hover {
       text-decoration: underline;
     }

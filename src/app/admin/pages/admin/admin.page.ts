@@ -10,7 +10,7 @@ import { Account, FeedbackEntry, FeedbackWithAccount, ChatMessage } from '../../
 import { ToastService } from '../../../services/toast.service';
 import { DebugViewComponent } from '../../components/debug-view/debug-view.component';
 import { addIcons } from 'ionicons';
-import { 
+import {
   analyticsOutline,
   chatbubblesOutline,
   eyeOutline,
@@ -29,7 +29,9 @@ import {
   closeOutline,
   arrowBackOutline,
   chevronUpOutline,
-  chevronDownOutline
+  chevronDownOutline,
+  personAddOutline,
+  linkOutline
 } from 'ionicons/icons';
 
 // Register all icons used in this component
@@ -52,7 +54,9 @@ addIcons({
   'close': closeOutline,
   'arrow-back-outline': arrowBackOutline,
   'chevron-up-outline': chevronUpOutline,
-  'chevron-down-outline': chevronDownOutline
+  'chevron-down-outline': chevronDownOutline,
+  'person-add-outline': personAddOutline,
+  'link-outline': linkOutline
 });
 
 @Component({
@@ -798,5 +802,131 @@ export class AdminPage implements OnInit, OnDestroy {
     const maxLength = 100;
     if (message.length <= maxLength) return message;
     return message.substring(0, maxLength) + '...';
+  }
+
+  /**
+   * Create a new beta account with Firebase auth and display sign-in link
+   */
+  async createBetaAccount() {
+    const alert = await this.alertController.create({
+      header: 'Create Beta Account',
+      message: 'Enter the email address for the new beta user:',
+      inputs: [
+        {
+          name: 'email',
+          type: 'email',
+          placeholder: 'beta@example.com'
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Create',
+          handler: async (data) => {
+            const email = data.email?.trim();
+            if (!email) {
+              await this.showToast('Email address is required', 'danger');
+              return false;
+            }
+
+            // Basic email validation
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+              await this.showToast('Please enter a valid email address', 'danger');
+              return false;
+            }
+
+            try {
+              const response = await this.adminService.createBetaAccount(email);
+              if (response.isSuccess && response.signInLink) {
+                // Show the sign-in link in a modal
+                await this.showBetaSignInLinkModal(response.signInLink, email, true);
+                // Refresh accounts list
+                await this.loadAccounts();
+              } else {
+                const errorMessage = response.errors?.[0]?.errorMessage || 'Failed to create beta account';
+                await this.showToast(errorMessage, 'danger');
+              }
+            } catch (error) {
+              await this.showToast('Error creating beta account', 'danger');
+            }
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  /**
+   * Generate a beta sign-in link for an existing account
+   */
+  async generateBetaLink(account: Account) {
+    if (!account.email) {
+      await this.showToast('Account has no email address', 'danger');
+      return;
+    }
+
+    try {
+      const response = await this.adminService.generateBetaSignInLink(account.email);
+      if (response.isSuccess && response.signInLink) {
+        await this.showBetaSignInLinkModal(response.signInLink, account.email, false);
+      } else {
+        const errorMessage = response.errors?.[0]?.errorMessage || 'Failed to generate sign-in link';
+        await this.showToast(errorMessage, 'danger');
+      }
+    } catch (error) {
+      await this.showToast('Error generating beta sign-in link', 'danger');
+    }
+  }
+
+  /**
+   * Show beta sign-in link in a modal
+   */
+  private async showBetaSignInLinkModal(signInLink: string, email: string, isNewAccount: boolean) {
+    const message = isNewAccount
+      ? `Beta account created successfully for ${email}!
+
+Copy the link below and send it to the beta user:`
+      : `Beta sign-in link generated for ${email}:`;
+
+    const alert = await this.alertController.create({
+      header: 'Beta Sign-In Link',
+      message: message,
+      inputs: [
+        {
+          name: 'link',
+          type: 'textarea',
+          value: signInLink,
+          attributes: {
+            readonly: true,
+            rows: 6
+          }
+        }
+      ],
+      buttons: [
+        {
+          text: 'Copy Link',
+          handler: (data) => {
+            // Copy to clipboard
+            navigator.clipboard.writeText(signInLink).then(() => {
+              this.showToast('Link copied to clipboard!', 'success');
+            }).catch(() => {
+              this.showToast('Failed to copy link', 'danger');
+            });
+            return false; // Keep modal open
+          }
+        },
+        {
+          text: 'OK',
+          role: 'cancel'
+        }
+      ]
+    });
+
+    await alert.present();
   }
 } 

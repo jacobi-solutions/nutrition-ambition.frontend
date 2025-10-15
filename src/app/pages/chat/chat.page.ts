@@ -569,12 +569,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
               // Hide loading dots when first content arrives
               this.isLoading = false;
 
+              // Extract stable message ID from backend (generated at start of streaming)
+              const messageId = (assistantMessage as any).Id || (assistantMessage as any).id;
+
               // Create or update the meal selection message
               if (streamingMessageIndex === -1) {
                 streamingMessageIndex = this.messages.length;
-                const streamingMessageId = `streaming-meal-${Date.now()}`;
                 this.messages = [...this.messages, {
-                  id: streamingMessageId,
+                  id: messageId, // Use backend's stable MongoDB ID from the first chunk
                   text: content || '',
                   isUser: false,
                   timestamp: new Date(),
@@ -592,12 +594,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
 
-                // Extract the message ID from the backend
-                const messageId = (assistantMessage as any).Id || (assistantMessage as any).id;
-
                 updatedMessages[streamingMessageIndex] = {
                   ...existingMessage,
-                  // Backend now generates stable ID at start of streaming, so ID stays consistent
+                  // Use the stable message ID from backend (already extracted above)
                   id: messageId || existingMessage.id,
                   text: content || '',
                   mealSelection: mealSelection,
@@ -1003,8 +1002,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Handle food selection confirmation for standalone food selection components
   onFoodSelectionConfirmed(request: SubmitServingSelectionRequest): void {
-    console.log('[CONFIRM] onFoodSelectionConfirmed called with request:', request);
-
     this.foodSelectionService.submitServingSelection(request).subscribe({
       next: (response: ChatMessagesResponse) => {
         if (!response.isSuccess) {

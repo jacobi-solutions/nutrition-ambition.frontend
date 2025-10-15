@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
-import { 
+import {
   NutritionAmbitionApiService,
   GetFeedbackWithAccountInfoRequest,
   GetFeedbackWithAccountInfoResponse,
@@ -24,6 +24,10 @@ import {
   ClearAccountDataResponse,
   GetAccountDataCountsRequest,
   GetAccountDataCountsResponse,
+  CreateBetaAccountRequest,
+  CreateBetaAccountResponse,
+  GenerateBetaSignInLinkRequest,
+  GenerateBetaSignInLinkResponse,
   ErrorDto
 } from '../../services/nutrition-ambition-api.service';
 
@@ -398,6 +402,58 @@ export class AdminService {
         errorResponse.errors = [];
       }
       errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while retrieving account data counts.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Create a beta account with Firebase auth and generate sign-in link (admin only)
+   */
+  async createBetaAccount(email: string): Promise<CreateBetaAccountResponse> {
+    try {
+      const request = new CreateBetaAccountRequest({
+        email: email
+      });
+
+      const response = await firstValueFrom(this.apiService.createBetaAccount(request));
+
+      if (response.isSuccess) {
+      } else {
+      }
+
+      return response;
+    } catch (error) {
+      const errorResponse = new CreateBetaAccountResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while creating the beta account.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Generate a beta sign-in link for an existing account (admin only)
+   */
+  async generateBetaSignInLink(email: string): Promise<GenerateBetaSignInLinkResponse> {
+    try {
+      const request = new GenerateBetaSignInLinkRequest({
+        email: email
+      });
+
+      const response = await firstValueFrom(this.apiService.generateBetaSignInLink(request));
+
+      if (response.isSuccess) {
+      } else {
+      }
+
+      return response;
+    } catch (error) {
+      const errorResponse = new GenerateBetaSignInLinkResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while generating the beta sign-in link.' }));
       return errorResponse;
     }
   }
