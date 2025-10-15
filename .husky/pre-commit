@@ -1,5 +1,5 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
+cd "$(dirname "$0")/.."
+export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
 npm run bump:version
 git add package.json src/environments/version.ts
