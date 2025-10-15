@@ -214,31 +214,19 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     }
 
 
-    // Check if serving is pending (for streaming UI)
-    // A serving is considered pending if:
-    // 1. It has isPending = true, OR
-    // 2. It lacks actual serving data (baseQuantity, measurementDescription, nutrients)
-    // Trust the backend's isPending flag first - if it's explicitly false, serving is complete
-    // Only fall back to checking for serving data if isPending is not explicitly set
-    const backendIsPending = this.selectedServing?.isPending;
-    if (backendIsPending === false) {
-      // Backend explicitly says not pending - trust it
-      this.servingIsPending = false;
-    } else {
-      // Backend says pending OR didn't set flag - check if we have serving data
-      const hasServingData = this.selectedServing &&
-                            (this.selectedServing.baseQuantity || 0) > 0 &&
-                            (this.selectedServing.measurementDescription || this.selectedServing.baseUnit);
-      this.servingIsPending = (backendIsPending || false) || !hasServingData;
-    }
+    // Use component.isPending directly (bubbled up from serving level by backend)
+    // The backend hierarchical system ensures component.isPending accurately reflects
+    // whether this component OR any of its servings are still being processed
+    this.servingIsPending = this.component?.isPending || false;
 
-    // Extract status text from component or serving
+    // Extract status text from component when pending
     if (this.servingIsPending) {
-      // Check for StatusText on serving first, then component, then default to 'Analyzing'
-      this.servingStatusText = (this.selectedServing as any)?.statusText ||
-                               (this.component as any)?.statusText ||
-                               'Analyzing';
-      this.macroStatusText = "(?? cal, ?? protein, ?? fat, ?? carbs)" //"(this.selectedServing as any)?.statusText || '';
+      this.servingStatusText = (this.component as any)?.statusText || 'Analyzing';
+      this.macroStatusText = "(?? cal, ?? protein, ?? fat, ?? carbs)";
+    } else {
+      // Clear status text when not pending
+      this.servingStatusText = '';
+      this.macroStatusText = '';
     }
 
     // Compute macro summary

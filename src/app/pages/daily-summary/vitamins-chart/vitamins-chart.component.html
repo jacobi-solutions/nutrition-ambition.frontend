@@ -1,9 +1,10 @@
-<div class="vitamins-bar-chart-container" [class.animate]="isVisible">
+<div class="vitamins-bar-chart-container" *ngIf="hasData" [class.animate]="isVisible">
   <!-- Fat-Soluble Vitamins (A, D, E, K) -->
   <div class="vitamin-group">
     <div class="group-header">
       <div class="group-title">Fat-Soluble Vitamins</div>
-      <div class="group-subtitle">Stored in the body — aim near 100%</div>
+      <div class="group-subtitle" *ngIf="hasTargets">Stored in the body — aim near 100%</div>
+      <div class="group-subtitle" *ngIf="!hasTargets">Stored in the body</div>
     </div>
     <div class="vitamin-bar-row" *ngFor="let vitamin of fatSolubleVitamins">
       <div class="vitamin-label">{{ vitamin.label }}</div>
@@ -13,10 +14,11 @@
                [style.width]="vitamin.barWidth"
                [style.background-color]="vitamin.barColor">
           </div>
-          <div class="target-line"></div>
+          <div class="target-line" *ngIf="hasTargets"></div>
         </div>
       </div>
-      <div class="vitamin-percentage">{{ vitamin.percentOfTarget }}%</div>
+      <div class="vitamin-percentage" *ngIf="hasTargets">{{ vitamin.percentOfTarget }}%</div>
+      <div class="vitamin-percentage" *ngIf="!hasTargets">{{ vitamin.consumed }}</div>
     </div>
   </div>
 
@@ -24,7 +26,8 @@
   <div class="vitamin-group">
     <div class="group-header">
       <div class="group-title">Water-Soluble Vitamins</div>
-      <div class="group-subtitle">Used daily — small overages are fine</div>
+      <div class="group-subtitle" *ngIf="hasTargets">Used daily — small overages are fine</div>
+      <div class="group-subtitle" *ngIf="!hasTargets">Used daily</div>
     </div>
     <div class="vitamin-bar-row" *ngFor="let vitamin of waterSolubleVitamins">
       <div class="vitamin-label">{{ vitamin.label }}</div>
@@ -34,10 +37,21 @@
                [style.width]="vitamin.barWidth"
                [style.background-color]="vitamin.barColor">
           </div>
-          <div class="target-line"></div>
+          <div class="target-line" *ngIf="hasTargets"></div>
         </div>
       </div>
-      <div class="vitamin-percentage">{{ vitamin.percentOfTarget }}%</div>
+      <div class="vitamin-percentage" *ngIf="hasTargets">{{ vitamin.percentOfTarget }}%</div>
+      <div class="vitamin-percentage" *ngIf="!hasTargets">{{ vitamin.consumed }}</div>
     </div>
+  </div>
+</div>
+
+<!-- Empty state -->
+<div class="empty-state" *ngIf="!hasData">
+  <div class="empty-state-content">
+    <ion-icon name="nutrition-outline" class="empty-state-icon"></ion-icon>
+    <h2>Nothing logged yet</h2>
+    <p>No meals or foods have been logged for this date.</p>
+    <p>Head over to the Chat tab to start tracking your vitamins!</p>
   </div>
 </div>

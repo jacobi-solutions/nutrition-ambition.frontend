@@ -38,14 +38,25 @@
           </ion-badge>
         </button>
         
-        <button 
-          class="nav-item" 
+        <button
+          class="nav-item"
           [class.active]="currentView === 'accounts'"
           (click)="currentView = 'accounts'; loadAccounts()">
           <ion-icon name="person-outline"></ion-icon>
           <span>Account Management</span>
           <ion-badge *ngIf="accounts.length > 0" color="primary" class="nav-badge">
             {{ accounts.length }}
+          </ion-badge>
+        </button>
+
+        <button
+          class="nav-item"
+          [class.active]="currentView === 'guidelines'"
+          (click)="currentView = 'guidelines'; switchToGuidelines()">
+          <ion-icon name="document-outline"></ion-icon>
+          <span>Guideline Files</span>
+          <ion-badge *ngIf="guidelineFiles.length > 0" color="secondary" class="nav-badge">
+            {{ guidelineFiles.length }}
           </ion-badge>
         </button>
       </div>
@@ -64,6 +75,10 @@
         <ion-segment-button value="accounts">
           <ion-label>Accounts</ion-label>
           <ion-icon name="person-outline"></ion-icon>
+        </ion-segment-button>
+        <ion-segment-button value="guidelines">
+          <ion-label>Guidelines</ion-label>
+          <ion-icon name="document-outline"></ion-icon>
         </ion-segment-button>
       </ion-segment>
     </div>
@@ -525,6 +540,80 @@
                   </td>
                 </tr>
               </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Guidelines View -->
+      <div *ngIf="currentView === 'guidelines'" class="guidelines-content">
+        <div class="page-header">
+          <h1>Guideline Files</h1>
+          <p>Upload and manage guideline files for use with OpenAI Responses API</p>
+        </div>
+
+        <div class="guidelines-controls">
+          <div class="control-actions">
+            <input #fileInput type="file" style="display: none" accept=".txt,.md,.pdf,.js,.ts,.py,.json,.xml,.html,.css" (change)="onFileSelected($event)" />
+            <ion-button color="primary" (click)="fileInput.click()" [disabled]="isUploadingFile">
+              <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+              {{ isUploadingFile ? 'Uploading...' : 'Upload File' }}
+            </ion-button>
+            <ion-button color="medium" fill="outline" (click)="loadGuidelineFiles()" [disabled]="isLoadingGuidelineFiles">
+              <ion-icon name="refresh-outline" slot="start"></ion-icon>
+              Refresh
+            </ion-button>
+          </div>
+        </div>
+
+        <div *ngIf="isLoadingGuidelineFiles" class="loading-state">
+          <ion-spinner name="crescent"></ion-spinner>
+          <p>Loading guideline files...</p>
+        </div>
+
+        <div *ngIf="!isLoadingGuidelineFiles && guidelineFiles.length === 0" class="empty-state">
+          <ion-icon name="document-outline" size="large"></ion-icon>
+          <h3>No Guideline Files</h3>
+          <p>Upload your first guideline file to get started.</p>
+        </div>
+
+        <div *ngIf="!isLoadingGuidelineFiles && guidelineFiles.length > 0" class="guidelines-table-container">
+          <table class="guidelines-table">
+            <thead>
+              <tr>
+                <th>File Name</th>
+                <th>Size</th>
+                <th>Type</th>
+                <th>Upload Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let file of guidelineFiles" class="guideline-row">
+                <td class="file-name">
+                  <ion-icon name="document-text-outline"></ion-icon>
+                  {{ file.fileName }}
+                </td>
+                <td>{{ formatFileSize(file.fileSize) }}</td>
+                <td>
+                  <ion-chip size="small" color="medium">
+                    {{ file.type }}
+                  </ion-chip>
+                </td>
+                <td>{{ formatDate(file.createdDateUtc) }}</td>
+                <td>
+                  <ion-badge [color]="file.status === 'ready' ? 'success' : file.status === 'error' ? 'danger' : 'warning'">
+                    {{ file.status | titlecase }}
+                  </ion-badge>
+                </td>
+                <td class="actions-cell">
+                  <ion-button size="small" color="danger" fill="outline" (click)="deleteGuidelineFile(file)">
+                    <ion-icon name="trash-outline" slot="start"></ion-icon>
+                    Delete
+                  </ion-button>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

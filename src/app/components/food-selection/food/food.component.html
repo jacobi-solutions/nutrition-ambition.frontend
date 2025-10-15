@@ -1,17 +1,8 @@
 <!-- Food container with header and components -->
 <div class="food-item-container">
 
-  <!-- Thinking dots at food level (when food is loading) -->
-  <div *ngIf="food.isPending" class="food-thinking-indicator">
-    <div class="typing-indicator-dots">
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
-    </div>
-  </div>
-
   <!-- Multi-component food: Show header + expandable components -->
-  <ng-container *ngIf="!food.isPending && isMultiComponentFood()">
+  <ng-container *ngIf="isMultiComponentFood()">
     <!-- Food header component -->
     <app-food-header
       [food]="food"
@@ -47,7 +38,7 @@
   </ng-container> <!-- Close multi-component food -->
 
   <!-- Single-component food: Display directly as component item -->
-  <ng-container *ngIf="!food.isPending && !isMultiComponentFood()">
+  <ng-container *ngIf="!isMultiComponentFood()">
     <ng-container *ngFor="let component of visibleComponents; trackBy: trackByComponent">
       <app-food-component-item
         [component]="component"

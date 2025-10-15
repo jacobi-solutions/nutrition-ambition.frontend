@@ -2,15 +2,6 @@
 <!-- Individual Component Item -->
 <div *ngIf="component" class="food-item-row-simple" [id]="'row-' + component.id" [class.searching]="isSearching">
 
-  <!-- Thinking dots when component is pending (streaming) -->
-  <div *ngIf="component.isPending && !isSearching" class="component-thinking-indicator">
-    <div class="typing-indicator-dots">
-      <div class="dot"></div>
-      <div class="dot"></div>
-      <div class="dot"></div>
-    </div>
-  </div>
-
   <!-- Loading overlay when searching -->
   <div *ngIf="isSearching" class="search-loading-overlay">
     <div class="loading-content">
@@ -23,7 +14,7 @@
     </div>
   </div>
 
-  <ion-grid class="row-grid" *ngIf="!isSearching && !component.isPending">
+  <ion-grid class="row-grid" *ngIf="!isSearching">
     <ion-row class="top-row" align-items-start>
       <ion-col size="1.5" class="photo-col">
         <div class="food-photo">

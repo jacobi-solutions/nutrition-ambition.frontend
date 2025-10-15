@@ -7,8 +7,8 @@
         <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Entry') | titlecase }}</strong></label>
       </div>
 
-      <!-- Meal selection thinking dots (Stage 0) -->
-      <div *ngIf="hasPayload && message.mealSelectionIsPending" class="meal-thinking-indicator">
+      <!-- Meal selection thinking dots (Stage 0) - only show when NO foods exist yet -->
+      <div *ngIf="hasPayload && message.mealSelectionIsPending && computedFoods.length === 0" class="meal-thinking-indicator">
         <div class="analyzing-text">{{ message.text || 'Analyzing food entry' }}</div>
         <div class="typing-indicator-dots">
           <div class="dot"></div>
@@ -17,7 +17,7 @@
         </div>
       </div>
 
-      <div *ngIf="hasPayload && !message.mealSelectionIsPending" class="food-items-list">
+      <div *ngIf="hasPayload && computedFoods.length > 0" class="food-items-list">
       <!-- Loop over foods using new intermediate food component -->
       <ng-container *ngFor="let food of computedFoods; let foodIndex = index; let isLast = last; trackBy: trackByFood">
         <div class="food-item-container" [class.is-last]="isLast">

@@ -28,6 +28,12 @@ import {
   CreateBetaAccountResponse,
   GenerateBetaSignInLinkRequest,
   GenerateBetaSignInLinkResponse,
+  UploadGuidelineFileRequest,
+  UploadGuidelineFileResponse,
+  GetGuidelineFilesRequest,
+  GetGuidelineFilesResponse,
+  DeleteGuidelineFileRequest,
+  DeleteGuidelineFileResponse,
   ErrorDto
 } from '../../services/nutrition-ambition-api.service';
 
@@ -457,4 +463,77 @@ export class AdminService {
       return errorResponse;
     }
   }
-} 
+
+  /**
+   * Upload a guideline file to OpenAI
+   */
+  async uploadGuidelineFile(file: File): Promise<UploadGuidelineFileResponse> {
+    try {
+      // Read file as ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+
+      // Convert to base64
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < uint8Array.byteLength; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      const base64Data = btoa(binary);
+
+      const request = new UploadGuidelineFileRequest({
+        fileName: file.name,
+        contentType: file.type || 'application/octet-stream',
+        base64Data: base64Data
+      });
+
+      const response = await firstValueFrom(this.apiService.uploadGuidelineFile(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new UploadGuidelineFileResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while uploading the file.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Get all guideline files
+   */
+  async getGuidelineFiles(): Promise<GetGuidelineFilesResponse> {
+    try {
+      const request = new GetGuidelineFilesRequest();
+      const response = await firstValueFrom(this.apiService.getGuidelineFiles(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new GetGuidelineFilesResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while retrieving guideline files.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Delete a guideline file
+   */
+  async deleteGuidelineFile(fileId: string): Promise<DeleteGuidelineFileResponse> {
+    try {
+      const request = new DeleteGuidelineFileRequest({
+        openAiFileId: fileId
+      });
+
+      const response = await firstValueFrom(this.apiService.deleteGuidelineFile(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new DeleteGuidelineFileResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while deleting the file.' }));
+      return errorResponse;
+    }
+  }
+}

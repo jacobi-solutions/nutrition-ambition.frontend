@@ -22,6 +22,8 @@ import {
   bulbOutline,
   helpOutline,
   documentOutline,
+  documentTextOutline,
+  cloudUploadOutline,
   phonePortraitOutline,
   terminalOutline,
   radioButtonOnOutline,
@@ -47,6 +49,8 @@ addIcons({
   'bulb-outline': bulbOutline,
   'help-outline': helpOutline,
   'document-outline': documentOutline,
+  'document-text-outline': documentTextOutline,
+  'cloud-upload-outline': cloudUploadOutline,
   'phone-portrait-outline': phonePortraitOutline,
   'terminal-outline': terminalOutline,
   'radio-button-on-outline': radioButtonOnOutline,
@@ -102,7 +106,7 @@ export class AdminPage implements OnInit, OnDestroy {
   feedbackTypes = ['bug', 'feature', 'other'];
   
   // Current view
-  currentView: 'overview' | 'feedback' | 'accounts' = 'feedback';
+  currentView: 'overview' | 'feedback' | 'accounts' | 'guidelines' = 'feedback';
 
   // Accounts management
   accounts: Account[] = [];
@@ -112,6 +116,11 @@ export class AdminPage implements OnInit, OnDestroy {
   loadingAccountCounts = new Set<string>();
   lastDeletionAudit: any = null;
   lastClearAudit: any = null;
+
+  // Guideline files management
+  guidelineFiles: any[] = [];
+  isLoadingGuidelineFiles = false;
+  isUploadingFile = false;
 
   constructor(
     private accountsService: AccountsService,
@@ -159,13 +168,15 @@ export class AdminPage implements OnInit, OnDestroy {
   // View management
   async onViewChange(event: any) {
     const newView = event.detail.value;
-    
+
     if (newView === 'overview') {
       await this.switchToOverview();
     } else if (newView === 'feedback') {
       await this.switchToFeedback();
     } else if (newView === 'accounts') {
       await this.switchToAccounts();
+    } else if (newView === 'guidelines') {
+      await this.switchToGuidelines();
     }
   }
 
@@ -189,6 +200,11 @@ export class AdminPage implements OnInit, OnDestroy {
     if (this.accounts.length === 0) {
       await this.loadAccounts();
     }
+  }
+
+  async switchToGuidelines() {
+    this.currentView = 'guidelines';
+    await this.loadGuidelineFiles();
   }
 
   // Data loading
@@ -929,4 +945,102 @@ Copy the link below and send it to the beta user:`
 
     await alert.present();
   }
-} 
+
+  // Guideline Files Management
+
+  async loadGuidelineFiles() {
+    try {
+      this.isLoadingGuidelineFiles = true;
+      const response = await this.adminService.getGuidelineFiles();
+      if (response.isSuccess && response.files) {
+        this.guidelineFiles = response.files;
+      } else {
+        await this.showToast('Error loading guideline files', 'danger');
+      }
+    } catch (error) {
+      await this.showToast('Error loading guideline files', 'danger');
+    } finally {
+      this.isLoadingGuidelineFiles = false;
+    }
+  }
+
+  async onFileSelected(event: any) {
+    const file: File = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['.txt', '.md', '.pdf', '.js', '.ts', '.py', '.json', '.xml', '.html', '.css'];
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!validTypes.includes(fileExtension)) {
+      await this.showToast('Invalid file type. Please upload a text, PDF, or code file.', 'warning');
+      return;
+    }
+
+    // Validate file size (max 100MB)
+    if (file.size > 100 * 1024 * 1024) {
+      await this.showToast('File is too large. Maximum size is 100MB.', 'warning');
+      return;
+    }
+
+    try {
+      this.isUploadingFile = true;
+      const response = await this.adminService.uploadGuidelineFile(file);
+
+      if (response.isSuccess) {
+        await this.showToast('File uploaded successfully!', 'success');
+        await this.loadGuidelineFiles(); // Refresh the list
+      } else {
+        const errorMessage = response.errors?.[0]?.errorMessage || 'Failed to upload file';
+        await this.showToast(errorMessage, 'danger');
+      }
+    } catch (error) {
+      await this.showToast('Error uploading file', 'danger');
+    } finally {
+      this.isUploadingFile = false;
+      // Reset file input
+      event.target.value = '';
+    }
+  }
+
+  async deleteGuidelineFile(file: any) {
+    const alert = await this.alertController.create({
+      header: 'Delete File',
+      message: `Are you sure you want to delete "${file.fileName}"? This will remove the file from OpenAI and cannot be undone.`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              const response = await this.adminService.deleteGuidelineFile(file.id);
+              if (response.isSuccess) {
+                await this.showToast('File deleted successfully', 'success');
+                await this.loadGuidelineFiles(); // Refresh the list
+              } else {
+                await this.showToast('Error deleting file', 'danger');
+              }
+            } catch (error) {
+              await this.showToast('Error deleting file', 'danger');
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+}

@@ -4,7 +4,7 @@
     <ion-col size="12">
       <div class="chart-wrapper">
         <div class="electrolytes-chart-container">
-          <span class="animation-label targets-label">Targets</span>
+          <span class="animation-label targets-label" *ngIf="hasTargets">Targets</span>
           <span class="animation-label actual-label">Actual</span>
 
           <div class="electrolytes-chart">
@@ -20,7 +20,7 @@
               </g>
 
               <!-- Target rings (thin outer rings at 100%) - render on top -->
-              <g class="target-rings">
+              <g class="target-rings" [class.no-targets]="!hasTargets">
                 <circle *ngFor="let electrolyte of electrolytes"
                         class="target-ring"
                         [attr.class]="'target-ring ' + electrolyte.key + '-target'"
@@ -47,8 +47,11 @@
             </svg>
           </div>
 
-          <div class="chart-tip">
+          <div class="chart-tip" *ngIf="hasTargets">
             Make each slice of the pie grow at the same rate. Try to stop when you hit the outer ring!
+          </div>
+          <div class="chart-tip" *ngIf="!hasTargets">
+            Track your electrolyte intake throughout the day
           </div>
         </div>
 
@@ -57,7 +60,8 @@
           <div class="value-item" *ngFor="let electrolyte of electrolytes">
             <span class="value-dot" [style.background-color]="electrolyte.color"></span>
             <span class="value-label">{{ electrolyte.name }}:</span>
-            <span class="value-number">{{ electrolyte.consumed }}mg / {{ electrolyte.target }}mg</span>
+            <span class="value-number" *ngIf="hasTargets">{{ electrolyte.consumed }}mg / {{ electrolyte.target }}mg</span>
+            <span class="value-number" *ngIf="!hasTargets">{{ electrolyte.consumed }}mg</span>
           </div>
         </div>
       </div>
@@ -67,5 +71,10 @@
 
 <!-- Empty state -->
 <div class="empty-state" *ngIf="!hasData">
-  <span>No electrolyte data available</span>
+  <div class="empty-state-content">
+    <ion-icon name="nutrition-outline" class="empty-state-icon"></ion-icon>
+    <h2>Nothing logged yet</h2>
+    <p>No meals or foods have been logged for this date.</p>
+    <p>Head over to the Chat tab to start tracking your electrolytes!</p>
+  </div>
 </div>

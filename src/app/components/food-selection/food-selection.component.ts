@@ -825,6 +825,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Rebuild from raw data with preserved state
     this.computedFoods = rawFoods.map((food, foodIndex) => {
       const transformedComponents = food.components?.map((component: any) => {
+
         // Transform matches to include ComponentServingDisplay objects
         const transformedMatches = component.matches?.map((match: any) => {
           const transformedServings = match.servings?.map((serving: any, servingIdx: number) => {

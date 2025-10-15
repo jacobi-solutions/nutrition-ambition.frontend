@@ -58,6 +58,47 @@
       line-height: 1.2;
     }
 
+    .inline-amount-pending {
+      margin-left: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .pending-text {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--ion-color-medium);
+        line-height: 1.2;
+      }
+
+      .typing-indicator-dots.inline-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+
+        .dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background-color: var(--ion-color-medium);
+          animation: typing 1.4s infinite;
+
+          &:nth-child(1) {
+            animation-delay: 0s;
+          }
+
+          &:nth-child(2) {
+            animation-delay: 0.2s;
+          }
+
+          &:nth-child(3) {
+            animation-delay: 0.4s;
+          }
+        }
+      }
+    }
+
     app-serving-quantity-input {
       flex-shrink: 0;
     }
@@ -117,5 +158,17 @@
         color: var(--color-error-dark);
       }
     }
+  }
+}
+
+// Typing animation for thinking dots
+@keyframes typing {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
   }
 }

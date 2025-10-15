@@ -50,6 +50,7 @@ import { MacronutrientsChartComponent } from './macronutrients-chart/macronutrie
 import { ElectrolytesChartComponent } from './electrolytes-chart/electrolytes-chart.component';
 import { VitaminsChartComponent } from './vitamins-chart/vitamins-chart.component';
 import { FatsChartComponent } from './fats-chart/fats-chart.component';
+import { ProfileAndGoalsComponent } from './profile-and-goals/profile-and-goals.component';
 import { ToastService } from 'src/app/services/toast.service';
 import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
@@ -86,7 +87,8 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
     MacronutrientsChartComponent,
     ElectrolytesChartComponent,
     VitaminsChartComponent,
-    FatsChartComponent
+    FatsChartComponent,
+    ProfileAndGoalsComponent
   ]
 })
 export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
@@ -164,14 +166,14 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   ngOnInit() {
     // Firebase Analytics: Track page view on initialization
     this.analytics.trackPageView('DailySummary');
-    
+
     // React to date changes after initial value to prevent duplicate load with ionViewWillEnter
     this.dateSubscription = this.dateService.selectedDate$
       .pipe(skip(1))
       .subscribe(date => {
         this.selectedDate = date;
         this.loadDetailedSummary(this.dateService.getSelectedDate());
-        
+
         // Firebase Analytics: Track page view when date changes
         this.analytics.trackPageView('DailySummary');
       });

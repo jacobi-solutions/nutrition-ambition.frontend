@@ -1,8 +1,10 @@
 import { Component, Input, OnChanges, SimpleChanges, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
+import { IonGrid, IonRow, IonCol, IonIcon } from '@ionic/angular/standalone';
 import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.service';
 import { NutritionChartService } from 'src/app/services/nutrition-chart.service';
+import { addIcons } from 'ionicons';
+import { nutritionOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-macronutrients-chart',
@@ -13,13 +15,15 @@ import { NutritionChartService } from 'src/app/services/nutrition-chart.service'
     CommonModule,
     IonGrid,
     IonRow,
-    IonCol
+    IonCol,
+    IonIcon
   ]
 })
 export class MacronutrientsChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() nutrients: NutrientBreakdown[] = [];
 
   hasData = false;
+  hasTargets = false;
   isVisible = false;
   private observer: IntersectionObserver | null = null;
 
@@ -70,7 +74,9 @@ export class MacronutrientsChartComponent implements OnChanges, AfterViewInit, O
   constructor(
     private chartService: NutritionChartService,
     private elementRef: ElementRef
-  ) {}
+  ) {
+    addIcons({ nutritionOutline });
+  }
 
   ngAfterViewInit(): void {
     // Set up Intersection Observer to trigger animations when chart is visible
@@ -110,10 +116,11 @@ export class MacronutrientsChartComponent implements OnChanges, AfterViewInit, O
       return;
     }
 
-    this.hasData = true;
-
     // Round values to 1 decimal and store for display
     this.calories = Math.round((macroData.calories || 0) * 10) / 10;
+
+    // Check if we have any actual consumption data
+    this.hasData = this.calories > 0;
     this.caloriesTarget = macroData.caloriesTarget ? Math.round(macroData.caloriesTarget * 10) / 10 : 0;
     this.caloriesLeft = this.caloriesTarget - this.calories;
 
@@ -140,7 +147,10 @@ export class MacronutrientsChartComponent implements OnChanges, AfterViewInit, O
     const carbsTargetCals = (macroData.macroAmounts.carbs.target || 0) * 4;
     const totalTargetCals = proteinTargetCals + fatTargetCals + carbsTargetCals;
 
-    if (totalTargetCals > 0) {
+    // Determine if targets exist
+    this.hasTargets = totalTargetCals > 0;
+
+    if (this.hasTargets) {
       this.proteinTargetPercentage = Math.round((proteinTargetCals / totalTargetCals) * 100);
       this.fatTargetPercentage = Math.round((fatTargetCals / totalTargetCals) * 100);
       this.carbsTargetPercentage = Math.round((carbsTargetCals / totalTargetCals) * 100);

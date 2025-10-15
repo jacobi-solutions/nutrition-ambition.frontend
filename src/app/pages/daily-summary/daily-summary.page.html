@@ -44,13 +44,16 @@
 
       <!-- Nutrients View -->
       <div *ngIf="viewMode === 'nutrients'" class="breakdown-container">
+        <!-- Profile and Goals Card -->
+        <app-profile-and-goals></app-profile-and-goals>
+
         <!-- Macronutrients Card -->
         <ion-card [class.expanded]="selectedNutrient">
           <ion-card-header>
             <div class="card-header-with-toggle">
               <ion-card-title>Macronutrients</ion-card-title>
-              <ion-button fill="clear" size="small" class="toggle-btn" (click)="toggleMacroChartView()">
-                <ion-icon [name]="showMacroCharts ? 'list' : 'bar-chart'"></ion-icon>
+              <ion-button fill="clear" size="small" class="toggle-btn" (click)="toggleMacroChartView()" type="button">
+                <ion-icon slot="icon-only" [name]="showMacroCharts ? 'list' : 'bar-chart'"></ion-icon>
               </ion-button>
             </div>
           </ion-card-header>

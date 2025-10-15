@@ -7,6 +7,7 @@ import {
   ChatMessagesResponse,
   RunChatRequest,
   LearnMoreAboutRequest,
+  SetupGoalsRequest,
   SubmitServingSelectionRequest,
   UserSelectedServing,
   ErrorDto,
@@ -123,7 +124,7 @@ export class ChatService {
       topic: topic,
       localDateKey: localDateKey
     });
-    
+
     // Call the API and handle the response
     return this.apiService.learnMoreAbout(request).pipe(
       map(response => {
@@ -132,7 +133,7 @@ export class ChatService {
           // Emit the response so the chat page can reload messages
           this.learnMoreAboutResponseSubject.next(response);
         }
-        
+
         return response;
       }),
       catchError(error => {
@@ -140,7 +141,32 @@ export class ChatService {
       })
     );
   }
-  
+
+
+  // Set up or tweak nutrition goals in chat
+  setupGoals(localDateKey: string, isTweaking: boolean = false): Observable<ChatMessagesResponse> {
+    // Create the request to the backend
+    const request = new SetupGoalsRequest({
+      localDateKey: localDateKey,
+      isTweaking: isTweaking
+    });
+
+    // Call the API and handle the response
+    return this.apiService.setupGoals(request).pipe(
+      map(response => {
+        // Emit a new message received event to indicate the response is complete
+        if (response.isSuccess) {
+          // Emit the response so the chat page can reload messages
+          this.learnMoreAboutResponseSubject.next(response);
+        }
+
+        return response;
+      }),
+      catchError(error => {
+        return throwError(() => error);
+      })
+    );
+  }
 
 
   // Set a context note that will be shown in the chat UI

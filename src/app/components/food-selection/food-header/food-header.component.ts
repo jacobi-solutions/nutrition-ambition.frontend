@@ -27,9 +27,11 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   // Precomputed values for performance
   displayName: string = '';
   servingLabel: string = '';
+  statusTextDisplay: string = '';
   quantityUnitLabel: string = '';
   computedShouldShowQuantityInput: boolean = false;
   computedShouldShowNormalLabel: boolean = false;
+  hasStatusText: boolean = false;
 
   // Macro display
   shouldShowMacros: boolean = false;
@@ -53,15 +55,29 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     // Compute display name
     this.displayName = this.food?.name || '';
 
-    // Compute serving label
+    // Compute serving label and status
     if (this.food && this.food.components && this.food.components.length > 1) {
       // For multi-component foods, show the food-level quantity and unit
       const quantity = this.food.quantity || 1;
       const unit = quantity === 1 ? (this.food.singularUnit || 'serving') : (this.food.pluralUnit || 'servings');
       const componentCount = this.food.components.length;
+
+      // Always set serving label (quantity + unit + component count)
       this.servingLabel = `${quantity} ${unit} - ${componentCount} component${componentCount !== 1 ? 's' : ''}`;
+
+      // Use isPending flag directly (bubbled up from backend)
+      this.hasStatusText = this.food.isPending || false;
+
+      if (this.food.isPending) {
+        // Show status text from backend (e.g., "Calculating components", "Processing 2 of 3 components")
+        this.statusTextDisplay = this.food.statusText || 'Processing';
+      } else {
+        this.statusTextDisplay = '';
+      }
     } else {
       this.servingLabel = '';
+      this.statusTextDisplay = '';
+      this.hasStatusText = false;
     }
 
     // Compute quantity unit label
@@ -84,13 +100,25 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
       return;
     }
 
-    // Aggregate macros from all components
-    const aggregatedMacros = this.aggregateComponentMacros();
-
-    // Always show full macro information for multi-component foods
+    // Always show macros for multi-component foods
     this.shouldShowMacros = true;
     this.shouldShowCaloriesOnly = false;
 
+    // Aggregate macros from all components
+    const aggregatedMacros = this.aggregateComponentMacros();
+
+    // If no macros available yet (all null), show dummy macros
+    const hasAnyMacros = aggregatedMacros.calories !== null ||
+                         aggregatedMacros.protein !== null ||
+                         aggregatedMacros.fat !== null ||
+                         aggregatedMacros.carbs !== null;
+
+    if (!hasAnyMacros) {
+      this.macroSummary = '(?? cal, ?? protein, ?? fat, ?? carbs)';
+      return;
+    }
+
+    // Show real macros (even if partial - e.g., just one component done)
     const parts: string[] = [];
 
     if (aggregatedMacros.calories !== null && aggregatedMacros.calories >= 0) {
@@ -106,7 +134,7 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
       parts.push(`${Math.round(aggregatedMacros.carbs)} carbs`);
     }
 
-    this.macroSummary = parts.length > 0 ? `(${parts.join(', ')})` : '';
+    this.macroSummary = parts.length > 0 ? `(${parts.join(', ')})` : '(?? cal, ?? protein, ?? fat, ?? carbs)';
   }
 
   private aggregateComponentMacros(): { calories: number | null; protein: number | null; fat: number | null; carbs: number | null } {

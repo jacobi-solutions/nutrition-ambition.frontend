@@ -69,7 +69,8 @@
   color: var(--ion-color-danger);
   padding: 16px;
   border-radius: 1rem;
-  background-color: var(--ion-color-danger-tint);
+  background-color: rgba(var(--ion-color-danger-rgb), 0.1);
+  border: 2px solid var(--ion-color-danger);
   margin: 16px 0;
   display: flex;
   align-items: flex-start;
@@ -324,12 +325,20 @@ ion-card {
 
     ion-card-title {
       flex: 1;
+      text-align: center;
     }
 
-    ion-button {
+    .toggle-btn {
       position: absolute;
       right: 0;
-      color: var(--color-sage);
+      --padding-start: 8px;
+      --padding-end: 8px;
+      margin: 0;
+
+      ion-icon {
+        font-size: 1.5rem;
+        color: var(--color-sage);
+      }
     }
   }
 }
@@ -884,21 +893,6 @@ ion-item {
 }
 
 // Chart styling
-.card-header-with-toggle {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-
-  ion-card-title {
-    flex: 1;
-  }
-
-  ion-button {
-    margin: 0;
-  }
-}
-
 .macro-charts-container {
   padding: 0;
 

@@ -1,7 +1,9 @@
 import { Component, Input, OnChanges, SimpleChanges, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
+import { IonGrid, IonRow, IonCol, IonIcon } from '@ionic/angular/standalone';
 import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.service';
+import { addIcons } from 'ionicons';
+import { nutritionOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-fats-chart',
@@ -12,13 +14,15 @@ import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.servi
     CommonModule,
     IonGrid,
     IonRow,
-    IonCol
+    IonCol,
+    IonIcon
   ]
 })
 export class FatsChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() nutrients: NutrientBreakdown[] = [];
 
   hasData = false;
+  hasTargets = false;
   isVisible = false;
   private observer: IntersectionObserver | null = null;
 
@@ -70,7 +74,9 @@ export class FatsChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   // Scale factor for donut chart
   donutScale = 1.2;
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(private elementRef: ElementRef) {
+    addIcons({ nutritionOutline });
+  }
 
   ngAfterViewInit(): void {
     this.observer = new IntersectionObserver((entries) => {
@@ -115,10 +121,31 @@ export class FatsChartComponent implements OnChanges, AfterViewInit, OnDestroy {
       return;
     }
 
-    this.hasData = true;
-
     // Total fat bar
     this.totalFat = Math.round((totalFatNutrient.totalAmount || 0) * 10) / 10;
+
+    // Check if we have any actual consumption data
+    this.hasData = this.totalFat > 0;
+
+    if (!this.hasData) {
+      return;
+    }
+
+    // Check if any fat nutrients have targets
+    this.hasTargets = !!(
+      (totalFatNutrient.maxTarget !== undefined && totalFatNutrient.maxTarget !== null) ||
+      (totalFatNutrient.minTarget !== undefined && totalFatNutrient.minTarget !== null) ||
+      (transNutrient?.maxTarget !== undefined && transNutrient?.maxTarget !== null) ||
+      (transNutrient?.minTarget !== undefined && transNutrient?.minTarget !== null) ||
+      (saturatedNutrient?.maxTarget !== undefined && saturatedNutrient?.maxTarget !== null) ||
+      (saturatedNutrient?.minTarget !== undefined && saturatedNutrient?.minTarget !== null) ||
+      (polyNutrient?.maxTarget !== undefined && polyNutrient?.maxTarget !== null) ||
+      (polyNutrient?.minTarget !== undefined && polyNutrient?.minTarget !== null) ||
+      (monoNutrient?.maxTarget !== undefined && monoNutrient?.maxTarget !== null) ||
+      (monoNutrient?.minTarget !== undefined && monoNutrient?.minTarget !== null)
+    );
+
+    // Total fat target
     this.totalFatTarget = Math.round((totalFatNutrient.maxTarget || totalFatNutrient.minTarget || 0) * 10) / 10;
     this.totalFatPercentage = this.totalFatTarget > 0 ? Math.max((this.totalFat / this.totalFatTarget) * 100, 5) : 15;
 
