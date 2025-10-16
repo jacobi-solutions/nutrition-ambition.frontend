@@ -68,8 +68,7 @@ addIcons({
   templateUrl: './admin.page.html',
   styleUrls: ['./admin.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule],
-  providers: [AlertController, ModalController]
+  imports: [CommonModule, IonicModule, FormsModule]
 })
 export class AdminPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -830,8 +829,25 @@ export class AdminPage implements OnInit, OnDestroy {
   async createBetaAccount() {
     console.log('🔵 createBetaAccount called');
     console.log('🔵 alertController:', this.alertController);
+    console.log('🔵 alertController type:', typeof this.alertController);
+    console.log('🔵 alertController is null?', this.alertController === null);
+    console.log('🔵 alertController is undefined?', this.alertController === undefined);
+
+    if (!this.alertController) {
+      console.error('🔴 CRITICAL: alertController is not defined!');
+      alert('ERROR: AlertController is not available. This is a dependency injection issue.');
+      return;
+    }
+
+    if (typeof this.alertController.create !== 'function') {
+      console.error('🔴 CRITICAL: alertController.create is not a function!');
+      console.log('🔴 alertController methods:', Object.keys(this.alertController));
+      alert('ERROR: AlertController.create is not available.');
+      return;
+    }
 
     try {
+      console.log('🔵 About to call alertController.create...');
       const alert = await this.alertController.create({
         header: 'Create Beta Account',
         message: 'Enter the email address for the new beta user:',
