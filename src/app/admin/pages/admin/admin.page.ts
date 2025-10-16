@@ -141,8 +141,6 @@ export class AdminPage implements OnInit, OnDestroy {
     private modalController: ModalController,
     private router: Router
   ) {
-    console.log('🟢 AdminPage constructor - alertController:', this.alertController);
-    console.log('🟢 AdminPage constructor - modalController:', this.modalController);
   }
 
   ngOnInit() {
@@ -838,27 +836,7 @@ export class AdminPage implements OnInit, OnDestroy {
    * Create a new beta account with Firebase auth and display sign-in link
    */
   async createBetaAccount() {
-    console.log('🔵 createBetaAccount called');
-    console.log('🔵 alertController:', this.alertController);
-    console.log('🔵 alertController type:', typeof this.alertController);
-    console.log('🔵 alertController is null?', this.alertController === null);
-    console.log('🔵 alertController is undefined?', this.alertController === undefined);
-
-    if (!this.alertController) {
-      console.error('🔴 CRITICAL: alertController is not defined!');
-      alert('ERROR: AlertController is not available. This is a dependency injection issue.');
-      return;
-    }
-
-    if (typeof this.alertController.create !== 'function') {
-      console.error('🔴 CRITICAL: alertController.create is not a function!');
-      console.log('🔴 alertController methods:', Object.keys(this.alertController));
-      alert('ERROR: AlertController.create is not available.');
-      return;
-    }
-
     try {
-      console.log('🔵 About to call alertController.create...');
       const alert = await this.alertController.create({
         header: 'Create Beta Account',
         message: 'Enter the email address for the new beta user:',
@@ -909,11 +887,9 @@ export class AdminPage implements OnInit, OnDestroy {
         ]
       });
 
-      console.log('🔵 Alert created:', alert);
       await alert.present();
-      console.log('🔵 Alert presented');
     } catch (error) {
-      console.error('🔴 Error in createBetaAccount:', error);
+      await this.showToast('Error creating beta account', 'danger');
     }
   }
 
@@ -921,29 +897,21 @@ export class AdminPage implements OnInit, OnDestroy {
    * Generate a beta sign-in link for an existing account
    */
   async generateBetaLink(account: Account) {
-    console.log('🔵 generateBetaLink called for account:', account.email);
-
     if (!account.email) {
-      console.log('🔴 No email address for account');
       await this.showToast('Account has no email address', 'danger');
       return;
     }
 
     try {
-      console.log('🔵 Calling adminService.generateBetaSignInLink...');
       const response = await this.adminService.generateBetaSignInLink(account.email);
-      console.log('🔵 generateBetaSignInLink response:', response);
 
       if (response.isSuccess && response.signInLink) {
-        console.log('🔵 Calling showBetaSignInLinkModal...');
         await this.showBetaSignInLinkModal(response.signInLink, account.email, false);
       } else {
         const errorMessage = response.errors?.[0]?.errorMessage || 'Failed to generate sign-in link';
-        console.log('🔴 Failed to generate link:', errorMessage);
         await this.showToast(errorMessage, 'danger');
       }
     } catch (error) {
-      console.error('🔴 Error in generateBetaLink:', error);
       await this.showToast('Error generating beta sign-in link', 'danger');
     }
   }
@@ -952,12 +920,6 @@ export class AdminPage implements OnInit, OnDestroy {
    * Show beta sign-in link in a modal
    */
   private async showBetaSignInLinkModal(signInLink: string, email: string, isNewAccount: boolean) {
-    console.log('🔵 showBetaSignInLinkModal called');
-    console.log('🔵   - signInLink:', signInLink.substring(0, 50) + '...');
-    console.log('🔵   - email:', email);
-    console.log('🔵   - isNewAccount:', isNewAccount);
-    console.log('🔵   - alertController:', this.alertController);
-
     const message = isNewAccount
       ? `Beta account created successfully for ${email}!
 
@@ -965,7 +927,6 @@ Copy the link below and send it to the beta user:`
       : `Beta sign-in link generated for ${email}:`;
 
     try {
-      console.log('🔵 Creating alert with message:', message);
       const alert = await this.alertController.create({
         header: 'Beta Sign-In Link',
         message: message,
@@ -984,13 +945,10 @@ Copy the link below and send it to the beta user:`
           {
             text: 'Copy Link',
             handler: (data) => {
-              console.log('🔵 Copy Link button clicked');
               // Copy to clipboard
               navigator.clipboard.writeText(signInLink).then(() => {
-                console.log('🔵 Link copied to clipboard');
                 this.showToast('Link copied to clipboard!', 'success');
               }).catch((err) => {
-                console.error('🔴 Failed to copy link:', err);
                 this.showToast('Failed to copy link', 'danger');
               });
               return false; // Keep modal open
@@ -1003,11 +961,9 @@ Copy the link below and send it to the beta user:`
         ]
       });
 
-      console.log('🔵 Alert created:', alert);
       await alert.present();
-      console.log('🔵 Alert presented successfully');
     } catch (error) {
-      console.error('🔴 Error in showBetaSignInLinkModal:', error);
+      await this.showToast('Error displaying sign-in link', 'danger');
     }
   }
 

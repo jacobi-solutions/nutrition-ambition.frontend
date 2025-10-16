@@ -416,28 +416,14 @@ export class AdminService {
    * Create a beta account with Firebase auth and generate sign-in link (admin only)
    */
   async createBetaAccount(email: string): Promise<CreateBetaAccountResponse> {
-    console.log('🟣 AdminService.createBetaAccount called with email:', email);
-
     try {
       const request = new CreateBetaAccountRequest({
         email: email
       });
-      console.log('🟣 CreateBetaAccountRequest created:', request);
 
-      console.log('🟣 Calling apiService.createBetaAccount...');
       const response = await firstValueFrom(this.apiService.createBetaAccount(request));
-      console.log('🟣 createBetaAccount response:', response);
-
-      if (response.isSuccess) {
-        console.log('🟢 Beta account created successfully');
-        console.log('🟢 Sign-in link:', response.signInLink?.substring(0, 50) + '...');
-      } else {
-        console.log('🔴 Beta account creation failed:', response.errors);
-      }
-
       return response;
     } catch (error) {
-      console.error('🔴 Error in AdminService.createBetaAccount:', error);
       const errorResponse = new CreateBetaAccountResponse();
       if (!errorResponse.errors) {
         errorResponse.errors = [];
@@ -451,28 +437,14 @@ export class AdminService {
    * Generate a beta sign-in link for an existing account (admin only)
    */
   async generateBetaSignInLink(email: string): Promise<GenerateBetaSignInLinkResponse> {
-    console.log('🟣 AdminService.generateBetaSignInLink called with email:', email);
-
     try {
       const request = new GenerateBetaSignInLinkRequest({
         email: email
       });
-      console.log('🟣 GenerateBetaSignInLinkRequest created:', request);
 
-      console.log('🟣 Calling apiService.generateBetaSignInLink...');
       const response = await firstValueFrom(this.apiService.generateBetaSignInLink(request));
-      console.log('🟣 generateBetaSignInLink response:', response);
-
-      if (response.isSuccess) {
-        console.log('🟢 Beta sign-in link generated successfully');
-        console.log('🟢 Sign-in link:', response.signInLink?.substring(0, 50) + '...');
-      } else {
-        console.log('🔴 Beta sign-in link generation failed:', response.errors);
-      }
-
       return response;
     } catch (error) {
-      console.error('🔴 Error in AdminService.generateBetaSignInLink:', error);
       const errorResponse = new GenerateBetaSignInLinkResponse();
       if (!errorResponse.errors) {
         errorResponse.errors = [];
