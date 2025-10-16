@@ -12,9 +12,6 @@ import { nutritionOutline, checkmarkCircleOutline, alertCircleOutline } from 'io
   standalone: true,
   imports: [
     CommonModule,
-    IonGrid,
-    IonRow,
-    IonCol,
     IonIcon
   ]
 })

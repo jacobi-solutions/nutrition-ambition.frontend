@@ -94,15 +94,14 @@ export class ProfileAndGoalsComponent implements OnInit {
             (response.goalSummary && response.goalSummary.trim().length > 0)
           );
 
-          // Check if user has profile information
+          // Check if user has profile information (exclude baseCalories since it's now a default)
           this.hasProfile = !!(
             response.age ||
             response.sex ||
             response.heightFeet ||
             response.heightInches ||
             response.weightLbs ||
-            response.activityLevel ||
-            response.baseCalories
+            response.activityLevel
           );
 
           // Format goals display

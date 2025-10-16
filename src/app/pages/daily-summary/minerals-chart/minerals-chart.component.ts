@@ -12,9 +12,6 @@ import { nutritionOutline } from 'ionicons/icons';
   standalone: true,
   imports: [
     CommonModule,
-    IonGrid,
-    IonRow,
-    IonCol,
     IonIcon
   ]
 })

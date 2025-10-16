@@ -20,9 +20,6 @@ interface NutrientBar {
   standalone: true,
   imports: [
     CommonModule,
-    IonGrid,
-    IonRow,
-    IonCol,
     IonIcon
   ]
 })

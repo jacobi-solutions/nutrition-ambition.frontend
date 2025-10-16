@@ -18,8 +18,8 @@
       <!-- No Goals State -->
       <div *ngIf="!hasGoals" class="no-goals-state">
         <p class="goals-message">
-          The charts below show your intake, but you haven't set any goals yet.
-          To get the most out of this experience, set up your goals.
+          These charts show your intake compared to generic nutrition targets.
+          To get personalized targets tailored to your goals, set up your profile and goals.
         </p>
         <ion-button class="goals-button" color="tertiary" (click)="onSetupGoals()">
           Set Up Goals
@@ -43,8 +43,8 @@
       <!-- No Profile State -->
       <div *ngIf="!hasProfile" class="no-profile-state">
         <p class="profile-message">
-          The charts below show your intake, but you haven't set up your profile yet.
-          To get personalized targets and recommendations, set up your profile.
+          These charts show your intake compared to generic nutrition targets based on averages.
+          To get personalized targets tailored to your unique needs, set up your profile and goals.
         </p>
         <ion-button class="profile-button" color="tertiary" (click)="onSetupProfile()">
           Set Up Profile
