@@ -1,109 +1,42 @@
-<ion-grid *ngIf="hasData" [class.animate]="isVisible">
-  <ion-row>
-    <!-- Total Fat Bar Chart -->
-    <ion-col size="4.5">
-      <div class="chart-wrapper">
-        <div class="bar-chart">
-          <div class="bar-group">
-            <span class="target-label" *ngIf="hasTargets">Target: {{ totalFatTarget || 'N/A' }} g</span>
-            <div class="bar ghost-bar" *ngIf="hasTargets"></div>
-            <div class="bar consumed-bar" [style.height.%]="totalFatPercentage">
-              <span class="bar-value-label">{{ totalFat }} g</span>
-            </div>
-            <span class="bar-label">Total Fat</span>
-          </div>
-        </div>
-        <div class="chart-tip" *ngIf="hasTargets">
-          Healthy fats are essential for nutrient absorption
-        </div>
-        <div class="chart-tip" *ngIf="!hasTargets">
-          {{ totalFat | number:'1.0-1' }}g of fat consumed today
-        </div>
-      </div>
-    </ion-col>
+<div *ngIf="hasData" class="fats-container" [class.animate]="isVisible">
+  <div class="bar-chart">
+    <!-- Trans Fat Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets" [style.bottom.%]="0"></div>
+      <div class="bar trans-bar" [style.height.%]="transBarHeight"></div>
+      <div class="bar-label">Trans Fat</div>
+      <div class="bar-value">{{ transGrams }}g</div>
+    </div>
 
-    <!-- Fat Types Donut Chart -->
-    <ion-col size="7.5">
-      <div class="chart-wrapper">
-        <div class="donut-chart-container">
-          <span class="animation-label targets-label" *ngIf="hasTargets">Targets</span>
-          <span class="animation-label actual-label">Actual</span>
-          <div class="donut-chart" [style.transform]="'scale(' + donutScale + ')'">
-            <svg viewBox="-10 -10 120 120">
-              <!-- Target ring (only 3 fats) -->
-              <g *ngIf="hasTargets">
-                <circle class="donut-target saturated-target" cx="50" cy="50" r="25"
-                        [attr.stroke-dasharray]="saturatedTargetPercentage * 1.571 + ' ' + 157.1"
-                        [attr.stroke-dashoffset]="0"></circle>
-                <circle class="donut-target poly-target" cx="50" cy="50" r="25"
-                        [attr.stroke-dasharray]="polyTargetPercentage * 1.571 + ' ' + 157.1"
-                        [attr.stroke-dashoffset]="-saturatedTargetPercentage * 1.571"></circle>
-                <circle class="donut-target mono-target" cx="50" cy="50" r="25"
-                        [attr.stroke-dasharray]="monoTargetPercentage * 1.571 + ' ' + 157.1"
-                        [attr.stroke-dashoffset]="-(saturatedTargetPercentage + polyTargetPercentage) * 1.571"></circle>
-              </g>
+    <!-- Saturated Fat Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && saturatedTargetGrams > 0" [style.bottom.%]="saturatedTargetPosition"></div>
+      <div class="bar saturated-bar" [style.height.%]="saturatedBarHeight"></div>
+      <div class="bar-label">Saturated Fat</div>
+      <div class="bar-value">{{ saturatedGrams }}g</div>
+    </div>
 
-              <!-- Actual consumption ring (only 3 fats) -->
-              <circle class="donut-segment saturated-segment" cx="50" cy="50" r="30"
-                      [attr.stroke-dasharray]="saturatedPercentage * 1.885 + ' ' + 188.5"
-                      [attr.stroke-dashoffset]="0"></circle>
-              <circle class="donut-segment poly-segment" cx="50" cy="50" r="30"
-                      [attr.stroke-dasharray]="polyPercentage * 1.885 + ' ' + 188.5"
-                      [attr.stroke-dashoffset]="-saturatedPercentage * 1.885"></circle>
-              <circle class="donut-segment mono-segment" cx="50" cy="50" r="30"
-                      [attr.stroke-dasharray]="monoPercentage * 1.885 + ' ' + 188.5"
-                      [attr.stroke-dashoffset]="-(saturatedPercentage + polyPercentage) * 1.885"></circle>
+    <!-- Monounsaturated Fat Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && monoTargetGrams > 0" [style.bottom.%]="monoTargetPosition"></div>
+      <div class="bar mono-bar" [style.height.%]="monoBarHeight"></div>
+      <div class="bar-label">Mono Fat</div>
+      <div class="bar-value">{{ monoGrams }}g</div>
+    </div>
 
-              <!-- Actual percentage labels (only 3 fats) -->
-              <text *ngIf="saturatedPercentage > 0" class="percentage-label saturated-label" [attr.x]="saturatedLabelX" [attr.y]="saturatedLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + saturatedLabelRotation + ', ' + saturatedLabelX + ', ' + saturatedLabelY + ')'">{{ saturatedPercentage }}%</text>
-              <text *ngIf="polyPercentage > 0" class="percentage-label poly-label" [attr.x]="polyLabelX" [attr.y]="polyLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + polyLabelRotation + ', ' + polyLabelX + ', ' + polyLabelY + ')'">{{ polyPercentage }}%</text>
-              <text *ngIf="monoPercentage > 0" class="percentage-label mono-label" [attr.x]="monoLabelX" [attr.y]="monoLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + monoLabelRotation + ', ' + monoLabelX + ', ' + monoLabelY + ')'">{{ monoPercentage }}%</text>
+    <!-- Polyunsaturated Fat Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && polyTargetGrams > 0" [style.bottom.%]="polyTargetPosition"></div>
+      <div class="bar poly-bar" [style.height.%]="polyBarHeight"></div>
+      <div class="bar-label">Poly Fat</div>
+      <div class="bar-value">{{ polyGrams }}g</div>
+    </div>
+  </div>
 
-              <!-- Target percentage labels (only 3 fats) -->
-              <g *ngIf="hasTargets">
-                <text *ngIf="saturatedTargetPercentage > 0" class="target-percentage-label saturated-target-label" [attr.x]="saturatedTargetLabelX" [attr.y]="saturatedTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + saturatedTargetLabelRotation + ', ' + saturatedTargetLabelX + ', ' + saturatedTargetLabelY + ')'">{{ saturatedTargetPercentage }}%</text>
-                <text *ngIf="polyTargetPercentage > 0" class="target-percentage-label poly-target-label" [attr.x]="polyTargetLabelX" [attr.y]="polyTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + polyTargetLabelRotation + ', ' + polyTargetLabelX + ', ' + polyTargetLabelY + ')'">{{ polyTargetPercentage }}%</text>
-                <text *ngIf="monoTargetPercentage > 0" class="target-percentage-label mono-target-label" [attr.x]="monoTargetLabelX" [attr.y]="monoTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + monoTargetLabelRotation + ', ' + monoTargetLabelX + ', ' + monoTargetLabelY + ')'">{{ monoTargetPercentage }}%</text>
-              </g>
-            </svg>
-          </div>
-          <div class="chart-tip" *ngIf="hasTargets">
-            Goal is to keep Trans fat to 0, Limit saturated fats below your target, and focus on poly & mono
-          </div>
-          <div class="chart-tip" *ngIf="!hasTargets">
-            Track your fat intake throughout the day
-          </div>
-        </div>
-        <div class="chart-values">
-          <div class="value-item">
-            <span class="value-dot trans-dot"></span>
-            <span class="value-label">Trans:</span>
-            <span class="value-number" *ngIf="hasTargets">{{ transGrams }}g / {{ transTargetGrams }}g</span>
-            <span class="value-number" *ngIf="!hasTargets">{{ transGrams }}g</span>
-          </div>
-          <div class="value-item">
-            <span class="value-dot saturated-dot"></span>
-            <span class="value-label">Saturated:</span>
-            <span class="value-number" *ngIf="hasTargets">{{ saturatedGrams }}g / {{ saturatedTargetGrams }}g</span>
-            <span class="value-number" *ngIf="!hasTargets">{{ saturatedGrams }}g</span>
-          </div>
-          <div class="value-item">
-            <span class="value-dot poly-dot"></span>
-            <span class="value-label">Poly:</span>
-            <span class="value-number" *ngIf="hasTargets">{{ polyGrams }}g / {{ polyTargetGrams }}g</span>
-            <span class="value-number" *ngIf="!hasTargets">{{ polyGrams }}g</span>
-          </div>
-          <div class="value-item">
-            <span class="value-dot mono-dot"></span>
-            <span class="value-label">Mono:</span>
-            <span class="value-number" *ngIf="hasTargets">{{ monoGrams }}g / {{ monoTargetGrams }}g</span>
-            <span class="value-number" *ngIf="!hasTargets">{{ monoGrams }}g</span>
-          </div>
-        </div>
-      </div>
-    </ion-col>
-  </ion-row>
-</ion-grid>
+  <div class="chart-tip">
+    Aim to keep trans fat at 0 or as little as possible. Keep saturated fat below your target. Watch the other fats, but there's no strict limit aside from what you already watch in your macros.
+  </div>
+</div>
 
 <!-- Empty state -->
 <div class="empty-state" *ngIf="!hasData">
