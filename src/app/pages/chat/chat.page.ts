@@ -680,7 +680,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
         // Force final update immediately
         this.ngZone.run(() => {
+          console.log('[CHAT] Stream complete. streamingMessageIndex:', streamingMessageIndex, 'pendingContent length:', pendingContent?.length);
+
           if (streamingMessageIndex !== -1) {
+            // Message was created during streaming - update it
             const updatedMessages = [...this.messages];
             const existingMessage = updatedMessages[streamingMessageIndex];
             updatedMessages[streamingMessageIndex] = {
@@ -696,6 +699,22 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             if (!this.isUserScrolledUp) {
               this.scrollToBottom();
             }
+          } else if (pendingContent && pendingContent.trim().length > 0) {
+            // Message was never created during streaming (arrived too fast) - create it now
+            console.log('[CHAT] Creating message in onComplete because streaming was too fast');
+            this.isLoading = false;
+            this.messages = [...this.messages, {
+              id: `streaming-${Date.now()}`,
+              text: pendingContent,
+              isUser: false,
+              timestamp: new Date(),
+              role: MessageRoleTypes.Assistant,
+              isStreaming: false
+            }];
+            this.cdr.detectChanges();
+            this.scrollToBottom();
+          } else {
+            console.log('[CHAT] No pending content to display');
           }
 
           this.isStreamingActive = false; // Re-enable sending
