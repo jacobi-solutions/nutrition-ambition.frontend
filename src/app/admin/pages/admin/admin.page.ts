@@ -1,7 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, AlertController, ModalController } from '@ionic/angular';
+import {
+  IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+  IonSegment, IonSegmentButton, IonLabel, IonSpinner, IonBadge, IonChip, IonInput,
+  IonSelect, IonSelectOption, IonBackButton, IonAlert,
+  AlertController, ModalController
+} from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AccountsService } from '../../../services/accounts.service';
@@ -68,7 +73,13 @@ addIcons({
   templateUrl: './admin.page.html',
   styleUrls: ['./admin.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+    IonSegment, IonSegmentButton, IonLabel, IonSpinner, IonBadge, IonChip, IonInput,
+    IonSelect, IonSelectOption, IonBackButton, IonAlert
+  ]
 })
 export class AdminPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
