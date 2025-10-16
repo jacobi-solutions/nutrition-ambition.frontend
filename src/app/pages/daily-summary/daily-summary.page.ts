@@ -50,6 +50,7 @@ import { MacronutrientsChartComponent } from './macronutrients-chart/macronutrie
 import { ElectrolytesChartComponent } from './electrolytes-chart/electrolytes-chart.component';
 import { VitaminsChartComponent } from './vitamins-chart/vitamins-chart.component';
 import { FatsChartComponent } from './fats-chart/fats-chart.component';
+import { SugarsChartComponent } from './sugars-chart/sugars-chart.component';
 import { ProfileAndGoalsComponent } from './profile-and-goals/profile-and-goals.component';
 import { ToastService } from 'src/app/services/toast.service';
 import { ViewWillEnter } from '@ionic/angular';
@@ -88,6 +89,7 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
     ElectrolytesChartComponent,
     VitaminsChartComponent,
     FatsChartComponent,
+    SugarsChartComponent,
     ProfileAndGoalsComponent
   ]
 })
@@ -135,6 +137,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   showElectrolyteCharts = true;
   showVitaminCharts = true;
   showFatsCharts = true;
+  showSugarsCharts = true;
 
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);
@@ -299,10 +302,19 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
   }
 
+  // Get sugars list
+  get sugarsList(): NutrientBreakdownDisplay[] {
+    const sugarsKeys = ['sugar', 'total_sugars', 'added_sugars'];
+    return sugarsKeys
+      .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
+      .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
+  }
+
   // Sort micronutrients using sortOrder field (set by backend)
   get micronutrientList(): NutrientBreakdownDisplay[] {
     const electrolyteKeys = ['sodium', 'potassium', 'magnesium', 'calcium'];
     const fatsKeys = ['saturated_fat', 'trans_fat', 'polyunsaturated_fat', 'monounsaturated_fat'];
+    const sugarsKeys = ['sugar', 'total_sugars', 'added_sugars'];
     const vitaminKeys = [
       'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_e', 'vitamin_k',
       'thiamin', 'riboflavin', 'niacin', 'vitamin_b6',
@@ -314,6 +326,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
         return !['calories', 'protein', 'fat', 'carbohydrate'].includes(key)
           && !electrolyteKeys.includes(key)
           && !fatsKeys.includes(key)
+          && !sugarsKeys.includes(key)
           && !vitaminKeys.includes(key);
       })
       .sort((a, b) => {
@@ -1054,5 +1067,9 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   toggleFatsChartView(): void {
     this.showFatsCharts = !this.showFatsCharts;
+  }
+
+  toggleSugarsChartView(): void {
+    this.showSugarsCharts = !this.showSugarsCharts;
   }
 }

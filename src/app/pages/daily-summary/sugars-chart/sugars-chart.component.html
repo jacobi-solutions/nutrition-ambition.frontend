@@ -1,0 +1,33 @@
+<div *ngIf="hasData" class="sugars-container" [class.animate]="isVisible">
+  <div class="bar-chart">
+    <!-- Total Sugars Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && totalSugarsTargetGrams > 0" [style.bottom.%]="totalSugarsTargetPosition"></div>
+      <div class="bar total-sugars-bar" [style.height.%]="totalSugarsBarHeight"></div>
+      <div class="bar-label">Total Sugars</div>
+      <div class="bar-value">{{ totalSugarsGrams }}g</div>
+    </div>
+
+    <!-- Added Sugars Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && addedSugarsTargetGrams > 0" [style.bottom.%]="addedSugarsTargetPosition"></div>
+      <div class="bar added-sugars-bar" [style.height.%]="addedSugarsBarHeight"></div>
+      <div class="bar-label">Added Sugars</div>
+      <div class="bar-value">{{ addedSugarsGrams }}g</div>
+    </div>
+  </div>
+
+  <div class="chart-tip">
+    Keep both total sugars and added sugars below your targets for better health outcomes.
+  </div>
+</div>
+
+<!-- Empty state -->
+<div class="empty-state" *ngIf="!hasData">
+  <div class="empty-state-content">
+    <ion-icon name="nutrition-outline" class="empty-state-icon"></ion-icon>
+    <h2>Nothing logged yet</h2>
+    <p>No meals or foods have been logged for this date.</p>
+    <p>Head over to the Chat tab to start tracking your sugars!</p>
+  </div>
+</div>
