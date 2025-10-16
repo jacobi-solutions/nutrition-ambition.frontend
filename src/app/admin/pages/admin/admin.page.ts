@@ -68,7 +68,8 @@ addIcons({
   templateUrl: './admin.page.html',
   styleUrls: ['./admin.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [CommonModule, IonicModule, FormsModule],
+  providers: [AlertController, ModalController]
 })
 export class AdminPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
