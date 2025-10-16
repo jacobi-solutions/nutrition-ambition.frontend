@@ -1,0 +1,29 @@
+<div *ngIf="hasData" class="other-nutrients-container" [class.animate]="isVisible">
+  <div class="bar-chart">
+    <!-- Dynamic bars for each nutrient -->
+    <div class="bar-group" *ngFor="let bar of nutrientBars; let i = index">
+      <div class="target-line"
+           *ngIf="hasTarget(bar)"
+           [style.bottom.%]="bar.targetPosition"></div>
+      <div class="bar"
+           [style.height.%]="bar.barHeight"
+           [style.background]="getBarColor(i)"></div>
+      <div class="bar-label">{{ bar.nutrient.nutrientName || bar.nutrient.nutrientKey }}</div>
+      <div class="bar-value">{{ bar.displayValue }}</div>
+    </div>
+  </div>
+
+  <div class="chart-tip">
+    Track additional nutrients that don't fit into other categories. Aim to meet your daily targets.
+  </div>
+</div>
+
+<!-- Empty state -->
+<div class="empty-state" *ngIf="!hasData">
+  <div class="empty-state-content">
+    <ion-icon name="nutrition-outline" class="empty-state-icon"></ion-icon>
+    <h2>Nothing logged yet</h2>
+    <p>No meals or foods have been logged for this date.</p>
+    <p>Head over to the Chat tab to start tracking your nutrition!</p>
+  </div>
+</div>

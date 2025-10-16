@@ -40,6 +40,13 @@ ion-content[fullscreen] {
   max-width: 90%;
   animation: fadeIn 0.3s ease-in;
 
+  // Enable text selection for context notes
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  cursor: text;
+
  
 
   .context-note-status {
@@ -81,6 +88,10 @@ ion-content[fullscreen] {
 .chat-container {
   display: flex;
   flex-direction: column;
+
+  // Ensure text selection works properly in the chat container
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .messages {

@@ -1,0 +1,65 @@
+<div *ngIf="hasData" class="minerals-container" [class.animate]="isVisible">
+  <div class="bar-chart">
+    <!-- Iron Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && ironTargetGrams > 0" [style.bottom.%]="ironTargetPosition"></div>
+      <div class="bar iron-bar" [style.height.%]="ironBarHeight"></div>
+      <div class="bar-label">Iron</div>
+      <div class="bar-value">{{ ironGrams }}mg</div>
+    </div>
+
+    <!-- Zinc Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && zincTargetGrams > 0" [style.bottom.%]="zincTargetPosition"></div>
+      <div class="bar zinc-bar" [style.height.%]="zincBarHeight"></div>
+      <div class="bar-label">Zinc</div>
+      <div class="bar-value">{{ zincGrams }}mg</div>
+    </div>
+
+    <!-- Selenium Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && seleniumTargetGrams > 0" [style.bottom.%]="seleniumTargetPosition"></div>
+      <div class="bar selenium-bar" [style.height.%]="seleniumBarHeight"></div>
+      <div class="bar-label">Selenium</div>
+      <div class="bar-value">{{ seleniumGrams }}mcg</div>
+    </div>
+
+    <!-- Copper Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && copperTargetGrams > 0" [style.bottom.%]="copperTargetPosition"></div>
+      <div class="bar copper-bar" [style.height.%]="copperBarHeight"></div>
+      <div class="bar-label">Copper</div>
+      <div class="bar-value">{{ copperGrams }}mg</div>
+    </div>
+
+    <!-- Manganese Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && manganeseTargetGrams > 0" [style.bottom.%]="manganeseTargetPosition"></div>
+      <div class="bar manganese-bar" [style.height.%]="manganeseBarHeight"></div>
+      <div class="bar-label">Manganese</div>
+      <div class="bar-value">{{ manganeseGrams }}mg</div>
+    </div>
+
+    <!-- Phosphorus Bar -->
+    <div class="bar-group">
+      <div class="target-line" *ngIf="hasTargets && phosphorusTargetGrams > 0" [style.bottom.%]="phosphorusTargetPosition"></div>
+      <div class="bar phosphorus-bar" [style.height.%]="phosphorusBarHeight"></div>
+      <div class="bar-label">Phosphorus</div>
+      <div class="bar-value">{{ phosphorusGrams }}mg</div>
+    </div>
+  </div>
+
+  <div class="chart-tip">
+    Track your intake of essential trace minerals. Aim to meet your daily targets for optimal health.
+  </div>
+</div>
+
+<!-- Empty state -->
+<div class="empty-state" *ngIf="!hasData">
+  <div class="empty-state-content">
+    <ion-icon name="nutrition-outline" class="empty-state-icon"></ion-icon>
+    <h2>Nothing logged yet</h2>
+    <p>No meals or foods have been logged for this date.</p>
+    <p>Head over to the Chat tab to start tracking your minerals!</p>
+  </div>
+</div>

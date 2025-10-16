@@ -76,11 +76,14 @@ ion-card {
   }
 
   .goals-display {
+    padding-left: 2rem;
+    padding-right: 2rem;
     font-size: 0.95rem;
     line-height: 1.6;
     margin-bottom: 12px;
     white-space: pre-line;
     color: var(--ion-text-color);
+    text-align: left;
   }
 
   .goals-button {
