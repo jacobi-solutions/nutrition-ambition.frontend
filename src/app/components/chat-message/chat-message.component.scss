@@ -14,7 +14,18 @@
   position: relative;
   word-wrap: break-word;
   box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
-  
+  transition: opacity 0.15s ease-in;
+
+  // Enable text selection with proper browser support
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+
+  // Allow touch events to work properly for selection on mobile/PWA
+  touch-action: manipulation;
+  -webkit-touch-callout: default; // Allow iOS long-press menu for copy/paste
+
   // Make messages with food options much wider
   &.has-food-options {
     max-width: 95%;
@@ -61,7 +72,16 @@
   font-size: 15px;
   line-height: 1.4;
   white-space: pre-wrap;
-  
+
+  // Explicitly enable text selection for message content
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+
+  // Ensure cursor shows text selection is possible
+  cursor: text;
+
   /* Markdown styling */
   ::ng-deep {
     p {

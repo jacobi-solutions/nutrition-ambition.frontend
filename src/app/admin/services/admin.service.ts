@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
-import { 
+import {
   NutritionAmbitionApiService,
   GetFeedbackWithAccountInfoRequest,
   GetFeedbackWithAccountInfoResponse,
@@ -24,6 +24,16 @@ import {
   ClearAccountDataResponse,
   GetAccountDataCountsRequest,
   GetAccountDataCountsResponse,
+  CreateBetaAccountRequest,
+  CreateBetaAccountResponse,
+  GenerateBetaSignInLinkRequest,
+  GenerateBetaSignInLinkResponse,
+  UploadGuidelineFileRequest,
+  UploadGuidelineFileResponse,
+  GetGuidelineFilesRequest,
+  GetGuidelineFilesResponse,
+  DeleteGuidelineFileRequest,
+  DeleteGuidelineFileResponse,
   ErrorDto
 } from '../../services/nutrition-ambition-api.service';
 
@@ -401,4 +411,119 @@ export class AdminService {
       return errorResponse;
     }
   }
-} 
+
+  /**
+   * Create a beta account with Firebase auth and generate sign-in link (admin only)
+   */
+  async createBetaAccount(email: string): Promise<CreateBetaAccountResponse> {
+    try {
+      const request = new CreateBetaAccountRequest({
+        email: email
+      });
+
+      const response = await firstValueFrom(this.apiService.createBetaAccount(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new CreateBetaAccountResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while creating the beta account.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Generate a beta sign-in link for an existing account (admin only)
+   */
+  async generateBetaSignInLink(email: string): Promise<GenerateBetaSignInLinkResponse> {
+    try {
+      const request = new GenerateBetaSignInLinkRequest({
+        email: email
+      });
+
+      const response = await firstValueFrom(this.apiService.generateBetaSignInLink(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new GenerateBetaSignInLinkResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while generating the beta sign-in link.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Upload a guideline file to OpenAI
+   */
+  async uploadGuidelineFile(file: File): Promise<UploadGuidelineFileResponse> {
+    try {
+      // Read file as ArrayBuffer
+      const arrayBuffer = await file.arrayBuffer();
+
+      // Convert to base64
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < uint8Array.byteLength; i++) {
+        binary += String.fromCharCode(uint8Array[i]);
+      }
+      const base64Data = btoa(binary);
+
+      const request = new UploadGuidelineFileRequest({
+        fileName: file.name,
+        contentType: file.type || 'application/octet-stream',
+        base64Data: base64Data
+      });
+
+      const response = await firstValueFrom(this.apiService.uploadGuidelineFile(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new UploadGuidelineFileResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while uploading the file.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Get all guideline files
+   */
+  async getGuidelineFiles(): Promise<GetGuidelineFilesResponse> {
+    try {
+      const request = new GetGuidelineFilesRequest();
+      const response = await firstValueFrom(this.apiService.getGuidelineFiles(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new GetGuidelineFilesResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while retrieving guideline files.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Delete a guideline file
+   */
+  async deleteGuidelineFile(fileId: string): Promise<DeleteGuidelineFileResponse> {
+    try {
+      const request = new DeleteGuidelineFileRequest({
+        openAiFileId: fileId
+      });
+
+      const response = await firstValueFrom(this.apiService.deleteGuidelineFile(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new DeleteGuidelineFileResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while deleting the file.' }));
+      return errorResponse;
+    }
+  }
+}

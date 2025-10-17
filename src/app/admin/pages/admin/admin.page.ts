@@ -1,7 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, AlertController, ModalController } from '@ionic/angular';
+import {
+  IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+  IonSegment, IonSegmentButton, IonLabel, IonSpinner, IonBadge, IonChip, IonInput,
+  IonSelect, IonSelectOption, IonBackButton, IonAlert,
+  AlertController, ModalController
+} from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { AccountsService } from '../../../services/accounts.service';
@@ -10,7 +15,7 @@ import { Account, FeedbackEntry, FeedbackWithAccount, ChatMessage } from '../../
 import { ToastService } from '../../../services/toast.service';
 import { DebugViewComponent } from '../../components/debug-view/debug-view.component';
 import { addIcons } from 'ionicons';
-import { 
+import {
   analyticsOutline,
   chatbubblesOutline,
   eyeOutline,
@@ -22,6 +27,8 @@ import {
   bulbOutline,
   helpOutline,
   documentOutline,
+  documentTextOutline,
+  cloudUploadOutline,
   phonePortraitOutline,
   terminalOutline,
   radioButtonOnOutline,
@@ -29,7 +36,9 @@ import {
   closeOutline,
   arrowBackOutline,
   chevronUpOutline,
-  chevronDownOutline
+  chevronDownOutline,
+  personAddOutline,
+  linkOutline
 } from 'ionicons/icons';
 
 // Register all icons used in this component
@@ -45,6 +54,8 @@ addIcons({
   'bulb-outline': bulbOutline,
   'help-outline': helpOutline,
   'document-outline': documentOutline,
+  'document-text-outline': documentTextOutline,
+  'cloud-upload-outline': cloudUploadOutline,
   'phone-portrait-outline': phonePortraitOutline,
   'terminal-outline': terminalOutline,
   'radio-button-on-outline': radioButtonOnOutline,
@@ -52,7 +63,9 @@ addIcons({
   'close': closeOutline,
   'arrow-back-outline': arrowBackOutline,
   'chevron-up-outline': chevronUpOutline,
-  'chevron-down-outline': chevronDownOutline
+  'chevron-down-outline': chevronDownOutline,
+  'person-add-outline': personAddOutline,
+  'link-outline': linkOutline
 });
 
 @Component({
@@ -60,7 +73,13 @@ addIcons({
   templateUrl: './admin.page.html',
   styleUrls: ['./admin.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonicModule, FormsModule]
+  imports: [
+    CommonModule,
+    FormsModule,
+    IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+    IonSegment, IonSegmentButton, IonLabel, IonSpinner, IonBadge, IonChip, IonInput,
+    IonSelect, IonSelectOption, IonBackButton, IonAlert
+  ]
 })
 export class AdminPage implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -98,7 +117,7 @@ export class AdminPage implements OnInit, OnDestroy {
   feedbackTypes = ['bug', 'feature', 'other'];
   
   // Current view
-  currentView: 'overview' | 'feedback' | 'accounts' = 'feedback';
+  currentView: 'overview' | 'feedback' | 'accounts' | 'guidelines' = 'feedback';
 
   // Accounts management
   accounts: Account[] = [];
@@ -109,6 +128,11 @@ export class AdminPage implements OnInit, OnDestroy {
   lastDeletionAudit: any = null;
   lastClearAudit: any = null;
 
+  // Guideline files management
+  guidelineFiles: any[] = [];
+  isLoadingGuidelineFiles = false;
+  isUploadingFile = false;
+
   constructor(
     private accountsService: AccountsService,
     private adminService: AdminService,
@@ -116,7 +140,8 @@ export class AdminPage implements OnInit, OnDestroy {
     private toastService: ToastService,
     private modalController: ModalController,
     private router: Router
-  ) {}
+  ) {
+  }
 
   ngOnInit() {
     
@@ -155,13 +180,15 @@ export class AdminPage implements OnInit, OnDestroy {
   // View management
   async onViewChange(event: any) {
     const newView = event.detail.value;
-    
+
     if (newView === 'overview') {
       await this.switchToOverview();
     } else if (newView === 'feedback') {
       await this.switchToFeedback();
     } else if (newView === 'accounts') {
       await this.switchToAccounts();
+    } else if (newView === 'guidelines') {
+      await this.switchToGuidelines();
     }
   }
 
@@ -185,6 +212,11 @@ export class AdminPage implements OnInit, OnDestroy {
     if (this.accounts.length === 0) {
       await this.loadAccounts();
     }
+  }
+
+  async switchToGuidelines() {
+    this.currentView = 'guidelines';
+    await this.loadGuidelineFiles();
   }
 
   // Data loading
@@ -799,4 +831,237 @@ export class AdminPage implements OnInit, OnDestroy {
     if (message.length <= maxLength) return message;
     return message.substring(0, maxLength) + '...';
   }
-} 
+
+  /**
+   * Create a new beta account with Firebase auth and display sign-in link
+   */
+  async createBetaAccount() {
+    try {
+      const alert = await this.alertController.create({
+        header: 'Create Beta Account',
+        message: 'Enter the email address for the new beta user:',
+        inputs: [
+          {
+            name: 'email',
+            type: 'email',
+            placeholder: 'beta@example.com'
+          }
+        ],
+        buttons: [
+          {
+            text: 'Cancel',
+            role: 'cancel'
+          },
+          {
+            text: 'Create',
+            handler: async (data) => {
+              const email = data.email?.trim();
+              if (!email) {
+                await this.showToast('Email address is required', 'danger');
+                return false;
+              }
+
+              // Basic email validation
+              if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                await this.showToast('Please enter a valid email address', 'danger');
+                return false;
+              }
+
+              try {
+                const response = await this.adminService.createBetaAccount(email);
+                if (response.isSuccess && response.signInLink) {
+                  // Show the sign-in link in a modal
+                  await this.showBetaSignInLinkModal(response.signInLink, email, true);
+                  // Refresh accounts list
+                  await this.loadAccounts();
+                } else {
+                  const errorMessage = response.errors?.[0]?.errorMessage || 'Failed to create beta account';
+                  await this.showToast(errorMessage, 'danger');
+                }
+              } catch (error) {
+                await this.showToast('Error creating beta account', 'danger');
+              }
+              return true;
+            }
+          }
+        ]
+      });
+
+      await alert.present();
+    } catch (error) {
+      await this.showToast('Error creating beta account', 'danger');
+    }
+  }
+
+  /**
+   * Generate a beta sign-in link for an existing account
+   */
+  async generateBetaLink(account: Account) {
+    if (!account.email) {
+      await this.showToast('Account has no email address', 'danger');
+      return;
+    }
+
+    try {
+      const response = await this.adminService.generateBetaSignInLink(account.email);
+
+      if (response.isSuccess && response.signInLink) {
+        await this.showBetaSignInLinkModal(response.signInLink, account.email, false);
+      } else {
+        const errorMessage = response.errors?.[0]?.errorMessage || 'Failed to generate sign-in link';
+        await this.showToast(errorMessage, 'danger');
+      }
+    } catch (error) {
+      await this.showToast('Error generating beta sign-in link', 'danger');
+    }
+  }
+
+  /**
+   * Show beta sign-in link in a modal
+   */
+  private async showBetaSignInLinkModal(signInLink: string, email: string, isNewAccount: boolean) {
+    const message = isNewAccount
+      ? `Beta account created successfully for ${email}!
+
+Copy the link below and send it to the beta user:`
+      : `Beta sign-in link generated for ${email}:`;
+
+    try {
+      const alert = await this.alertController.create({
+        header: 'Beta Sign-In Link',
+        message: message,
+        inputs: [
+          {
+            name: 'link',
+            type: 'textarea',
+            value: signInLink,
+            attributes: {
+              readonly: true,
+              rows: 6
+            }
+          }
+        ],
+        buttons: [
+          {
+            text: 'Copy Link',
+            handler: (data) => {
+              // Copy to clipboard
+              navigator.clipboard.writeText(signInLink).then(() => {
+                this.showToast('Link copied to clipboard!', 'success');
+              }).catch((err) => {
+                this.showToast('Failed to copy link', 'danger');
+              });
+              return false; // Keep modal open
+            }
+          },
+          {
+            text: 'OK',
+            role: 'cancel'
+          }
+        ]
+      });
+
+      await alert.present();
+    } catch (error) {
+      await this.showToast('Error displaying sign-in link', 'danger');
+    }
+  }
+
+  // Guideline Files Management
+
+  async loadGuidelineFiles() {
+    try {
+      this.isLoadingGuidelineFiles = true;
+      const response = await this.adminService.getGuidelineFiles();
+      if (response.isSuccess && response.files) {
+        this.guidelineFiles = response.files;
+      } else {
+        await this.showToast('Error loading guideline files', 'danger');
+      }
+    } catch (error) {
+      await this.showToast('Error loading guideline files', 'danger');
+    } finally {
+      this.isLoadingGuidelineFiles = false;
+    }
+  }
+
+  async onFileSelected(event: any) {
+    const file: File = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['.txt', '.md', '.pdf', '.js', '.ts', '.py', '.json', '.xml', '.html', '.css'];
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!validTypes.includes(fileExtension)) {
+      await this.showToast('Invalid file type. Please upload a text, PDF, or code file.', 'warning');
+      return;
+    }
+
+    // Validate file size (max 100MB)
+    if (file.size > 100 * 1024 * 1024) {
+      await this.showToast('File is too large. Maximum size is 100MB.', 'warning');
+      return;
+    }
+
+    try {
+      this.isUploadingFile = true;
+      const response = await this.adminService.uploadGuidelineFile(file);
+
+      if (response.isSuccess) {
+        await this.showToast('File uploaded successfully!', 'success');
+        await this.loadGuidelineFiles(); // Refresh the list
+      } else {
+        const errorMessage = response.errors?.[0]?.errorMessage || 'Failed to upload file';
+        await this.showToast(errorMessage, 'danger');
+      }
+    } catch (error) {
+      await this.showToast('Error uploading file', 'danger');
+    } finally {
+      this.isUploadingFile = false;
+      // Reset file input
+      event.target.value = '';
+    }
+  }
+
+  async deleteGuidelineFile(file: any) {
+    const alert = await this.alertController.create({
+      header: 'Delete File',
+      message: `Are you sure you want to delete "${file.fileName}"? This will remove the file from OpenAI and cannot be undone.`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: async () => {
+            try {
+              const response = await this.adminService.deleteGuidelineFile(file.id);
+              if (response.isSuccess) {
+                await this.showToast('File deleted successfully', 'success');
+                await this.loadGuidelineFiles(); // Refresh the list
+              } else {
+                await this.showToast('Error deleting file', 'danger');
+              }
+            } catch (error) {
+              await this.showToast('Error deleting file', 'danger');
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+}

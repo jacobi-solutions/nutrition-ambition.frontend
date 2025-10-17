@@ -1,6 +1,6 @@
 
 <!-- Individual Component Item -->
-<div *ngIf="component" class="food-item-row-simple" [id]="'row-' + component.componentId" [class.searching]="isSearching">
+<div *ngIf="component" class="food-item-row-simple" [id]="'row-' + component.id" [class.searching]="isSearching">
 
   <!-- Loading overlay when searching -->
   <div *ngIf="isSearching" class="search-loading-overlay">
@@ -38,10 +38,19 @@
           <span *ngIf="brandName" class="brand-name"> – {{ brandName }}</span>
         </div>
         <div class="serving-line">
-          <span class="inline-amount">{{ servingLabel }}</span>
+          <span *ngIf="!servingIsPending" class="inline-amount">{{ servingLabel }}</span>
+          <!-- Thinking dots for pending serving info -->
+          <span *ngIf="servingIsPending" class="inline-amount-pending">
+            <span class="pending-text">{{ servingStatusText || 'Analyzing' }}</span>
+            <span class="typing-indicator-dots inline-dots">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </span>
+          </span>
         </div>
       </ion-col>
-      <ion-col size="2" class="right" *ngIf="!isReadOnly">
+      <ion-col size="2" class="right" *ngIf="!isReadOnly && !servingIsPending">
         <div class="action-icons">
           <ion-icon
             [name]="isExpanded ? 'chevron-up-outline' : 'create-outline'"
@@ -57,10 +66,14 @@
         </div>
       </ion-col>
     </ion-row>
-    <ion-row *ngIf="macroSummary" class="macro-row">
+    <ion-row *ngIf="macroSummary || servingIsPending" class="macro-row">
       <ion-col size="12">
-        <div class="macro-summary">
+        <div *ngIf="!servingIsPending" class="macro-summary">
           {{ macroSummary }}
+        </div>
+        <!-- Thinking dots for pending macro info -->
+        <div *ngIf="servingIsPending && macroStatusText" class="macro-summary-pending">
+          <span class="pending-text">{{ macroStatusText }}</span>
         </div>
       </ion-col>
     </ion-row>
@@ -74,7 +87,7 @@
       <div class="food-name">
         <!-- TEMPORARILY DISABLED: Original phrase editing section
         <div class="original-phrase-header">
-          <div class="phrase-edit-container" [attr.data-component-id]="component.componentId">
+          <div class="phrase-edit-container" [attr.data-component-id]="component.id">
             <div *ngIf="!isEditing" class="phrase-display-mode">
               <strong class="phrase-text">{{ displayName | titlecase}}</strong>
               <span *ngIf="isInferred" class="inferred-badge">(inferred)</span>

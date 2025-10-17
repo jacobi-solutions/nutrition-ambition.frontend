@@ -19,7 +19,7 @@ import { ToastService } from '../../../services/toast.service';
   standalone: true,
   imports: [CommonModule, IonicModule],
   templateUrl: './debug-view.component.html',
-  styleUrls: ['./debug-view.component.scss'],
+  styleUrls: ['./debug-view.component.scss']
 })
 export class DebugViewComponent implements OnInit, OnDestroy {
   @Input() feedbackWithAccount!: FeedbackWithAccount;

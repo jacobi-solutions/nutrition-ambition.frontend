@@ -1,0 +1,179 @@
+.sugars-container {
+  background: white;
+  opacity: 0;
+  transform: translateY(10px);
+
+  &.animate {
+    animation: sugars-fadeInUp 0.6s ease-out forwards;
+
+    .target-line {
+      animation: sugars-slideIn 0.6s ease-out 0.2s forwards;
+    }
+
+    .bar-label,
+    .bar-value {
+      animation: sugars-fadeIn 0.4s ease-out 1.2s forwards;
+    }
+
+    .chart-tip {
+      animation: sugars-fadeIn 0.4s ease-out 1.4s forwards;
+    }
+  }
+
+  .bar-chart {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 200px;
+    padding: 20px 16px 60px 16px;
+    gap: 8px;
+  }
+
+  .chart-tip {
+    padding: 0 16px 12px 16px;
+    font-size: 10px;
+    color: var(--ion-color-medium);
+    line-height: 1.4;
+    text-align: center;
+    opacity: 0;
+  }
+
+  .bar-group {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+
+    .target-line {
+      position: absolute;
+      width: 100%;
+      height: 3px;
+      background: #000;
+      z-index: 2;
+      opacity: 0;
+      transform: scaleX(0);
+    }
+
+    .bar {
+      width: 100%;
+      max-width: 80px;
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      transition: height 0.8s ease-out 0.3s;
+
+      &.total-sugars-bar {
+        background: #4E6E5D; // sage
+      }
+
+      &.added-sugars-bar {
+        background: #FF8A5C; // salmon
+      }
+    }
+
+    .bar-label {
+      position: absolute;
+      bottom: -30px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ion-text-color);
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    .bar-value {
+      position: absolute;
+      bottom: -46px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ion-text-color);
+      opacity: 0;
+    }
+  }
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+  min-height: 300px;
+
+  .empty-state-content {
+    max-width: 300px;
+
+    .empty-state-icon {
+      font-size: 4rem;
+      color: #ccc;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      color: #999;
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin: 0 0 1rem 0;
+    }
+
+    p {
+      color: #aaa;
+      font-size: 1rem;
+      line-height: 1.5;
+      margin: 0 0 0.5rem 0;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+@keyframes sugars-fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sugars-slideIn {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes sugars-fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Hide elements before animation
+.sugars-container:not(.animate) {
+  opacity: 0 !important;
+
+  .bar {
+    height: 0 !important;
+  }
+
+  .target-line,
+  .bar-label,
+  .bar-value,
+  .chart-tip {
+    opacity: 0 !important;
+  }
+}

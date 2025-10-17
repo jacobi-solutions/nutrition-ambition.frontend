@@ -1,12 +1,9 @@
 import { Component } from '@angular/core';
-import { 
-  IonHeader, 
-  IonToolbar, 
-  IonTitle, 
-  IonContent, 
-  IonButtons, 
-  IonBackButton
+import { RouterModule } from '@angular/router';
+import {
+  IonContent
 } from '@ionic/angular/standalone';
+import { AppHeaderComponent } from 'src/app/components/header/header.component';
 
 @Component({
   selector: 'app-terms-of-service',
@@ -14,12 +11,9 @@ import {
   styleUrls: ['./terms-of-service.page.scss'],
   standalone: true,
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonButtons,
-    IonBackButton
+    RouterModule,
+    AppHeaderComponent,
+    IonContent
   ],
 })
 export class TermsOfServicePage {

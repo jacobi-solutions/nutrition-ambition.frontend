@@ -50,6 +50,11 @@ import { MacronutrientsChartComponent } from './macronutrients-chart/macronutrie
 import { ElectrolytesChartComponent } from './electrolytes-chart/electrolytes-chart.component';
 import { VitaminsChartComponent } from './vitamins-chart/vitamins-chart.component';
 import { FatsChartComponent } from './fats-chart/fats-chart.component';
+import { SugarsChartComponent } from './sugars-chart/sugars-chart.component';
+import { MineralsChartComponent } from './minerals-chart/minerals-chart.component';
+import { OtherNutrientsChartComponent } from './other-nutrients-chart/other-nutrients-chart.component';
+import { ProfileAndGoalsComponent } from './profile-and-goals/profile-and-goals.component';
+import { NutrientListCardComponent } from './nutrient-list-card/nutrient-list-card.component';
 import { ToastService } from 'src/app/services/toast.service';
 import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
@@ -86,7 +91,12 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
     MacronutrientsChartComponent,
     ElectrolytesChartComponent,
     VitaminsChartComponent,
-    FatsChartComponent
+    FatsChartComponent,
+    SugarsChartComponent,
+    MineralsChartComponent,
+    OtherNutrientsChartComponent,
+    ProfileAndGoalsComponent,
+    NutrientListCardComponent
   ]
 })
 export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
@@ -133,6 +143,9 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   showElectrolyteCharts = true;
   showVitaminCharts = true;
   showFatsCharts = true;
+  showSugarsCharts = true;
+  showMineralsCharts = true;
+  showOtherNutrientsCharts = true;
 
   private dailySummaryService = inject(DailySummaryService);
   private authService = inject(AuthService);
@@ -164,14 +177,14 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   ngOnInit() {
     // Firebase Analytics: Track page view on initialization
     this.analytics.trackPageView('DailySummary');
-    
+
     // React to date changes after initial value to prevent duplicate load with ionViewWillEnter
     this.dateSubscription = this.dateService.selectedDate$
       .pipe(skip(1))
       .subscribe(date => {
         this.selectedDate = date;
         this.loadDetailedSummary(this.dateService.getSelectedDate());
-        
+
         // Firebase Analytics: Track page view when date changes
         this.analytics.trackPageView('DailySummary');
       });
@@ -260,63 +273,70 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       });
   }
 
-  // Sort macronutrients in desired fixed order
+  // Sort macronutrients in desired fixed order (Macronutrients category from backend)
   get macronutrientList(): NutrientBreakdownDisplay[] {
-    const order = ['calories', 'protein', 'fat', 'carbohydrate'];
+    const order = ['calories', 'carbohydrate', 'protein', 'fat'];
     return order
       .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
       .filter((n): n is NutrientBreakdownDisplay => !!n);
   }
 
-  // Get electrolytes list
+  // Get electrolytes list (Electrolytes category from backend)
   get electrolyteList(): NutrientBreakdownDisplay[] {
-    const electrolyteKeys = ['sodium', 'potassium', 'magnesium', 'calcium'];
+    const electrolyteKeys = ['sodium', 'potassium', 'chloride', 'magnesium', 'calcium', 'phosphorus', 'water'];
     // Sort by the order defined in electrolyteKeys array
     return electrolyteKeys
       .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
       .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
   }
 
-  // Get vitamins list
+  // Get vitamins list (Vitamins category from backend)
   get vitaminList(): NutrientBreakdownDisplay[] {
     const vitaminKeys = [
-      'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_e', 'vitamin_k',
-      'thiamin', 'riboflavin', 'niacin', 'vitamin_b6',
-      'folate', 'vitamin_b12', 'pantothenic_acid'
+      'vitamin_a_rae', 'vitamin_c', 'vitamin_d', 'vitamin_e', 'vitamin_k',
+      'thiamin', 'riboflavin', 'niacin', 'pantothenic_acid', 'vitamin_b6',
+      'biotin', 'folate_dfe', 'vitamin_b12', 'choline'
     ];
     return vitaminKeys
       .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
       .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
   }
 
-  // Get fats list
+  // Get fats list (FatsAndFattyAcids category from backend)
   get fatsList(): NutrientBreakdownDisplay[] {
-    const fatsKeys = ['saturated_fat', 'trans_fat', 'polyunsaturated_fat', 'monounsaturated_fat'];
+    const fatsKeys = ['saturated_fat', 'trans_fat', 'linoleic_acid', 'ala', 'epa', 'dha'];
     return fatsKeys
       .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
       .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
   }
 
-  // Sort micronutrients using sortOrder field (set by backend)
+  // Get sugars list (DEPRECATED - sugars now in dietaryComponentsList)
+  get sugarsList(): NutrientBreakdownDisplay[] {
+    const sugarsKeys = ['sugar', 'added_sugars'];
+    return sugarsKeys
+      .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
+      .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
+  }
+
+  // Get minerals list (Minerals category from backend)
+  get mineralsList(): NutrientBreakdownDisplay[] {
+    const mineralsKeys = ['iron', 'zinc', 'copper', 'manganese', 'selenium', 'iodine', 'chromium', 'molybdenum', 'fluoride'];
+    return mineralsKeys
+      .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
+      .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
+  }
+
+  // Get dietary components (DietaryComponents category from backend)
+  get dietaryComponentsList(): NutrientBreakdownDisplay[] {
+    const dietaryKeys = ['fiber', 'sugar', 'added_sugars', 'cholesterol', 'alcohol'];
+    return dietaryKeys
+      .map(key => this.nutrientsDisplay.find(n => n.nutrientKey?.toLowerCase() === key))
+      .filter(n => n !== undefined) as NutrientBreakdownDisplay[];
+  }
+
+  // Legacy getter for backwards compatibility (maps to dietary components)
   get micronutrientList(): NutrientBreakdownDisplay[] {
-    const electrolyteKeys = ['sodium', 'potassium', 'magnesium', 'calcium'];
-    const fatsKeys = ['saturated_fat', 'trans_fat', 'polyunsaturated_fat', 'monounsaturated_fat'];
-    const vitaminKeys = [
-      'vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_e', 'vitamin_k',
-      'thiamin', 'riboflavin', 'niacin', 'vitamin_b6',
-      'folate', 'vitamin_b12', 'pantothenic_acid'
-    ];
-    return this.nutrientsDisplay
-      .filter(n => {
-        const key = n.nutrientKey?.toLowerCase() || '';
-        return !['calories', 'protein', 'fat', 'carbohydrate'].includes(key)
-          && !electrolyteKeys.includes(key)
-          && !fatsKeys.includes(key)
-          && !vitaminKeys.includes(key);
-      })
-      .sort((a, b) => {
-        return ((a as any)['sortOrder'] ?? 9999) - ((b as any)['sortOrder'] ?? 9999);
-      });
+    return this.dietaryComponentsList;
   }
 
   // Get macronutrients for the selected food
@@ -1052,5 +1072,17 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   toggleFatsChartView(): void {
     this.showFatsCharts = !this.showFatsCharts;
+  }
+
+  toggleSugarsChartView(): void {
+    this.showSugarsCharts = !this.showSugarsCharts;
+  }
+
+  toggleMineralsChartView(): void {
+    this.showMineralsCharts = !this.showMineralsCharts;
+  }
+
+  toggleOtherNutrientsChartView(): void {
+    this.showOtherNutrientsCharts = !this.showOtherNutrientsCharts;
   }
 }

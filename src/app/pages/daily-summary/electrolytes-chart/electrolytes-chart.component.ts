@@ -1,7 +1,9 @@
 import { Component, Input, OnChanges, SimpleChanges, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
+import { IonGrid, IonRow, IonCol, IonIcon } from '@ionic/angular/standalone';
 import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.service';
+import { addIcons } from 'ionicons';
+import { nutritionOutline } from 'ionicons/icons';
 
 interface ElectrolyteData {
   key: string;
@@ -26,12 +28,13 @@ interface ElectrolyteData {
   templateUrl: './electrolytes-chart.component.html',
   styleUrls: ['./electrolytes-chart.component.scss'],
   standalone: true,
-  imports: [CommonModule, IonGrid, IonRow, IonCol]
+  imports: [CommonModule, IonGrid, IonRow, IonCol, IonIcon]
 })
 export class ElectrolytesChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() nutrients: NutrientBreakdown[] = [];
 
   hasData = false;
+  hasTargets = false;
   isVisible = false;
   electrolytes: ElectrolyteData[] = [];
   maxRadius = 60; // Maximum visual radius we'll allow (for 200%+)
@@ -48,7 +51,9 @@ export class ElectrolytesChartComponent implements OnChanges, AfterViewInit, OnD
     calcium: '#D64933'      // tomato (fitting for calcium)
   };
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(private elementRef: ElementRef) {
+    addIcons({ nutritionOutline });
+  }
 
   ngAfterViewInit(): void {
     // Set up Intersection Observer to trigger animations when chart is visible
@@ -92,11 +97,27 @@ export class ElectrolytesChartComponent implements OnChanges, AfterViewInit, OnD
       return;
     }
 
-    this.hasData = true;
+    // Check if we have any actual consumption data
+    this.hasData = electrolyteNutrients.some(n => (n.totalAmount || 0) > 0);
+
+    if (!this.hasData) {
+      return;
+    }
+
+    // Check if any electrolytes have targets
+    this.hasTargets = electrolyteNutrients.some(n =>
+      (n.maxTarget !== undefined && n.maxTarget !== null) ||
+      (n.minTarget !== undefined && n.minTarget !== null)
+    );
 
     // Calculate total target for proportional angle distribution
     const totalTarget = electrolyteNutrients.reduce((sum, n) => {
       return sum + (n.maxTarget || n.minTarget || 0);
+    }, 0);
+
+    // Calculate total consumed for angle distribution when no targets
+    const totalConsumed = electrolyteNutrients.reduce((sum, n) => {
+      return sum + (n.totalAmount || 0);
     }, 0);
 
     let cumulativeAngle = 0;
@@ -104,27 +125,54 @@ export class ElectrolytesChartComponent implements OnChanges, AfterViewInit, OnD
     this.electrolytes = electrolyteNutrients.map((nutrient, index) => {
       const key = nutrient.nutrientKey?.toLowerCase() || '';
       const consumed = nutrient.totalAmount || 0;
-      const target = nutrient.maxTarget || nutrient.minTarget || 1;
-      const percentage = (consumed / target) * 100;
+      const target = nutrient.maxTarget || nutrient.minTarget || 0;
 
-      // Calculate radius based on percentage
-      // 0% = minRadius, 100% = targetRingRadius, >100% continues to grow beyond target ring
+      // Calculate percentage and radius
+      let percentage: number;
       let radius: number;
-      if (percentage <= 100) {
-        // Below or at 100%: scale from minRadius to targetRingRadius
-        radius = this.minRadius + ((this.targetRingRadius - this.minRadius) * (percentage / 100));
+
+      if (this.hasTargets && target > 0) {
+        // With targets: show percentage of target
+        percentage = (consumed / target) * 100;
+
+        // Calculate radius based on percentage of target
+        if (percentage <= 100) {
+          // Below or at 100%: scale from minRadius to targetRingRadius
+          radius = this.minRadius + ((this.targetRingRadius - this.minRadius) * (percentage / 100));
+        } else {
+          // Beyond 100%: continue growing proportionally beyond the target ring
+          const overage = percentage - 100;
+          const additionalRadius = ((this.maxRadius - this.targetRingRadius) * (overage / 100));
+          radius = this.targetRingRadius + additionalRadius;
+          // Cap at reasonable visual limit
+          radius = Math.min(radius, this.maxRadius);
+        }
       } else {
-        // Beyond 100%: continue growing proportionally beyond the target ring
-        // Each additional 100% adds another (maxRadius - targetRingRadius) to the radius
-        const overage = percentage - 100;
-        const additionalRadius = ((this.maxRadius - this.targetRingRadius) * (overage / 100));
-        radius = this.targetRingRadius + additionalRadius;
-        // Cap at reasonable visual limit
-        radius = Math.min(radius, this.maxRadius);
+        // Without targets: radius grows proportionally to consumed amount
+        // Find the max consumed to scale against
+        const maxConsumed = Math.max(...electrolyteNutrients.map(n => n.totalAmount || 0));
+
+        if (maxConsumed > 0) {
+          // Scale radius from minRadius to targetRingRadius based on proportion of max
+          const proportionOfMax = consumed / maxConsumed;
+          radius = this.minRadius + ((this.targetRingRadius - this.minRadius) * proportionOfMax);
+          // Show percentage as share of total consumed
+          percentage = totalConsumed > 0 ? (consumed / totalConsumed) * 100 : 25;
+        } else {
+          radius = this.minRadius;
+          percentage = 0;
+        }
       }
 
-      // Calculate angle proportional to target amount
-      const angleForThisSegment = (target / totalTarget) * 360;
+      // Calculate angle proportional to target (if targets exist) or consumed amount (if no targets)
+      let angleForThisSegment: number;
+      if (this.hasTargets && totalTarget > 0) {
+        angleForThisSegment = (target / totalTarget) * 360;
+      } else if (totalConsumed > 0) {
+        angleForThisSegment = (consumed / totalConsumed) * 360;
+      } else {
+        angleForThisSegment = 360 / electrolyteNutrients.length; // Equal slices if no data
+      }
       const startAngle = cumulativeAngle;
       const endAngle = cumulativeAngle + angleForThisSegment;
       cumulativeAngle = endAngle;

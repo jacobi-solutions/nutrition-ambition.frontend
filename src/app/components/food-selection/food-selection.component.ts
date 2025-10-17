@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, MealSelection, GetInstantAlternativesRequest, GetInstantAlternativesResponse, ServingIdentifier, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood, HydrateAlternateSelectionRequest } from 'src/app/services/nutrition-ambition-api.service';
-import { Subject } from 'rxjs';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, GetInstantAlternativesRequest, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood, HydrateAlternateSelectionRequest } from 'src/app/services/nutrition-ambition-api.service';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { FoodComponent } from './food/food.component';
@@ -14,7 +13,6 @@ import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { IonIcon } from '@ionic/angular/standalone';
-import { ServingIdentifierUtil } from './food-selection.util';
 
 @Component({
   selector: 'app-food-selection',
@@ -56,17 +54,69 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   get hasPayload(): boolean {
-    return !!this.computedFoods && this.computedFoods.length > 0;
+    // Show card even when empty during streaming (isPartial=true means loading)
+    // This allows progressive loading UI to display immediately
+    // Also show when mealSelection is pending (Stage 0)
+    return this.message.isPartial || this.message.mealSelectionIsPending || (!!this.computedFoods && this.computedFoods.length > 0);
   }
 
   get statusText(): string {
     const mealName = this.message.mealName && this.message.mealName.trim().length > 0 ? this.message.mealName : 'Food';
     const capitalizedMealName = mealName.charAt(0).toUpperCase() + mealName.slice(1).toLowerCase();
-    
+
     if (this.message.role === MessageRoleTypes.CompletedEditFoodSelection) {
       return `${capitalizedMealName} edited`;
     }
     return `${capitalizedMealName} logged`;
+  }
+
+  get hasAnyPending(): boolean {
+    // Check if meal selection itself is pending (Stage 0)
+    if (this.message.mealSelectionIsPending) {
+      return true;
+    }
+
+    // Check if any food, component, match, or serving has isPending = true
+    if (!this.computedFoods || this.computedFoods.length === 0) {
+      return false;
+    }
+
+    for (const food of this.computedFoods) {
+      if (food.isPending) {
+        return true;
+      }
+
+      if (food.components) {
+        for (const component of food.components) {
+          if (component.isPending) {
+            return true;
+          }
+
+          if (component.matches) {
+            for (const match of component.matches) {
+              if (match.isPending) {
+                return true;
+              }
+
+              // Check servings for isPending or lack of data
+              if (match.servings) {
+                for (const serving of match.servings) {
+                  // Serving is pending if explicitly marked OR if it lacks actual data
+                  const hasServingData = serving &&
+                                        (serving.baseQuantity || 0) > 0 &&
+                                        (serving.measurementDescription || serving.baseUnit);
+                  if (serving.isPending || !hasServingData) {
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   ngOnInit(): void {
@@ -74,6 +124,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
     this.isAddingFood = false; // Ensure this is always false on init
     this.computeAllFoods();
+  }
+
+  ngOnDestroy(): void {
+    // Component cleanup
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -586,13 +640,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               // Use effectiveQuantity for both values - it's what the user sees/edited
               const effectiveQuantity = (selectedServing as any).effectiveQuantity || 1;
 
+              // Get servingIdentifier from selected serving (now properly deserialized with toJSON method)
               const servingIdentifier = selectedServing.servingId;
+
               req.selections.push(new UserSelectedServing({
                 componentId: component.id,
                 originalText: this.getComponentDisplayName(component.id || '') || (selectedFood as any)?.originalText || '',
                 provider: (selectedFood as any)?.provider ?? 'nutritionix',
                 providerFoodId: (selectedFood as any)?.providerFoodId,
-                servingId: servingIdentifier,
+                servingId: servingIdentifier, // Pass the ServingIdentifier object directly
                 editedQuantity: effectiveQuantity,
                 scaledQuantity: effectiveQuantity
               }));
@@ -602,7 +658,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
     }
 
- 
     this.isSubmitting = true;
     this.selectionConfirmed.emit(req);
   }
@@ -646,13 +701,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               // Use effectiveQuantity for both values - it's what the user sees/edited
               const effectiveQuantity = (selectedServing as any).effectiveQuantity || 1;
 
+              // Get servingIdentifier from selected serving (now properly deserialized with toJSON method)
               const servingIdentifier = selectedServing.servingId;
+
               req.selections.push(new UserSelectedServing({
                 componentId: component.id,
                 originalText: this.getComponentDisplayName(component.id || '') || (selectedFood as any)?.originalText || '',
                 provider: (selectedFood as any)?.provider ?? 'nutritionix',
                 providerFoodId: (selectedFood as any)?.providerFoodId,
-                servingId: servingIdentifier,
+                servingId: servingIdentifier, // Pass the ServingIdentifier object directly
                 editedQuantity: effectiveQuantity,
                 scaledQuantity: effectiveQuantity
               }));
@@ -734,16 +791,49 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   private computeAllFoods(): void {
     const rawFoods = this.message?.mealSelection?.foods || [];
 
-    // Only rebuild from raw data - no state preservation needed
+    // Capture existing UI state before rebuilding
+    const uiStateMap = new Map<string, any>();
+    if (this.computedFoods) {
+      this.computedFoods.forEach(food => {
+        if (food.id) {
+          const componentStates = new Map();
+          if (food.components) {
+            food.components.forEach(comp => {
+              if (comp.id) {
+                const state = {
+                  isExpanded: comp.isExpanded,
+                  isEditing: comp.isEditing,
+                  editingValue: comp.editingValue,
+                  showingMoreOptions: comp.showingMoreOptions,
+                  isSearching: comp.isSearching
+                };
+                componentStates.set(comp.id, state);
+              }
+            });
+          }
+          uiStateMap.set(food.id, {
+            isEditingExpanded: food.isEditingExpanded,
+            editingQuantity: food.editingQuantity,
+            isEditing: food.isEditing,
+            isExpanded: food.isExpanded,
+            componentStates
+          });
+        }
+      });
+    }
+
+    // Rebuild from raw data with preserved state
     this.computedFoods = rawFoods.map((food, foodIndex) => {
       const transformedComponents = food.components?.map((component: any) => {
+
         // Transform matches to include ComponentServingDisplay objects
         const transformedMatches = component.matches?.map((match: any) => {
-          const transformedServings = match.servings?.map((serving: any) => {
+          const transformedServings = match.servings?.map((serving: any, servingIdx: number) => {
             // Convert to ComponentServingDisplay with initial effectiveQuantity
             // Use UserConfirmedQuantity if available, otherwise calculate from AI fractions
             const effectiveQuantity = Math.round((serving.userConfirmedQuantity ||
               ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1))) * 100) / 100;
+
             return new ComponentServingDisplay({
               ...serving,
               effectiveQuantity: effectiveQuantity,
@@ -761,29 +851,44 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           });
         }) || [];
 
-        return new ComponentDisplay({
+        // Get preserved state for this component
+        const savedFoodState = food.id ? uiStateMap.get(food.id) : null;
+        const savedCompState = savedFoodState && component.id ? savedFoodState.componentStates.get(component.id) : null;
+
+        const componentDisplay = new ComponentDisplay({
           ...component,
           matches: transformedMatches,
-          // All UI state starts fresh
-          isSearching: false,
-          isEditing: false,
-          isExpanded: false,
-          editingValue: '',
-          showingMoreOptions: false,
+          // Apply preserved state or use defaults
+          isSearching: savedCompState?.isSearching || false,
+          isEditing: savedCompState?.isEditing || false,
+          isExpanded: savedCompState?.isExpanded || false,
+          editingValue: savedCompState?.editingValue || '',
+          showingMoreOptions: savedCompState?.showingMoreOptions || false,
           loadingMoreOptions: false,
           loadingInstantOptions: false,
         });
+
+        return componentDisplay;
       }) || [];
 
+      // Get preserved state for this food
+      const savedFoodState = food.id ? uiStateMap.get(food.id) : null;
+      const resolvedEditingExpanded = savedFoodState?.isEditingExpanded ?? this.isEditMode;
 
       return new FoodDisplay({
         ...food,
         components: transformedComponents,
-        isEditingExpanded: this.isEditMode, // Auto-expand if in edit mode
+        // Apply preserved state or use defaults
+        isEditingExpanded: resolvedEditingExpanded, // Use preserved state if available, otherwise auto-expand if in edit mode
+        editingQuantity: savedFoodState?.editingQuantity,
+        isEditing: savedFoodState?.isEditing,
+        isExpanded: savedFoodState?.isExpanded,
         initialQuantity: food.quantity, // Store baseline quantity for nutrition calculations (no default)
       });
     });
 
+    // Force change detection since we use OnPush strategy
+    this.cdr.markForCheck();
   }
 
 
@@ -1343,6 +1448,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Helper to detect if a ComponentMatch represents a common food (no brand name)
   isCommonFood(match: ComponentMatch): boolean {
     return !match.brandName || match.brandName.trim().length === 0;
+  }
+
+  // Truncate text to specified length with ellipsis
+  truncateText(text: string, maxLength: number): string {
+    if (!text || text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + '...';
   }
 
   // Get the original phrase for a component to use in the search

@@ -30,12 +30,22 @@ ion-header {
       align-items: center;
       padding-left: 16px;
       height: 100%;
-      
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+
+      &:hover {
+        opacity: 0.8;
+      }
+
       .header-logo {
         height: 80px;
         width: auto;
         max-width: 280px;
         object-fit: contain;
+      }
+
+      .clickable-logo {
+        cursor: pointer;
       }
     }
     

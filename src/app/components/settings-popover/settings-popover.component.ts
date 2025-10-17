@@ -9,12 +9,13 @@ import {
 } from '@ionic/angular/standalone';
 import { RouterModule } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { 
-  logOut, 
+import {
+  logOut,
   download,
   informationCircle,
   key,
-  refresh
+  refresh,
+  documentText
 } from 'ionicons/icons';
 import { APP_VERSION } from '../../../environments/version';
 import { AppUpdateService } from '../../services/app-update.service';
@@ -47,12 +48,13 @@ export class SettingsPopoverComponent {
 
   constructor(private popoverCtrl: PopoverController) {
     // Add the icons explicitly to the library
-    addIcons({ 
-      logOut, 
+    addIcons({
+      logOut,
       download,
       informationCircle,
       key,
-      refresh
+      refresh,
+      documentText
     });
   }
 
@@ -74,6 +76,11 @@ export class SettingsPopoverComponent {
   }
 
   onNavigateToResetPassword() {
+    this.dismiss();
+    // Navigation will be handled by the routerLink
+  }
+
+  onNavigateToLegal() {
     this.dismiss();
     // Navigation will be handled by the routerLink
   }

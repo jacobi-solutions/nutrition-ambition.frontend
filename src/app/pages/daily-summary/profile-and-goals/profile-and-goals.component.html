@@ -1,0 +1,88 @@
+<ion-card>
+  <ion-card-header>
+    <div class="card-header-with-toggle">
+      <ion-card-title>{{ viewMode === 'goals' ? 'Goals' : 'Profile' }}</ion-card-title>
+      <ion-button fill="clear" size="small" class="toggle-btn" (click)="toggleView()">
+        <ion-icon [name]="viewMode === 'goals' ? 'person' : 'trophy'"></ion-icon>
+      </ion-button>
+    </div>
+  </ion-card-header>
+  <ion-card-content>
+    <!-- Loading State -->
+    <div *ngIf="isLoadingProfile" class="goals-loading">
+      <ion-spinner name="dots" color="medium"></ion-spinner>
+    </div>
+
+    <!-- Goals View -->
+    <div *ngIf="!isLoadingProfile && viewMode === 'goals'">
+      <!-- No Goals State -->
+      <div *ngIf="!hasGoals" class="no-goals-state">
+        <p class="goals-message">
+          These charts show your intake compared to generic nutrition targets.
+          To get personalized targets tailored to your goals, set up your profile and goals.
+        </p>
+        <ion-button class="goals-button" color="tertiary" (click)="onSetupGoals()">
+          Set Up Goals
+        </ion-button>
+      </div>
+
+      <!-- Has Goals State -->
+      <div *ngIf="hasGoals" class="has-goals-state">
+        <p class="goals-display">{{ goalsDisplay }}</p>
+        <p class="goals-explanation">
+          The targets in the charts below are set for you to reach these goals.
+        </p>
+        <ion-button class="goals-button" color="tertiary" (click)="onTweakGoals()">
+          Tweak Goals
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Profile View -->
+    <div *ngIf="!isLoadingProfile && viewMode === 'profile'" class="profile-view">
+      <!-- No Profile State -->
+      <div *ngIf="!hasProfile" class="no-profile-state">
+        <p class="profile-message">
+          These charts show your intake compared to generic nutrition targets based on averages.
+          To get personalized targets tailored to your unique needs, set up your profile and goals.
+        </p>
+        <ion-button class="profile-button" color="tertiary" (click)="onSetupProfile()">
+          Set Up Profile
+        </ion-button>
+      </div>
+
+      <!-- Has Profile State -->
+      <div *ngIf="hasProfile && userProfile" class="has-profile-state">
+        <div class="profile-info">
+          <div class="profile-item" *ngIf="userProfile.age">
+            <span class="profile-label">Age:</span>
+            <span class="profile-value">{{ userProfile.age }}</span>
+          </div>
+          <div class="profile-item" *ngIf="userProfile.sex">
+            <span class="profile-label">Sex:</span>
+            <span class="profile-value">{{ userProfile.sex | titlecase }}</span>
+          </div>
+          <div class="profile-item" *ngIf="userProfile.heightFeet || userProfile.heightInches">
+            <span class="profile-label">Height:</span>
+            <span class="profile-value">{{ userProfile.heightFeet }}'{{ userProfile.heightInches }}"</span>
+          </div>
+          <div class="profile-item" *ngIf="userProfile.weightLbs">
+            <span class="profile-label">Weight:</span>
+            <span class="profile-value">{{ userProfile.weightLbs }} lbs</span>
+          </div>
+          <div class="profile-item" *ngIf="userProfile.activityLevel">
+            <span class="profile-label">Activity Level:</span>
+            <span class="profile-value">{{ userProfile.activityLevel | titlecase }}</span>
+          </div>
+          <div class="profile-item" *ngIf="userProfile.baseCalories">
+            <span class="profile-label">Base Calories:</span>
+            <span class="profile-value">{{ userProfile.baseCalories | number:'1.0-0' }} cal</span>
+          </div>
+        </div>
+        <ion-button class="profile-button" color="tertiary" (click)="onUpdateProfile()">
+          Update Profile
+        </ion-button>
+      </div>
+    </div>
+  </ion-card-content>
+</ion-card>

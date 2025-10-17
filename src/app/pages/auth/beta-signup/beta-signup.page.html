@@ -1,0 +1,70 @@
+<ion-content>
+  <div class="signup-wrapper">
+    <div class="logo-container">
+      <img src="https://storage.googleapis.com/nutritionambition.app/logos/login-screen-logo.svg" alt="Nutrition Ambition Logo" class="signup-logo clickable-logo" (click)="navigateToChat()" />
+    </div>
+    <div class="signup-card">
+      <h1 class="form-title">Welcome, Beta Tester!</h1>
+      <p class="beta-message">Thanks again! Complete your account setup by creating a password.</p>
+
+      <form (ngSubmit)="onBetaSignup()">
+        <div class="form-group">
+          <label for="email" class="input-label">Email</label>
+          <ion-input
+            id="email"
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            class="input-box input-readonly"
+            readonly
+            required>
+          </ion-input>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="input-label">Password</label>
+          <ion-input
+            id="password"
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            class="input-box"
+            required>
+            <ion-input-password-toggle slot="end" color="medium"></ion-input-password-toggle>
+          </ion-input>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword" class="input-label">Confirm Password</label>
+          <ion-input
+            id="confirmPassword"
+            type="password"
+            [(ngModel)]="confirmPassword"
+            name="confirmPassword"
+            class="input-box"
+            required>
+            <ion-input-password-toggle slot="end" color="medium"></ion-input-password-toggle>
+          </ion-input>
+        </div>
+
+        <div class="terms-checkbox-container">
+          <ion-checkbox [(ngModel)]="termsAccepted" name="termsAccepted" labelPlacement="end">
+            <span class="terms-text">I agree to the <a routerLink="/legal/terms-of-service" class="legal-link">Terms of Use</a> and <a routerLink="/legal/privacy-policy" class="legal-link">Privacy Policy</a></span>
+          </ion-checkbox>
+        </div>
+
+        <ion-button expand="block" type="submit" color="tertiary" class="signup-button" [disabled]="!canSubmit()">
+          {{ isWorking ? 'Completing Signup...' : 'Complete Signup' }}
+        </ion-button>
+      </form>
+
+      <div class="form-footer" *ngIf="!isValidLink">
+        <p class="error-message">Invalid or expired sign-in link. Please request a new one.</p>
+      </div>
+    </div>
+
+    <div class="copyright-text">
+      Copyright © 2025 Nutrition Ambition All rights reserved
+    </div>
+  </div>
+</ion-content>

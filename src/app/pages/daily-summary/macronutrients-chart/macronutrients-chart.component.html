@@ -6,20 +6,23 @@
         
         <div class="bar-chart">
           <div class="bar-group">
-            <span class="target-label">Target: {{ caloriesTarget || 'N/A' }} cal</span>
-            <div class="bar ghost-bar"></div>
+            <span class="target-label" *ngIf="hasTargets">Target: {{ caloriesTarget || 'N/A' }} cal</span>
+            <div class="bar ghost-bar" *ngIf="hasTargets"></div>
             <div class="bar consumed-bar" [style.height.%]="caloriesPercentage">
               <span class="bar-value-label">{{ calories }} cal</span>
             </div>
             <span class="bar-label">Calories</span>
           </div>
         </div>
-        <div class="bar-label">
+        <div class="bar-label" *ngIf="hasTargets">
           <span *ngIf="caloriesLeft > 0">{{ caloriesLeft | number:'1.0-0' }} cal left</span>
           <span *ngIf="caloriesLeft <= 0">Over target by {{ -caloriesLeft | number:'1.0-0' }} cal</span>
         </div>
-        <div class="chart-tip">
+        <div class="chart-tip" *ngIf="hasTargets">
           Keep your calories on target to complete the day
+        </div>
+        <div class="chart-tip" *ngIf="!hasTargets">
+          {{ calories | number:'1.0-0' }} cal consumed today
         </div>
         
 
@@ -40,20 +43,22 @@
     <ion-col size="7.5">
       <div class="chart-wrapper">
         <div class="donut-chart-container">
-          <span class="animation-label targets-label">Targets</span>
+          <span class="animation-label targets-label" *ngIf="hasTargets">Targets</span>
           <span class="animation-label actual-label">Actual</span>
           <div class="donut-chart" [style.transform]="'scale(' + donutScale + ')'">
             <svg viewBox="-10 -10 120 120">
-            <!-- Single target ring -->
-            <circle class="donut-target protein-target" cx="50" cy="50" r="25"
-                    [attr.stroke-dasharray]="proteinTargetPercentage * 1.571 + ' ' + 157.1"
-                    [attr.stroke-dashoffset]="0"></circle>
-            <circle class="donut-target fat-target" cx="50" cy="50" r="25"
-                    [attr.stroke-dasharray]="fatTargetPercentage * 1.571 + ' ' + 157.1"
-                    [attr.stroke-dashoffset]="-proteinTargetPercentage * 1.571"></circle>
-            <circle class="donut-target carbs-target" cx="50" cy="50" r="25"
-                    [attr.stroke-dasharray]="carbsTargetPercentage * 1.571 + ' ' + 157.1"
-                    [attr.stroke-dashoffset]="-(proteinTargetPercentage + fatTargetPercentage) * 1.571"></circle>
+            <!-- Single target ring (only if targets exist) -->
+            <ng-container *ngIf="hasTargets">
+              <circle class="donut-target protein-target" cx="50" cy="50" r="25"
+                      [attr.stroke-dasharray]="proteinTargetPercentage * 1.571 + ' ' + 157.1"
+                      [attr.stroke-dashoffset]="0"></circle>
+              <circle class="donut-target fat-target" cx="50" cy="50" r="25"
+                      [attr.stroke-dasharray]="fatTargetPercentage * 1.571 + ' ' + 157.1"
+                      [attr.stroke-dashoffset]="-proteinTargetPercentage * 1.571"></circle>
+              <circle class="donut-target carbs-target" cx="50" cy="50" r="25"
+                      [attr.stroke-dasharray]="carbsTargetPercentage * 1.571 + ' ' + 157.1"
+                      [attr.stroke-dashoffset]="-(proteinTargetPercentage + fatTargetPercentage) * 1.571"></circle>
+            </ng-container>
 
             <!-- Actual consumption ring (appears after target) -->
             <circle class="donut-segment protein-segment" cx="50" cy="50" r="30"
@@ -71,41 +76,41 @@
             <text class="percentage-label fat-label" [attr.x]="fatLabelX" [attr.y]="fatLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + fatLabelRotation + ', ' + fatLabelX + ', ' + fatLabelY + ')'">{{ fatPercentage }}%</text>
             <text class="percentage-label carbs-label" [attr.x]="carbsLabelX" [attr.y]="carbsLabelY" text-anchor="middle" dominant-baseline="middle" [attr.transform]="'rotate(' + carbsLabelRotation + ', ' + carbsLabelX + ', ' + carbsLabelY + ')'">{{ carbsPercentage }}%</text>
 
-            <!-- Target percentage labels (black, outside outer ring) -->
-            <text class="target-percentage-label protein-target-label" [attr.x]="proteinTargetLabelX" [attr.y]="proteinTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + proteinTargetLabelRotation + ', ' + proteinTargetLabelX + ', ' + proteinTargetLabelY + ')'">{{ proteinTargetPercentage }}%</text>
-            <text class="target-percentage-label fat-target-label" [attr.x]="fatTargetLabelX" [attr.y]="fatTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + fatTargetLabelRotation + ', ' + fatTargetLabelX + ', ' + fatTargetLabelY + ')'">{{ fatTargetPercentage }}%</text>
-            <text class="target-percentage-label carbs-target-label" [attr.x]="carbsTargetLabelX" [attr.y]="carbsTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + carbsTargetLabelRotation + ', ' + carbsTargetLabelX + ', ' + carbsTargetLabelY + ')'">{{ carbsTargetPercentage }}%</text>
-
-            <!-- Target header label -->
-            <!-- <text class="target-percentage-label target-header-label" [attr.x]="targetHeaderLabelX" [attr.y]="targetHeaderLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + targetHeaderLabelRotation + ', ' + targetHeaderLabelX + ', ' + targetHeaderLabelY + ')'">Target %</text> -->
+            <!-- Target percentage labels (black, outside outer ring) - only if targets exist -->
+            <ng-container *ngIf="hasTargets">
+              <text class="target-percentage-label protein-target-label" [attr.x]="proteinTargetLabelX" [attr.y]="proteinTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + proteinTargetLabelRotation + ', ' + proteinTargetLabelX + ', ' + proteinTargetLabelY + ')'">{{ proteinTargetPercentage }}%</text>
+              <text class="target-percentage-label fat-target-label" [attr.x]="fatTargetLabelX" [attr.y]="fatTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + fatTargetLabelRotation + ', ' + fatTargetLabelX + ', ' + fatTargetLabelY + ')'">{{ fatTargetPercentage }}%</text>
+              <text class="target-percentage-label carbs-target-label" [attr.x]="carbsTargetLabelX" [attr.y]="carbsTargetLabelY" text-anchor="middle" dominant-baseline="central" [attr.transform]="'rotate(' + carbsTargetLabelRotation + ', ' + carbsTargetLabelX + ', ' + carbsTargetLabelY + ')'">{{ carbsTargetPercentage }}%</text>
+            </ng-container>
           </svg>
           </div>
           <!-- <span class="chart-label">Macros Breakdown</span> -->
-          <div class="chart-tip" style="margin-top: 12px; font-size: 10px; color: #A3A3A3; line-height: 1.4; text-align: center;">
+          <div class="chart-tip" *ngIf="hasTargets" style="margin-top: 12px; font-size: 10px; color: #A3A3A3; line-height: 1.4; text-align: center;">
             The closer the ring lines up with the pie, the more balanced your day! <br/>
             Ring = Actual, Pie = Target
           </div>
+          <div class="chart-tip" *ngIf="!hasTargets" style="margin-top: 12px; font-size: 10px; color: #A3A3A3; line-height: 1.4; text-align: center;">
+            Your macronutrient distribution for today
+          </div>
         </div>
         <div class="chart-values">
-          <!-- <div class="value-item">
-            <span class="value-dot calories-dot"></span>
-            <span class="value-label">Calories:</span>
-            <span class="value-number">{{ calories }} cal / {{ caloriesTarget }} cal</span>
-          </div> -->
           <div class="value-item">
             <span class="value-dot protein-dot"></span>
             <span class="value-label">Protein:</span>
-            <span class="value-number">{{ proteinGrams }}g / {{ proteinTargetGrams }}g</span>
+            <span class="value-number" *ngIf="hasTargets">{{ proteinGrams }}g / {{ proteinTargetGrams }}g</span>
+            <span class="value-number" *ngIf="!hasTargets">{{ proteinGrams }}g</span>
           </div>
           <div class="value-item">
             <span class="value-dot fat-dot"></span>
             <span class="value-label">Fat:</span>
-            <span class="value-number">{{ fatGrams }}g / {{ fatTargetGrams }}g</span>
+            <span class="value-number" *ngIf="hasTargets">{{ fatGrams }}g / {{ fatTargetGrams }}g</span>
+            <span class="value-number" *ngIf="!hasTargets">{{ fatGrams }}g</span>
           </div>
           <div class="value-item">
             <span class="value-dot carbs-dot"></span>
             <span class="value-label">Carbs:</span>
-            <span class="value-number">{{ carbsGrams }}g / {{ carbsTargetGrams }}g</span>
+            <span class="value-number" *ngIf="hasTargets">{{ carbsGrams }}g / {{ carbsTargetGrams }}g</span>
+            <span class="value-number" *ngIf="!hasTargets">{{ carbsGrams }}g</span>
           </div>
         </div>
       </div>
@@ -115,5 +120,10 @@
 
 <!-- Empty state -->
 <div class="empty-state" *ngIf="!hasData">
-  <span>No macronutrient data available</span>
+  <div class="empty-state-content">
+    <ion-icon name="nutrition-outline" class="empty-state-icon"></ion-icon>
+    <h2>Nothing logged yet</h2>
+    <p>No meals or foods have been logged for this date.</p>
+    <p>Head over to the Chat tab to start tracking your macros!</p>
+  </div>
 </div>

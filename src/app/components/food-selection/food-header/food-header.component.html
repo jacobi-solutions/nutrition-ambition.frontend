@@ -23,7 +23,16 @@
             </ng-container>
             <!-- Show normal label when collapsed or read-only -->
             <ng-container *ngIf="computedShouldShowNormalLabel">
-              <span class="inline-amount">{{ servingLabel }}</span>
+              <span *ngIf="!hasStatusText" class="inline-amount">{{ servingLabel }}</span>
+              <!-- Thinking dots for pending component processing -->
+              <span *ngIf="hasStatusText" class="inline-amount-pending">
+                <span class="pending-text">{{ statusTextDisplay }}</span>
+                <span class="typing-indicator-dots inline-dots">
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                </span>
+              </span>
             </ng-container>
           </div>
         </ion-col>
@@ -36,6 +45,7 @@
               (click)="onToggleExpansion()">
             </ion-icon>
             <ion-icon
+              *ngIf="!food.isPending"
               name="trash-outline"
               class="delete-icon"
               (click)="onRemoveFood()">

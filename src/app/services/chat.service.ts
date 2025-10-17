@@ -2,17 +2,19 @@ import { Injectable } from '@angular/core';
 import { Observable, map, catchError, throwError, of, Subject, switchMap, BehaviorSubject, finalize } from 'rxjs';
 import { NutritionAmbitionApiService } from './nutrition-ambition-api.service';
 import { AuthService } from './auth.service';
-import { 
+import {
   GetChatMessagesRequest,
   ChatMessagesResponse,
   RunChatRequest,
   LearnMoreAboutRequest,
+  SetupGoalsRequest,
   SubmitServingSelectionRequest,
   UserSelectedServing,
   ErrorDto,
   ChatMessage
 } from './nutrition-ambition-api.service';
 import { DateService } from './date.service';
+import { ChatStreamService } from './chat-stream.service';
 
 @Injectable({
   providedIn: 'root'
@@ -41,19 +43,40 @@ export class ChatService {
   public pendingEdit$ = this.pendingEditSubject.asObservable();
   
 
-  
+
   constructor(
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService,
+    private chatStreamService: ChatStreamService
   ) {}
 
   getFirstTimeWelcomeMessage(): string {
     return "Hi there! I'm your nutrition assistant — here to help you track your meals, understand your nutrients, and stay on track with your goals. You can start right away by telling me what you ate today — no setup needed! We can also talk about your health goals whenever you're ready. 🍎🥦";
   }
 
-  // Send message to the assistant
+  // Send message to the assistant with streaming
+  async sendMessageStream(
+    message: string,
+    onChunk: (data: ChatMessagesResponse) => void,
+    onComplete: () => void,
+    onError: (error: any) => void
+  ): Promise<EventSource | null> {
+    const request = new RunChatRequest({
+      message: message,
+      localDateKey: this.dateService.getSelectedDate(),
+    });
+
+    return this.chatStreamService.runResponsesConversationStream(
+      request,
+      onChunk,
+      onComplete,
+      onError
+    );
+  }
+
+  // Send message to the assistant (non-streaming fallback)
   sendMessage(message: string): Observable<ChatMessagesResponse> {
-    
+
     // Send to the assistant for processing
     // No need to log the message separately - the backend handles this
     return this.runAssistantMessage(message).pipe(
@@ -66,30 +89,15 @@ export class ChatService {
     );
   }
   
-  // Run assistant message
+  // Run assistant message (DEPRECATED - use streaming version instead)
+  // This method is kept for backwards compatibility but should not be used
   runAssistantMessage(message: string): Observable<ChatMessagesResponse> {
-    const request = new RunChatRequest({
-      message: message,
-      localDateKey: this.dateService.getSelectedDate(),
-    });
-    
-    return this.apiService.runResponsesConversation(request).pipe(
-      map(response => {
-        
-        // No need to map response properties as the API now returns ChatMessagesResponse directly
-        const botResponse = response;
-        
-        // Note: Meal logging events are now handled by individual service methods
-        
-        return botResponse;
-      }),
-      catchError(error => {
-        const errorResponse = new ChatMessagesResponse();
-        errorResponse.isSuccess = false;
-        errorResponse.messages = [];
-        return of(errorResponse);
-      })
-    );
+    // Since the backend now always streams, this method returns an empty response
+    // All message sending should go through the streaming path
+    const emptyResponse = new ChatMessagesResponse();
+    emptyResponse.isSuccess = false;
+    emptyResponse.messages = [];
+    return of(emptyResponse);
   }
 
   getMessageHistoryByDate(localDateKey: string): Observable<ChatMessagesResponse> {
@@ -116,7 +124,7 @@ export class ChatService {
       topic: topic,
       localDateKey: localDateKey
     });
-    
+
     // Call the API and handle the response
     return this.apiService.learnMoreAbout(request).pipe(
       map(response => {
@@ -125,7 +133,7 @@ export class ChatService {
           // Emit the response so the chat page can reload messages
           this.learnMoreAboutResponseSubject.next(response);
         }
-        
+
         return response;
       }),
       catchError(error => {
@@ -133,7 +141,32 @@ export class ChatService {
       })
     );
   }
-  
+
+
+  // Set up or tweak nutrition goals in chat
+  setupGoals(localDateKey: string, isTweaking: boolean = false): Observable<ChatMessagesResponse> {
+    // Create the request to the backend
+    const request = new SetupGoalsRequest({
+      localDateKey: localDateKey,
+      isTweaking: isTweaking
+    });
+
+    // Call the API and handle the response
+    return this.apiService.setupGoals(request).pipe(
+      map(response => {
+        // Emit a new message received event to indicate the response is complete
+        if (response.isSuccess) {
+          // Emit the response so the chat page can reload messages
+          this.learnMoreAboutResponseSubject.next(response);
+        }
+
+        return response;
+      }),
+      catchError(error => {
+        return throwError(() => error);
+      })
+    );
+  }
 
 
   // Set a context note that will be shown in the chat UI

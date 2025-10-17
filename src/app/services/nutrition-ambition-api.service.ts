@@ -80,17 +80,52 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    createBetaAccount(body: CreateBetaAccountRequest | undefined): Observable<CreateBetaAccountResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    generateBetaSignInLink(body: GenerateBetaSignInLinkRequest | undefined): Observable<GenerateBetaSignInLinkResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    uploadGuidelineFile(body: UploadGuidelineFileRequest | undefined): Observable<UploadGuidelineFileResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getGuidelineFiles(body: GetGuidelineFilesRequest | undefined): Observable<GetGuidelineFilesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    deleteGuidelineFile(body: DeleteGuidelineFileRequest | undefined): Observable<DeleteGuidelineFileResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
      */
-    runResponsesConversation(body: RunChatRequest | undefined): Observable<ChatMessagesResponse>;
+    types(body: RunChatRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    runResponsesConversation(body: RunChatRequest | undefined): Observable<void>;
     /**
      * @param body (optional) 
      * @return Success
      */
     learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    setupGoals(body: SetupGoalsRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -146,6 +181,11 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     getInstantAlternatives(body: GetInstantAlternativesRequest | undefined): Observable<GetInstantAlternativesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getProfileAndTargets(body: GetProfileAndTargetsRequest | undefined): Observable<GetProfileAndTargetsResponse>;
     /**
      * @return Success
      */
@@ -839,6 +879,286 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
+    createBetaAccount(body: CreateBetaAccountRequest | undefined): Observable<CreateBetaAccountResponse> {
+        let url_ = this.baseUrl + "/api/Admin/CreateBetaAccount";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateBetaAccount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateBetaAccount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CreateBetaAccountResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CreateBetaAccountResponse>;
+        }));
+    }
+
+    protected processCreateBetaAccount(response: HttpResponseBase): Observable<CreateBetaAccountResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateBetaAccountResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<CreateBetaAccountResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    generateBetaSignInLink(body: GenerateBetaSignInLinkRequest | undefined): Observable<GenerateBetaSignInLinkResponse> {
+        let url_ = this.baseUrl + "/api/Admin/GenerateBetaSignInLink";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGenerateBetaSignInLink(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGenerateBetaSignInLink(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GenerateBetaSignInLinkResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GenerateBetaSignInLinkResponse>;
+        }));
+    }
+
+    protected processGenerateBetaSignInLink(response: HttpResponseBase): Observable<GenerateBetaSignInLinkResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GenerateBetaSignInLinkResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GenerateBetaSignInLinkResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    uploadGuidelineFile(body: UploadGuidelineFileRequest | undefined): Observable<UploadGuidelineFileResponse> {
+        let url_ = this.baseUrl + "/api/Admin/UploadGuidelineFile";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUploadGuidelineFile(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUploadGuidelineFile(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<UploadGuidelineFileResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<UploadGuidelineFileResponse>;
+        }));
+    }
+
+    protected processUploadGuidelineFile(response: HttpResponseBase): Observable<UploadGuidelineFileResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UploadGuidelineFileResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<UploadGuidelineFileResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getGuidelineFiles(body: GetGuidelineFilesRequest | undefined): Observable<GetGuidelineFilesResponse> {
+        let url_ = this.baseUrl + "/api/Admin/GetGuidelineFiles";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetGuidelineFiles(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetGuidelineFiles(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetGuidelineFilesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetGuidelineFilesResponse>;
+        }));
+    }
+
+    protected processGetGuidelineFiles(response: HttpResponseBase): Observable<GetGuidelineFilesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetGuidelineFilesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetGuidelineFilesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    deleteGuidelineFile(body: DeleteGuidelineFileRequest | undefined): Observable<DeleteGuidelineFileResponse> {
+        let url_ = this.baseUrl + "/api/Admin/DeleteGuidelineFile";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteGuidelineFile(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteGuidelineFile(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<DeleteGuidelineFileResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<DeleteGuidelineFileResponse>;
+        }));
+    }
+
+    protected processDeleteGuidelineFile(response: HttpResponseBase): Observable<DeleteGuidelineFileResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = DeleteGuidelineFileResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<DeleteGuidelineFileResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/Conversation/GetChatMessages";
         url_ = url_.replace(/[?&]$/, "");
@@ -895,8 +1215,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    runResponsesConversation(body: RunChatRequest | undefined): Observable<ChatMessagesResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/RunResponsesConversation";
+    types(body: RunChatRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/RunResponsesConversation/types";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -912,11 +1232,11 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processRunResponsesConversation(response_);
+            return this.processTypes(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processRunResponsesConversation(response_ as any);
+                    return this.processTypes(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
@@ -925,7 +1245,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         }));
     }
 
-    protected processRunResponsesConversation(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+    protected processTypes(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -945,6 +1265,58 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    runResponsesConversation(body: RunChatRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/RunResponsesConversation";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRunResponsesConversation(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRunResponsesConversation(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processRunResponsesConversation(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
     }
 
     /**
@@ -982,6 +1354,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processLearnMoreAbout(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    setupGoals(body: SetupGoalsRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/SetupGoals";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetupGoals(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetupGoals(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
+        }));
+    }
+
+    protected processSetupGoals(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -1620,6 +2048,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getProfileAndTargets(body: GetProfileAndTargetsRequest | undefined): Observable<GetProfileAndTargetsResponse> {
+        let url_ = this.baseUrl + "/api/Profile/GetProfileAndTargets";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetProfileAndTargets(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetProfileAndTargets(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetProfileAndTargetsResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetProfileAndTargetsResponse>;
+        }));
+    }
+
+    protected processGetProfileAndTargets(response: HttpResponseBase): Observable<GetProfileAndTargetsResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetProfileAndTargetsResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetProfileAndTargetsResponse>(null as any);
+    }
+
+    /**
      * @return Success
      */
     ip(): Observable<void> {
@@ -1745,6 +2229,8 @@ export class AccountResponse implements IAccountResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     account?: Account;
 
     constructor(data?: IAccountResponse) {
@@ -1767,6 +2253,8 @@ export class AccountResponse implements IAccountResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.account = _data["account"] ? Account.fromJS(_data["account"]) : <any>undefined;
         }
     }
@@ -1789,6 +2277,8 @@ export class AccountResponse implements IAccountResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["account"] = this.account ? this.account.toJSON() : <any>undefined;
         return data;
     }
@@ -1800,6 +2290,8 @@ export interface IAccountResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     account?: Account;
 }
 
@@ -2099,6 +2591,8 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     messages?: ChatMessage[] | undefined;
 
     constructor(data?: IChatMessagesResponse) {
@@ -2121,6 +2615,8 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -2147,6 +2643,8 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -2162,6 +2660,8 @@ export interface IChatMessagesResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     messages?: ChatMessage[] | undefined;
 }
 
@@ -2211,6 +2711,8 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -2236,6 +2738,8 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.dataCleared = _data["dataCleared"];
             this.clearedAccountId = _data["clearedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -2267,6 +2771,8 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["dataCleared"] = this.dataCleared;
         data["clearedAccountId"] = this.clearedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -2287,6 +2793,8 @@ export interface IClearAccountDataResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -2343,6 +2851,8 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     feedbackEntry?: FeedbackEntry;
 
     constructor(data?: ICompleteFeedbackResponse) {
@@ -2365,6 +2875,8 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.feedbackEntry = _data["feedbackEntry"] ? FeedbackEntry.fromJS(_data["feedbackEntry"]) : <any>undefined;
         }
     }
@@ -2387,6 +2899,8 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["feedbackEntry"] = this.feedbackEntry ? this.feedbackEntry.toJSON() : <any>undefined;
         return data;
     }
@@ -2398,6 +2912,8 @@ export interface ICompleteFeedbackResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     feedbackEntry?: FeedbackEntry;
 }
 
@@ -2406,6 +2922,8 @@ export class Component implements IComponent {
     selectedComponentId?: string | undefined;
     matches?: ComponentMatch[] | undefined;
     culinaryRole?: string | undefined;
+    isPending?: boolean;
+    statusText?: string | undefined;
 
     constructor(data?: IComponent) {
         if (data) {
@@ -2426,6 +2944,8 @@ export class Component implements IComponent {
                     this.matches!.push(ComponentMatch.fromJS(item));
             }
             this.culinaryRole = _data["culinaryRole"];
+            this.isPending = _data["isPending"];
+            this.statusText = _data["statusText"];
         }
     }
 
@@ -2446,6 +2966,8 @@ export class Component implements IComponent {
                 data["matches"].push(item.toJSON());
         }
         data["culinaryRole"] = this.culinaryRole;
+        data["isPending"] = this.isPending;
+        data["statusText"] = this.statusText;
         return data;
     }
 }
@@ -2455,6 +2977,8 @@ export interface IComponent {
     selectedComponentId?: string | undefined;
     matches?: ComponentMatch[] | undefined;
     culinaryRole?: string | undefined;
+    isPending?: boolean;
+    statusText?: string | undefined;
 }
 
 export class ComponentBreakdown implements IComponentBreakdown {
@@ -2607,6 +3131,8 @@ export class ComponentMatch implements IComponentMatch {
     culinaryRole?: string | undefined;
     photoThumb?: string | undefined;
     photoHighRes?: string | undefined;
+    isPending?: boolean;
+    statusText?: string | undefined;
 
     constructor(data?: IComponentMatch) {
         if (data) {
@@ -2644,6 +3170,8 @@ export class ComponentMatch implements IComponentMatch {
             this.culinaryRole = _data["culinaryRole"];
             this.photoThumb = _data["photoThumb"];
             this.photoHighRes = _data["photoHighRes"];
+            this.isPending = _data["isPending"];
+            this.statusText = _data["statusText"];
         }
     }
 
@@ -2681,6 +3209,8 @@ export class ComponentMatch implements IComponentMatch {
         data["culinaryRole"] = this.culinaryRole;
         data["photoThumb"] = this.photoThumb;
         data["photoHighRes"] = this.photoHighRes;
+        data["isPending"] = this.isPending;
+        data["statusText"] = this.statusText;
         return data;
     }
 }
@@ -2707,6 +3237,8 @@ export interface IComponentMatch {
     culinaryRole?: string | undefined;
     photoThumb?: string | undefined;
     photoHighRes?: string | undefined;
+    isPending?: boolean;
+    statusText?: string | undefined;
 }
 
 export class ComponentServing implements IComponentServing {
@@ -2727,6 +3259,8 @@ export class ComponentServing implements IComponentServing {
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
+    isPending?: boolean;
+    statusText?: string | undefined;
 
     constructor(data?: IComponentServing) {
         if (data) {
@@ -2762,6 +3296,8 @@ export class ComponentServing implements IComponentServing {
                 }
             }
             this.apiServingKind = _data["apiServingKind"];
+            this.isPending = _data["isPending"];
+            this.statusText = _data["statusText"];
         }
     }
 
@@ -2797,6 +3333,8 @@ export class ComponentServing implements IComponentServing {
             }
         }
         data["apiServingKind"] = this.apiServingKind;
+        data["isPending"] = this.isPending;
+        data["statusText"] = this.statusText;
         return data;
     }
 }
@@ -2819,6 +3357,116 @@ export interface IComponentServing {
     weightGramsPerUnit?: number | undefined;
     nutrients?: { [key: string]: number; } | undefined;
     apiServingKind?: UnitKind;
+    isPending?: boolean;
+    statusText?: string | undefined;
+}
+
+export class CreateBetaAccountRequest implements ICreateBetaAccountRequest {
+    email?: string | undefined;
+
+    constructor(data?: ICreateBetaAccountRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.email = _data["email"];
+        }
+    }
+
+    static fromJS(data: any): CreateBetaAccountRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateBetaAccountRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["email"] = this.email;
+        return data;
+    }
+}
+
+export interface ICreateBetaAccountRequest {
+    email?: string | undefined;
+}
+
+export class CreateBetaAccountResponse implements ICreateBetaAccountResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    signInLink?: string | undefined;
+    accountId?: string | undefined;
+
+    constructor(data?: ICreateBetaAccountResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.signInLink = _data["signInLink"];
+            this.accountId = _data["accountId"];
+        }
+    }
+
+    static fromJS(data: any): CreateBetaAccountResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateBetaAccountResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["signInLink"] = this.signInLink;
+        data["accountId"] = this.accountId;
+        return data;
+    }
+}
+
+export interface ICreateBetaAccountResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    signInLink?: string | undefined;
+    accountId?: string | undefined;
 }
 
 export class DailySummary implements IDailySummary {
@@ -2955,6 +3603,8 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -2980,6 +3630,8 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.accountDeleted = _data["accountDeleted"];
             this.deletedAccountId = _data["deletedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -3011,6 +3663,8 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["accountDeleted"] = this.accountDeleted;
         data["deletedAccountId"] = this.deletedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -3031,6 +3685,8 @@ export interface IDeleteAccountResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -3079,6 +3735,8 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     deleted?: boolean;
 
     constructor(data?: IDeleteFeedbackResponse) {
@@ -3101,6 +3759,8 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.deleted = _data["deleted"];
         }
     }
@@ -3123,6 +3783,8 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["deleted"] = this.deleted;
         return data;
     }
@@ -3134,6 +3796,8 @@ export interface IDeleteFeedbackResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     deleted?: boolean;
 }
 
@@ -3187,6 +3851,8 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
 
     constructor(data?: IDeleteFoodEntryResponse) {
         if (data) {
@@ -3208,6 +3874,8 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
         }
     }
 
@@ -3229,6 +3897,8 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         return data;
     }
 }
@@ -3239,6 +3909,112 @@ export interface IDeleteFoodEntryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+}
+
+export class DeleteGuidelineFileRequest implements IDeleteGuidelineFileRequest {
+    openAiFileId?: string | undefined;
+
+    constructor(data?: IDeleteGuidelineFileRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.openAiFileId = _data["openAiFileId"];
+        }
+    }
+
+    static fromJS(data: any): DeleteGuidelineFileRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new DeleteGuidelineFileRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["openAiFileId"] = this.openAiFileId;
+        return data;
+    }
+}
+
+export interface IDeleteGuidelineFileRequest {
+    openAiFileId?: string | undefined;
+}
+
+export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+
+    constructor(data?: IDeleteGuidelineFileResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+        }
+    }
+
+    static fromJS(data: any): DeleteGuidelineFileResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new DeleteGuidelineFileResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        return data;
+    }
+}
+
+export interface IDeleteGuidelineFileResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
 }
 
 export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
@@ -3479,6 +4255,8 @@ export class Food implements IFood {
     brand?: string | undefined;
     originalPhrase?: string | undefined;
     components?: Component[] | undefined;
+    isPending?: boolean;
+    statusText?: string | undefined;
 
     constructor(data?: IFood) {
         if (data) {
@@ -3504,6 +4282,8 @@ export class Food implements IFood {
                 for (let item of _data["components"])
                     this.components!.push(Component.fromJS(item));
             }
+            this.isPending = _data["isPending"];
+            this.statusText = _data["statusText"];
         }
     }
 
@@ -3529,6 +4309,8 @@ export class Food implements IFood {
             for (let item of this.components)
                 data["components"].push(item.toJSON());
         }
+        data["isPending"] = this.isPending;
+        data["statusText"] = this.statusText;
         return data;
     }
 }
@@ -3543,6 +4325,8 @@ export interface IFood {
     brand?: string | undefined;
     originalPhrase?: string | undefined;
     components?: Component[] | undefined;
+    isPending?: boolean;
+    statusText?: string | undefined;
 }
 
 export class FoodBreakdown implements IFoodBreakdown {
@@ -3781,6 +4565,114 @@ export interface IFoodEntryBreakdown {
     foods?: FoodBreakdown[] | undefined;
 }
 
+export class GenerateBetaSignInLinkRequest implements IGenerateBetaSignInLinkRequest {
+    email?: string | undefined;
+
+    constructor(data?: IGenerateBetaSignInLinkRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.email = _data["email"];
+        }
+    }
+
+    static fromJS(data: any): GenerateBetaSignInLinkRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GenerateBetaSignInLinkRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["email"] = this.email;
+        return data;
+    }
+}
+
+export interface IGenerateBetaSignInLinkRequest {
+    email?: string | undefined;
+}
+
+export class GenerateBetaSignInLinkResponse implements IGenerateBetaSignInLinkResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    signInLink?: string | undefined;
+
+    constructor(data?: IGenerateBetaSignInLinkResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.signInLink = _data["signInLink"];
+        }
+    }
+
+    static fromJS(data: any): GenerateBetaSignInLinkResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GenerateBetaSignInLinkResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["signInLink"] = this.signInLink;
+        return data;
+    }
+}
+
+export interface IGenerateBetaSignInLinkResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    signInLink?: string | undefined;
+}
+
 export class GetAccountDataCountsRequest implements IGetAccountDataCountsRequest {
     accountId?: string | undefined;
 
@@ -3822,6 +4714,8 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -3845,6 +4739,8 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
             this.isSuccess = _data["isSuccess"];
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.accountId = _data["accountId"];
             if (_data["dataCounts"]) {
                 this.dataCounts = {} as any;
@@ -3874,6 +4770,8 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
         data["isSuccess"] = this.isSuccess;
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["accountId"] = this.accountId;
         if (this.dataCounts) {
             data["dataCounts"] = {};
@@ -3892,6 +4790,8 @@ export interface IGetAccountDataCountsResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -3933,6 +4833,8 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accounts?: Account[] | undefined;
 
     constructor(data?: IGetAllAccountsResponse) {
@@ -3955,6 +4857,8 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["accounts"])) {
                 this.accounts = [] as any;
                 for (let item of _data["accounts"])
@@ -3981,6 +4885,8 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.accounts)) {
             data["accounts"] = [];
             for (let item of this.accounts)
@@ -3996,6 +4902,8 @@ export interface IGetAllAccountsResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     accounts?: Account[] | undefined;
 }
 
@@ -4077,6 +4985,8 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     dailySummary?: DailySummary;
 
     constructor(data?: IGetDetailedSummaryResponse) {
@@ -4099,6 +5009,8 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.dailySummary = _data["dailySummary"] ? DailySummary.fromJS(_data["dailySummary"]) : <any>undefined;
         }
     }
@@ -4121,6 +5033,8 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["dailySummary"] = this.dailySummary ? this.dailySummary.toJSON() : <any>undefined;
         return data;
     }
@@ -4132,6 +5046,8 @@ export interface IGetDetailedSummaryResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     dailySummary?: DailySummary;
 }
 
@@ -4193,6 +5109,8 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 
     constructor(data?: IGetFeedbackWithAccountInfoResponse) {
@@ -4215,6 +5133,8 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["feedbackWithAccounts"])) {
                 this.feedbackWithAccounts = [] as any;
                 for (let item of _data["feedbackWithAccounts"])
@@ -4241,6 +5161,8 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.feedbackWithAccounts)) {
             data["feedbackWithAccounts"] = [];
             for (let item of this.feedbackWithAccounts)
@@ -4256,7 +5178,119 @@ export interface IGetFeedbackWithAccountInfoResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
+}
+
+export class GetGuidelineFilesRequest implements IGetGuidelineFilesRequest {
+
+    constructor(data?: IGetGuidelineFilesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): GetGuidelineFilesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetGuidelineFilesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+export interface IGetGuidelineFilesRequest {
+}
+
+export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    files?: OpenAiFile[] | undefined;
+
+    constructor(data?: IGetGuidelineFilesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            if (Array.isArray(_data["files"])) {
+                this.files = [] as any;
+                for (let item of _data["files"])
+                    this.files!.push(OpenAiFile.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): GetGuidelineFilesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetGuidelineFilesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        if (Array.isArray(this.files)) {
+            data["files"] = [];
+            for (let item of this.files)
+                data["files"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IGetGuidelineFilesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    files?: OpenAiFile[] | undefined;
 }
 
 export class GetInstantAlternativesRequest implements IGetInstantAlternativesRequest {
@@ -4309,6 +5343,8 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
@@ -4334,6 +5370,8 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.originalPhrase = _data["originalPhrase"];
             this.componentId = _data["componentId"];
             if (Array.isArray(_data["alternatives"])) {
@@ -4363,6 +5401,8 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["originalPhrase"] = this.originalPhrase;
         data["componentId"] = this.componentId;
         if (Array.isArray(this.alternatives)) {
@@ -4381,10 +5421,176 @@ export interface IGetInstantAlternativesResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
     searchMethod?: string | undefined;
+}
+
+export class GetProfileAndTargetsRequest implements IGetProfileAndTargetsRequest {
+    localDateKey?: string | undefined;
+
+    constructor(data?: IGetProfileAndTargetsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.localDateKey = _data["localDateKey"];
+        }
+    }
+
+    static fromJS(data: any): GetProfileAndTargetsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetProfileAndTargetsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["localDateKey"] = this.localDateKey;
+        return data;
+    }
+}
+
+export interface IGetProfileAndTargetsRequest {
+    localDateKey?: string | undefined;
+}
+
+export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    age?: number | undefined;
+    sex?: string | undefined;
+    heightFeet?: number | undefined;
+    heightInches?: number | undefined;
+    weightLbs?: number | undefined;
+    activityLevel?: string | undefined;
+    baseCalories?: number | undefined;
+    hasTargets?: boolean;
+    goals?: string[] | undefined;
+    goalSummary?: string | undefined;
+    nutrientTargets?: NutrientTarget[] | undefined;
+
+    constructor(data?: IGetProfileAndTargetsResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.age = _data["age"];
+            this.sex = _data["sex"];
+            this.heightFeet = _data["heightFeet"];
+            this.heightInches = _data["heightInches"];
+            this.weightLbs = _data["weightLbs"];
+            this.activityLevel = _data["activityLevel"];
+            this.baseCalories = _data["baseCalories"];
+            this.hasTargets = _data["hasTargets"];
+            if (Array.isArray(_data["goals"])) {
+                this.goals = [] as any;
+                for (let item of _data["goals"])
+                    this.goals!.push(item);
+            }
+            this.goalSummary = _data["goalSummary"];
+            if (Array.isArray(_data["nutrientTargets"])) {
+                this.nutrientTargets = [] as any;
+                for (let item of _data["nutrientTargets"])
+                    this.nutrientTargets!.push(NutrientTarget.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): GetProfileAndTargetsResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetProfileAndTargetsResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["age"] = this.age;
+        data["sex"] = this.sex;
+        data["heightFeet"] = this.heightFeet;
+        data["heightInches"] = this.heightInches;
+        data["weightLbs"] = this.weightLbs;
+        data["activityLevel"] = this.activityLevel;
+        data["baseCalories"] = this.baseCalories;
+        data["hasTargets"] = this.hasTargets;
+        if (Array.isArray(this.goals)) {
+            data["goals"] = [];
+            for (let item of this.goals)
+                data["goals"].push(item);
+        }
+        data["goalSummary"] = this.goalSummary;
+        if (Array.isArray(this.nutrientTargets)) {
+            data["nutrientTargets"] = [];
+            for (let item of this.nutrientTargets)
+                data["nutrientTargets"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IGetProfileAndTargetsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    age?: number | undefined;
+    sex?: string | undefined;
+    heightFeet?: number | undefined;
+    heightInches?: number | undefined;
+    weightLbs?: number | undefined;
+    activityLevel?: string | undefined;
+    baseCalories?: number | undefined;
+    hasTargets?: boolean;
+    goals?: string[] | undefined;
+    goalSummary?: string | undefined;
+    nutrientTargets?: NutrientTarget[] | undefined;
 }
 
 export class GetUserChatMessagesRequest implements IGetUserChatMessagesRequest {
@@ -4436,6 +5642,8 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -4459,6 +5667,8 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
             this.isSuccess = _data["isSuccess"];
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -4486,6 +5696,8 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
         data["isSuccess"] = this.isSuccess;
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -4502,6 +5714,8 @@ export interface IGetUserChatMessagesResponse {
     isSuccess?: boolean;
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -4685,6 +5899,7 @@ export class MealSelection implements IMealSelection {
     foodEntryId?: string | undefined;
     foodId?: string | undefined;
     componentId?: string | undefined;
+    isPending?: boolean;
 
     constructor(data?: IMealSelection) {
         if (data) {
@@ -4707,6 +5922,7 @@ export class MealSelection implements IMealSelection {
             this.foodEntryId = _data["foodEntryId"];
             this.foodId = _data["foodId"];
             this.componentId = _data["componentId"];
+            this.isPending = _data["isPending"];
         }
     }
 
@@ -4729,6 +5945,7 @@ export class MealSelection implements IMealSelection {
         data["foodEntryId"] = this.foodEntryId;
         data["foodId"] = this.foodId;
         data["componentId"] = this.componentId;
+        data["isPending"] = this.isPending;
         return data;
     }
 }
@@ -4740,6 +5957,7 @@ export interface IMealSelection {
     foodEntryId?: string | undefined;
     foodId?: string | undefined;
     componentId?: string | undefined;
+    isPending?: boolean;
 }
 
 export enum MessageRoleTypes {
@@ -4895,6 +6113,142 @@ export interface INutrientContribution {
     originalUnit?: string | undefined;
 }
 
+export class NutrientTarget implements INutrientTarget {
+    nutrientKey?: string | undefined;
+    maxValue?: number | undefined;
+    minValue?: number | undefined;
+    isDefault?: boolean;
+    isGoal?: boolean;
+
+    constructor(data?: INutrientTarget) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.nutrientKey = _data["nutrientKey"];
+            this.maxValue = _data["maxValue"];
+            this.minValue = _data["minValue"];
+            this.isDefault = _data["isDefault"];
+            this.isGoal = _data["isGoal"];
+        }
+    }
+
+    static fromJS(data: any): NutrientTarget {
+        data = typeof data === 'object' ? data : {};
+        let result = new NutrientTarget();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["nutrientKey"] = this.nutrientKey;
+        data["maxValue"] = this.maxValue;
+        data["minValue"] = this.minValue;
+        data["isDefault"] = this.isDefault;
+        data["isGoal"] = this.isGoal;
+        return data;
+    }
+}
+
+export interface INutrientTarget {
+    nutrientKey?: string | undefined;
+    maxValue?: number | undefined;
+    minValue?: number | undefined;
+    isDefault?: boolean;
+    isGoal?: boolean;
+}
+
+export class OpenAiFile implements IOpenAiFile {
+    id?: string | undefined;
+    createdDateUtc?: Date;
+    lastUpdatedDateUtc?: Date;
+    type?: string | undefined;
+    openAiFileId?: string | undefined;
+    vectorStoreId?: string | undefined;
+    fileName?: string | undefined;
+    fileSize?: number;
+    contentType?: string | undefined;
+    fileSha256Hash?: string | undefined;
+    uploadedByAccountId?: string | undefined;
+    status?: string | undefined;
+    errorMessage?: string | undefined;
+
+    constructor(data?: IOpenAiFile) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
+            this.lastUpdatedDateUtc = _data["lastUpdatedDateUtc"] ? new Date(_data["lastUpdatedDateUtc"].toString()) : <any>undefined;
+            this.type = _data["type"];
+            this.openAiFileId = _data["openAiFileId"];
+            this.vectorStoreId = _data["vectorStoreId"];
+            this.fileName = _data["fileName"];
+            this.fileSize = _data["fileSize"];
+            this.contentType = _data["contentType"];
+            this.fileSha256Hash = _data["fileSha256Hash"];
+            this.uploadedByAccountId = _data["uploadedByAccountId"];
+            this.status = _data["status"];
+            this.errorMessage = _data["errorMessage"];
+        }
+    }
+
+    static fromJS(data: any): OpenAiFile {
+        data = typeof data === 'object' ? data : {};
+        let result = new OpenAiFile();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
+        data["lastUpdatedDateUtc"] = this.lastUpdatedDateUtc ? this.lastUpdatedDateUtc.toISOString() : <any>undefined;
+        data["type"] = this.type;
+        data["openAiFileId"] = this.openAiFileId;
+        data["vectorStoreId"] = this.vectorStoreId;
+        data["fileName"] = this.fileName;
+        data["fileSize"] = this.fileSize;
+        data["contentType"] = this.contentType;
+        data["fileSha256Hash"] = this.fileSha256Hash;
+        data["uploadedByAccountId"] = this.uploadedByAccountId;
+        data["status"] = this.status;
+        data["errorMessage"] = this.errorMessage;
+        return data;
+    }
+}
+
+export interface IOpenAiFile {
+    id?: string | undefined;
+    createdDateUtc?: Date;
+    lastUpdatedDateUtc?: Date;
+    type?: string | undefined;
+    openAiFileId?: string | undefined;
+    vectorStoreId?: string | undefined;
+    fileName?: string | undefined;
+    fileSize?: number;
+    contentType?: string | undefined;
+    fileSha256Hash?: string | undefined;
+    uploadedByAccountId?: string | undefined;
+    status?: string | undefined;
+    errorMessage?: string | undefined;
+}
+
 export class RegisterAccountRequest implements IRegisterAccountRequest {
     email?: string | undefined;
     timeZoneId?: string | undefined;
@@ -4975,6 +6329,8 @@ export class Response implements IResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
 
     constructor(data?: IResponse) {
         if (data) {
@@ -4996,6 +6352,8 @@ export class Response implements IResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
         }
     }
 
@@ -5017,6 +6375,8 @@ export class Response implements IResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         return data;
     }
 }
@@ -5027,6 +6387,8 @@ export interface IResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
 }
 
 export class RunChatRequest implements IRunChatRequest {
@@ -5155,6 +6517,8 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 
@@ -5178,6 +6542,8 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             this.searchPhrase = _data["searchPhrase"];
             if (Array.isArray(_data["foodOptions"])) {
                 this.foodOptions = [] as any;
@@ -5205,6 +6571,8 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         data["searchPhrase"] = this.searchPhrase;
         if (Array.isArray(this.foodOptions)) {
             data["foodOptions"] = [];
@@ -5221,6 +6589,8 @@ export interface ISearchFoodPhraseResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 }
@@ -5295,6 +6665,8 @@ export class SearchLogsResponse implements ISearchLogsResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 
@@ -5318,6 +6690,8 @@ export class SearchLogsResponse implements ISearchLogsResponse {
             this.correlationId = _data["correlationId"];
             this.stackTrace = _data["stackTrace"];
             this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
             if (Array.isArray(_data["items"])) {
                 this.items = [] as any;
                 for (let item of _data["items"])
@@ -5345,6 +6719,8 @@ export class SearchLogsResponse implements ISearchLogsResponse {
         data["correlationId"] = this.correlationId;
         data["stackTrace"] = this.stackTrace;
         data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
         if (Array.isArray(this.items)) {
             data["items"] = [];
             for (let item of this.items)
@@ -5361,6 +6737,8 @@ export interface ISearchLogsResponse {
     correlationId?: string | undefined;
     stackTrace?: string | undefined;
     accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 }
@@ -5415,6 +6793,46 @@ export interface IServingIdentifier {
     foodName?: string | undefined;
     variantIndex?: number;
     servingType?: string | undefined;
+}
+
+export class SetupGoalsRequest implements ISetupGoalsRequest {
+    localDateKey?: string | undefined;
+    isTweaking?: boolean;
+
+    constructor(data?: ISetupGoalsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.localDateKey = _data["localDateKey"];
+            this.isTweaking = _data["isTweaking"];
+        }
+    }
+
+    static fromJS(data: any): SetupGoalsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetupGoalsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["localDateKey"] = this.localDateKey;
+        data["isTweaking"] = this.isTweaking;
+        return data;
+    }
+}
+
+export interface ISetupGoalsRequest {
+    localDateKey?: string | undefined;
+    isTweaking?: boolean;
 }
 
 export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {
@@ -5634,6 +7052,134 @@ export enum UnitKind {
     Volume = "Volume",
     Count = "Count",
     Unknown = "Unknown",
+}
+
+export class UploadGuidelineFileRequest implements IUploadGuidelineFileRequest {
+    fileName?: string | undefined;
+    contentType?: string | undefined;
+    base64Data?: string | undefined;
+
+    constructor(data?: IUploadGuidelineFileRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fileName = _data["fileName"];
+            this.contentType = _data["contentType"];
+            this.base64Data = _data["base64Data"];
+        }
+    }
+
+    static fromJS(data: any): UploadGuidelineFileRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UploadGuidelineFileRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fileName"] = this.fileName;
+        data["contentType"] = this.contentType;
+        data["base64Data"] = this.base64Data;
+        return data;
+    }
+}
+
+export interface IUploadGuidelineFileRequest {
+    fileName?: string | undefined;
+    contentType?: string | undefined;
+    base64Data?: string | undefined;
+}
+
+export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    openAiFileId?: string | undefined;
+    openAiFileApiId?: string | undefined;
+    vectorStoreId?: string | undefined;
+    status?: string | undefined;
+
+    constructor(data?: IUploadGuidelineFileResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.openAiFileId = _data["openAiFileId"];
+            this.openAiFileApiId = _data["openAiFileApiId"];
+            this.vectorStoreId = _data["vectorStoreId"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): UploadGuidelineFileResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new UploadGuidelineFileResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["openAiFileId"] = this.openAiFileId;
+        data["openAiFileApiId"] = this.openAiFileApiId;
+        data["vectorStoreId"] = this.vectorStoreId;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IUploadGuidelineFileResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    openAiFileId?: string | undefined;
+    openAiFileApiId?: string | undefined;
+    vectorStoreId?: string | undefined;
+    status?: string | undefined;
 }
 
 export class UserSelectedFoodQuantity implements IUserSelectedFoodQuantity {

@@ -1,4 +1,9 @@
-<div [ngClass]="{'user-message': isUser, 'bot-message': !isUser && !isTool, 'tool-message': isTool}" class="message">
+<div
+  [ngClass]="{'user-message': isUser, 'bot-message': !isUser && !isTool, 'tool-message': isTool, 'streaming': isStreaming}"
+  class="message"
+  [attr.aria-live]="isStreaming ? 'polite' : 'off'"
+  [attr.aria-busy]="isStreaming"
+  role="article">
   <div class="message-content" [innerHTML]="formattedContent"></div>
   <!-- <div class="message-time">{{ timestamp | date:'shortTime' }}</div> -->
 </div> 

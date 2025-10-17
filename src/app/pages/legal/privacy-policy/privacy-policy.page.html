@@ -1,51 +1,123 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Privacy Policy</ion-title>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/legal"></ion-back-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header
+  [title]="'Privacy Policy'"
+  [showBackButton]="true">
+</app-header>
 
-<ion-content class="ion-padding">
+<ion-content [fullscreen]="true" class="ion-padding">
   <div class="privacy-container">
-    <h1>Privacy Policy</h1>
-    <p class="last-updated">Last updated: January 2025</p>
-    
+    <h1>🔒 PRIVACY POLICY</h1>
+    <p class="last-updated">Effective Date: October 2025</p>
+    <p class="operator-info">Operator: JACOBI, LLC ("we," "us," "our")</p>
+    <p class="operator-info">App: Nutrition Ambition</p>
+    <p class="operator-info">Contact: <a href="mailto:hello@nutritionambition.com">hello&#64;nutritionambition.com</a></p>
+
     <div class="section">
-      <h2>Information We Collect</h2>
-      <p>We collect information you provide directly to us, such as when you create an account, use our nutrition tracking features, or contact us for support.</p>
+      <h2>1. Purpose of This Policy</h2>
+      <p>This Privacy Policy explains how we collect, use, and protect your information when you use Nutrition Ambition. We value privacy and limit data collection to what's necessary for app functionality.</p>
     </div>
-    
+
     <div class="section">
-      <h2>How We Use Your Information</h2>
-      <p>We use the information we collect to:</p>
+      <h2>2. Information We Collect</h2>
       <ul>
-        <li>Provide, maintain, and improve our nutrition tracking services</li>
-        <li>Process transactions and send related information</li>
-        <li>Send technical notices and support messages</li>
-        <li>Respond to your comments and questions</li>
+        <li><strong>Account Information:</strong> Email address, authentication credentials (managed by Firebase), and optional demographic data (age, sex, weight, activity level).</li>
+        <li><strong>Nutrition Data:</strong> Food logs, nutrient targets, and related entries.</li>
+        <li><strong>Technical Data:</strong> Device type, usage logs, crash reports, and analytics.</li>
+        <li><strong>Communications:</strong> Messages, feedback, or support emails you send.</li>
       </ul>
     </div>
-    
+
     <div class="section">
-      <h2>Information Sharing</h2>
-      <p>We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this privacy policy.</p>
+      <h2>3. How We Use Information</h2>
+      <ul>
+        <li>Provide and personalize app features.</li>
+        <li>Generate nutrition insights and recommendations.</li>
+        <li>Improve performance and fix bugs.</li>
+        <li>Communicate updates and respond to feedback.</li>
+        <li><strong>[BETA ONLY]</strong> Evaluate app usability and collect voluntary tester feedback.</li>
+      </ul>
+      <p>We do not use your data for advertising or sell it to third parties.</p>
     </div>
-    
+
     <div class="section">
-      <h2>Data Security</h2>
-      <p>We implement appropriate security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+      <h2>4. Third-Party Service Providers</h2>
+      <p>We rely on secure third-party services to operate the app:</p>
+      <ul>
+        <li><strong>Firebase (Google Cloud)</strong> – authentication and hosting</li>
+        <li><strong>MongoDB Atlas (on GCP)</strong> – encrypted data storage</li>
+        <li><strong>Nutritionix API</strong> – food and nutrient lookup</li>
+        <li><strong>OpenAI API</strong> – text processing and nutrition language support</li>
+      </ul>
+      <p>Each provider processes limited data only to the extent necessary for its function and under its own privacy policy.</p>
     </div>
-    
+
     <div class="section">
-      <h2>Your Rights</h2>
-      <p>You have the right to access, update, or delete your personal information. You may also opt out of certain communications from us.</p>
+      <h2>5. Data Security</h2>
+      <ul>
+        <li>All network traffic is encrypted via HTTPS (SSL).</li>
+        <li>Stored data is encrypted at rest.</li>
+        <li>Access is restricted to authorized team members.</li>
+        <li>Audit logs and cloud security tools are used to monitor access.</li>
+      </ul>
     </div>
-    
+
     <div class="section">
-      <h2>Contact Us</h2>
-      <p>If you have any questions about this Privacy Policy, please contact us at privacy&#64;nutritionambition.com.</p>
+      <h2>6. Data Retention</h2>
+      <p>Data is retained while your account is active. You may request deletion at any time by emailing <a href="mailto:hello@nutritionambition.com">hello&#64;nutritionambition.com</a>.</p>
+      <p><strong>[BETA ONLY]</strong> We may delete tester data after the beta program ends or after 12 months of inactivity.</p>
+    </div>
+
+    <div class="section">
+      <h2>7. User Rights</h2>
+      <p>You may:</p>
+      <ul>
+        <li>Access, correct, or delete your data.</li>
+        <li>Withdraw consent and close your account.</li>
+        <li>Request a copy of your data in portable form.</li>
+      </ul>
+      <p>We will respond to verified requests within 30 days.</p>
+    </div>
+
+    <div class="section">
+      <h2>8. Children's Privacy</h2>
+      <p>Nutrition Ambition is not intended for individuals under 18. We do not knowingly collect data from minors.</p>
+    </div>
+
+    <div class="section">
+      <h2>9. International Users</h2>
+      <p>Data is stored and processed in the United States. By using the Service from outside the U.S., you consent to this transfer and processing.</p>
+    </div>
+
+    <div class="section">
+      <h2>10. Data Sharing and Disclosure</h2>
+      <p>We may share data only:</p>
+      <ul>
+        <li>With vendors or contractors under confidentiality agreements.</li>
+        <li>When required by law (e.g., legal request or to prevent harm).</li>
+        <li>As aggregated, anonymized analytics that cannot identify individuals.</li>
+      </ul>
+      <p>We never sell personal information.</p>
+    </div>
+
+    <div class="section">
+      <h2>11. Cookies and Analytics</h2>
+      <p>We may use minimal cookies or local storage for session management and performance analytics. No cross-site tracking or advertising cookies are used.</p>
+    </div>
+
+    <div class="section">
+      <h2>12. Information Security Incidents</h2>
+      <p>If a data incident occurs, we will notify affected users and relevant authorities as required by applicable law.</p>
+    </div>
+
+    <div class="section">
+      <h2>13. Changes to This Policy</h2>
+      <p>We may update this Policy periodically. The latest version will be posted within the app and on our website with a revised "Effective Date."</p>
+    </div>
+
+    <div class="section">
+      <h2>14. Contact Us</h2>
+      <p>Questions or requests:</p>
+      <p>Email: <a href="mailto:hello@nutritionambition.com">hello&#64;nutritionambition.com</a></p>
+      <p>Operator: JACOBI, LLC, Florida USA</p>
     </div>
   </div>
 </ion-content> 

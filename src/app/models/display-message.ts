@@ -10,12 +10,18 @@ export interface DisplayMessage {
 
     // keep full payload from backend
     mealSelection?: MealSelection | null;
-  
+
     // optional convenience fields
     mealName?: string | null;
-    
+
     // phrase editing state
     isEditingPhrase?: boolean;
     editingPhrase?: string;
     newPhrase?: string;
+
+    // streaming state
+    isStreaming?: boolean;
+    isPartial?: boolean;
+    processingStage?: string;
+    mealSelectionIsPending?: boolean;  // Stage 0 - analyzing food entry
   }

@@ -1,3 +1,12 @@
+ion-content {
+  --background: var(--color-bone, #f5f3ef);
+}
+
+// Add top padding when using fullscreen to account for header
+ion-content[fullscreen] {
+  --padding-top: 96px; // Approximate height of the two-row header
+}
+
 .legal-container {
   max-width: 600px;
   margin: 0 auto;
@@ -6,39 +15,56 @@
 
 .legal-container h1 {
   font-family: var(--font-primary);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1.5rem;
   color: var(--color-charcoal);
   margin-bottom: 1rem;
   text-align: center;
+  letter-spacing: 0.5px;
 }
 
 .legal-container p {
   font-family: var(--font-primary);
-  font-size: 1rem;
-  color: var(--color-charcoal);
+  font-size: 0.9375rem;
+  color: var(--color-smoke);
   text-align: center;
   margin-bottom: 2rem;
+  line-height: 1.5;
 }
 
 .legal-card {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  
+  border-radius: 1.25rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12);
   }
+
+  &:last-child {
+    margin-bottom: 1rem;
+  }
+}
+
+.legal-card ion-card-header {
+  padding-bottom: 0.5rem;
 }
 
 .legal-card ion-card-title {
   font-family: var(--font-primary);
   font-weight: 600;
-  color: var(--color-charcoal);
+  font-size: 1.125rem;
+  color: var(--color-olive);
+  text-align: left;
 }
 
 .legal-card ion-card-content {
   font-family: var(--font-primary);
-  color: var(--color-smoke);
+  font-size: 0.9375rem;
+  color: var(--color-charcoal);
+  line-height: 1.6;
+  padding-top: 0.5rem;
 } 

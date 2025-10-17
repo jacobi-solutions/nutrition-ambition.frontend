@@ -1,6 +1,9 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { IonIcon } from '@ionic/angular/standalone';
 import { NutrientBreakdown } from 'src/app/services/nutrition-ambition-api.service';
+import { addIcons } from 'ionicons';
+import { nutritionOutline } from 'ionicons/icons';
 
 interface VitaminData {
   label: string;
@@ -18,17 +21,21 @@ interface VitaminData {
   templateUrl: './vitamins-chart.component.html',
   styleUrls: ['./vitamins-chart.component.scss'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, IonIcon]
 })
 export class VitaminsChartComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() nutrients: NutrientBreakdown[] = [];
 
   fatSolubleVitamins: VitaminData[] = [];
   waterSolubleVitamins: VitaminData[] = [];
+  hasData = false;
+  hasTargets = false;
   isVisible = false;
   private observer: IntersectionObserver | null = null;
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(private elementRef: ElementRef) {
+    addIcons({ nutritionOutline });
+  }
 
   ngAfterViewInit(): void {
     this.observer = new IntersectionObserver((entries) => {
@@ -80,6 +87,17 @@ export class VitaminsChartComponent implements OnChanges, AfterViewInit, OnDestr
 
     this.fatSolubleVitamins = fatSolubleData.map(v => this.createVitaminData(v, true));
     this.waterSolubleVitamins = waterSolubleData.map(v => this.createVitaminData(v, false));
+
+    // Check if we have any vitamin data
+    const allVitamins = [...this.fatSolubleVitamins, ...this.waterSolubleVitamins];
+    this.hasData = allVitamins.some(v => v.consumed > 0);
+
+    // Check if any vitamins have targets
+    this.hasTargets = this.nutrients.some(n => {
+      const key = n.nutrientKey?.toLowerCase() || '';
+      const isVitamin = [...fatSolubleData, ...waterSolubleData].some(v => v.key === key);
+      return isVitamin && ((n.maxTarget !== undefined && n.maxTarget !== null) || (n.minTarget !== undefined && n.minTarget !== null));
+    });
   }
 
   private createVitaminData(vitaminInfo: {label: string, key: string}, isFatSoluble: boolean): VitaminData {

@@ -14,16 +14,24 @@ export class AppUpdateService {
   private _storageKey = 'na-sw-reload';
 
   initAutoUpdateListeners(): void {
+    console.log('🔄 AppUpdateService: Initializing auto-update listeners');
+    console.log('🔄 Service Worker enabled:', this.swUpdate.isEnabled);
+
     if (!this.swUpdate.isEnabled) {
+      console.log('⚠️ Service Worker is NOT enabled - skipping update listeners');
       return;
     }
 
     // Listen for Angular SW version events
     this.swUpdate.versionUpdates.subscribe(async (event) => {
+      console.log('🔄 SW Version Event:', event);
       if (event.type === 'VERSION_READY') {
+        console.log('✅ New version ready! Activating and reloading...');
         if (this._reloading) return;
         this._reloading = true;
-        try { await this.swUpdate.activateUpdate(); } catch (e) { }
+        try { await this.swUpdate.activateUpdate(); } catch (e) {
+          console.error('🔴 Error activating update:', e);
+        }
         this.broadcastReload();
         location.reload();
       }
@@ -48,10 +56,22 @@ export class AppUpdateService {
     }
 
     // Initial + lifecycle checks
+    console.log('🔄 Running initial update check...');
     this.checkNow();
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') this.checkNow(); });
-    window.addEventListener('focus', () => this.checkNow());
-    setInterval(() => this.checkNow(), 15 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        console.log('🔄 Page visible - checking for updates...');
+        this.checkNow();
+      }
+    });
+    window.addEventListener('focus', () => {
+      console.log('🔄 Window focused - checking for updates...');
+      this.checkNow();
+    });
+    setInterval(() => {
+      console.log('🔄 Periodic check (15min) - checking for updates...');
+      this.checkNow();
+    }, 15 * 60 * 1000);
 
   }
 
@@ -66,23 +86,34 @@ export class AppUpdateService {
   private async checkNow(force = false): Promise<void> {
     if (this._reloading) return;
     try {
+      console.log('🔍 checkNow called (force=' + force + ')');
+
       // Nudge browser SW check cadence
       const regs = await navigator.serviceWorker?.getRegistrations?.();
+      console.log('🔍 Service Worker registrations:', regs?.length || 0);
       if (regs?.length) {
-        await Promise.all(regs.map(r => r.update().catch(e => {})));
+        await Promise.all(regs.map(r => r.update().catch(e => {
+          console.error('🔴 Error updating SW registration:', e);
+        })));
       }
 
       const hadUpdate = await this.swUpdate.checkForUpdate().catch((e) => {
+        console.error('🔴 Error checking for update:', e);
         return false;
       });
+      console.log('🔍 Update available:', hadUpdate);
 
       if (force) {
-        try { await this.swUpdate.activateUpdate(); } catch (e) { }
+        console.log('🔄 Force reload requested - activating and reloading...');
+        try { await this.swUpdate.activateUpdate(); } catch (e) {
+          console.error('🔴 Error activating update:', e);
+        }
         this._reloading = true;
         this.broadcastReload();
         location.reload();
       }
     } catch (e) {
+      console.error('🔴 Error in checkNow:', e);
     }
   }
 

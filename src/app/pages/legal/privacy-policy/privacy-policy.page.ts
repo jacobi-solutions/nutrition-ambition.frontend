@@ -1,12 +1,8 @@
 import { Component } from '@angular/core';
-import { 
-  IonHeader, 
-  IonToolbar, 
-  IonTitle, 
-  IonContent, 
-  IonButtons, 
-  IonBackButton
+import {
+  IonContent
 } from '@ionic/angular/standalone';
+import { AppHeaderComponent } from 'src/app/components/header/header.component';
 
 @Component({
   selector: 'app-privacy-policy',
@@ -14,12 +10,8 @@ import {
   styleUrls: ['./privacy-policy.page.scss'],
   standalone: true,
   imports: [
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonButtons,
-    IonBackButton
+    AppHeaderComponent,
+    IonContent
   ],
 })
 export class PrivacyPolicyPage {

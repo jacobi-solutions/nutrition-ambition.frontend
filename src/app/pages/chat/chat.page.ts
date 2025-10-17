@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
@@ -31,6 +31,12 @@ import { format } from 'date-fns';
 import { ToastService } from '../../services/toast.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { AnalyticsService } from '../../services/analytics.service';
+
+// Type for handling both camelCase and PascalCase responses from backend
+type ChatMessagesResponseVariant = ChatMessagesResponse | {
+  Messages: Array<{ Content: string; content?: string }>;
+  messages?: Array<{ Content: string; content?: string }>;
+};
 
 
 
@@ -70,6 +76,18 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   contextNote: string | null = null;
   private dateSubscription: Subscription;
 
+  // Streaming optimization
+  private streamUpdateTimeout: any;
+  private isUserScrolledUp = false;
+  private lastScrollTime = 0;
+  private scrollDebounceMs = 1000; // Only autoscroll once per second
+  isStreamingActive = false; // Prevent multiple concurrent messages (public for template)
+  private activeStream: any = null; // Store active stream for cancellation
+
+  // Streaming configuration constants
+  private readonly STREAM_THROTTLE_MS = 50;
+  private readonly FOCUS_INPUT_DELAY_MS = 300;
+
   // Track messages by ID to preserve component instances during updates
   trackMessage(index: number, message: DisplayMessage): string {
     return message.id || `${index}`;
@@ -93,7 +111,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     private router: Router,
     private toastService: ToastService,
     private cdr: ChangeDetectorRef,
-    private analytics: AnalyticsService // Firebase Analytics tracking
+    private analytics: AnalyticsService, // Firebase Analytics tracking
+    private ngZone: NgZone
   ) {
     // Add the icons explicitly to the library
     addIcons({
@@ -200,17 +219,22 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     if (this.dateSubscription) {
       this.dateSubscription.unsubscribe();
     }
-    
+
     if (this.contextNoteSubscription) {
       this.contextNoteSubscription.unsubscribe();
     }
-    
+
     if (this.learnMoreAboutSubscription) {
       this.learnMoreAboutSubscription.unsubscribe();
     }
-    
+
     if (this.editFoodSelectionStartedSubscription) {
       this.editFoodSelectionStartedSubscription.unsubscribe();
+    }
+
+    // Clean up streaming timeout
+    if (this.streamUpdateTimeout) {
+      clearTimeout(this.streamUpdateTimeout);
     }
   }
 
@@ -468,81 +492,280 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       this.router.navigate(['/login']);
       return;
     }
-    
+
     // Get message text before clearing the input
     const sentMessage = this.userMessage;
     const messageDate = new Date();
-    
-    // Track analytics for message sending
-    this.analytics.trackChatMessageSent(sentMessage.length);
-    
+
     // Add user message to UI
     this.messages.push({
       text: sentMessage,
       isUser: true,
       timestamp: messageDate
     });
-    
+
     // Remove any persisted draft and clear input. Then show loading
     localStorage.removeItem(this.draftStorageKey);
     this.userMessage = '';
     this.isLoading = true;
-    
+    this.isStreamingActive = true; // Disable sending while streaming
+
     // Reset textarea height
     if (this.messageInput && this.messageInput.nativeElement) {
       this.messageInput.nativeElement.style.height = 'auto';
     }
-    
+
     // Scroll for user's message
     this.scrollToBottom();
-    
-    // Send the message - authentication token will be added by the AuthInterceptor
-    this.chatService.sendMessage(sentMessage).subscribe({
-      next: (response: ChatMessagesResponse) => {
-        this.isLoading = false;
 
-        if (response.isSuccess) {
-          
-          // Firebase Analytics: Track successful message sent
-          this.analytics.trackChatMessageSent(sentMessage.length);
-          
-          this.analytics.trackPageView('Chat');
-          
-          // Process the returned messages and add them to the chat
-          if (response.messages && response.messages.length > 0) {
-            this.processAndAddNewMessages(response.messages);
+    // Track if we've added the assistant message yet
+    let streamingMessageIndex = -1;
+    let pendingContent = '';
+
+    // Send the message with streaming
+    this.activeStream = await this.chatService.sendMessageStream(
+      sentMessage,
+      (chunk: ChatMessagesResponse) => {
+
+        // Check for error response and bail out early
+        if (!chunk.isSuccess && chunk.errors && chunk.errors.length > 0) {
+          console.error('Received error chunk from backend:', chunk.errors);
+          return; // Let the error be handled by stream completion or dedicated error handler
+        }
+
+        // Handle both camelCase and PascalCase (backend sends PascalCase)
+        const chunkVariant = chunk as ChatMessagesResponseVariant;
+        const messages = 'messages' in chunkVariant
+          ? chunkVariant.messages
+          : (chunkVariant as any).Messages;
+
+        if (messages && messages.length > 0) {
+          const assistantMessage = messages[0];
+          const content = 'content' in assistantMessage
+            ? assistantMessage.content
+            : (assistantMessage as any).Content;
+          // Backend sends Role (capital R), check both cases
+          const role = (assistantMessage as any).Role || (assistantMessage as any).role || MessageRoleTypes.Assistant;
+          const mealSelections = (assistantMessage as any).MealSelections || (assistantMessage as any).mealSelections;
+
+          // Check if this is a streaming meal selection
+          const isPartial = chunk.isPartial || false;
+          const processingStage = chunk.processingStage;
+
+          // Handle streaming meal selection differently
+          // Check both string and numeric enum values
+          const isPendingFood = role === MessageRoleTypes.PendingFoodSelection || role === 'PendingFoodSelection' || role === 5;
+          // Always show meal selection card when role is PendingFoodSelection, even if empty (for progressive loading)
+          if (isPendingFood && mealSelections) {
+            const mealSelection = mealSelections[0];
+
+            // Clear existing timeout
+            if (this.streamUpdateTimeout) {
+              clearTimeout(this.streamUpdateTimeout);
+            }
+
+            // Create or update the meal selection message immediately (no throttle for meal selection)
+            this.ngZone.run(() => {
+              // Hide loading dots when first content arrives
+              this.isLoading = false;
+
+              // Extract stable message ID from backend (generated at start of streaming)
+              const messageId = (assistantMessage as any).Id || (assistantMessage as any).id;
+
+              // Create or update the meal selection message
+              if (streamingMessageIndex === -1) {
+                streamingMessageIndex = this.messages.length;
+                this.messages = [...this.messages, {
+                  id: messageId, // Use backend's stable MongoDB ID from the first chunk
+                  text: content || '',
+                  isUser: false,
+                  timestamp: new Date(),
+                  role: MessageRoleTypes.PendingFoodSelection,
+                  mealSelection: mealSelection,
+                  mealName: mealSelection?.mealName,
+                  isStreaming: true,
+                  isPartial: isPartial,
+                  processingStage: processingStage,
+                  mealSelectionIsPending: mealSelection?.isPending || false
+                }];
+                this.scrollToBottom();
+              } else {
+                // Update existing message
+                const updatedMessages = [...this.messages];
+                const existingMessage = updatedMessages[streamingMessageIndex];
+
+                updatedMessages[streamingMessageIndex] = {
+                  ...existingMessage,
+                  // Use the stable message ID from backend (already extracted above)
+                  id: messageId || existingMessage.id,
+                  text: content || '',
+                  mealSelection: mealSelection,
+                  mealName: mealSelection?.mealName,
+                  mealSelectionIsPending: mealSelection?.isPending || false,
+                  isStreaming: isPartial,
+                  isPartial: isPartial,
+                  processingStage: processingStage
+                };
+                this.messages = updatedMessages;
+
+                if (!this.isUserScrolledUp) {
+                  this.scrollToBottom();
+                }
+              }
+
+              this.cdr.detectChanges();
+            });
+          } else {
+            // Regular text streaming (existing logic)
+            pendingContent = content;
+
+            // Clear existing timeout
+            if (this.streamUpdateTimeout) {
+              clearTimeout(this.streamUpdateTimeout);
+            }
+
+            // Throttle UI updates to every 50ms for smoother rendering
+            this.streamUpdateTimeout = setTimeout(() => {
+              this.ngZone.run(() => {
+                // Hide loading dots when first content arrives
+                this.isLoading = false;
+
+                // Skip if content is empty or whitespace
+                if (!pendingContent || pendingContent.trim().length === 0) {
+                  return;
+                }
+
+                // Create the assistant message bubble on first chunk
+                if (streamingMessageIndex === -1) {
+                  streamingMessageIndex = this.messages.length;
+                  const streamingMessageId = `streaming-${Date.now()}`;
+                  this.messages = [...this.messages, {
+                    id: streamingMessageId,
+                    text: pendingContent || '',
+                    isUser: false,
+                    timestamp: new Date(),
+                    role: MessageRoleTypes.Assistant,
+                    isStreaming: true
+                  }];
+                  // Always scroll on first chunk
+                  this.scrollToBottom();
+                } else {
+                  // Update existing message by replacing the array
+                  const updatedMessages = [...this.messages];
+                  const existingMessage = updatedMessages[streamingMessageIndex];
+                  updatedMessages[streamingMessageIndex] = {
+                    ...existingMessage,
+                    text: pendingContent || '',
+                    isStreaming: true
+                  };
+                  this.messages = updatedMessages;
+
+                  // Only auto-scroll if user hasn't scrolled up
+                  if (!this.isUserScrolledUp) {
+                    this.scrollToBottom();
+                  }
+                }
+
+                this.cdr.detectChanges();
+              });
+            }, this.STREAM_THROTTLE_MS);
           }
-          
-          // Only focus the input if response doesn't contain pending food selection messages
-          // This prevents mobile keyboard from opening when user needs to interact with food selection cards
-          if (!this.containsPendingFoodSelection(response.messages)) {
-            setTimeout(() => this.focusInput(), 300);
-          }
-        } else {
-          this.messages.push({
-            text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
-            isUser: false,
-            timestamp: new Date()
-          });
-          this.scrollToBottom();
-          this.focusInput();
         }
       },
-      error: (error: any) => {
-        this.isLoading = false;
-        this.messages.push({
-          text: "Sorry, I'm having trouble understanding that right now. Please try again later.",
-          isUser: false,
-          timestamp: new Date()
+      () => {
+        // Stream complete - ensure final update is rendered
+        if (this.streamUpdateTimeout) {
+          clearTimeout(this.streamUpdateTimeout);
+        }
+
+        // Force final update immediately
+        this.ngZone.run(() => {
+          console.log('[CHAT] Stream complete. streamingMessageIndex:', streamingMessageIndex, 'pendingContent length:', pendingContent?.length);
+
+          if (streamingMessageIndex !== -1) {
+            // Message was created during streaming - update it
+            const updatedMessages = [...this.messages];
+            const existingMessage = updatedMessages[streamingMessageIndex];
+            updatedMessages[streamingMessageIndex] = {
+              ...existingMessage,
+              text: existingMessage.text || pendingContent,
+              isStreaming: false, // Remove streaming indicator
+              isPartial: false // Mark as complete
+            };
+            this.messages = updatedMessages;
+            this.cdr.detectChanges();
+
+            // Scroll to bottom on completion if not scrolled up
+            if (!this.isUserScrolledUp) {
+              this.scrollToBottom();
+            }
+          } else if (pendingContent && pendingContent.trim().length > 0) {
+            // Message was never created during streaming (arrived too fast) - create it now
+            console.log('[CHAT] Creating message in onComplete because streaming was too fast');
+            this.isLoading = false;
+            this.messages = [...this.messages, {
+              id: `streaming-${Date.now()}`,
+              text: pendingContent,
+              isUser: false,
+              timestamp: new Date(),
+              role: MessageRoleTypes.Assistant,
+              isStreaming: false
+            }];
+            this.cdr.detectChanges();
+            this.scrollToBottom();
+          } else {
+            console.log('[CHAT] No pending content to display');
+          }
+
+          this.isStreamingActive = false; // Re-enable sending
+          this.activeStream = null; // Clear stream reference
+
+          // Firebase Analytics: Track successful message sent
+          this.analytics.trackChatMessageSent(sentMessage.length);
+          this.analytics.trackPageView('Chat');
+
+          // Focus the input after completion
+          setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
         });
-        
-        // Scroll for error message
+      },
+      (error: any) => {
+        // Stream error - clean up timeout and streaming state
+        if (this.streamUpdateTimeout) {
+          clearTimeout(this.streamUpdateTimeout);
+          this.streamUpdateTimeout = null;
+        }
+
+        this.isLoading = false;
+        this.isStreamingActive = false; // Re-enable sending
+        this.activeStream = null; // Clear stream reference
+
+        // Check if message was removed by user cancellation
+        // If the message is gone (streamingMessageIndex exists but message not in array), user cancelled intentionally
+        const messageStillExists = streamingMessageIndex !== -1 &&
+                                   this.messages[streamingMessageIndex] !== undefined;
+
+        // Only show error if this wasn't a user-initiated cancellation
+        if (messageStillExists) {
+          this.messages[streamingMessageIndex] = {
+            text: "Sorry, I'm having trouble right now. Please try again.",
+            isUser: false,
+            timestamp: new Date()
+          };
+        } else if (streamingMessageIndex === -1) {
+          // No streaming message created yet, add error as new message
+          this.messages = [...this.messages, {
+            text: "Sorry, I'm having trouble right now. Please try again.",
+            isUser: false,
+            timestamp: new Date()
+          }];
+        }
+        // else: message was removed (user cancelled) - don't show error
+
+        this.cdr.detectChanges();
         this.scrollToBottom();
-        
-        // Focus the input after error message is posted
         this.focusInput();
       }
-    });
+    );
   }
   
   // Handle keydown events for textarea
@@ -585,13 +808,25 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   }
   
   // Handle scroll events
-  onScroll(event: any) {
-    // This method can be used for implementing "load more" when scrolling up
-    // For now, we just use it to enable the scroll events
+  async onScroll(event: any) {
+    // Check if user has scrolled up from the bottom
+    if (this.content) {
+      const scrollElement = await this.content.getScrollElement();
+      const scrollTop = scrollElement.scrollTop;
+      const scrollHeight = scrollElement.scrollHeight;
+      const clientHeight = scrollElement.clientHeight;
+
+      // Consider user at bottom if within 100px of bottom
+      const threshold = 100;
+      this.isUserScrolledUp = (scrollTop + clientHeight + threshold) < scrollHeight;
+    }
   }
 
-  private scrollToBottom() {
-    
+  private async scrollToBottom() {
+    // Note: Caller is responsible for checking isUserScrolledUp before calling this
+    // Update last scroll time
+    this.lastScrollTime = Date.now();
+
     // Single timeout to allow DOM rendering, then handle scrolling
     setTimeout(async () => {
       if (!this.content) {
@@ -786,7 +1021,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Handle food selection confirmation for standalone food selection components
   onFoodSelectionConfirmed(request: SubmitServingSelectionRequest): void {
-
     this.foodSelectionService.submitServingSelection(request).subscribe({
       next: (response: ChatMessagesResponse) => {
         if (!response.isSuccess) {
@@ -974,20 +1208,30 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       return;
     }
 
+    // Cancel active stream if one is running
+    if (this.activeStream) {
+      this.activeStream.close();
+      this.activeStream = null;
+      this.isStreamingActive = false;
+    }
+
     // Remove the pending food selection message from UI
     const messageIndex = this.messages.findIndex(m => m.id === message.id);
-    
+
     if (messageIndex !== -1) {
       this.messages.splice(messageIndex, 1);
 
       // Track this message as cancelled to prevent re-adding
       this.cancelledMessageIds.add(message.id);
-      
-      // Show thinking dots while waiting for assistant response
-      this.isLoading = true;
-      
+
       // Force change detection to ensure UI updates immediately
       this.cdr.detectChanges();
+    }
+
+    // IMPORTANT: Only call backend API if message was persisted (streaming completed)
+    // During streaming, message hasn't been saved to DB yet - closing the connection is sufficient
+    if (message.isStreaming || message.isPartial) {
+      return;
     }
 
     // Use the appropriate API based on the message type
@@ -997,7 +1241,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         pendingMessageId: message.id,
         localDateKey: this.dateService.getSelectedDate()
       });
-      
+
       this.foodSelectionService.cancelEditSelection(request).subscribe({
         next: (response) => {
           this.handleCancelResponse(response, message, messageIndex);
@@ -1025,7 +1269,7 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
   }
 
   private handleCancelResponse(response: ChatMessagesResponse, message: DisplayMessage, messageIndex: number): void {
-    
+
     if (!response.isSuccess) {
       this.showErrorToast('Failed to cancel food selection.');
 
@@ -1034,7 +1278,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
         this.messages.splice(messageIndex, 0, message);
         this.cdr.detectChanges();
       }
-      // Turn off loading indicator
       this.isLoading = false;
       return;
     }
@@ -1042,15 +1285,14 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     // Set context note after successful cancellation
     this.chatService.setContextNote('Canceled food logging');
 
-    // Process the returned messages and add them to the chat
-    if (response.messages && response.messages.length > 0) {
-      this.processAndAddNewMessages(response.messages);
-    }
-    
+    // Don't show the AI's acknowledgment message - just remove the card and be done
+    // The backend still sends a tool response to satisfy OpenAI requirements,
+    // but we don't display it to the user
+
     // Turn off loading indicator
     this.isLoading = false;
-    
-    // Focus the input after response is posted
+
+    // Focus the input after cancellation
     this.focusInput();
   }
 
@@ -1062,8 +1304,6 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       this.messages.splice(messageIndex, 0, message);
       this.cdr.detectChanges();
     }
-    
-    // Turn off loading indicator
     this.isLoading = false;
   }
 

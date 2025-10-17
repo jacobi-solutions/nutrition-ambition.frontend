@@ -1,0 +1,63 @@
+<ion-card [class.expanded]="selectedNutrient">
+  <ion-card-header>
+    <ion-card-title>{{ title }}</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    <!-- List View -->
+    <ion-list [class.expanded]="selectedNutrient && isLastItem(selectedNutrient, nutrients)">
+      <ng-container *ngFor="let nutrient of nutrients; trackBy: trackById">
+        <ion-item
+          class="nutrient-entry"
+          (click)="selectNutrient(nutrient)"
+          [class.selected]="nutrient.isSelected">
+          <div class="breakdown-item">
+            <div class="primary-info">
+              <span class="name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
+              <span class="amount">{{ formatConsumedTarget(nutrient) }}</span>
+            </div>
+          </div>
+
+          <ion-button
+            fill="clear"
+            slot="end"
+            size="small"
+            class="action-btn"
+            (click)="openActionMenu($event, nutrient)">
+            <ion-icon name="ellipsis-vertical"></ion-icon>
+          </ion-button>
+
+          <ion-button
+            fill="clear"
+            slot="end"
+            size="small"
+            class="chevron-btn">
+            <ion-icon
+              [name]="nutrient.isSelected ? 'chevron-down-outline' : 'chevron-forward-outline'">
+            </ion-icon>
+          </ion-button>
+        </ion-item>
+
+        <ng-container *ngIf="selectedNutrient?.nutrientKey === nutrient.nutrientKey">
+          <ion-item lines="none" class="drilldown-row nutrient-drilldown">
+            <div class="drilldown-content">
+              <ng-container *ngIf="selectedNutrient && selectedNutrient.foods?.length">
+                <ng-container *ngFor="let food of selectedNutrient.foods; trackBy: trackById">
+                  <div class="detail-item clickable-food" (click)="food.name && navigateToFood(food.name)">
+                    <span class="detail-name">
+                      <span *ngIf="food.brandName" class="brand-name">{{ food.brandName }} - </span>{{ food.name }}
+                    </span>
+                    <span class="detail-amount">{{ formatAmountWithFoodUnit(food) }}</span>
+                  </div>
+                </ng-container>
+              </ng-container>
+              <div *ngIf="selectedNutrient && !selectedNutrient.foods?.length" class="empty-detail-message">
+                <span>No foods logged for this nutrient yet.</span>
+              </div>
+            </div>
+          </ion-item>
+        </ng-container>
+
+      </ng-container>
+    </ion-list>
+  </ion-card-content>
+</ion-card>

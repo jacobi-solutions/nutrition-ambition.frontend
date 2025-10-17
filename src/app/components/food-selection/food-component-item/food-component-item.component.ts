@@ -39,6 +39,9 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
   macroSummary: string = '';
   photoThumb: string = '';
   photoHighRes: string = '';
+  servingIsPending: boolean = false;
+  servingStatusText: string = 'Finding serving size';
+  macroStatusText: string = 'Finding nutritional info';
 
   // Flag to track if user explicitly selected something vs just searching
   private isExplicitSelection = false;
@@ -158,8 +161,9 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
   // Compute all display values when data changes
   private computeDisplayValues(): void {
-    // Only update selectedFood if user explicitly selected, not during search
-    if (this.isExplicitSelection || !this.selectedFood) {
+    // Always update selectedFood to pick up new serving data from streaming updates
+    // Only skip during active search to avoid disrupting autocomplete
+    if (this.isExplicitSelection || !this.selectedFood || !this.isSearching) {
       this.selectedFood = this.computeSelectedFood();
     }
     this.selectedServing = this.computeSelectedServing();
@@ -209,6 +213,21 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       this.servingLabel = '';
     }
 
+
+    // Use component.isPending directly (bubbled up from serving level by backend)
+    // The backend hierarchical system ensures component.isPending accurately reflects
+    // whether this component OR any of its servings are still being processed
+    this.servingIsPending = this.component?.isPending || false;
+
+    // Extract status text from component when pending
+    if (this.servingIsPending) {
+      this.servingStatusText = (this.component as any)?.statusText || 'Analyzing';
+      this.macroStatusText = "(?? cal, ?? protein, ?? fat, ?? carbs)";
+    } else {
+      // Clear status text when not pending
+      this.servingStatusText = '';
+      this.macroStatusText = '';
+    }
 
     // Compute macro summary
     this.macroSummary = this.computeMacroSummary();
@@ -328,6 +347,14 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     }
 
     return this.selectedFood.servings[0];
+  }
+
+  // Truncate text to specified length with ellipsis
+  private truncateText(text: string, maxLength: number): string {
+    if (!text || text.length <= maxLength) {
+      return text;
+    }
+    return text.substring(0, maxLength) + '...';
   }
 
   getServingOptions(): ComponentServing[] {
