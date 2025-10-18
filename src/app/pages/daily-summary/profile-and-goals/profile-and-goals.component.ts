@@ -122,7 +122,7 @@ export class ProfileAndGoalsComponent implements OnInit {
     this.chatService.setContextNote('Setting up your nutrition goals');
     this.router.navigate(['/app/chat']);
 
-    this.chatService.setupGoals(this.dateService.getSelectedDate(), false).subscribe({
+    this.chatService.setupGoals(this.dateService.getTodayDate(), false).subscribe({
       next: (response) => {
         if (!response.isSuccess) {
           this.showErrorToast('Failed to start goal setup. Please try again.');
@@ -138,7 +138,7 @@ export class ProfileAndGoalsComponent implements OnInit {
     this.chatService.setContextNote('Tweaking your nutrition goals');
     this.router.navigate(['/app/chat']);
 
-    this.chatService.setupGoals(this.dateService.getSelectedDate(), true).subscribe({
+    this.chatService.setupGoals(this.dateService.getTodayDate(), true).subscribe({
       next: (response) => {
         if (!response.isSuccess) {
           this.showErrorToast('Failed to start goal tweaking. Please try again.');
@@ -155,7 +155,7 @@ export class ProfileAndGoalsComponent implements OnInit {
     this.chatService.setContextNote('Setting up your profile and nutrition goals');
     this.router.navigate(['/app/chat']);
 
-    this.chatService.setupGoals(this.dateService.getSelectedDate(), false).subscribe({
+    this.chatService.setupGoals(this.dateService.getTodayDate(), false).subscribe({
       next: (response) => {
         if (!response.isSuccess) {
           this.showErrorToast('Failed to start profile setup. Please try again.');
@@ -172,7 +172,7 @@ export class ProfileAndGoalsComponent implements OnInit {
     this.chatService.setContextNote('Updating your profile and nutrition goals');
     this.router.navigate(['/app/chat']);
 
-    this.chatService.setupGoals(this.dateService.getSelectedDate(), true).subscribe({
+    this.chatService.setupGoals(this.dateService.getTodayDate(), true).subscribe({
       next: (response) => {
         if (!response.isSuccess) {
           this.showErrorToast('Failed to start profile update. Please try again.');

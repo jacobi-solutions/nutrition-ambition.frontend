@@ -4124,6 +4124,7 @@ export class FeedbackEntry implements IFeedbackEntry {
     completedByAccountId?: string | undefined;
     isAssistantResponseShown?: boolean;
     assistantResponseShownDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
 
     constructor(data?: IFeedbackEntry) {
         if (data) {
@@ -4150,6 +4151,7 @@ export class FeedbackEntry implements IFeedbackEntry {
             this.completedByAccountId = _data["completedByAccountId"];
             this.isAssistantResponseShown = _data["isAssistantResponseShown"];
             this.assistantResponseShownDateUtc = _data["assistantResponseShownDateUtc"] ? new Date(_data["assistantResponseShownDateUtc"].toString()) : <any>undefined;
+            this.localDateKey = _data["localDateKey"];
         }
     }
 
@@ -4176,6 +4178,7 @@ export class FeedbackEntry implements IFeedbackEntry {
         data["completedByAccountId"] = this.completedByAccountId;
         data["isAssistantResponseShown"] = this.isAssistantResponseShown;
         data["assistantResponseShownDateUtc"] = this.assistantResponseShownDateUtc ? this.assistantResponseShownDateUtc.toISOString() : <any>undefined;
+        data["localDateKey"] = this.localDateKey;
         return data;
     }
 }
@@ -4195,6 +4198,7 @@ export interface IFeedbackEntry {
     completedByAccountId?: string | undefined;
     isAssistantResponseShown?: boolean;
     assistantResponseShownDateUtc?: Date | undefined;
+    localDateKey?: string | undefined;
 }
 
 export class FeedbackWithAccount implements IFeedbackWithAccount {

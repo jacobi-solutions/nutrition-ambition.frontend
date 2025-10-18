@@ -895,12 +895,12 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   private handleLearnMore(entry: any) {
     const topic = this.getEntryTopicName(entry);
-    const localDateKey = this.dateService.getSelectedDate();
-    
+    const localDateKey = this.dateService.getTodayDate(); // Use today's date for new chat conversations
+
     // Set context note and navigate to chat immediately
     this.chatService.setContextNote(`Learning more about ${topic}`);
     this.router.navigate(['/app/chat']);
-    
+
     // Make API call in background
     this.chatService.learnMoreAbout(topic, localDateKey).subscribe({
       next: (response) => {

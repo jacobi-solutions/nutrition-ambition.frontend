@@ -67,6 +67,24 @@
     justify-content: space-between;
   }
 
+  .date-navigation {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .date-display {
+    min-width: 120px;
+    text-align: center;
+
+    h2 {
+      margin: 0;
+      font-size: 1em;
+      color: var(--ion-color-dark);
+      font-weight: 600;
+    }
+  }
+
   .chat-header h2 {
     margin: 0;
     font-size: 1.1em;
@@ -117,6 +135,15 @@
 
   .message-time {
     color: var(--ion-color-medium);
+  }
+
+  .token-tag {
+    background: var(--ion-color-tertiary);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.7em;
+    margin-left: auto;
   }
 
   .app-version-tag {

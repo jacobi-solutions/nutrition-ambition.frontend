@@ -27,10 +27,10 @@ export class DebugViewComponent implements OnInit, OnDestroy {
   chatMessages: ChatMessage[] = [];
   userProfile?: any; // TODO: Add UserProfile type when available
   userDailyTargets?: any; // TODO: Add DailyTarget type when available
-  selectedDate: Date;
+  selectedDate: string; // Local date in yyyy-MM-dd format
   systemLogs: LogEntryDto[] = [];
   logsLoading = false;
-  
+
   // Resizing state
   leftPanelWidth = 30; // Percentage
   isResizing = false;
@@ -48,14 +48,24 @@ export class DebugViewComponent implements OnInit, OnDestroy {
     private toastService: ToastService,
     private router: Router
   ) {
-    this.selectedDate = this.dateService.getSelectedDateUtc();
+    // Initialize selectedDate - prefer localDateKey if available, otherwise use today
+    this.selectedDate = this.dateService.getSelectedDate();
   }
 
   ngOnInit() {
+    // Set the initial date based on feedback's localDateKey or createdDateUtc
+    if (this.feedbackWithAccount?.feedback?.localDateKey) {
+      // Use localDateKey directly (already in yyyy-MM-dd format)
+      this.selectedDate = this.feedbackWithAccount.feedback.localDateKey;
+    } else if (this.feedbackWithAccount?.feedback?.createdDateUtc) {
+      // Fallback to converting createdDateUtc
+      this.selectedDate = new Date(this.feedbackWithAccount.feedback.createdDateUtc).toISOString().split('T')[0];
+    }
+
     this.loadUserChatMessages();
     this.loadSystemLogs();
     // TODO: Load user profile and daily targets
-    
+
     // Initialize the CSS custom property
     setTimeout(() => {
       const debugLayout = document.querySelector('.debug-layout') as HTMLElement;
@@ -70,6 +80,29 @@ export class DebugViewComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // Date navigation methods
+  onPreviousDay(): void {
+    const currentDate = new Date(this.selectedDate);
+    currentDate.setDate(currentDate.getDate() - 1);
+    this.selectedDate = currentDate.toISOString().split('T')[0];
+    this.loadUserChatMessages();
+  }
+
+  onNextDay(): void {
+    const currentDate = new Date(this.selectedDate);
+    const nextDay = new Date(currentDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    // Prevent going to future dates
+    const today = new Date();
+    if (nextDay > today) {
+      return;
+    }
+
+    this.selectedDate = nextDay.toISOString().split('T')[0];
+    this.loadUserChatMessages();
+  }
+
   async loadUserChatMessages() {
     if (!this.feedbackWithAccount?.accountId) return;
 
@@ -77,14 +110,13 @@ export class DebugViewComponent implements OnInit, OnDestroy {
       const response = await this.adminService.getUserChatMessages(
         this.feedbackWithAccount.accountId,
         {
-          localDateKey: this.feedbackWithAccount.feedback?.createdDateUtc ? 
-            new Date(this.feedbackWithAccount.feedback.createdDateUtc).toISOString().split('T')[0] : undefined,
+          localDateKey: this.selectedDate,
           limit: 100
         }
       );
 
       if (response.isSuccess && response.messages) {
-        this.chatMessages = response.messages.sort((a, b) => 
+        this.chatMessages = response.messages.sort((a, b) =>
           new Date(a.createdDateUtc || 0).getTime() - new Date(b.createdDateUtc || 0).getTime()
         );
       }
@@ -153,7 +185,7 @@ export class DebugViewComponent implements OnInit, OnDestroy {
 
   formatDate(dateString?: string | Date): string {
     if (!dateString) return 'N/A';
-    
+
     try {
       const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
       return date.toLocaleString('en-US', {
@@ -167,6 +199,32 @@ export class DebugViewComponent implements OnInit, OnDestroy {
     } catch {
       return 'Invalid Date';
     }
+  }
+
+  formatDateShort(dateString?: string): string {
+    if (!dateString) return '';
+
+    try {
+      // Parse the yyyy-MM-dd string as local date
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+
+      // Always show the formatted date (no "Today" or "Yesterday" in admin view)
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch {
+      return '';
+    }
+  }
+
+  isNextDayDisabled(): boolean {
+    const today = new Date();
+    const todayDateString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return this.selectedDate >= todayDateString;
   }
 
   formatMessageContent(content?: string): string {

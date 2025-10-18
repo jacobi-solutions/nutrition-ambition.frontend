@@ -10,16 +10,22 @@ import { format, parseISO, startOfDay, isAfter, startOfToday } from 'date-fns';
 })
 export class DateService {
   private readonly selectedDateSubject = new BehaviorSubject<string>(format(new Date(), 'yyyy-MM-dd'));
-  
+
   // Observable that components can subscribe to
   readonly selectedDate$: Observable<string> = this.selectedDateSubject.asObservable();
 
   constructor() {
   }
 
-  // Get the current selected date as local date string (yyyy-MM-dd)
+  // Get the currently selected/viewing date as local date string (yyyy-MM-dd)
   getSelectedDate(): string {
     return this.selectedDateSubject.value;
+  }
+
+  // Get today's actual date (not the viewing date) for new operations like sending messages
+  // Always recalculates from current time to ensure accuracy
+  getTodayDate(): string {
+    return format(new Date(), 'yyyy-MM-dd');
   }
 
   // Helper method to check if a date is in the future

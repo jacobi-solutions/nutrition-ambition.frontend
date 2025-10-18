@@ -14,7 +14,17 @@
       <!-- Chat Interface Replica -->
       <div class="chat-replica">
         <div class="chat-header">
-          <h2>Chat Messages</h2>
+          <div class="date-navigation">
+            <ion-button fill="clear" size="small" (click)="onPreviousDay()">
+              <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
+            </ion-button>
+            <div class="date-display">
+              <h2>{{ formatDateShort(selectedDate) }}</h2>
+            </div>
+            <ion-button fill="clear" size="small" (click)="onNextDay()" [disabled]="isNextDayDisabled()">
+              <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
+            </ion-button>
+          </div>
           <span class="message-count">{{ chatMessages.length }} messages</span>
         </div>
         
@@ -71,7 +81,7 @@
       <div class="summary-replica" *ngIf="userDailyTargets">
         <div class="summary-header">
           <h3>Daily Summary</h3>
-          <span class="summary-date">{{ formatDate(selectedDate.toISOString()) }}</span>
+          <span class="summary-date">{{ formatDateShort(selectedDate) }}</span>
         </div>
         <div class="summary-content">
           <p><em>User's daily summary would appear here...</em></p>

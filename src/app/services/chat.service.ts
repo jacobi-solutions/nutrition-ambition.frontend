@@ -63,7 +63,7 @@ export class ChatService {
   ): Promise<EventSource | null> {
     const request = new RunChatRequest({
       message: message,
-      localDateKey: this.dateService.getSelectedDate(),
+      localDateKey: this.dateService.getTodayDate(), // Always use current date for new messages
     });
 
     return this.chatStreamService.runResponsesConversationStream(
