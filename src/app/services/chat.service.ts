@@ -64,7 +64,7 @@ export class ChatService {
   ): Promise<EventSource | null> {
     const request = new RunChatRequest({
       message: message,
-      localDateKey: this.dateService.getTodayDate(), // Always use current date for new messages
+      localDateKey: this.dateService.getSelectedDate(), // Use the date the user is viewing
       retryCount: retryCount
     });
 
