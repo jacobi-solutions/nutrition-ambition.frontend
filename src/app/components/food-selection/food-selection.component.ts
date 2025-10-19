@@ -791,6 +791,45 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   private computeAllFoods(): void {
     const rawFoods = this.message?.mealSelection?.foods || [];
 
+    // 🛡️ DEFENSIVE STATE CORRECTION: Fix stuck "Analyzing..." components
+    // If a component has isPending=true but ALL its servings/matches have isPending=false,
+    // this indicates a state desync (likely from SSE connection drop). Auto-correct it.
+    let correctedCount = 0;
+    rawFoods.forEach((food: any) => {
+      if (food.components) {
+        food.components.forEach((component: any) => {
+          if (component.isPending && component.matches && component.matches.length > 0) {
+            // Check if ALL matches and their servings are NOT pending
+            const allMatchesComplete = component.matches.every((match: any) => {
+              if (match.isPending) return false;
+              if (!match.servings || match.servings.length === 0) return false;
+              return match.servings.every((serving: any) => !serving.isPending);
+            });
+
+            if (allMatchesComplete) {
+              console.warn(`[State Correction] Component ${component.id} had isPending=true but all servings complete. Auto-correcting.`);
+              component.isPending = false;
+              correctedCount++;
+            }
+          }
+        });
+
+        // Also check food-level isPending
+        if (food.isPending && food.components.length > 0) {
+          const allComponentsComplete = food.components.every((comp: any) => !comp.isPending);
+          if (allComponentsComplete) {
+            console.warn(`[State Correction] Food ${food.id} had isPending=true but all components complete. Auto-correcting.`);
+            food.isPending = false;
+            correctedCount++;
+          }
+        }
+      }
+    });
+
+    if (correctedCount > 0) {
+      console.log(`[State Correction] Fixed ${correctedCount} stuck isPending flags`);
+    }
+
     // Capture existing UI state before rebuilding
     const uiStateMap = new Map<string, any>();
     if (this.computedFoods) {

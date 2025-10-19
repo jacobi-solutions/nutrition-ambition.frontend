@@ -88,6 +88,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private readonly STREAM_THROTTLE_MS = 50;
   private readonly FOCUS_INPUT_DELAY_MS = 300;
 
+  // Auto-retry flag to prevent multiple simultaneous retries
+  private isRetrying = false;
+
   // Track messages by ID to preserve component instances during updates
   trackMessage(index: number, message: DisplayMessage): string {
     return message.id || `${index}`;
@@ -253,16 +256,16 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   ionViewWillEnter() {
     // Firebase Analytics: Track page view when entering the page
     this.analytics.trackPageView('Chat');
-    
+
     // Check for completed pending edits when entering the chat page
     const pendingMessages = this.chatService.consumePendingEditMessages();
     if (pendingMessages && pendingMessages.length > 0) {
-      
+
       // Filter out pending edit messages - only process completed edit messages
-      const completedMessages = pendingMessages.filter(msg => 
+      const completedMessages = pendingMessages.filter(msg =>
         msg.role !== MessageRoleTypes.PendingEditFoodSelection
       );
-      
+
       if (completedMessages.length > 0) {
         // Only process if we're currently viewing today's date (edit operations always happen on today)
         const today = format(new Date(), 'yyyy-MM-dd');
@@ -273,6 +276,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       }
       this.isLoading = false;
     }
+
+    // NOTE: Auto-retry check moved to checkForIncompleteMeals() which runs after loadChatHistory completes
   }
 
   // This will be called when the component has been fully activated
@@ -405,13 +410,29 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             const contextNoteMsgs: ChatMessage[] = [];
             const regularMsgs: ChatMessage[] = [];
             
+            // Debug: Log raw messages from backend
+            console.log('[LOAD] Loaded messages from backend:', response.messages.length);
+            response.messages.forEach((msg, idx) => {
+              console.log(`[LOAD] Raw message ${idx}:`, {
+                id: msg.id,
+                role: msg.role,
+                roleType: MessageRoleTypes[msg.role!],
+                content: msg.content?.substring(0, 50),
+                mealSelections: msg.mealSelections,
+                mealSelectionsLength: msg.mealSelections?.length,
+                retryCount: msg.retryCount,
+                createdDateUtc: msg.createdDateUtc,
+                lastUpdatedDateUtc: msg.lastUpdatedDateUtc
+              });
+            });
+
             // Separate messages by role - only include User (0), Assistant (1), ContextNote (4), PendingFoodSelection (5), CompletedFoodSelection (6), PendingEditFoodSelection (8), and CompletedEditFoodSelection (9)
             response.messages.forEach(msg => {
               if (msg.role === MessageRoleTypes.ContextNote) {
                 contextNoteMsgs.push(msg);
               } else if (
-                msg.role === MessageRoleTypes.User || 
-                msg.role === MessageRoleTypes.Assistant || 
+                msg.role === MessageRoleTypes.User ||
+                msg.role === MessageRoleTypes.Assistant ||
                 msg.role === MessageRoleTypes.PendingFoodSelection ||
                 msg.role === MessageRoleTypes.CompletedFoodSelection ||
                 msg.role === MessageRoleTypes.PendingEditFoodSelection ||
@@ -430,7 +451,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
               timestamp: msg.createdDateUtc || new Date(),
               mealName: msg.mealSelections?.[0]?.mealName || null,
               mealSelection: msg.mealSelections?.[0] || null,
-              role: msg.role
+              role: msg.role,
+              retryCount: msg.retryCount,
+              createdDateUtc: msg.createdDateUtc,
+              lastUpdatedDateUtc: msg.lastUpdatedDateUtc
             }));
             
             // Insert context notes as display messages
@@ -455,13 +479,73 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             this.messages.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
             this.hasInitialMessage = true;
-            
+
+            // Check for incomplete meals after messages are loaded
+            this.checkForIncompleteMeals();
+
             // Scroll at the end of the next event cycle
             this.scrollToBottom();
           }
           // Don't start a conversation automatically - we'll show static message instead
         }
       });
+  }
+
+  // Check for incomplete meals and trigger auto-retry if needed
+  private checkForIncompleteMeals(): void {
+    // Prevent multiple simultaneous retries
+    if (this.isRetrying) {
+      console.log('[AUTO-RETRY] Already retrying, skipping duplicate check');
+      return;
+    }
+
+    // Only check on today's date
+    const today = format(new Date(), 'yyyy-MM-dd');
+    if (this.selectedDate !== today) {
+      return;
+    }
+
+    console.log('[AUTO-RETRY] Checking for incomplete meals. Today:', today, 'Messages:', this.messages.length);
+
+    // Debug: Log all messages with FULL structure
+    this.messages.forEach((msg, idx) => {
+      console.log(`[AUTO-RETRY] Message ${idx}:`, {
+        id: msg.id,
+        role: msg.role,
+        roleType: MessageRoleTypes[msg.role!],
+        text: msg.text?.substring(0, 50), // First 50 chars of text
+        mealSelection: msg.mealSelection, // FULL mealSelection object
+        mealSelectionType: typeof msg.mealSelection,
+        mealSelectionIsNull: msg.mealSelection === null,
+        mealSelectionIsUndefined: msg.mealSelection === undefined,
+        hasFoodEntryId: !!msg.mealSelection?.foodEntryId,
+        foodEntryId: msg.mealSelection?.foodEntryId,
+        retryCount: msg.retryCount,
+        createdDateUtc: msg.createdDateUtc,
+        lastUpdatedDateUtc: msg.lastUpdatedDateUtc,
+        hasIncompleteMeal: this.hasIncompleteMeal(msg)
+      });
+    });
+
+    const incompleteMealMessage = this.messages.find(msg =>
+      this.hasIncompleteMeal(msg)
+    );
+
+    if (incompleteMealMessage) {
+      console.log('[AUTO-RETRY] Detected incomplete meal message:', {
+        messageId: incompleteMealMessage.id,
+        retryCount: incompleteMealMessage.retryCount,
+        createdDateUtc: incompleteMealMessage.createdDateUtc,
+        lastUpdatedDateUtc: incompleteMealMessage.lastUpdatedDateUtc,
+        role: incompleteMealMessage.role,
+        mealSelection: incompleteMealMessage.mealSelection
+      });
+
+      // Backend handles all retry logic automatically
+      this.handleIncompleteMeal(incompleteMealMessage);
+    } else {
+      console.log('[AUTO-RETRY] No incomplete meals found');
+    }
   }
 
   // Display a static welcome message in the UI
@@ -987,7 +1071,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             timestamp: msg.createdDateUtc || new Date(),
             mealName: msg.mealSelections?.[0]?.mealName || null,
             mealSelection: msg.mealSelections?.[0] || null,
-            role: msg.role
+            role: msg.role,
+            retryCount: msg.retryCount,
+            createdDateUtc: msg.createdDateUtc,
+            lastUpdatedDateUtc: msg.lastUpdatedDateUtc
           };
         }
 
@@ -1307,5 +1394,108 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     this.isLoading = false;
   }
 
-  
-} 
+  // Helper: Check if a message represents an incomplete meal (never completed)
+  private hasIncompleteMeal(message: DisplayMessage): boolean {
+    const debugInfo = {
+      messageId: message.id,
+      role: message.role,
+      roleType: MessageRoleTypes[message.role!],
+      mealSelection: message.mealSelection,
+      hasMealSelection: !!message.mealSelection,
+      foodEntryId: message.mealSelection?.foodEntryId
+    };
+
+    // Only PendingFoodSelection messages can be incomplete
+    if (message.role !== MessageRoleTypes.PendingFoodSelection &&
+        message.role !== MessageRoleTypes.PendingEditFoodSelection) {
+      console.log('[hasIncompleteMeal] FALSE - Wrong role:', debugInfo);
+      return false;
+    }
+
+    // If there's no mealSelection at all, it's incomplete
+    if (!message.mealSelection) {
+      console.log('[hasIncompleteMeal] TRUE - No mealSelection:', debugInfo);
+      return true;
+    }
+
+    // If mealSelection exists but has no foodEntryId, it was never completed
+    const isIncomplete = !message.mealSelection.foodEntryId;
+    console.log(`[hasIncompleteMeal] ${isIncomplete ? 'TRUE' : 'FALSE'} - MealSelection exists, foodEntryId=${message.mealSelection.foodEntryId}:`, debugInfo);
+    return isIncomplete;
+  }
+
+  // Helper: Find the original user message that started this meal selection
+  private findOriginalMealMessage(pendingMessage: DisplayMessage): DisplayMessage | null {
+    if (!pendingMessage.id) {
+      return null;
+    }
+
+    // Find the pending message index
+    const pendingIndex = this.messages.findIndex(m => m.id === pendingMessage.id);
+    if (pendingIndex === -1) {
+      return null;
+    }
+
+    // Search backwards to find the most recent user message before this pending message
+    for (let i = pendingIndex - 1; i >= 0; i--) {
+      if (this.messages[i].isUser && this.messages[i].role === MessageRoleTypes.User) {
+        return this.messages[i];
+      }
+    }
+
+    return null;
+  }
+
+  // Handle incomplete meal - simply retry it
+  // Backend handles all cleanup logic (retry limits, time windows, error messages, deletions)
+  private async handleIncompleteMeal(incompleteMealMessage: DisplayMessage): Promise<void> {
+    this.isRetrying = true;
+
+    try {
+      console.log('[AUTO-RETRY] Found incomplete message, attempting retry');
+
+      // Find the original user message to retry
+      const originalMessage = this.findOriginalMealMessage(incompleteMealMessage);
+      if (!originalMessage || !originalMessage.text) {
+        console.log('[AUTO-RETRY] No original message found, skipping');
+        return;
+      }
+
+      console.log('[AUTO-RETRY] Retrying with message:', originalMessage.text.substring(0, 50));
+
+      // Remove incomplete message from UI
+      const incompleteMsgIndex = this.messages.findIndex(m => m.id === incompleteMealMessage.id);
+      if (incompleteMsgIndex !== -1) {
+        this.messages.splice(incompleteMsgIndex, 1);
+        if (incompleteMealMessage.id) {
+          this.cancelledMessageIds.add(incompleteMealMessage.id);
+        }
+      }
+
+      // Remove user message from UI (will be re-added by sendMessage)
+      const userMsgIndex = this.messages.findIndex(m => m.id === originalMessage.id);
+      if (userMsgIndex !== -1) {
+        this.messages.splice(userMsgIndex, 1);
+        if (originalMessage.id) {
+          this.cancelledMessageIds.add(originalMessage.id);
+        }
+      }
+
+      this.cdr.detectChanges();
+
+      // Close any active stream
+      if (this.activeStream) {
+        this.activeStream.close();
+        this.activeStream = null;
+      }
+
+      // Retry by calling sendMessage with the original text
+      this.userMessage = originalMessage.text;
+      await this.sendMessage();
+
+    } finally {
+      this.isRetrying = false;
+    }
+  }
+
+}

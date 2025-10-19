@@ -59,11 +59,13 @@ export class ChatService {
     message: string,
     onChunk: (data: ChatMessagesResponse) => void,
     onComplete: () => void,
-    onError: (error: any) => void
+    onError: (error: any) => void,
+    retryCount?: number
   ): Promise<EventSource | null> {
     const request = new RunChatRequest({
       message: message,
       localDateKey: this.dateService.getTodayDate(), // Always use current date for new messages
+      retryCount: retryCount
     });
 
     return this.chatStreamService.runResponsesConversationStream(
@@ -228,5 +230,15 @@ export class ChatService {
   // Add a method to reload messages for the current date
   loadMessages(): Observable<ChatMessagesResponse> {
     return this.getMessageHistory(this.dateService.getSelectedDate());
+  }
+
+  // Delete a chat message by ID
+  async deleteMessage(messageId: string): Promise<void> {
+    try {
+      await this.apiService.deleteMessage(messageId).toPromise();
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      throw error;
+    }
   }
 } 

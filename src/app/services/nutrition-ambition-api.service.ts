@@ -127,6 +127,10 @@ export interface INutritionAmbitionApiService {
      */
     setupGoals(body: SetupGoalsRequest | undefined): Observable<ChatMessagesResponse>;
     /**
+     * @return Success
+     */
+    deleteMessage(messageId: string): Observable<void>;
+    /**
      * @param body (optional) 
      * @return Success
      */
@@ -1432,6 +1436,56 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     /**
+     * @return Success
+     */
+    deleteMessage(messageId: string): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/DeleteMessage/{messageId}";
+        if (messageId === undefined || messageId === null)
+            throw new Error("The parameter 'messageId' must be defined.");
+        url_ = url_.replace("{messageId}", encodeURIComponent("" + messageId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("delete", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteMessage(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteMessage(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDeleteMessage(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
      * @param body (optional) 
      * @return Success
      */
@@ -2474,6 +2528,7 @@ export class ChatMessage implements IChatMessage {
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
     mealSelections?: MealSelection[] | undefined;
+    retryCount?: number;
     modelUsed?: string | undefined;
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
@@ -2514,6 +2569,7 @@ export class ChatMessage implements IChatMessage {
                 for (let item of _data["mealSelections"])
                     this.mealSelections!.push(MealSelection.fromJS(item));
             }
+            this.retryCount = _data["retryCount"];
             this.modelUsed = _data["modelUsed"];
             this.promptTokens = _data["promptTokens"];
             this.completionTokens = _data["completionTokens"];
@@ -2554,6 +2610,7 @@ export class ChatMessage implements IChatMessage {
             for (let item of this.mealSelections)
                 data["mealSelections"].push(item.toJSON());
         }
+        data["retryCount"] = this.retryCount;
         data["modelUsed"] = this.modelUsed;
         data["promptTokens"] = this.promptTokens;
         data["completionTokens"] = this.completionTokens;
@@ -2579,6 +2636,7 @@ export interface IChatMessage {
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
     mealSelections?: MealSelection[] | undefined;
+    retryCount?: number;
     modelUsed?: string | undefined;
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
@@ -6398,6 +6456,7 @@ export interface IResponse {
 export class RunChatRequest implements IRunChatRequest {
     message?: string | undefined;
     localDateKey?: string | undefined;
+    retryCount?: number | undefined;
 
     constructor(data?: IRunChatRequest) {
         if (data) {
@@ -6412,6 +6471,7 @@ export class RunChatRequest implements IRunChatRequest {
         if (_data) {
             this.message = _data["message"];
             this.localDateKey = _data["localDateKey"];
+            this.retryCount = _data["retryCount"];
         }
     }
 
@@ -6426,6 +6486,7 @@ export class RunChatRequest implements IRunChatRequest {
         data = typeof data === 'object' ? data : {};
         data["message"] = this.message;
         data["localDateKey"] = this.localDateKey;
+        data["retryCount"] = this.retryCount;
         return data;
     }
 }
@@ -6433,6 +6494,7 @@ export class RunChatRequest implements IRunChatRequest {
 export interface IRunChatRequest {
     message?: string | undefined;
     localDateKey?: string | undefined;
+    retryCount?: number | undefined;
 }
 
 export class SearchFoodPhraseRequest implements ISearchFoodPhraseRequest {

@@ -24,4 +24,9 @@ export interface DisplayMessage {
     isPartial?: boolean;
     processingStage?: string;
     mealSelectionIsPending?: boolean;  // Stage 0 - analyzing food entry
+
+    // retry tracking
+    retryCount?: number;
+    createdDateUtc?: Date;
+    lastUpdatedDateUtc?: Date;
   }
