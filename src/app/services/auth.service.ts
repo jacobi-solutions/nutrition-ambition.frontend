@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, onIdTokenChanged, signInAnonymously, linkWithCredential, EmailAuthProvider, reauthenticateWithCredential, signInWithEmailLink, isSignInWithEmailLink } from '@angular/fire/auth';
+import { Auth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, onIdTokenChanged, signInAnonymously, linkWithCredential, EmailAuthProvider, reauthenticateWithCredential } from '@angular/fire/auth';
 import { setPersistence, indexedDBLocalPersistence, sendPasswordResetEmail, confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import { Observable, BehaviorSubject, first } from 'rxjs';
 import { Router } from '@angular/router';
@@ -406,44 +406,4 @@ export class AuthService {
     }
   }
 
-  /**
-   * Check if a URL is a valid email sign-in link
-   */
-  isSignInWithEmailLink(url: string): boolean {
-    return isSignInWithEmailLink(this.authInstance, url);
-  }
-
-  /**
-   * Sign in with email link (for beta users)
-   */
-  async signInWithEmailLink(email: string, emailLink: string): Promise<void> {
-    try {
-      await signInWithEmailLink(this.authInstance, email, emailLink);
-
-      // Firebase Analytics: Track successful login
-      this._analytics.trackAuthEvent('login');
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Set password for beta user (who signed in via email link)
-   * This calls the backend ChangePassword endpoint which uses Firebase Admin SDK
-   */
-  async setBetaUserPassword(newPassword: string): Promise<void> {
-    try {
-      const request = new ChangePasswordRequest({
-        newPassword: newPassword
-      });
-
-      const result = await this._apiService.changePassword(request).toPromise();
-
-      if (result && !result.isSuccess) {
-        throw new Error(result.errors?.join(', ') || 'Failed to set password');
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
 }

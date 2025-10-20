@@ -4,7 +4,7 @@ import { IonicModule } from '@ionic/angular';
 import { AuthService } from '../../../services/auth.service';
 import { ToastService } from '../../../services/toast.service';
 import { Router, RouterModule } from '@angular/router';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonInputPasswordToggle } from '@ionic/angular/standalone';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonInputPasswordToggle, IonCheckbox } from '@ionic/angular/standalone';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -18,13 +18,14 @@ import { environment } from 'src/environments/environment';
 
     // Required standalone components
     IonContent,
-    IonInput, IonButton, IonInputPasswordToggle
+    IonInput, IonButton, IonInputPasswordToggle, IonCheckbox
   ],
 })
 export class SignupPage {
   email: string = '';
   password: string = '';
   confirmPassword: string = '';
+  termsAccepted: boolean = false;
   isWorking: boolean = false;
 
   constructor(
@@ -37,6 +38,15 @@ export class SignupPage {
     if (!this.email.trim()) {
       await this.toastService.showToast({
         message: 'Email is required',
+        color: 'danger',
+        duration: 1500
+      });
+      return;
+    }
+
+    if (!this.termsAccepted) {
+      await this.toastService.showToast({
+        message: 'Please accept the Terms of Use and Privacy Policy',
         color: 'danger',
         duration: 1500
       });

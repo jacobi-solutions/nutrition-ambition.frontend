@@ -387,14 +387,6 @@
           
           <div class="control-actions">
             <ion-button
-              color="success"
-              fill="solid"
-              (click)="createBetaAccount()"
-              [disabled]="isLoadingAccounts">
-              <ion-icon name="person-add-outline" slot="start"></ion-icon>
-              Beta Signup
-            </ion-button>
-            <ion-button
               color="primary"
               fill="outline"
               (click)="loadAccounts()"
@@ -466,14 +458,6 @@
                     </ng-template>
                   </td>
                   <td class="actions-cell">
-                    <ion-button
-                      size="small"
-                      color="success"
-                      fill="outline"
-                      (click)="generateBetaLink(account); $event.stopPropagation()">
-                      <ion-icon name="link-outline" slot="start"></ion-icon>
-                      Beta Link
-                    </ion-button>
                     <ion-button
                       size="small"
                       color="warning"
