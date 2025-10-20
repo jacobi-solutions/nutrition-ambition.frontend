@@ -360,7 +360,17 @@
             >
               <!-- Entry Header -->
               <ion-card-header>
-                <ion-card-title>{{ entry.entryName | titlecase }}</ion-card-title>
+                <div class="card-header-with-toggle">
+                  <ion-card-title>{{ entry.entryName | titlecase }}</ion-card-title>
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    class="share-btn"
+                    (click)="shareMeal($event, entry)"
+                    type="button">
+                    <ion-icon slot="icon-only" name="share-outline"></ion-icon>
+                  </ion-button>
+                </div>
               </ion-card-header>
 
               <!-- Entry Content -->

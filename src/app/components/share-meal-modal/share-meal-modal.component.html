@@ -1,0 +1,46 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Share {{ mealName }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="share-content">
+    <div class="qr-container">
+      <div class="qr-wrapper">
+        <qrcode
+          [qrdata]="shareUrl"
+          [width]="256"
+          [errorCorrectionLevel]="'H'"
+          [elementType]="'canvas'">
+        </qrcode>
+        <div class="logo-overlay">
+          <img src="assets/logo-icons/LogoIcon-96x96.png" alt="Nutrition Ambition Logo" />
+        </div>
+      </div>
+    </div>
+
+    <ion-text class="expires-text" color="medium">
+      <p>Expires {{ expiresDate | date:'short' }}</p>
+      <p class="help-text">Scan the QR code or share the link below</p>
+      <p class="help-text">To help someone else edit and log the same meal!</p>
+    </ion-text>
+
+    <div class="button-group">
+      <ion-button expand="block" (click)="copyLink()" class="action-button">
+        <ion-icon name="copy-outline" slot="start"></ion-icon>
+        Copy Link
+      </ion-button>
+
+      <!-- <ion-button expand="block" (click)="nativeShare()" class="action-button">
+        <ion-icon name="share-social-outline" slot="start"></ion-icon>
+        Share
+      </ion-button> -->
+    </div>
+  </div>
+</ion-content>

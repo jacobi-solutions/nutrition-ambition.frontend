@@ -1,0 +1,135 @@
+// Header styling to match app header
+ion-header {
+  box-shadow: none !important;
+
+  ion-toolbar {
+    --background: var(--color-bone);
+    --border-width: 0;
+    --box-shadow: none !important;
+    border-bottom: 2px solid #ffffff;
+    box-shadow: none !important;
+
+    ion-title {
+      font-family: var(--font-primary);
+      font-weight: 600;
+      font-size: 1.125rem;
+      color: var(--color-charcoal);
+    }
+
+    ion-button {
+      --color: var(--color-charcoal);
+    }
+  }
+}
+
+ion-header::after {
+  display: none !important;
+}
+
+ion-content {
+  --background: var(--color-bone);
+  height: 100%;
+}
+
+.share-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  height: 100%;
+}
+
+.qr-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 2.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: none;
+  border: 1px solid #e6e3dd;
+}
+
+.qr-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.logo-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  img {
+    width: 56px;
+    height: 56px;
+    display: block;
+  }
+}
+
+.expires-text {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--color-charcoal);
+
+  p {
+    margin: 0.25rem 0;
+    font-family: var(--font-primary);
+  }
+
+  .help-text {
+    font-size: 0.875rem;
+    opacity: 0.7;
+  }
+}
+
+.button-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.action-button {
+  height: 3.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  --background: var(--color-salmon);
+  --color: #ffffff;
+  --border-radius: 30px;
+  text-transform: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.action-button::part(native) {
+  color: #ffffff !important;
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .qr-container {
+    background: white; // Keep QR code background white for contrast
+  }
+}

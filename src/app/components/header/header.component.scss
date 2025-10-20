@@ -118,7 +118,14 @@ ion-header {
       display: flex;
       justify-content: center;
       align-items: center;
-      
+
+      .date-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
       ion-datetime-button::part(native) {
         background-color: #e6e3dd;
         border-radius: 1rem;
@@ -127,6 +134,31 @@ ion-header {
         font-family: 'Poppins', sans-serif;
         font-weight: 200;
         color: var(--color-charcoal);
+      }
+
+      .return-to-today-button {
+        background-color: #e6e3dd;
+        border-radius: 1rem;
+        padding: 0.4rem .75rem;
+        font-size: 0.95rem;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 200;
+        color: var(--color-charcoal);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+          opacity: 0.8;
+        }
+
+        ion-icon {
+          font-size: 1rem;
+          margin-top: 1px;
+        }
       }
     }
     

@@ -1,6 +1,6 @@
 {
   "name": "nutrition-ambition-frontend",
-  "version": "0.7.10",
+  "version": "0.7.11",
   "author": "Ionic Framework",
   "homepage": "https://ionicframework.com/",
   "scripts": {
@@ -34,6 +34,7 @@
     "@capacitor/status-bar": "6.0.2",
     "@ionic/angular": "^8.0.0",
     "@ng-select/ng-select": "^19.0.0",
+    "angularx-qrcode": "^20.0.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.3.1",
     "ionicons": "^7.0.0",

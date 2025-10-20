@@ -21,10 +21,12 @@ import {
     SubmitEditServingSelectionRequest,
     MealSelection,
     UserSelectedServing,
-    SearchFoodPhraseRequest
+    SearchFoodPhraseRequest,
+    NutritionAmbitionApiService,
+    GetSharedMealRequest
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ChatMessageComponent } from 'src/app/components/chat-message/chat-message.component';
 import { FoodSelectionComponent } from 'src/app/components/food-selection/food-selection.component';
 import { format } from 'date-fns';
@@ -91,6 +93,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   // Auto-retry flag to prevent multiple simultaneous retries
   private isRetrying = false;
 
+  // Flag to skip auto-retry after loading a shared meal
+  private skipNextAutoRetry = false;
+
   // Track messages by ID to preserve component instances during updates
   trackMessage(index: number, message: DisplayMessage): string {
     return message.id || `${index}`;
@@ -112,10 +117,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     private authService: AuthService,
     private dateService: DateService,
     private router: Router,
+    private route: ActivatedRoute,
     private toastService: ToastService,
     private cdr: ChangeDetectorRef,
     private analytics: AnalyticsService, // Firebase Analytics tracking
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private apiService: NutritionAmbitionApiService
   ) {
     // Add the icons explicitly to the library
     addIcons({
@@ -129,6 +136,24 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   }
 
   async ngOnInit() {
+    // Check for share token in route params FIRST - before any subscriptions
+    const shareToken = this.route.snapshot.paramMap.get('token');
+    console.log('[SHARE-ROUTE] ngOnInit - checking route params', {
+      hasToken: !!shareToken,
+      tokenLength: shareToken?.length,
+      allParams: this.route.snapshot.params,
+      url: this.router.url,
+      routeUrl: this.route.snapshot.url
+    });
+
+    if (shareToken) {
+      console.log('[SHARE-ROUTE] Share token detected in ngOnInit, handling shared meal', { shareToken });
+      await this.handleSharedMeal(shareToken);
+      console.log('[SHARE-ROUTE] Navigating to /app/chat after handling share');
+      // Navigate to regular chat after handling share
+      await this.router.navigate(['/app/chat'], { replaceUrl: true });
+    }
+
     // Subscribe to date changes
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this.selectedDate = date;
@@ -253,7 +278,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   }
   
   // This will be called when the view is about to enter
-  ionViewWillEnter() {
+  async ionViewWillEnter() {
     // Firebase Analytics: Track page view when entering the page
     this.analytics.trackPageView('Chat');
 
@@ -409,22 +434,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             // Process messages and filter to only show allowed roles
             const contextNoteMsgs: ChatMessage[] = [];
             const regularMsgs: ChatMessage[] = [];
-            
-            // Debug: Log raw messages from backend
-            console.log('[LOAD] Loaded messages from backend:', response.messages.length);
-            response.messages.forEach((msg, idx) => {
-              console.log(`[LOAD] Raw message ${idx}:`, {
-                id: msg.id,
-                role: msg.role,
-                roleType: MessageRoleTypes[msg.role!],
-                content: msg.content?.substring(0, 50),
-                mealSelections: msg.mealSelections,
-                mealSelectionsLength: msg.mealSelections?.length,
-                retryCount: msg.retryCount,
-                createdDateUtc: msg.createdDateUtc,
-                lastUpdatedDateUtc: msg.lastUpdatedDateUtc
-              });
-            });
 
             // Separate messages by role - only include User (0), Assistant (1), ContextNote (4), PendingFoodSelection (5), CompletedFoodSelection (6), PendingEditFoodSelection (8), and CompletedEditFoodSelection (9)
             response.messages.forEach(msg => {
@@ -493,9 +502,15 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Check for incomplete meals and trigger auto-retry if needed
   private checkForIncompleteMeals(): void {
+    // Skip if we just loaded a shared meal (to prevent retrying old incomplete meals)
+    if (this.skipNextAutoRetry) {
+      console.log('[checkForIncompleteMeals] Skipping auto-retry after shared meal import');
+      this.skipNextAutoRetry = false;
+      return;
+    }
+
     // Prevent multiple simultaneous retries
     if (this.isRetrying) {
-      console.log('[AUTO-RETRY] Already retrying, skipping duplicate check');
       return;
     }
 
@@ -505,46 +520,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       return;
     }
 
-    console.log('[AUTO-RETRY] Checking for incomplete meals. Today:', today, 'Messages:', this.messages.length);
-
-    // Debug: Log all messages with FULL structure
-    this.messages.forEach((msg, idx) => {
-      console.log(`[AUTO-RETRY] Message ${idx}:`, {
-        id: msg.id,
-        role: msg.role,
-        roleType: MessageRoleTypes[msg.role!],
-        text: msg.text?.substring(0, 50), // First 50 chars of text
-        mealSelection: msg.mealSelection, // FULL mealSelection object
-        mealSelectionType: typeof msg.mealSelection,
-        mealSelectionIsNull: msg.mealSelection === null,
-        mealSelectionIsUndefined: msg.mealSelection === undefined,
-        hasFoodEntryId: !!msg.mealSelection?.foodEntryId,
-        foodEntryId: msg.mealSelection?.foodEntryId,
-        retryCount: msg.retryCount,
-        createdDateUtc: msg.createdDateUtc,
-        lastUpdatedDateUtc: msg.lastUpdatedDateUtc,
-        hasIncompleteMeal: this.hasIncompleteMeal(msg)
-      });
-    });
-
+    // Find incomplete meals
     const incompleteMealMessage = this.messages.find(msg =>
       this.hasIncompleteMeal(msg)
     );
 
     if (incompleteMealMessage) {
-      console.log('[AUTO-RETRY] Detected incomplete meal message:', {
-        messageId: incompleteMealMessage.id,
-        retryCount: incompleteMealMessage.retryCount,
-        createdDateUtc: incompleteMealMessage.createdDateUtc,
-        lastUpdatedDateUtc: incompleteMealMessage.lastUpdatedDateUtc,
-        role: incompleteMealMessage.role,
-        mealSelection: incompleteMealMessage.mealSelection
-      });
-
       // Backend handles all retry logic automatically
       this.handleIncompleteMeal(incompleteMealMessage);
-    } else {
-      console.log('[AUTO-RETRY] No incomplete meals found');
     }
   }
 
@@ -1402,7 +1385,8 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       roleType: MessageRoleTypes[message.role!],
       mealSelection: message.mealSelection,
       hasMealSelection: !!message.mealSelection,
-      foodEntryId: message.mealSelection?.foodEntryId
+      foodEntryId: message.mealSelection?.foodEntryId,
+      sharedById: message.mealSelection?.sharedById
     };
 
     // Only PendingFoodSelection messages can be incomplete
@@ -1418,10 +1402,36 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       return true;
     }
 
-    // If mealSelection exists but has no foodEntryId, it was never completed
-    const isIncomplete = !message.mealSelection.foodEntryId;
-    console.log(`[hasIncompleteMeal] ${isIncomplete ? 'TRUE' : 'FALSE'} - MealSelection exists, foodEntryId=${message.mealSelection.foodEntryId}:`, debugInfo);
-    return isIncomplete;
+    // If this is a shared meal (has sharedById), it's never incomplete - just needs to be saved
+    if (message.mealSelection.sharedById) {
+      console.log('[hasIncompleteMeal] FALSE - Shared meal (has sharedById):', debugInfo);
+      return false;
+    }
+
+    // If mealSelection has a foodEntryId, it was completed/saved
+    if (message.mealSelection.foodEntryId) {
+      console.log('[hasIncompleteMeal] FALSE - Has foodEntryId:', debugInfo);
+      return false;
+    }
+
+    // Check if this is a meal with complete data (no pending servings)
+    // These don't have foodEntryId but should have complete food data
+    const hasCompleteData = message.mealSelection.foods?.every(food =>
+      food.components?.every(component =>
+        component.matches?.every(match =>
+          match.servings?.every(serving => !serving.isPending) && !match.isPending
+        )
+      )
+    );
+
+    if (hasCompleteData) {
+      console.log('[hasIncompleteMeal] FALSE - Complete data (no pending servings):', debugInfo);
+      return false;
+    }
+
+    // No foodEntryId and incomplete data means it's truly incomplete
+    console.log('[hasIncompleteMeal] TRUE - No foodEntryId and incomplete data:', debugInfo);
+    return true;
   }
 
   // Helper: Find the original user message that started this meal selection
@@ -1495,6 +1505,82 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
 
     } finally {
       this.isRetrying = false;
+    }
+  }
+
+  private async handleSharedMeal(shareToken: string) {
+    console.log('[SHARE-ROUTE] handleSharedMeal called', { shareToken });
+
+    try {
+      // Fetch the shared meal from backend
+      const localDateKey = this.dateService.getSelectedDate(); // Today's date in user's local timezone
+      const request = new GetSharedMealRequest({
+        shareToken,
+        localDateKey
+      });
+      console.log('[SHARE-ROUTE] Calling API getSharedMeal', { request, localDateKey });
+
+      const response = await this.apiService.getSharedMeal(request).toPromise();
+      console.log('[SHARE-ROUTE] API response received', {
+        isSuccess: response?.isSuccess,
+        isExpired: response?.isExpired,
+        hasMealData: !!response?.mealData,
+        errors: response?.errors,
+        fullResponse: response
+      });
+
+      if (!response?.isSuccess || response.isExpired) {
+        console.log('[SHARE-ROUTE] Meal expired or unavailable');
+        this.toastService.showToast({
+          message: 'This shared meal has expired or is no longer available',
+          color: 'warning'
+        });
+        return;
+      }
+
+      if (!response.mealData) {
+        console.log('[SHARE-ROUTE] No meal data in response');
+        this.toastService.showToast({
+          message: 'Failed to load shared meal',
+          color: 'danger'
+        });
+        return;
+      }
+
+      console.log('[SHARE-ROUTE] Shared meal retrieved successfully', {
+        mealName: response.mealData.mealName,
+        foodsCount: response.mealData.foods?.length,
+        sharedByAccountId: response.sharedByAccountId
+      });
+
+      // Backend has already created the PendingFoodSelection message in the database
+      // Show success toast
+      const mealName = response.mealData.mealName || 'Meal';
+      this.toastService.showToast({
+        message: `"${mealName}" has been added to your chat!`,
+        color: 'success',
+        duration: 3000
+      });
+
+      // Track analytics
+      this.analytics.trackEvent('shared_meal_imported', {
+        mealName: mealName,
+        sharedByAccountId: response.sharedByAccountId
+      });
+
+      // Skip auto-retry on next loadChatHistory to prevent retrying old incomplete meals
+      this.skipNextAutoRetry = true;
+
+    } catch (error) {
+      console.error('[SHARE-ROUTE] Error loading shared meal', {
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined
+      });
+      this.toastService.showToast({
+        message: 'Failed to load shared meal',
+        color: 'danger'
+      });
     }
   }
 

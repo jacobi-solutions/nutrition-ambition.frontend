@@ -191,6 +191,16 @@ export interface INutritionAmbitionApiService {
      */
     getProfileAndTargets(body: GetProfileAndTargetsRequest | undefined): Observable<GetProfileAndTargetsResponse>;
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    createSharedMeal(body: CreateSharedMealRequest | undefined): Observable<CreateSharedMealResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getSharedMeal(body: GetSharedMealRequest | undefined): Observable<GetSharedMealResponse>;
+    /**
      * @return Success
      */
     ip(): Observable<void>;
@@ -2158,6 +2168,118 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    createSharedMeal(body: CreateSharedMealRequest | undefined): Observable<CreateSharedMealResponse> {
+        let url_ = this.baseUrl + "/api/SharedMeal/CreateSharedMeal";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateSharedMeal(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateSharedMeal(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CreateSharedMealResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CreateSharedMealResponse>;
+        }));
+    }
+
+    protected processCreateSharedMeal(response: HttpResponseBase): Observable<CreateSharedMealResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateSharedMealResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<CreateSharedMealResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getSharedMeal(body: GetSharedMealRequest | undefined): Observable<GetSharedMealResponse> {
+        let url_ = this.baseUrl + "/api/SharedMeal/GetSharedMeal";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetSharedMeal(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetSharedMeal(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetSharedMealResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetSharedMealResponse>;
+        }));
+    }
+
+    protected processGetSharedMeal(response: HttpResponseBase): Observable<GetSharedMealResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetSharedMealResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetSharedMealResponse>(null as any);
+    }
+
+    /**
      * @return Success
      */
     ip(): Observable<void> {
@@ -3527,6 +3649,126 @@ export interface ICreateBetaAccountResponse {
     accountId?: string | undefined;
 }
 
+export class CreateSharedMealRequest implements ICreateSharedMealRequest {
+    foodEntryId?: string | undefined;
+
+    constructor(data?: ICreateSharedMealRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodEntryId = _data["foodEntryId"];
+        }
+    }
+
+    static fromJS(data: any): CreateSharedMealRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateSharedMealRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodEntryId"] = this.foodEntryId;
+        return data;
+    }
+}
+
+export interface ICreateSharedMealRequest {
+    foodEntryId?: string | undefined;
+}
+
+export class CreateSharedMealResponse implements ICreateSharedMealResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    shareToken?: string | undefined;
+    shareUrl?: string | undefined;
+    preview?: MealPreview;
+    expiresDateUtc?: Date;
+
+    constructor(data?: ICreateSharedMealResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.shareToken = _data["shareToken"];
+            this.shareUrl = _data["shareUrl"];
+            this.preview = _data["preview"] ? MealPreview.fromJS(_data["preview"]) : <any>undefined;
+            this.expiresDateUtc = _data["expiresDateUtc"] ? new Date(_data["expiresDateUtc"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): CreateSharedMealResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateSharedMealResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["shareToken"] = this.shareToken;
+        data["shareUrl"] = this.shareUrl;
+        data["preview"] = this.preview ? this.preview.toJSON() : <any>undefined;
+        data["expiresDateUtc"] = this.expiresDateUtc ? this.expiresDateUtc.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface ICreateSharedMealResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    shareToken?: string | undefined;
+    shareUrl?: string | undefined;
+    preview?: MealPreview;
+    expiresDateUtc?: Date;
+}
+
 export class DailySummary implements IDailySummary {
     id?: string | undefined;
     createdDateUtc?: Date;
@@ -4627,6 +4869,54 @@ export interface IFoodEntryBreakdown {
     foods?: FoodBreakdown[] | undefined;
 }
 
+export class FoodPreview implements IFoodPreview {
+    name?: string | undefined;
+    componentNames?: string[] | undefined;
+
+    constructor(data?: IFoodPreview) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            if (Array.isArray(_data["componentNames"])) {
+                this.componentNames = [] as any;
+                for (let item of _data["componentNames"])
+                    this.componentNames!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): FoodPreview {
+        data = typeof data === 'object' ? data : {};
+        let result = new FoodPreview();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        if (Array.isArray(this.componentNames)) {
+            data["componentNames"] = [];
+            for (let item of this.componentNames)
+                data["componentNames"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IFoodPreview {
+    name?: string | undefined;
+    componentNames?: string[] | undefined;
+}
+
 export class GenerateBetaSignInLinkRequest implements IGenerateBetaSignInLinkRequest {
     email?: string | undefined;
 
@@ -5655,6 +5945,126 @@ export interface IGetProfileAndTargetsResponse {
     nutrientTargets?: NutrientTarget[] | undefined;
 }
 
+export class GetSharedMealRequest implements IGetSharedMealRequest {
+    shareToken?: string | undefined;
+    localDateKey?: string | undefined;
+
+    constructor(data?: IGetSharedMealRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.shareToken = _data["shareToken"];
+            this.localDateKey = _data["localDateKey"];
+        }
+    }
+
+    static fromJS(data: any): GetSharedMealRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetSharedMealRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["shareToken"] = this.shareToken;
+        data["localDateKey"] = this.localDateKey;
+        return data;
+    }
+}
+
+export interface IGetSharedMealRequest {
+    shareToken?: string | undefined;
+    localDateKey?: string | undefined;
+}
+
+export class GetSharedMealResponse implements IGetSharedMealResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    mealData?: MealSelection;
+    sharedByAccountId?: string | undefined;
+    isExpired?: boolean;
+
+    constructor(data?: IGetSharedMealResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.mealData = _data["mealData"] ? MealSelection.fromJS(_data["mealData"]) : <any>undefined;
+            this.sharedByAccountId = _data["sharedByAccountId"];
+            this.isExpired = _data["isExpired"];
+        }
+    }
+
+    static fromJS(data: any): GetSharedMealResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetSharedMealResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["mealData"] = this.mealData ? this.mealData.toJSON() : <any>undefined;
+        data["sharedByAccountId"] = this.sharedByAccountId;
+        data["isExpired"] = this.isExpired;
+        return data;
+    }
+}
+
+export interface IGetSharedMealResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    mealData?: MealSelection;
+    sharedByAccountId?: string | undefined;
+    isExpired?: boolean;
+}
+
 export class GetUserChatMessagesRequest implements IGetUserChatMessagesRequest {
     accountId?: string | undefined;
     localDateKey?: string | undefined;
@@ -5954,6 +6364,54 @@ export interface ILogEntryDto {
     extra?: { [key: string]: string; } | undefined;
 }
 
+export class MealPreview implements IMealPreview {
+    mealName?: string | undefined;
+    foods?: FoodPreview[] | undefined;
+
+    constructor(data?: IMealPreview) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.mealName = _data["mealName"];
+            if (Array.isArray(_data["foods"])) {
+                this.foods = [] as any;
+                for (let item of _data["foods"])
+                    this.foods!.push(FoodPreview.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): MealPreview {
+        data = typeof data === 'object' ? data : {};
+        let result = new MealPreview();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["mealName"] = this.mealName;
+        if (Array.isArray(this.foods)) {
+            data["foods"] = [];
+            for (let item of this.foods)
+                data["foods"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IMealPreview {
+    mealName?: string | undefined;
+    foods?: FoodPreview[] | undefined;
+}
+
 export class MealSelection implements IMealSelection {
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
@@ -5961,6 +6419,7 @@ export class MealSelection implements IMealSelection {
     foodEntryId?: string | undefined;
     foodId?: string | undefined;
     componentId?: string | undefined;
+    sharedById?: string | undefined;
     isPending?: boolean;
 
     constructor(data?: IMealSelection) {
@@ -5984,6 +6443,7 @@ export class MealSelection implements IMealSelection {
             this.foodEntryId = _data["foodEntryId"];
             this.foodId = _data["foodId"];
             this.componentId = _data["componentId"];
+            this.sharedById = _data["sharedById"];
             this.isPending = _data["isPending"];
         }
     }
@@ -6007,6 +6467,7 @@ export class MealSelection implements IMealSelection {
         data["foodEntryId"] = this.foodEntryId;
         data["foodId"] = this.foodId;
         data["componentId"] = this.componentId;
+        data["sharedById"] = this.sharedById;
         data["isPending"] = this.isPending;
         return data;
     }
@@ -6019,6 +6480,7 @@ export interface IMealSelection {
     foodEntryId?: string | undefined;
     foodId?: string | undefined;
     componentId?: string | undefined;
+    sharedById?: string | undefined;
     isPending?: boolean;
 }
 

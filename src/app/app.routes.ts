@@ -44,6 +44,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/auth/firebase-action/firebase-action.page').then(m => m.FirebaseActionPage)
   },
   {
+    path: 'share/:token',
+    loadComponent: () => import('./pages/chat/chat.page').then(m => m.ChatPage),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'admin',
     loadComponent: () => import('./admin/pages/admin/admin.page').then(m => m.AdminPage),
     canActivate: [AuthGuard, OwnerGuard]

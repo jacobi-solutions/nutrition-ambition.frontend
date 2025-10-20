@@ -63,13 +63,22 @@
     
     <!-- Center: Date picker -->
     <ion-title class="ion-text-center">
-      <ion-datetime-button datetime="datePicker"></ion-datetime-button>
+      <div class="date-controls">
+        <ion-datetime-button datetime="datePicker"></ion-datetime-button>
+        <button
+          *ngIf="isViewingHistoricalDate"
+          class="return-to-today-button"
+          (click)="onReturnToToday()">
+          {{ todayDayNumber }}
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+      </div>
       <ion-modal [keepContentsMounted]="true">
         <ng-template>
           <!-- Local date only — uses 'yyyy-MM-dd' format -->
           <!-- UTC conversion handled via dateService when communicating with backend -->
-          <ion-datetime 
-            id="datePicker" 
+          <ion-datetime
+            id="datePicker"
             [value]="selectedDate"
             (ionChange)="onDateChanged($event)"
             presentation="date">

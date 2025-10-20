@@ -4,7 +4,7 @@ import {
   IonContent, IonCard, IonCardHeader, IonCardTitle, IonCardContent,
   IonSpinner, IonSegment, IonSegmentButton, IonLabel, IonList,
   IonItem, IonIcon, IonButton, IonPopover, IonRefresher, IonRefresherContent,
-  IonRow, IonCol
+  IonRow, IonCol, ModalController
 } from '@ionic/angular/standalone';
 import { FormsModule } from '@angular/forms';
 import {
@@ -15,7 +15,8 @@ import {
   ComponentBreakdown,
   NutritionAmbitionApiService,
   EditFoodSelectionRequest,
-  SubmitEditServingSelectionRequest
+  SubmitEditServingSelectionRequest,
+  CreateSharedMealRequest
 } from '../../services/nutrition-ambition-api.service';
 import {
   FoodBreakdownDisplay,
@@ -41,7 +42,8 @@ import {
   informationCircleOutline,
   informationCircle,
   list,
-  barChart
+  barChart,
+  shareOutline
 } from 'ionicons/icons';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
 import { EntryActionMenuComponent, ActionEvent } from 'src/app/components/entry-action-menu/entry-action-menu.component';
@@ -60,6 +62,7 @@ import { ViewWillEnter } from '@ionic/angular';
 import { format } from 'date-fns';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { AnalyticsService } from 'src/app/services/analytics.service';
+import { ShareMealModalComponent } from 'src/app/components/share-meal-modal/share-meal-modal.component';
 
 @Component({
   selector: 'app-daily-summary',
@@ -154,6 +157,8 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   private foodEntryService = inject(FoodEntryService);
   private router = inject(Router);
   private toastService = inject(ToastService);
+  private modalController = inject(ModalController);
+  private apiService = inject(NutritionAmbitionApiService);
 
   constructor(
     private elementRef: ElementRef,
@@ -170,7 +175,8 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       informationCircleOutline,
       informationCircle,
       list,
-      barChart
+      barChart,
+      shareOutline
     });
   }
 
@@ -1084,5 +1090,47 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   toggleOtherNutrientsChartView(): void {
     this.showOtherNutrientsCharts = !this.showOtherNutrientsCharts;
+  }
+
+  async shareMeal(event: Event, entry: FoodEntryBreakdownDisplay) {
+    event.stopPropagation();
+
+    try {
+      // Call backend to create shared meal
+      const request = new CreateSharedMealRequest({ foodEntryId: entry.foodEntryId });
+      const response = await this.apiService.createSharedMeal(request).toPromise();
+
+      if (!response?.isSuccess) {
+        this.toastService.showToast({
+          message: 'Failed to create share link',
+          color: 'danger'
+        });
+        return;
+      }
+
+      // Open modal with QR code
+      const modal = await this.modalController.create({
+        component: ShareMealModalComponent,
+        componentProps: {
+          shareUrl: response.shareUrl,
+          mealName: entry.entryName,
+          expiresDate: response.expiresDateUtc
+        },
+        cssClass: 'share-meal-modal'
+      });
+
+      await modal.present();
+
+      // Track analytics
+      this.analytics.trackEvent('meal_shared', {
+        mealName: entry.entryName,
+        shareToken: response.shareToken
+      });
+    } catch (error) {
+      this.toastService.showToast({
+        message: 'Failed to share meal',
+        color: 'danger'
+      });
+    }
   }
 }

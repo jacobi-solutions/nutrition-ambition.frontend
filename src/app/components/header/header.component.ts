@@ -86,13 +86,17 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   // Local date only — uses 'yyyy-MM-dd' format
   // UTC conversion handled via dateService when communicating with backend
   private _selectedDate: string = format(new Date(), 'yyyy-MM-dd');
-  
+
   @Output() previousDay = new EventEmitter<void>();
   @Output() nextDay = new EventEmitter<void>();
   @Output() dateChanged = new EventEmitter<string>();
   @Output() logout = new EventEmitter<void>();
   @Output() login = new EventEmitter<void>();
   @Output() refresh = new EventEmitter<void>();
+
+  // Computed properties for "return to today" button
+  isViewingHistoricalDate: boolean = false;
+  todayDayNumber: string = '';
   
   private lastDateChange = 0;
   private dateSubscription: Subscription;
@@ -145,10 +149,14 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
       this.updateDisplayName();
     });
     this.authSubscriptions.push(subUid, subEmail);
-    
+
+    // Initialize today's day number
+    this.updateTodayDayNumber();
+
     // Subscribe to date changes from the service
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this._selectedDate = date;
+      this.updateHistoricalDateStatus();
 
       // Force change detection to update the view
       this.cdRef.detectChanges();
@@ -225,9 +233,32 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   onNextDay() {
     this.nextDay.emit();
   }
-  
 
-  
+  // Return to today
+  onReturnToToday() {
+    this.analyticsService.trackActionClick('return_to_today', 'header');
+    this.dateService.setSelectedDate(this.dateService.getTodayDate());
+  }
+
+  // Update whether we're viewing a historical date (2+ days in the past)
+  private updateHistoricalDateStatus() {
+    const today = new Date(this.dateService.getTodayDate());
+    const selectedDate = new Date(this._selectedDate);
+
+    // Calculate the difference in days
+    const diffTime = today.getTime() - selectedDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // Show button only if 2+ days in the past
+    this.isViewingHistoricalDate = diffDays >= 2;
+  }
+
+  // Update today's day number for the button
+  private updateTodayDayNumber() {
+    const today = new Date();
+    this.todayDayNumber = today.getDate().toString();
+  }
+
   // Settings dropdown methods
   async onSettingsAction(actionData: { action: string, event?: Event }) {
     const { action, event } = actionData;
