@@ -330,11 +330,17 @@
   padding: 16px;
   background: var(--color-light-smoke);
   border-radius: 12px;
+  overflow: visible;
 
   .drilldown-content {
+    overflow: visible;
+
     .food-item-row {
+      overflow: visible;
+
       .food-name {
         margin-bottom: 16px;
+        overflow: visible;
 
         .original-phrase-header {
           margin-bottom: 12px;
@@ -444,6 +450,7 @@
 
         .food-select-container {
           margin-bottom: 16px;
+          overflow: visible;
 
           // The autocomplete component has its own styling,
           // so we just need the container spacing

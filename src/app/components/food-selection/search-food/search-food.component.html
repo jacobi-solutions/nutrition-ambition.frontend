@@ -1,19 +1,58 @@
 <!-- Search food input - just the textarea and send button -->
-<div class="search-food-input">
-    <textarea
-      #addFoodTextarea
-      class="add-food-input"
-      [(ngModel)]="currentPhrase"
-      (keydown)="onKeyDown($event)"
-      [placeholder]="placeholder"
-      (input)="onTextareaInput($event)">
-    </textarea>
-    <button
-      class="send-button"
-      (click)="submitPhrase()"
-      (mousedown)="$event.preventDefault()"
-      [disabled]="!hasChanges()">
-      <ion-icon name="send" *ngIf="!isSubmittingNewFood"></ion-icon>
-      <div *ngIf="isSubmittingNewFood" class="loading-dots">...</div>
-    </button>
+<div class="search-food-container">
+  <div class="search-food-input">
+      <textarea
+        #addFoodTextarea
+        class="add-food-input"
+        [(ngModel)]="currentPhrase"
+        (keydown)="onKeyDown($event)"
+        [placeholder]="placeholder"
+        (input)="onTextareaInput($event)">
+      </textarea>
+      <button
+        *ngIf="mode === 'default'"
+        class="send-button"
+        (click)="submitPhrase()"
+        (mousedown)="$event.preventDefault()"
+        [disabled]="!hasChanges()">
+        <ion-icon name="send" *ngIf="!isSubmittingNewFood"></ion-icon>
+        <div *ngIf="isSubmittingNewFood" class="loading-dots">...</div>
+      </button>
+  </div>
+
+  <!-- Quick search dropdown -->
+  <div *ngIf="mode === 'quick' && showDropdown" class="search-results-dropdown">
+    <div *ngIf="isSearching" class="search-loading">
+      <div class="loading-text">Searching...</div>
+    </div>
+
+    <div *ngIf="!isSearching && searchResults.length === 0" class="no-results">
+      <div class="no-results-text">No results found</div>
+    </div>
+
+    <div *ngIf="!isSearching && searchResults.length > 0" class="results-list">
+      <div
+        *ngFor="let result of searchResults"
+        class="result-item"
+        (click)="selectResult(result)">
+        <div class="result-photo">
+          <img
+            *ngIf="result.photoThumb"
+            [src]="result.photoThumb"
+            [alt]="result.displayName"
+            class="result-thumbnail"
+            loading="lazy">
+          <div
+            *ngIf="!result.photoThumb"
+            class="result-thumbnail-placeholder">
+            🍽️
+          </div>
+        </div>
+        <div class="result-info">
+          <div class="result-name">{{ result.displayName }}</div>
+          <div class="result-brand" *ngIf="result.brandName">{{ result.brandName }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

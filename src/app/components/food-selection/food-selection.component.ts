@@ -2,8 +2,8 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
-import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, GetInstantAlternativesRequest, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood, HydrateAlternateSelectionRequest } from 'src/app/services/nutrition-ambition-api.service';
+import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal, sparkles, search, barcode, closeOutline } from 'ionicons/icons';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, GetInstantAlternativesRequest, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood, HydrateAlternateSelectionRequest, UpdateMealSelectionRequest } from 'src/app/services/nutrition-ambition-api.service';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { FoodComponent } from './food/food.component';
@@ -13,6 +13,7 @@ import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { IonIcon } from '@ionic/angular/standalone';
+import { ServingIdentifierUtil, NutrientScalingUtil } from './food-selection.util';
 
 @Component({
   selector: 'app-food-selection',
@@ -34,7 +35,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   isReadOnly = false;
   isEditMode = false;
+  showAddInput = false;
+  addFoodMode: 'default' | 'quick' | 'barcode' = 'default';
   isAddingFood = false;
+  quickSearchResults: any[] = [];
+  isQuickSearching = false;
 
   isSubmitting = false;
   isCanceling = false;
@@ -45,19 +50,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   constructor(
     private cdr: ChangeDetectorRef,
-    private toastService: ToastService, 
+    private toastService: ToastService,
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService,
     private foodSelectionService: FoodSelectionService
   ) {
-    addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal });
+    addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal, sparkles, search, barcode, closeOutline });
   }
 
   get hasPayload(): boolean {
     // Show card even when empty during streaming (isPartial=true means loading)
     // This allows progressive loading UI to display immediately
     // Also show when mealSelection is pending (Stage 0)
-    return this.message.isPartial || this.message.mealSelectionIsPending || (!!this.computedFoods && this.computedFoods.length > 0);
+    // Also show when mealSelection exists (for manually created empty food entries)
+    return this.message.isPartial || this.message.mealSelectionIsPending || !!this.message.mealSelection || (!!this.computedFoods && this.computedFoods.length > 0);
   }
 
   get statusText(): string {
@@ -68,6 +74,107 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       return `${capitalizedMealName} edited`;
     }
     return `${capitalizedMealName} logged`;
+  }
+
+  get mealMacroSummary(): string {
+    if (!this.computedFoods || this.computedFoods.length === 0) {
+      return '';
+    }
+
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalFat = 0;
+    let totalCarbs = 0;
+
+    // Sum up macros from all foods using the same logic as food-header component
+    for (const food of this.computedFoods) {
+      const foodMacros = this.aggregateFoodMacros(food);
+      if (foodMacros.calories !== null) totalCalories += foodMacros.calories;
+      if (foodMacros.protein !== null) totalProtein += foodMacros.protein;
+      if (foodMacros.fat !== null) totalFat += foodMacros.fat;
+      if (foodMacros.carbs !== null) totalCarbs += foodMacros.carbs;
+    }
+
+    // Round to whole numbers
+    const cal = Math.round(totalCalories);
+    const protein = Math.round(totalProtein);
+    const fat = Math.round(totalFat);
+    const carbs = Math.round(totalCarbs);
+
+    return `(${cal} cal, ${protein} g protein, ${fat} g fat, ${carbs} g carb)`;
+  }
+
+  private aggregateFoodMacros(food: FoodDisplay): { calories: number | null; protein: number | null; fat: number | null; carbs: number | null } {
+    const aggregated = { calories: 0, protein: 0, fat: 0, carbs: 0 };
+    let hasAnyNutrients = false;
+
+    if (!food?.components) {
+      return { calories: null, protein: null, fat: null, carbs: null };
+    }
+
+    for (const component of food.components) {
+      // Get the selected serving from component data (same pattern as food-header)
+      const selectedMatch = component.matches?.find((m: any) => m.isBestMatch) || component.matches?.[0];
+      if (!selectedMatch) continue;
+
+      const selectedServing = selectedMatch.servings?.find((s: any) =>
+        ServingIdentifierUtil.areEqual(s.servingId, selectedMatch.selectedServingId)
+      ) || selectedMatch.servings?.[0];
+
+      if (!selectedServing) continue;
+
+      // Use the utility to get properly scaled nutrients (handles alternative servings)
+      const scaledNutrients = NutrientScalingUtil.getScaledNutrients(selectedServing, selectedMatch);
+      if (!scaledNutrients) continue;
+
+      const scaledCalories = NutrientScalingUtil.getMacro(scaledNutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']);
+      if (scaledCalories !== null) {
+        aggregated.calories += scaledCalories;
+        hasAnyNutrients = true;
+      }
+
+      const scaledProtein = NutrientScalingUtil.getMacro(scaledNutrients, ['protein', 'Protein']);
+      if (scaledProtein !== null) {
+        aggregated.protein += scaledProtein;
+        hasAnyNutrients = true;
+      }
+
+      const scaledFat = NutrientScalingUtil.getMacro(scaledNutrients, ['fat', 'Fat', 'total_fat']);
+      if (scaledFat !== null) {
+        aggregated.fat += scaledFat;
+        hasAnyNutrients = true;
+      }
+
+      const scaledCarbs = NutrientScalingUtil.getMacro(scaledNutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']);
+      if (scaledCarbs !== null) {
+        aggregated.carbs += scaledCarbs;
+        hasAnyNutrients = true;
+      }
+    }
+
+    // Apply food-level quantity normalization using initialQuantity
+    const foodQuantity = food?.quantity || 1;
+    const initialQuantity = food?.initialQuantity;
+
+    // For new foods or during loading, initialQuantity may not be set yet
+    // In these cases, skip quantity normalization
+    if (initialQuantity === undefined || initialQuantity === null) {
+      // Return raw aggregated values without scaling
+      return hasAnyNutrients ? aggregated : { calories: null, protein: null, fat: null, carbs: null };
+    }
+
+    if (hasAnyNutrients) {
+      // Normalize by dividing by initial quantity, then scale by current quantity
+      const scaleFactor = foodQuantity / initialQuantity;
+      return {
+        calories: aggregated.calories * scaleFactor,
+        protein: aggregated.protein * scaleFactor,
+        fat: aggregated.fat * scaleFactor,
+        carbs: aggregated.carbs * scaleFactor
+      };
+    }
+
+    return { calories: null, protein: null, fat: null, carbs: null };
   }
 
   get hasAnyPending(): boolean {
@@ -124,6 +231,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
     this.isAddingFood = false; // Ensure this is always false on init
     this.computeAllFoods();
+
+    // Auto-open quick add if requested (for manual food entry via FAB)
+    if (this.message.autoOpenQuickAdd) {
+      this.showAddInput = true;
+      this.addFoodMode = 'quick';
+      delete this.message.autoOpenQuickAdd; // Clear flag after using
+      this.cdr.detectChanges();
+    }
   }
 
   ngOnDestroy(): void {
@@ -273,43 +388,65 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const component = this.findComponentById(componentId);
     if (!component?.matches) return;
 
-    // Clear isBestMatch on all matches, then set it on the selected one
-    component.matches.forEach((match: any) => {
-      (match as any).isBestMatch = match.providerFoodId === foodId;
-      if ((match as any).isBestMatch) {
-        // Set default serving on the selected match
-        (match as any).selectedServingId = match.servings?.[0]?.id;
-        // Set the default serving ID for display
-        const originalSid = match.servings?.[0]?.id;
-        if (originalSid) {
-          (match as any).selectedServingId = originalSid;
-        }
-      }
+    // Find the food index containing this component
+    const foodIndex = this.findFoodIndexForComponent(componentId);
+    if (foodIndex < 0) return;
+
+    const selectedMatch = component.matches.find((match: any) => match.providerFoodId === foodId) as ComponentMatch | undefined;
+    if (!selectedMatch) return;
+
+    // STRATEGY: Instead of updating in-place (which causes empty dropdown issues),
+    // remove the old food and re-add it fresh using the same flow as quick add.
+    // This ensures the dropdown always has full serving data.
+
+    // 1. Capture all alternatives from the existing component
+    const allAlternatives = component.matches || [];
+
+    // 2. Remove the food from computedFoods
+    const newFoods = [
+      ...this.computedFoods.slice(0, foodIndex),
+      ...this.computedFoods.slice(foodIndex + 1)
+    ];
+    this.computedFoods = newFoods;
+    this.cdr.detectChanges();
+
+    // 3. Re-add the food using the quick add flow (which works perfectly)
+    // Mark the selected match and create a fresh food
+    const freshAlternatives = allAlternatives.map((match: any) => {
+      const matchCopy = new ComponentMatchDisplay(match);
+      (matchCopy as any).isBestMatch = match.providerFoodId === selectedMatch.providerFoodId;
+      return matchCopy;
     });
 
+    const newComponentId = `component-${Date.now()}`;
+    const newComponent = new ComponentDisplay({
+      id: newComponentId,
+      matches: freshAlternatives,
+      selectedComponentId: selectedMatch.providerFoodId,
+      isExpanded: true,
+      isSearching: false,
+      loadingInstantOptions: false,
+      isNewAddition: false, // Not a new addition, just a replacement
+      isHydratingAlternateSelection: true // Set loading state for hydration
+    });
 
-    // Update caches for this component
-    const selectedMatch = component.matches.find((match: any) => match.providerFoodId === foodId) as ComponentMatch | undefined;
-    if (selectedMatch) {
-      // Selection state is now managed in the data structure via isBestMatch flag
-      // and selectedServingId property - no need for external caches
+    const newFood = new FoodDisplay({
+      id: `food-${Date.now()}`,
+      name: selectedMatch.displayName || '',
+      quantity: 1,
+      components: [newComponent]
+    });
 
-      // Find food index to use proper state management pattern
-      const foodIndex = this.findFoodIndexForComponent(componentId);
-      if (foodIndex >= 0) {
-        // Set loading state using established pattern (same as onFoodAdded)
-        this.onComponentChanged(foodIndex, componentId, {
-          isHydratingAlternateSelection: true, // this is what we really want, but it doesn't work, so we do the isSearching below. TODO: fix this.
-          isSearching: true
-        });
+    // Insert at the same position where the old food was
+    this.computedFoods = [
+      ...this.computedFoods.slice(0, foodIndex),
+      newFood,
+      ...this.computedFoods.slice(foodIndex)
+    ];
+    this.cdr.detectChanges();
 
-        // Trigger change detection to show loading state immediately
-        this.cdr.detectChanges();
-
-        // Call backend to finalize the food selection with full nutrition data
-        this.hydrateAlternateSelection(component.id, selectedMatch);
-      }
-    }
+    // 4. Hydrate the selection to get full nutrition data
+    this.hydrateAlternateSelection(newComponentId, selectedMatch);
   }
 
   private async hydrateAlternateSelection(componentId: string, selectedMatch: ComponentMatch): Promise<void> {
@@ -447,6 +584,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               updatedFood,
               ...this.computedFoods.slice(foodIndex + 1)
             ];
+
+            // Force change detection
+            this.cdr.markForCheck();
+            this.cdr.detectChanges();
           }
         } else {
           // This is a full food replacement (like onFoodAdded pattern)
@@ -457,13 +598,18 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             newFood,
             ...this.computedFoods.slice(foodIndex + 1)
           ];
+
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
         }
 
-        this.cdr.detectChanges();
+        // Auto-save the updated meal selection after successful hydration
+        this.autoSaveMealSelection();
       } else {
         // Clear loading state on error
         this.onComponentChanged(foodIndex, componentId, {
-          isSearching: false
+          isSearching: false,
+          isHydratingAlternateSelection: false
         });
         this.cdr.detectChanges();
         await this.showErrorToast('Failed to update food. Please try again.');
@@ -474,7 +620,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       const foodIndex = this.findFoodIndexForComponent(componentId);
       if (foodIndex >= 0) {
         this.onComponentChanged(foodIndex, componentId, {
-          isSearching: false
+          isSearching: false,
+          isHydratingAlternateSelection: false
         });
       }
       await this.showErrorToast('Failed to update food. Please try again.');
@@ -576,12 +723,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       return firstMatch.servings?.[0] || null;
     }
 
-    const selectedServingId = this.getSelectedServingId(componentId);
+    // Get the selected ServingIdentifier object from the match
+    const selectedServingId = (selectedMatch as any)?.selectedServingId;
 
     if (selectedServingId && selectedMatch?.servings) {
-      const serving = selectedMatch.servings.find((s: any) =>
-        s.id === selectedServingId || (s.servingId && s.servingId.toString() === selectedServingId.toString())
-      );
+      // Compare ServingIdentifier objects properly
+      const serving = selectedMatch.servings.find((s: any) => {
+        if (!s.servingId) return false;
+        // Match all fields of ServingIdentifier
+        return s.servingId.provider === selectedServingId.provider &&
+               s.servingId.foodType === selectedServingId.foodType &&
+               s.servingId.foodName === selectedServingId.foodName &&
+               s.servingId.variantIndex === selectedServingId.variantIndex &&
+               s.servingId.servingType === selectedServingId.servingType;
+      });
       if (serving) return serving;
     }
 
@@ -609,7 +764,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  private confirmRegularSelections(): void {
+  private async confirmRegularSelections(): Promise<void> {
+    // Validate that all quick-added foods have been populated
+    const hasEmptyFoods = this.computedFoods.some(food =>
+      !food.components ||
+      food.components.length === 0 ||
+      !food.components[0].matches ||
+      food.components[0].matches.length === 0
+    );
+
+    if (hasEmptyFoods) {
+      await this.showErrorToast('Please complete or remove empty foods before submitting');
+      return;
+    }
+
     const req = new SubmitServingSelectionRequest();
     req.pendingMessageId = this.message.id;
     req.selections = [];
@@ -1050,6 +1218,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.computedFoods[foodIndex] = updatedFood;
     this.computedFoods = [...this.computedFoods];
 
+    // Auto-save to database if we have a message ID
+    this.autoSaveMealSelection();
+
     setTimeout(async () => {
       // Get display name from component's selected match
       const selectedMatch = componentToRemove?.matches?.find((m: any) => m.isBestMatch)
@@ -1102,6 +1273,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // Update the array
     this.computedFoods = newFoods;
+
+    // Auto-save to database if we have a message ID
+    this.autoSaveMealSelection();
 
     // Get food name for toast
     const foodName = foodToRemove.name || 'food item';
@@ -1787,16 +1961,222 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
   }
 
-  
+
 
   // Add food methods
-  startAddingFood(): void {
-    this.isAddingFood = true;
+  // Add food methods
+  async setAddFoodMode(mode: 'default' | 'quick' | 'barcode'): Promise<void> {
+    if (mode === 'barcode') {
+      await this.showErrorToast('Barcode scanning coming soon!');
+      return;
+    }
+
+    this.addFoodMode = mode;
+    this.cdr.detectChanges();
+
+    // If switching to quick mode and there's already text typed, trigger instant search
+    if (mode === 'quick' && this.addFoodComponent) {
+      const currentPhrase = this.addFoodComponent.currentPhrase?.trim();
+      if (currentPhrase && currentPhrase.length >= 3) {
+        await this.onInstantSearch(currentPhrase);
+      }
+    }
   }
 
-  cancelAddingFood(): void {
-    this.isAddingFood = false;
+  getPlaceholderText(): string {
+    if (this.addFoodMode === 'quick') {
+      return 'Search for one food';
+    }
+    return 'Describe your meal';
   }
 
-  
+  async onAddFoodSubmitted(phrase: string): Promise<void> {
+    if (this.addFoodMode === 'quick') {
+      // Quick Add mode - create empty food with dropdown
+      await this.startQuickAdd();
+    } else {
+      // Default mode - AI search
+      await this.onFoodAdded(phrase);
+    }
+
+    // Reset state
+    this.showAddInput = false;
+    this.addFoodMode = 'default';
+  }
+
+  async startQuickAdd(): Promise<void> {
+    // Prevent Quick Add if card is still processing
+    if (this.message.isPartial || this.hasAnyPending) {
+      await this.showErrorToast('Please wait for current search to complete');
+      return;
+    }
+
+    // Create empty component with display state
+    const emptyComponent = new ComponentDisplay({
+      id: `component-${Date.now()}`,
+      matches: [],
+      selectedComponentId: undefined,
+      isExpanded: true,
+      isSearching: false,
+      loadingInstantOptions: false,
+      isNewAddition: true
+    });
+
+    // Create empty food structure
+    const emptyFood = new FoodDisplay({
+      id: `quick-add-${Date.now()}`,
+      name: '',
+      quantity: 1,
+      components: [emptyComponent]
+    });
+
+    // Append to existing foods
+    this.computedFoods = [...this.computedFoods, emptyFood];
+  }
+
+  cancelAddFood(): void {
+    this.showAddInput = false;
+    this.addFoodMode = 'default';
+  }
+
+  async onInstantSearch(query: string): Promise<void> {
+    // Only handle instant search when in quick mode
+    if (this.addFoodMode !== 'quick') {
+      return;
+    }
+
+    // Set loading state
+    this.isQuickSearching = true;
+    this.cdr.detectChanges();
+
+    // Call instant alternatives API
+    try {
+      const request = new GetInstantAlternativesRequest({
+        originalPhrase: query,
+        componentId: `quick-search-${Date.now()}`, // Temporary ID for search
+        localDateKey: this.dateService.getSelectedDate()
+      });
+
+      const response = await this.apiService.getInstantAlternatives(request).toPromise();
+
+      if (response?.isSuccess && response.alternatives) {
+        this.quickSearchResults = response.alternatives;
+      } else {
+        this.quickSearchResults = [];
+      }
+    } catch (error) {
+      console.error('Error fetching instant alternatives:', error);
+      this.quickSearchResults = [];
+    } finally {
+      this.isQuickSearching = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  async onQuickSearchResultSelected(selectedMatch: ComponentMatch): Promise<void> {
+    // Hide the input area
+    this.showAddInput = false;
+    this.addFoodMode = 'default';
+
+    // Keep all alternatives and mark the selected one with isBestMatch flag
+    const allAlternatives = this.quickSearchResults.map(match => {
+      const matchCopy = new ComponentMatchDisplay(match);
+      (matchCopy as any).isBestMatch = match.providerFoodId === selectedMatch.providerFoodId;
+      return matchCopy;
+    });
+    this.quickSearchResults = [];
+
+    // Create a food with the selected match AND all alternatives
+    const componentId = `component-${Date.now()}`;
+    const component = new ComponentDisplay({
+      id: componentId,
+      matches: allAlternatives,
+      selectedComponentId: selectedMatch.providerFoodId, // Use providerFoodId for consistency
+      isExpanded: true,
+      isSearching: false,
+      loadingInstantOptions: false,
+      isNewAddition: true,
+      isHydratingAlternateSelection: true // Set loading state for hydration
+    });
+
+    const newFood = new FoodDisplay({
+      id: `food-${Date.now()}`,
+      name: selectedMatch.displayName || '',
+      quantity: 1,
+      components: [component]
+    });
+
+    // Append to existing foods
+    this.computedFoods = [...this.computedFoods, newFood];
+    this.cdr.detectChanges();
+
+    // Hydrate the selection to get full nutrition data, servings, and thumbnail
+    await this.hydrateAlternateSelection(componentId, selectedMatch);
+  }
+
+  /**
+   * Auto-saves the current meal selection to the database.
+   * Called after changes like deletions and hydrations to persist state without full submission.
+   * If no message ID exists yet, creates a new message (for manual food entries).
+   */
+  private autoSaveMealSelection(): void {
+    // Don't auto-save in edit mode or read-only mode
+    if (this.isEditMode || this.isReadOnly) {
+      return;
+    }
+
+    // Convert FoodDisplay[] to Food[] for API
+    const foodsForApi: Food[] = this.computedFoods.map(foodDisplay => {
+      const food = new Food({
+        id: foodDisplay.id,
+        name: foodDisplay.name,
+        quantity: foodDisplay.quantity,
+        components: foodDisplay.components?.map(compDisplay => {
+          const comp = new ComponentOfFood({
+            id: compDisplay.id,
+            selectedComponentId: compDisplay.selectedComponentId,
+            matches: compDisplay.matches?.map(matchDisplay => {
+              const match = new ComponentMatch({
+                ...matchDisplay,
+                servings: matchDisplay.servings?.map(servDisplay =>
+                  new ComponentServing(servDisplay)
+                )
+              });
+              return match;
+            })
+          });
+          return comp;
+        })
+      });
+      return food;
+    });
+
+    // Call the API to update (or create if no messageId)
+    const request = new UpdateMealSelectionRequest({
+      messageId: this.message.id, // Can be undefined - backend will create message
+      localDateKey: this.dateService.getSelectedDate(),
+      foods: foodsForApi
+    });
+
+    this.apiService.updateMealSelection(request).subscribe({
+      next: (response) => {
+        if (response.isSuccess) {
+          // If we didn't have a message ID before, we have one now
+          if (!this.message.id && response.messageId) {
+            this.message.id = response.messageId;
+            console.log('Created message via auto-save:', response.messageId);
+          } else {
+            console.log('Auto-saved meal selection to database');
+          }
+        } else {
+          console.warn('Failed to auto-save meal selection:', response.errors);
+        }
+      },
+      error: (error) => {
+        console.error('Error auto-saving meal selection:', error);
+      }
+    });
+  }
+
+
 }

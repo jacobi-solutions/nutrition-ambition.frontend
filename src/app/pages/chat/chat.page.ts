@@ -5,7 +5,7 @@ import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSp
 import { ViewWillEnter } from '@ionic/angular';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
-import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlaneSharp } from 'ionicons/icons';
+import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlaneSharp, search } from 'ionicons/icons';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { DateService } from '../../services/date.service';
@@ -23,7 +23,8 @@ import {
     UserSelectedServing,
     SearchFoodPhraseRequest,
     NutritionAmbitionApiService,
-    GetSharedMealRequest
+    GetSharedMealRequest,
+    UpdateMealSelectionRequest
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -131,7 +132,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       create,
       barcodeSharp,
       addOutline,
-      closeCircleOutline
+      closeCircleOutline,
+      search
     });
   }
 
@@ -641,6 +643,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
               // Create or update the meal selection message
               if (streamingMessageIndex === -1) {
+                // First chunk - create the message and always scroll
                 streamingMessageIndex = this.messages.length;
                 this.messages = [...this.messages, {
                   id: messageId, // Use backend's stable MongoDB ID from the first chunk
@@ -656,8 +659,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   mealSelectionIsPending: mealSelection?.isPending || false
                 }];
                 this.scrollToBottom();
+                // Reset scroll flag after scroll animation completes (300ms + buffer)
+                setTimeout(() => {
+                  this.isUserScrolledUp = false;
+                }, 600);
               } else {
-                // Update existing message
+                // Subsequent chunks - update existing message
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
 
@@ -675,6 +682,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                 };
                 this.messages = updatedMessages;
 
+                // Only scroll if user hasn't scrolled up
                 if (!this.isUserScrolledUp) {
                   this.scrollToBottom();
                 }
@@ -704,6 +712,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
                 // Create the assistant message bubble on first chunk
                 if (streamingMessageIndex === -1) {
+                  // First chunk - create the message and always scroll
                   streamingMessageIndex = this.messages.length;
                   const streamingMessageId = `streaming-${Date.now()}`;
                   this.messages = [...this.messages, {
@@ -714,10 +723,13 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                     role: MessageRoleTypes.Assistant,
                     isStreaming: true
                   }];
-                  // Always scroll on first chunk
                   this.scrollToBottom();
+                  // Reset scroll flag after scroll animation completes (300ms + buffer)
+                  setTimeout(() => {
+                    this.isUserScrolledUp = false;
+                  }, 600);
                 } else {
-                  // Update existing message by replacing the array
+                  // Subsequent chunks - update existing message
                   const updatedMessages = [...this.messages];
                   const existingMessage = updatedMessages[streamingMessageIndex];
                   updatedMessages[streamingMessageIndex] = {
@@ -829,7 +841,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         // else: message was removed (user cancelled) - don't show error
 
         this.cdr.detectChanges();
-        this.scrollToBottom();
+        if (!this.isUserScrolledUp) {
+          this.scrollToBottom();
+        }
         this.focusInput();
       }
     );
@@ -904,29 +918,29 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         // Get viewport and last message dimensions
         const contentElement = await this.content.getScrollElement();
         const viewportHeight = contentElement.clientHeight;
-        
+
         // Find the last message element
         const messageElements = contentElement.querySelectorAll('app-chat-message, .context-note-inline, .typing-indicator');
-        
+
         if (messageElements.length === 0) {
           this.content.scrollToBottom(300);
           return;
         }
-        
+
         const lastMessageElement = messageElements[messageElements.length - 1] as HTMLElement;
         const messageHeight = lastMessageElement.offsetHeight;
-        
+
         // If message is taller than 40% of viewport, position it near the top
         if (messageHeight > viewportHeight * 0.4) {
           const marginFromTop = viewportHeight * 0.05; // 5% margin from top
           const messageOffsetTop = lastMessageElement.offsetTop;
           const scrollPosition = Math.max(0, messageOffsetTop - marginFromTop);
-          
+
           await this.content.scrollToPoint(0, scrollPosition, 300);
         } else {
           this.content.scrollToBottom(300);
         }
-        
+
       } catch (error) {
         this.content.scrollToBottom(300);
       }
@@ -939,14 +953,15 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     this.analytics.trackFabToggle(this.isOpen);
   }
 
-  handleAction(action: 'photo' | 'barcode' | 'edit') {
+  handleAction(action: 'photo' | 'barcode' | 'quick-search') {
+    console.log('handleAction called with action:', action);
     // Determine if the action is implemented
-    const implementedActions = ['edit']; // Only manual entry is currently working
+    const implementedActions = ['quick-search']; // Quick search is implemented
     const isImplemented = implementedActions.includes(action);
-    
+
     // Track analytics for all FAB actions
     this.analytics.trackFabAction(action, isImplemented);
-    
+
     // Here we would implement the actual functionality
     switch(action) {
       case 'photo':
@@ -969,18 +984,76 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           color: 'medium'
         });
         break;
-      case 'edit':
+      case 'quick-search':
         // This is implemented, so track as a successful action
-        this.analytics.trackActionClick('manual_entry_open', 'fab_menu', { source: 'chat_page' });
+        this.analytics.trackActionClick('quick_search_open', 'fab_menu', { source: 'chat_page' });
+        this.createManualFoodEntry();
         break;
     }
-    
+
     // Close the FAB after action is clicked
     setTimeout(() => {
       this.isOpen = false;
       // Track FAB close after action
       this.analytics.trackFabToggle(false);
     }, 300);
+  }
+
+  // Create an empty food selection card for manual entry
+  async createManualFoodEntry(): Promise<void> {
+    console.log('createManualFoodEntry called, selectedDate:', this.selectedDate);
+    try {
+      // Call backend immediately to create the message
+      const request = new UpdateMealSelectionRequest({
+        messageId: undefined, // No ID yet - backend will create
+        localDateKey: this.selectedDate,
+        foods: []
+      });
+
+      console.log('Calling updateMealSelection with request:', request);
+      const response = await this.apiService.updateMealSelection(request).toPromise();
+      console.log('updateMealSelection response:', response);
+
+      if (response?.isSuccess && response.messageId) {
+        // Create the UI message with the returned messageId
+        const newMessage: DisplayMessage = {
+          id: response.messageId, // Use the real ID from backend
+          text: '',
+          isUser: false,
+          timestamp: new Date(),
+          role: MessageRoleTypes.PendingFoodSelection,
+          mealSelection: new MealSelection({
+            mealName: 'Food Entry',
+            foods: []
+          }),
+          mealName: 'Food Entry',
+          isStreaming: false,
+          isPartial: false,
+          autoOpenQuickAdd: true
+        };
+
+        // Add to messages array
+        this.messages = [...this.messages, newMessage];
+
+        // Scroll to bottom to show new card
+        setTimeout(() => {
+          this.content.scrollToBottom(300);
+        }, 100);
+      } else {
+        this.toastService.showToast({
+          message: 'Failed to create food entry',
+          color: 'danger',
+          duration: 2000
+        });
+      }
+    } catch (error) {
+      console.error('Error creating manual food entry:', error);
+      this.toastService.showToast({
+        message: 'Failed to create food entry',
+        color: 'danger',
+        duration: 2000
+      });
+    }
   }
 
   // Focus the input element

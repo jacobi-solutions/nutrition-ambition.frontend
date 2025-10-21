@@ -142,6 +142,44 @@ export class FoodEntryBreakdownDisplay extends FoodEntryBreakdown {
     });
   }
 
+  /**
+   * Returns a formatted macro summary for this meal entry.
+   * Format: (XXX cal, XX g protein, XX g fat, XX g carb)
+   */
+  get mealMacroSummary(): string {
+    if (!this.nutrients || this.nutrients.length === 0) {
+      return '';
+    }
+
+    // Extract macro nutrients using canonical keys
+    const calories = this.nutrients.find(n =>
+      n.nutrientKey?.toLowerCase() === 'energy_kcal' ||
+      n.nutrientKey?.toLowerCase() === 'calories'
+    );
+    const protein = this.nutrients.find(n => n.nutrientKey?.toLowerCase() === 'protein');
+    const fat = this.nutrients.find(n =>
+      n.nutrientKey?.toLowerCase() === 'total_fat' ||
+      n.nutrientKey?.toLowerCase() === 'fat'
+    );
+    const carbs = this.nutrients.find(n =>
+      n.nutrientKey?.toLowerCase() === 'carbohydrate' ||
+      n.nutrientKey?.toLowerCase() === 'carbohydrates' ||
+      n.nutrientKey?.toLowerCase() === 'carbs'
+    );
+
+    // Only show summary if we have at least calories
+    if (!calories) {
+      return '';
+    }
+
+    const cal = Math.round(calories.amount || 0);
+    const proteinG = Math.round(protein?.amount || 0);
+    const fatG = Math.round(fat?.amount || 0);
+    const carbsG = Math.round(carbs?.amount || 0);
+
+    return `(${cal} cal, ${proteinG} g protein, ${fatG} g fat, ${carbsG} g carb)`;
+  }
+
   updateSelectionState(
     selectedFood?: FoodBreakdownDisplay,
     selectedComponent?: ComponentBreakdownDisplay,

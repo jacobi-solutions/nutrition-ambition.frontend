@@ -161,6 +161,16 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
   // Compute all display values when data changes
   private computeDisplayValues(): void {
+    // First, update all component flags from input - needed for pending checks below
+    this.isExpanded = this.component?.isExpanded || false;
+    this.isEditing = this.component?.isEditing || false;
+    this.editingValue = this.component?.editingValue || '';
+    this.isSearching = this.component?.isSearching || false;
+    this.showingMoreOptions = this.component?.showingMoreOptions || false;
+    this.loadingMoreOptions = this.component?.loadingMoreOptions || false;
+    this.loadingInstantOptions = this.component?.loadingInstantOptions || false;
+    this.isHydratingSelection = this.component?.isHydratingAlternateSelection || false;
+
     // Always update selectedFood to pick up new serving data from streaming updates
     // Only skip during active search to avoid disrupting autocomplete
     if (this.isExplicitSelection || !this.selectedFood || !this.isSearching) {
@@ -217,12 +227,18 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     // Use component.isPending directly (bubbled up from serving level by backend)
     // The backend hierarchical system ensures component.isPending accurately reflects
     // whether this component OR any of its servings are still being processed
-    this.servingIsPending = this.component?.isPending || false;
+    // Also show as pending when hydrating the selection
+    this.servingIsPending = this.component?.isPending || this.isHydratingSelection || false;
 
     // Extract status text from component when pending
     if (this.servingIsPending) {
-      this.servingStatusText = (this.component as any)?.statusText || 'Analyzing';
-      this.macroStatusText = "(?? cal, ?? protein, ?? fat, ?? carbs)";
+      if (this.isHydratingSelection) {
+        this.servingStatusText = 'Getting macros';
+        this.macroStatusText = "(?? cal, ?? g protein, ?? g fat, ?? g carb)";
+      } else {
+        this.servingStatusText = (this.component as any)?.statusText || 'Analyzing';
+        this.macroStatusText = "(?? cal, ?? g protein, ?? g fat, ?? g carb)";
+      }
     } else {
       // Clear status text when not pending
       this.servingStatusText = '';
@@ -231,16 +247,6 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
 
     // Compute macro summary
     this.macroSummary = this.computeMacroSummary();
-
-    // Compute ComponentDisplay flags
-    this.isExpanded = this.component?.isExpanded || false;
-    this.isEditing = this.component?.isEditing || false;
-    this.editingValue = this.component?.editingValue || '';
-    this.isSearching = this.component?.isSearching || false;
-    this.showingMoreOptions = this.component?.showingMoreOptions || false;
-    this.loadingMoreOptions = this.component?.loadingMoreOptions || false;
-    this.loadingInstantOptions = this.component?.loadingInstantOptions || false;
-    this.isHydratingSelection = this.component?.isHydratingAlternateSelection || false;
 
     // Compute additional precomputed values
     this.originalPhrase = this.computeOriginalPhrase();

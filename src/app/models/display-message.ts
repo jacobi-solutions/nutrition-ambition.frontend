@@ -29,4 +29,7 @@ export interface DisplayMessage {
     retryCount?: number;
     createdDateUtc?: Date;
     lastUpdatedDateUtc?: Date;
+
+    // manual food entry flag
+    autoOpenQuickAdd?: boolean;
   }

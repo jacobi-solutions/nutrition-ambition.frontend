@@ -5,6 +5,7 @@
       <!-- Food items list -->
       <div *ngIf="hasPayload" class="card-header">
         <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Entry') | titlecase }}</strong></label>
+        <div *ngIf="mealMacroSummary" class="meal-macro-summary">{{ mealMacroSummary }}</div>
       </div>
 
       <!-- Meal selection thinking dots (Stage 0) - only show when NO foods exist yet -->
@@ -33,19 +34,57 @@
       </ng-container>
     </div>
 
-    <!-- Add something row -->
-    <div *ngIf="hasPayload && !isReadOnly && !isEditMode && !hasAnyPending" class="add-something-row">
-      <div *ngIf="!isAddingFood" class="add-something-display" (click)="startAddingFood()">
+    <!-- Add more food section -->
+    <div *ngIf="hasPayload && !isReadOnly && !isEditMode && !hasAnyPending && !isSubmitting" class="add-more-food-section">
+
+      <!-- Initial "Add another food" button -->
+      <div *ngIf="!showAddInput" class="add-something-display" (click)="showAddInput = true">
         <div class="add-something-text">Add another food</div>
         <ion-icon name="add-circle-outline" class="add-something-icon"></ion-icon>
       </div>
 
-      <app-search-food
-        *ngIf="isAddingFood"
-        placeholder="What did you eat?"
-        (phraseSubmitted)="onFoodAdded($event)"
-        (editCanceled)="cancelAddingFood()">
-      </app-search-food>
+      <!-- Input with mode selector icons -->
+      <div *ngIf="showAddInput" class="add-food-input-container">
+        <!-- Mode selector icons -->
+        <div class="mode-selector">
+          <div
+            class="mode-icon"
+            [class.active]="addFoodMode === 'default'"
+            (click)="setAddFoodMode('default')">
+            <ion-icon name="sparkles"></ion-icon>
+          </div>
+          <div
+            class="mode-icon"
+            [class.active]="addFoodMode === 'quick'"
+            (click)="setAddFoodMode('quick')">
+            <ion-icon name="search"></ion-icon>
+          </div>
+          <div
+            class="mode-icon disabled"
+            [class.active]="addFoodMode === 'barcode'"
+            (click)="setAddFoodMode('barcode')">
+            <ion-icon name="barcode"></ion-icon>
+          </div>
+          <div class="spacer"></div>
+          <div
+            class="mode-icon close-icon"
+            (click)="cancelAddFood()">
+            <ion-icon name="close-outline"></ion-icon>
+          </div>
+        </div>
+
+        <!-- Text input (uses existing search-food component) -->
+        <app-search-food
+          [placeholder]="getPlaceholderText()"
+          [mode]="addFoodMode === 'barcode' ? 'default' : addFoodMode"
+          [searchResults]="quickSearchResults"
+          [isSearching]="isQuickSearching"
+          (phraseSubmitted)="onAddFoodSubmitted($event)"
+          (instantSearch)="onInstantSearch($event)"
+          (resultSelected)="onQuickSearchResultSelected($event)"
+          (editCanceled)="cancelAddFood()">
+        </app-search-food>
+      </div>
     </div>
   </div>
 

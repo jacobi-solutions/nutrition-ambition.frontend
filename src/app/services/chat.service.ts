@@ -6,8 +6,6 @@ import {
   GetChatMessagesRequest,
   ChatMessagesResponse,
   RunChatRequest,
-  LearnMoreAboutRequest,
-  SetupGoalsRequest,
   SubmitServingSelectionRequest,
   UserSelectedServing,
   ErrorDto,
@@ -120,54 +118,59 @@ export class ChatService {
   
   
   // Learn more about a specific topic in chat
-  learnMoreAbout(topic: string, localDateKey: string): Observable<ChatMessagesResponse> {
-    // Create the request to the backend
-    const request = new LearnMoreAboutRequest({
-      topic: topic,
-      localDateKey: localDateKey
-    });
+  learnMoreAbout(topic: string, localDateKey: string): Observable<any> {
+    // TODO: Re-enable when backend endpoint is restored
+    return throwError(() => new Error('learnMoreAbout endpoint not available'));
 
-    // Call the API and handle the response
-    return this.apiService.learnMoreAbout(request).pipe(
-      map(response => {
-        // Emit a new message received event to indicate the response is complete
-        if (response.isSuccess) {
-          // Emit the response so the chat page can reload messages
-          this.learnMoreAboutResponseSubject.next(response);
-        }
+    // // Create the request to the backend
+    // const request = new LearnMoreAboutRequest({
+    //   topic: topic,
+    //   localDateKey: localDateKey
+    // });
 
-        return response;
-      }),
-      catchError(error => {
-        return throwError(() => error);
-      })
-    );
+    // // Call the API and handle the response
+    // return this.apiService.learnMoreAbout(request).pipe(
+    //   map(response => {
+    //     // Emit a new message received event to indicate the response is complete
+    //     if (response.isSuccess) {
+    //       // Emit the response so the chat page can reload messages
+    //       this.learnMoreAboutResponseSubject.next(response);
+    //     }
+
+    //     return response;
+    //   }),
+    //   catchError(error => {
+    //     return throwError(() => error);
+    //   })
+    // );
   }
 
 
   // Set up or tweak nutrition goals in chat
-  setupGoals(localDateKey: string, isTweaking: boolean = false): Observable<ChatMessagesResponse> {
-    // Create the request to the backend
-    const request = new SetupGoalsRequest({
-      localDateKey: localDateKey,
-      isTweaking: isTweaking
-    });
+  setupGoals(localDateKey: string, isTweaking: boolean = false): Observable<any> {
+    // TODO: Re-enable when backend endpoint is restored
+    return throwError(() => new Error('setupGoals endpoint not available'));
+    // // Create the request to the backend
+    // const request = new SetupGoalsRequest({
+    //   localDateKey: localDateKey,
+    //   isTweaking: isTweaking
+    // });
 
-    // Call the API and handle the response
-    return this.apiService.setupGoals(request).pipe(
-      map(response => {
-        // Emit a new message received event to indicate the response is complete
-        if (response.isSuccess) {
-          // Emit the response so the chat page can reload messages
-          this.learnMoreAboutResponseSubject.next(response);
-        }
+    // // Call the API and handle the response
+    // return this.apiService.setupGoals(request).pipe(
+    //   map(response => {
+    //     // Emit a new message received event to indicate the response is complete
+    //     if (response.isSuccess) {
+    //       // Emit the response so the chat page can reload messages
+    //       this.learnMoreAboutResponseSubject.next(response);
+    //     }
 
-        return response;
-      }),
-      catchError(error => {
-        return throwError(() => error);
-      })
-    );
+    //     return response;
+    //   }),
+    //   catchError(error => {
+    //     return throwError(() => error);
+    //   })
+    // );
   }
 
 

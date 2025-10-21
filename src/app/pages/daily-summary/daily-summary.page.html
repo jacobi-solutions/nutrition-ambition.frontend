@@ -371,6 +371,7 @@
                     <ion-icon slot="icon-only" name="share-outline"></ion-icon>
                   </ion-button>
                 </div>
+                <div *ngIf="entry.mealMacroSummary" class="meal-macro-summary">{{ entry.mealMacroSummary }}</div>
               </ion-card-header>
 
               <!-- Entry Content -->
@@ -379,8 +380,9 @@
                   <ng-container *ngFor="let food of entry?.foodsDisplay; trackBy: trackById">
                     <!-- Normal Food Row -->
                     <ion-item
-                      (click)="selectFood(food)"
-                      [class.selected]="food.isSelected">
+                      (click)="food.isMultiComponent && selectFood(food)"
+                      [class.selected]="food.isSelected"
+                      [class.clickable]="food.isMultiComponent">
                     <div class="breakdown-item">
                       <div class="primary-info">
                         <span class="name">
@@ -407,7 +409,7 @@
                                 : 'information-circle-outline'">
                       </ion-icon>
                     </ion-button>
-                    <ion-button fill="clear" slot="end" size="small" class="chevron-btn">
+                    <ion-button *ngIf="food.isMultiComponent" fill="clear" slot="end" size="small" class="chevron-btn">
                       <ion-icon
                         [name]="food.isSelected
                                 ? 'chevron-down-outline'

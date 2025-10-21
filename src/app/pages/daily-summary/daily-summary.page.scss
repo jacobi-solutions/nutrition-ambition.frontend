@@ -327,6 +327,15 @@ ion-card {
       flex: 1;
       text-align: center;
     }
+  }
+
+  .meal-macro-summary {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--ion-color-medium);
+    margin-top: 4px;
+    text-align: center;
 
     .toggle-btn {
       position: absolute;

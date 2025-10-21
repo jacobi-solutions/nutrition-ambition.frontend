@@ -9,7 +9,7 @@
   outline: none;
   // Smooth height transitions to reduce jumping when content loads
   transition: height 0.3s ease-in-out, min-height 0.3s ease-in-out;
-  overflow: hidden;
+  overflow: visible;
 
   &.read-only {
     background: var(--color-light-smoke) !important;
@@ -123,17 +123,25 @@
   .card-header {
     margin-bottom: 16px;
     text-align: center;
-    
+
     label {
       display: block;
       color: var(--color-olive);
       font-size: 1.125rem;
       font-weight: 600;
       margin-bottom: 0;
-      
+
       strong {
         font-weight: 600;
       }
+    }
+
+    .meal-macro-summary {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--ion-color-medium);
+      margin-top: 4px;
     }
   }
 
@@ -191,10 +199,12 @@
     // Smooth fade and slide in when foods appear
     animation: fadeIn 0.3s ease-in-out;
     transition: opacity 0.3s ease-in-out;
+    overflow: visible;
 
     .food-item-container {
       border-bottom: 1px solid var(--color-olive);
-      
+      overflow: visible;
+
       &.is-last {
         border-bottom: none;
       }
@@ -507,6 +517,163 @@
     .add-something-icon {
       color: #D64933; // Tomato red color
       font-size: 20px;
+    }
+  }
+}
+
+// New "Add more food" section with Quick Add and Smart Add options
+.add-more-food-section {
+  padding: 12px 0;
+  border-top: 1px solid var(--color-olive);
+
+  .add-something-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 12px;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: rgba(214, 73, 51, 0.05);
+    }
+
+    .add-something-text {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 500;
+      font-size: 0.95rem;
+      color: var(--color-tomato); 
+      line-height: 1.4;
+    }
+
+    .add-something-icon {
+      color: var(--color-tomato); // Tomato red color
+      font-size: 20px;
+    }
+  }
+
+  .add-food-input-container {
+    padding: 0 8px;
+
+    .mode-selector {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 12px;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 0 4px;
+      position: relative;
+
+      .spacer {
+        flex: 1;
+        min-width: 20px;
+      }
+
+      .mode-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--ion-color-medium);
+
+        ion-icon {
+          font-size: 1rem;
+        }
+
+        &.active {
+          color:  var(--color-olive);
+        }
+
+        &.disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+
+        &.close-icon {
+          color: var(--ion-color-medium);
+          margin-left: auto;
+          padding-right: 8px;
+
+          ion-icon {
+            font-size: 1.25rem;
+          }
+
+          &:hover {
+            color: var(--ion-color-danger);
+          }
+        }
+
+        &:not(.disabled):not(.active):hover {
+          color: var(--ion-color-dark);
+        }
+      }
+    }
+  }
+
+  .section-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+    margin-bottom: 12px;
+    padding: 0 16px;
+  }
+
+  .add-food-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .add-food-option {
+    display: flex;
+    align-items: center;
+    padding: 14px 12px;
+    background: var(--ion-color-light);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:active {
+      background: var(--ion-color-light-shade);
+      transform: scale(0.98);
+    }
+
+    .option-icon {
+      font-size: 24px;
+      color: #D64933; // Tomato red color to match theme
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .option-content {
+      flex: 1;
+
+      .option-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--ion-text-color);
+        margin-bottom: 2px;
+      }
+
+      .option-description {
+        font-family: 'Poppins', sans-serif;
+        font-size: 13px;
+        color: var(--ion-color-medium);
+        line-height: 1.3;
+      }
+    }
+
+    .option-arrow {
+      font-size: 20px;
+      color: var(--ion-color-medium);
+      flex-shrink: 0;
+      margin-left: 8px;
     }
   }
 }

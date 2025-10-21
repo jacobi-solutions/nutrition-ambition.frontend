@@ -32,6 +32,8 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   computedShouldShowQuantityInput: boolean = false;
   computedShouldShowNormalLabel: boolean = false;
   hasStatusText: boolean = false;
+  photoThumb: string = '';
+  photoHighRes: string = '';
 
   // Macro display
   shouldShowMacros: boolean = false;
@@ -54,6 +56,17 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
   private computeDisplayValues(): void {
     // Compute display name
     this.displayName = this.food?.name || '';
+
+    // Compute photo from first component's selected food
+    if (this.food?.components && this.food.components.length > 0) {
+      const firstComponent = this.food.components[0];
+      const selectedFood = firstComponent?.matches?.find((m: any) => m.isBestMatch) || firstComponent?.matches?.[0];
+      this.photoThumb = selectedFood?.photoThumb || '';
+      this.photoHighRes = selectedFood?.photoHighRes || '';
+    } else {
+      this.photoThumb = '';
+      this.photoHighRes = '';
+    }
 
     // Compute serving label and status
     if (this.food && this.food.components && this.food.components.length > 1) {
@@ -114,27 +127,18 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
                          aggregatedMacros.carbs !== null;
 
     if (!hasAnyMacros) {
-      this.macroSummary = '(?? cal, ?? protein, ?? fat, ?? carbs)';
+      this.macroSummary = "(?? cal, ?? g protein, ?? g fat, ?? g carb)";
       return;
     }
 
-    // Show real macros (even if partial - e.g., just one component done)
-    const parts: string[] = [];
+    // Show all four macros consistently (cal, protein, fat, carbs)
+    // Use 0 for any macro that's null (nutrient not available in the data)
+    const cal = aggregatedMacros.calories !== null ? Math.round(aggregatedMacros.calories) : 0;
+    const protein = aggregatedMacros.protein !== null ? Math.round(aggregatedMacros.protein) : 0;
+    const fat = aggregatedMacros.fat !== null ? Math.round(aggregatedMacros.fat) : 0;
+    const carbs = aggregatedMacros.carbs !== null ? Math.round(aggregatedMacros.carbs) : 0;
 
-    if (aggregatedMacros.calories !== null && aggregatedMacros.calories >= 0) {
-      parts.push(`${Math.round(aggregatedMacros.calories)} cal`);
-    }
-    if (aggregatedMacros.protein !== null && aggregatedMacros.protein >= 0) {
-      parts.push(`${Math.round(aggregatedMacros.protein)} protein`);
-    }
-    if (aggregatedMacros.fat !== null && aggregatedMacros.fat >= 0) {
-      parts.push(`${Math.round(aggregatedMacros.fat)} fat`);
-    }
-    if (aggregatedMacros.carbs !== null && aggregatedMacros.carbs >= 0) {
-      parts.push(`${Math.round(aggregatedMacros.carbs)} carbs`);
-    }
-
-    this.macroSummary = parts.length > 0 ? `(${parts.join(', ')})` : '(?? cal, ?? protein, ?? fat, ?? carbs)';
+    this.macroSummary = `(${cal} cal, ${protein} g protein, ${fat} g fat, ${carbs} g carb)`;
   }
 
   private aggregateComponentMacros(): { calories: number | null; protein: number | null; fat: number | null; carbs: number | null } {

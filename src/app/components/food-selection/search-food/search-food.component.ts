@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular/standalone';
@@ -12,18 +12,24 @@ import { send, addCircleOutline } from 'ionicons/icons';
   standalone: true,
   imports: [CommonModule, FormsModule, IonIcon]
 })
-export class SearchFoodComponent implements OnInit {
+export class SearchFoodComponent implements OnInit, OnChanges {
   @Input() initialPhrase: string = '';
   @Input() placeholder: string = 'What did you eat?';
   @Input() isVisible: boolean = false;
+  @Input() mode: 'default' | 'quick' = 'default';
+  @Input() searchResults: any[] = [];
+  @Input() isSearching: boolean = false;
 
   @Output() phraseSubmitted = new EventEmitter<string>();
   @Output() editCanceled = new EventEmitter<void>();
+  @Output() instantSearch = new EventEmitter<string>();
+  @Output() resultSelected = new EventEmitter<any>();
 
   @ViewChild('addFoodTextarea', { static: false }) addFoodTextarea!: ElementRef<HTMLTextAreaElement>;
 
   currentPhrase = '';
-isSubmittingNewFood = false;
+  isSubmittingNewFood = false;
+  showDropdown = false;
 
   constructor() {
     addIcons({ send, addCircleOutline });
@@ -31,12 +37,35 @@ isSubmittingNewFood = false;
 
   ngOnInit(): void {
     this.currentPhrase = this.initialPhrase;
-    // Focus the textarea after view update
+    // Focus the textarea and set initial height after view update
     setTimeout(() => {
       if (this.addFoodTextarea) {
-        this.addFoodTextarea.nativeElement.focus();
+        const textarea = this.addFoodTextarea.nativeElement;
+        textarea.style.height = '38px'; // Start with single-line height
+        textarea.focus();
       }
     }, 50);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Reset textarea height when mode changes or when becoming visible
+    if ((changes['mode'] && !changes['mode'].firstChange) ||
+        (changes['isVisible'] && changes['isVisible'].currentValue === true)) {
+      setTimeout(() => {
+        if (this.addFoodTextarea) {
+          const textarea = this.addFoodTextarea.nativeElement;
+          textarea.style.height = '38px'; // Reset to initial single-line height
+        }
+      }, 0);
+    }
+
+    // If mode changed to 'quick' and there's already text, trigger instant search
+    if (changes['mode'] && !changes['mode'].firstChange) {
+      if (this.mode === 'quick' && this.currentPhrase.trim().length >= 3) {
+        this.showDropdown = true;
+        this.instantSearch.emit(this.currentPhrase.trim());
+      }
+    }
   }
 
   cancel(): void {
@@ -79,13 +108,36 @@ isSubmittingNewFood = false;
   onTextareaInput(event: Event): void {
     const target = event.target as HTMLTextAreaElement;
     if (target) {
-      this.autoResizeTextarea(target);
+      // Only auto-resize in default mode
+      if (this.mode === 'default') {
+        this.autoResizeTextarea(target);
+      }
+
+      // Emit instant search in quick mode
+      if (this.mode === 'quick') {
+        if (this.currentPhrase.trim().length > 0) {
+          this.showDropdown = true;
+          this.instantSearch.emit(this.currentPhrase.trim());
+        } else {
+          this.showDropdown = false;
+        }
+      }
     }
   }
 
+  selectResult(result: any): void {
+    this.showDropdown = false;
+    this.resultSelected.emit(result);
+  }
+
   autoResizeTextarea(textarea: HTMLTextAreaElement): void {
-    textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 72) + 'px'; // Max 3 rows (72px)
+    // Reset to min height to get accurate scrollHeight measurement
+    textarea.style.height = '38px';
+
+    // Only grow if content actually overflows
+    if (textarea.scrollHeight > 38) {
+      textarea.style.height = Math.min(textarea.scrollHeight, 72) + 'px'; // Max 3 rows (72px)
+    }
   }
 
   // Reset state when submission is complete
