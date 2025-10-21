@@ -151,9 +151,10 @@ export class MacronutrientsChartComponent implements OnChanges, AfterViewInit, O
     this.hasTargets = totalTargetCals > 0;
 
     if (this.hasTargets) {
+      // Round first two percentages, calculate third as remainder to ensure they sum to 100%
       this.proteinTargetPercentage = Math.round((proteinTargetCals / totalTargetCals) * 100);
       this.fatTargetPercentage = Math.round((fatTargetCals / totalTargetCals) * 100);
-      this.carbsTargetPercentage = Math.round((carbsTargetCals / totalTargetCals) * 100);
+      this.carbsTargetPercentage = 100 - this.proteinTargetPercentage - this.fatTargetPercentage;
 
       // Calculate target grams
       this.proteinTargetGrams = Math.round((macroData.macroAmounts.protein.target || 0) * 10) / 10;

@@ -1,9 +1,9 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, ViewChild, NO_ERRORS_SCHEMA, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, ViewChild, ElementRef, NO_ERRORS_SCHEMA, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal, sparkles, search, barcode, closeOutline } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, GetInstantAlternativesRequest, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood, HydrateAlternateSelectionRequest, UpdateMealSelectionRequest } from 'src/app/services/nutrition-ambition-api.service';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, GetInstantAlternativesRequest, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood, HydrateAlternateSelectionRequest, UpdateMealSelectionRequest, DirectLogMealRequest, MealSelection } from 'src/app/services/nutrition-ambition-api.service';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { FoodComponent } from './food/food.component';
@@ -12,6 +12,7 @@ import { ComponentDisplay, ComponentMatchDisplay, ComponentServingDisplay, FoodD
 import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
+import { ChatStreamService } from 'src/app/services/chat-stream.service';
 import { IonIcon } from '@ionic/angular/standalone';
 import { ServingIdentifierUtil, NutrientScalingUtil } from './food-selection.util';
 
@@ -32,6 +33,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   @Output() selectionCanceled = new EventEmitter<void>();
   @Output() updatedMessage = new EventEmitter<DisplayMessage>();
   @ViewChild(SearchFoodComponent) addFoodComponent?: SearchFoodComponent;
+  @ViewChild('mealNameInput') mealNameInput?: ElementRef<HTMLInputElement>;
 
   isReadOnly = false;
   isEditMode = false;
@@ -47,13 +49,18 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Precomputed foods array with all display state embedded - eliminates all method calls in template
   computedFoods: FoodDisplay[] = [];
 
+  // Meal name editing state
+  isEditingMealName = false;
+  editingMealNameValue = '';
+
 
   constructor(
     private cdr: ChangeDetectorRef,
     private toastService: ToastService,
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService,
-    private foodSelectionService: FoodSelectionService
+    private foodSelectionService: FoodSelectionService,
+    private chatStreamService: ChatStreamService
   ) {
     addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal, sparkles, search, barcode, closeOutline });
   }
@@ -843,6 +850,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     req.foodId = this.message.mealSelection?.foodId ?? '';
     req.componentId = this.message.mealSelection?.componentId ?? '';
     req.localDateKey = this.dateService.getSelectedDate() || undefined;
+    req.mealName = this.message.mealName || undefined; // Include meal name
 
     // Build selections array just like confirmRegularSelections
     req.selections = [];
@@ -1606,47 +1614,108 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   async onFoodAdded(phrase: string): Promise<void> {
     this.isAddingFood = false;
 
-      // Handle the new food phrase submission directly
-      const request = new SearchFoodPhraseRequest({
-        searchPhrase: phrase,
-        originalPhrase: '',
-        messageId: this.message.id || '',
-        localDateKey: this.dateService.getSelectedDate()
-      });
+    // Hide search input immediately and show "Add more food"
+    this.showAddInput = false;
+    this.addFoodMode = 'default';
 
-      var component = new ComponentDisplay({
-        isSearching: true,
-        isEditing: false,
-        isExpanded: false,
-        editingValue: '',
-        showingMoreOptions: false,
-        isNewAddition: true,
-      });
+    // Track initial food count to know where to insert streaming results
+    const initialFoodCount = this.computedFoods.length;
 
-      var tempLoadingFoodId = 'temp-loading-' + Date.now();
+    // Create loading placeholder food immediately
+    const loadingFood: FoodDisplay = new FoodDisplay({
+      id: 'loading-' + Date.now(),
+      name: '',
+      components: [new ComponentDisplay({
+        id: 'loading-component',
+        isSearching: true,  // Shows "analyzing food entry" with thinking dots
+        matches: [new ComponentMatchDisplay({
+          providerFoodId: 'loading',
+          displayName: '',
+          isNewAddition: true,
+          servings: [],
+          isPending: true
+        })]
+      })]
+    });
 
-      var tempLoadingFood = new FoodDisplay({
-        id: tempLoadingFoodId,
-        name: '',
-        components: [component]
-      });
+    // Add loading placeholder to UI immediately
+    this.computedFoods = [
+      ...this.computedFoods.slice(0, initialFoodCount),
+      loadingFood
+    ];
+    this.cdr.detectChanges();
 
-      this.computedFoods = [...this.computedFoods, tempLoadingFood];
+    const request = new DirectLogMealRequest({
+      foodPhrase: phrase,
+      messageId: this.message.id || '',
+      localDateKey: this.dateService.getSelectedDate()
+    });
 
-      const response = await this.foodSelectionService.searchFoodPhrase(request).toPromise();
-      var tempFoodToReplaceIndex = this.computedFoods.findIndex(x => x.id === tempLoadingFoodId);
-      if (response?.isSuccess) {
-        var newFoods = response.foodOptions?.map(x => new FoodDisplay(x) );
-        
-        this.computedFoods = [...this.computedFoods.slice(0, tempFoodToReplaceIndex), ...newFoods || [], ...this.computedFoods.slice(tempFoodToReplaceIndex + 1)];
-        this.cdr.detectChanges();
-      } else {
-        this.computedFoods = [...this.computedFoods.slice(0, tempFoodToReplaceIndex), ...this.computedFoods.slice(tempFoodToReplaceIndex + 1)];
-        this.cdr.detectChanges();
-        await this.showErrorToast('Failed to add food. Please try again.');
-      }
-       
-    
+    console.log('[AI Search] Starting DirectLogMealStream for phrase:', phrase);
+
+    try {
+      let finalFoods: Food[] = [];
+
+      await this.chatStreamService.directLogMealStream(
+        request,
+        (chunk) => {
+          // Process streaming chunk
+          console.log('[AI Search] Received chunk:', {
+            isPartial: chunk.isPartial,
+            processingStage: chunk.processingStage,
+            foodCount: chunk.foodOptions?.length || 0,
+            hasData: !!chunk.foodOptions && chunk.foodOptions.length > 0
+          });
+
+          // Update foods progressively as we receive data
+          if (chunk.foodOptions && chunk.foodOptions.length > 0) {
+            // Store latest foods
+            finalFoods = chunk.foodOptions;
+
+            // Update message object with latest foods
+            if (!this.message.mealSelection) {
+              this.message.mealSelection = new MealSelection({ foods: [] });
+            }
+            if (!this.message.mealSelection?.foods) {
+              this.message.mealSelection!.foods = [];
+            }
+
+            // Replace streamed foods in message (keep existing, replace new portion)
+            this.message.mealSelection!.foods = [
+              ...this.message.mealSelection!.foods!.slice(0, initialFoodCount),
+              ...chunk.foodOptions
+            ];
+
+            // Use computeAllFoods to properly handle structure changes and state
+            // This handles single->multi component transitions gracefully
+            this.computeAllFoods();
+            this.cdr.detectChanges();
+          }
+        },
+        () => {
+          // Stream complete - message was already updated during streaming chunks
+          console.log('[AI Search] DirectLogMealStream completed successfully');
+
+          // Just trigger a final recompute to ensure everything is in the correct state
+          // (No need to append foods again - they were already added during streaming)
+          this.computeAllFoods();
+          this.cdr.detectChanges();
+        },
+        (error) => {
+          // Stream error - remove loading placeholder
+          console.error('[AI Search] DirectLogMealStream error:', error);
+          this.computedFoods = this.computedFoods.slice(0, initialFoodCount);
+          this.cdr.detectChanges();
+          this.showErrorToast('Failed to add food. Please try again.');
+        }
+      );
+    } catch (error) {
+      console.error('[AI Search] Error starting DirectLogMealStream:', error);
+      // Remove loading placeholder on error
+      this.computedFoods = this.computedFoods.slice(0, initialFoodCount);
+      this.cdr.detectChanges();
+      await this.showErrorToast('Failed to add food. Please try again.');
+    }
   }
 
 
@@ -1656,6 +1725,41 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       duration: 4000,
       color: 'danger'
     });
+  }
+
+  // Meal name editing methods
+  startEditingMealName(): void {
+    if (this.isReadOnly) return;
+
+    this.isEditingMealName = true;
+    this.editingMealNameValue = this.message.mealName || '';
+    this.cdr.detectChanges();
+
+    // Focus the input after it's rendered
+    setTimeout(() => {
+      this.mealNameInput?.nativeElement?.focus();
+    }, 0);
+  }
+
+  saveMealName(): void {
+    if (!this.isEditingMealName) return;
+
+    // Update the message meal name
+    const newName = this.editingMealNameValue.trim();
+    this.message.mealName = newName.length > 0 ? newName : undefined;
+
+    // Exit editing mode
+    this.isEditingMealName = false;
+    this.cdr.detectChanges();
+
+    // Auto-save to backend
+    this.autoSaveMealSelection();
+  }
+
+  cancelEditingMealName(): void {
+    this.isEditingMealName = false;
+    this.editingMealNameValue = '';
+    this.cdr.detectChanges();
   }
 
   // Helper to detect if a ComponentMatch represents a common food (no brand name)
@@ -2155,7 +2259,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const request = new UpdateMealSelectionRequest({
       messageId: this.message.id, // Can be undefined - backend will create message
       localDateKey: this.dateService.getSelectedDate(),
-      foods: foodsForApi
+      foods: foodsForApi,
+      mealName: this.message.mealName || undefined // Include meal name (convert null to undefined)
     });
 
     this.apiService.updateMealSelection(request).subscribe({

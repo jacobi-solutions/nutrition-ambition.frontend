@@ -365,6 +365,19 @@
                   <ion-button
                     fill="clear"
                     size="small"
+                    class="info-btn"
+                    (click)="showMealNutrients($event, entry)"
+                    type="button">
+                    <ion-icon
+                      slot="icon-only"
+                      [name]="mealShowingNutrients?.foodEntryId === entry.foodEntryId
+                              ? 'information-circle'
+                              : 'information-circle-outline'">
+                    </ion-icon>
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    size="small"
                     class="share-btn"
                     (click)="shareMeal($event, entry)"
                     type="button">
@@ -376,6 +389,47 @@
 
               <!-- Entry Content -->
               <ion-card-content>
+                <!-- Meal-level nutrient drilldown -->
+                <ng-container *ngIf="mealShowingNutrients?.foodEntryId === entry.foodEntryId">
+                  <ion-list lines="none" class="meal-nutrients-list">
+                    <div class="drilldown-content">
+                      <ng-container *ngIf="mealShowingNutrients?.nutrients?.length">
+
+                        <!-- Macronutrients -->
+                        <div *ngIf="mealShowingNutrientsMacros.length" class="nutrient-section">
+                          <h4 class="nutrient-section-title">Macronutrients</h4>
+                          <ng-container *ngFor="let nutrient of mealShowingNutrientsMacros; trackBy: trackByNutrientKey">
+                            <div class="detail-item clickable-nutrient"
+                                (click)="navigateToNutrient(nutrient.nutrientKey)">
+                              <span class="detail-name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
+                              <span class="detail-amount">{{ nutrient.amount?.toFixed(1) }} {{ nutrient.unit }}</span>
+                            </div>
+                          </ng-container>
+                        </div>
+
+                        <!-- Micronutrients -->
+                        <div *ngIf="mealShowingNutrientsMicros.length" class="nutrient-section">
+                          <h4 class="nutrient-section-title">Micronutrients</h4>
+                          <ng-container *ngFor="let nutrient of mealShowingNutrientsMicros; trackBy: trackByNutrientKey">
+                            <div class="detail-item clickable-nutrient"
+                                (click)="navigateToNutrient(nutrient.nutrientKey)">
+                              <span class="detail-name">{{ nutrient.nutrientName || nutrient.nutrientKey }}</span>
+                              <span class="detail-amount">{{ nutrient.amount?.toFixed(1) }} {{ nutrient.unit }}</span>
+                            </div>
+                          </ng-container>
+                        </div>
+
+                      </ng-container>
+
+                      <!-- Fallback if no nutrients -->
+                      <div *ngIf="mealShowingNutrients && !mealShowingNutrients.nutrients?.length"
+                          class="empty-detail-message">
+                        <span>No nutrient data available for this meal.</span>
+                      </div>
+                    </div>
+                  </ion-list>
+                </ng-container>
+
                 <ion-list>
                   <ng-container *ngFor="let food of entry?.foodsDisplay; trackBy: trackById">
                     <!-- Normal Food Row -->

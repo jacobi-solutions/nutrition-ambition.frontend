@@ -4,7 +4,25 @@
     <!-- Normal content -->
       <!-- Food items list -->
       <div *ngIf="hasPayload" class="card-header">
-        <label><strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Entry') | titlecase }}</strong></label>
+        <!-- Non-editing state: Click to edit -->
+        <label *ngIf="!isEditingMealName" (click)="startEditingMealName()" [class.editable]="!isReadOnly">
+          <strong>{{ ((message.mealName && message.mealName.trim().length > 0) ? message.mealName : 'Food Entry') | titlecase }}</strong>
+        </label>
+
+        <!-- Editing state: Input field -->
+        <input
+          #mealNameInput
+          *ngIf="isEditingMealName"
+          type="text"
+          class="meal-name-input"
+          [(ngModel)]="editingMealNameValue"
+          (blur)="saveMealName()"
+          (keyup.enter)="saveMealName()"
+          (keyup.escape)="cancelEditingMealName()"
+          placeholder="Enter meal name"
+          autocapitalize="words"
+        />
+
         <div *ngIf="mealMacroSummary" class="meal-macro-summary">{{ mealMacroSummary }}</div>
       </div>
 
@@ -35,7 +53,7 @@
     </div>
 
     <!-- Add more food section -->
-    <div *ngIf="hasPayload && !isReadOnly && !isEditMode && !hasAnyPending && !isSubmitting" class="add-more-food-section">
+    <div *ngIf="hasPayload && !isReadOnly && !hasAnyPending && !isSubmitting" class="add-more-food-section">
 
       <!-- Initial "Add another food" button -->
       <div *ngIf="!showAddInput" class="add-something-display" (click)="showAddInput = true">

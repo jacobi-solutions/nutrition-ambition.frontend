@@ -134,6 +134,44 @@
       strong {
         font-weight: 600;
       }
+
+      &.editable {
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+          opacity: 0.7;
+        }
+      }
+    }
+
+    .meal-name-input {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 6px 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-olive);
+      text-align: center;
+      border: 1px solid var(--color-sage);
+      border-radius: 8px;
+      background: white !important;
+      outline: none;
+      cursor: text;
+      transition: all 0.2s ease;
+
+      &:focus {
+        border-color: var(--color-sage);
+        box-shadow: 0 0 0 2px rgba(139, 169, 129, 0.1);
+        background: white !important;
+      }
+
+      &::placeholder {
+        color: var(--ion-color-medium);
+        font-weight: 400;
+      }
     }
 
     .meal-macro-summary {

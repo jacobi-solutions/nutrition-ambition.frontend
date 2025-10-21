@@ -118,6 +118,7 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   selectedFood: FoodBreakdownDisplay | null = null;
   selectedComponent: ComponentBreakdownDisplay | null = null;
   foodShowingNutrients: FoodBreakdownDisplay | null = null;  // Track which food is showing nutrients via info icon
+  mealShowingNutrients: FoodEntryBreakdownDisplay | null = null;  // Track which meal is showing nutrients via info icon
   detailedLoading = false;
   detailedError: string | null = null;
   // Local date only — uses 'yyyy-MM-dd' format
@@ -383,6 +384,26 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       });
   }
 
+  // Get macronutrients for meal showing nutrients
+  get mealShowingNutrientsMacros(): any[] {
+    if (!this.mealShowingNutrients?.nutrients) return [];
+    const order = ['calories', 'energy_kcal', 'protein', 'total_fat', 'fat', 'carbohydrate'];
+    return order
+      .map(key => this.mealShowingNutrients?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
+      .filter((n): n is any => !!n)
+      .filter((n, index, self) => index === self.findIndex(t => t.nutrientKey === n.nutrientKey)); // Remove duplicates
+  }
+
+  // Get micronutrients for meal showing nutrients
+  get mealShowingNutrientsMicros(): any[] {
+    if (!this.mealShowingNutrients?.nutrients) return [];
+    return this.mealShowingNutrients.nutrients
+      .filter(n => !['calories', 'energy_kcal', 'protein', 'total_fat', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
+      .sort((a, b) => {
+        return ((a as any)['sortOrder'] ?? 9999) - ((b as any)['sortOrder'] ?? 9999);
+      });
+  }
+
   formatConsumedTarget(nutrient: NutrientBreakdown): string {
     const amount = nutrient.totalAmount || 0;
     const unit = nutrient.unit || 'mg';
@@ -475,6 +496,11 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     this.selectedNutrient = null;
     this.selectedComponent = null; // Reset component selection when selecting a food
 
+    // Close nutrient display when expanding components (mutually exclusive)
+    if (this.selectedFood) {
+      this.foodShowingNutrients = null;
+    }
+
     // Update all selection states
     this.updateAllSelectionStates();
 
@@ -488,6 +514,22 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       this.foodShowingNutrients = null;
     } else {
       this.foodShowingNutrients = food;
+      // Close component expansion when showing nutrients (mutually exclusive)
+      if (this.selectedFood?.foodId === food.foodId) {
+        this.selectedFood = null;
+        this.selectedComponent = null;
+        this.updateAllSelectionStates();
+      }
+    }
+  }
+
+  showMealNutrients(event: Event, entry: FoodEntryBreakdownDisplay) {
+    event.stopPropagation();
+    // Toggle the meal nutrient display state
+    if (this.mealShowingNutrients?.foodEntryId === entry.foodEntryId) {
+      this.mealShowingNutrients = null;
+    } else {
+      this.mealShowingNutrients = entry;
     }
   }
 
@@ -968,8 +1010,12 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     return item?.componentId
         || (Array.isArray(item?.foodItemIds) ? item.foodItemIds.join(',') : '')
         || item?.nutrientKey
-        || item?.name
+        || item?.foodEntryId
         || index.toString();
+  }
+
+  trackByNutrientKey(index: number, item: any): string {
+    return item?.nutrientKey || item?.name || index.toString();
   }
 
   // Helper method to check if a food is currently being edited

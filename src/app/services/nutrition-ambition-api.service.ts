@@ -174,6 +174,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    directLogMealStream(body: DirectLogMealRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getProfileAndTargets(body: GetProfileAndTargetsRequest | undefined): Observable<GetProfileAndTargetsResponse>;
     /**
      * @param body (optional) 
@@ -1926,6 +1931,58 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<Response>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    directLogMealStream(body: DirectLogMealRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/FoodSelection/DirectLogMealStream";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDirectLogMealStream(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDirectLogMealStream(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processDirectLogMealStream(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
     }
 
     /**
@@ -4060,6 +4117,50 @@ export interface IDeleteGuidelineFileResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+}
+
+export class DirectLogMealRequest implements IDirectLogMealRequest {
+    foodPhrase?: string | undefined;
+    messageId?: string | undefined;
+    localDateKey?: string | undefined;
+
+    constructor(data?: IDirectLogMealRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.foodPhrase = _data["foodPhrase"];
+            this.messageId = _data["messageId"];
+            this.localDateKey = _data["localDateKey"];
+        }
+    }
+
+    static fromJS(data: any): DirectLogMealRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new DirectLogMealRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["foodPhrase"] = this.foodPhrase;
+        data["messageId"] = this.messageId;
+        data["localDateKey"] = this.localDateKey;
+        return data;
+    }
+}
+
+export interface IDirectLogMealRequest {
+    foodPhrase?: string | undefined;
+    messageId?: string | undefined;
+    localDateKey?: string | undefined;
 }
 
 export class EditFoodSelectionRequest implements IEditFoodSelectionRequest {
@@ -6989,6 +7090,7 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
     selections?: UserSelectedServing[] | undefined;
     foodQuantities?: UserSelectedFoodQuantity[] | undefined;
     foods?: Food[] | undefined;
+    mealName?: string | undefined;
 
     constructor(data?: ISubmitEditServingSelectionRequest) {
         if (data) {
@@ -7021,6 +7123,7 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
                 for (let item of _data["foods"])
                     this.foods!.push(Food.fromJS(item));
             }
+            this.mealName = _data["mealName"];
         }
     }
 
@@ -7053,6 +7156,7 @@ export class SubmitEditServingSelectionRequest implements ISubmitEditServingSele
             for (let item of this.foods)
                 data["foods"].push(item.toJSON());
         }
+        data["mealName"] = this.mealName;
         return data;
     }
 }
@@ -7066,6 +7170,7 @@ export interface ISubmitEditServingSelectionRequest {
     selections?: UserSelectedServing[] | undefined;
     foodQuantities?: UserSelectedFoodQuantity[] | undefined;
     foods?: Food[] | undefined;
+    mealName?: string | undefined;
 }
 
 export class SubmitServingSelectionRequest implements ISubmitServingSelectionRequest {
@@ -7203,6 +7308,7 @@ export class UpdateMealSelectionRequest implements IUpdateMealSelectionRequest {
     messageId?: string | undefined;
     localDateKey?: string | undefined;
     foods?: Food[] | undefined;
+    mealName?: string | undefined;
 
     constructor(data?: IUpdateMealSelectionRequest) {
         if (data) {
@@ -7222,6 +7328,7 @@ export class UpdateMealSelectionRequest implements IUpdateMealSelectionRequest {
                 for (let item of _data["foods"])
                     this.foods!.push(Food.fromJS(item));
             }
+            this.mealName = _data["mealName"];
         }
     }
 
@@ -7241,6 +7348,7 @@ export class UpdateMealSelectionRequest implements IUpdateMealSelectionRequest {
             for (let item of this.foods)
                 data["foods"].push(item.toJSON());
         }
+        data["mealName"] = this.mealName;
         return data;
     }
 }
@@ -7249,6 +7357,7 @@ export interface IUpdateMealSelectionRequest {
     messageId?: string | undefined;
     localDateKey?: string | undefined;
     foods?: Food[] | undefined;
+    mealName?: string | undefined;
 }
 
 export class UploadGuidelineFileRequest implements IUploadGuidelineFileRequest {

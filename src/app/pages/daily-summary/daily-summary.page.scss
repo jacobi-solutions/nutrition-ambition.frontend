@@ -122,6 +122,11 @@
   }
 }
 
+// Ensure meal name input doesn't get lowercased - needs to be outside to have proper specificity
+.editing-entry-container ::ng-deep input.meal-name-input {
+  text-transform: none !important;
+}
+
 // Fix conflicting selected backgrounds - disable Ionic's default selected styling
 ion-item.selected {
   --background: transparent !important;
@@ -322,7 +327,7 @@ ion-card {
     align-items: center;
     justify-content: center;
     position: relative;
-
+    padding-bottom: .5rem;
     ion-card-title {
       flex: 1;
       text-align: center;
@@ -336,6 +341,7 @@ ion-card {
     color: var(--ion-color-medium);
     margin-top: 4px;
     text-align: center;
+    margin-bottom: .5rem;
 
     .toggle-btn {
       position: absolute;
@@ -559,7 +565,7 @@ ion-card {
   display: block;
   margin-bottom: 12px;
   color: var(--color-olive);
-  font-size: 1em;
+  font-size: 1rem;
   font-weight: 600;
   text-align: center;
 }
@@ -568,7 +574,7 @@ ion-card {
   display: block;
   margin-bottom: 8px;
   color: var(--color-olive);
-  font-size: 1em;
+  font-size: 1rem;
 }
 
 .empty-detail-message {
@@ -949,12 +955,56 @@ ion-item {
   --padding-start: 8px;
   --padding-end: 8px;
   margin: 0;
+
   --border-radius: 50%;
   border-radius: 50%;
 
   ion-icon {
     font-size: 1.5rem;
     color: var(--color-sage);
+  }
+}
+
+// Meal info button styling - positioned to left of share button
+ion-card-header .info-btn {
+  position: absolute;
+  right: 2.5rem;
+  --padding-start: 0;
+  --padding-end: 0;
+  margin: 0;
+  --border-radius: 50%;
+  border-radius: 50%;
+
+  ion-icon {
+    font-size: 1.5rem;
+    color: var(--color-sage);
+  }
+}
+
+// Meal nutrients list styling - matches food nutrient display
+.meal-nutrients-list {
+  padding: 0;
+  margin-bottom: 1rem;
+  margin-left: 1rem;
+  margin-right: 1rem;
+
+  .drilldown-content {
+    padding: 1rem;
+    background-color: rgba(78, 110, 93, 0.2);
+    border-radius: 1rem;
+
+    .nutrient-section {
+      &:not(:last-child) {
+        margin-bottom: 1.5rem;
+      }
+    }
+  }
+
+  .empty-detail-message {
+    text-align: center;
+    color: var(--ion-color-medium);
+    font-style: italic;
+    padding: 1rem;
   }
 }
 

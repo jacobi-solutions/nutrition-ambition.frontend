@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { ChatMessagesResponse, RunChatRequest } from './nutrition-ambition-api.service';
+import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse } from './nutrition-ambition-api.service';
 import { AuthService } from './auth.service';
 import { DateService } from './date.service';
 
@@ -169,6 +169,131 @@ export class ChatStreamService {
 
     } catch (err) {
       console.error('Stream start error', err);
+      onError(err);
+      return null;
+    }
+  }
+
+  /**
+   * Streams food data directly from LogMeal tool to append to an existing message.
+   * Used for AI search (sparkles icon) without creating new messages.
+   */
+  async directLogMealStream(
+    request: DirectLogMealRequest,
+    onChunk: (data: SearchFoodPhraseResponse) => void,
+    onComplete: () => void,
+    onError: (error: any) => void
+  ): Promise<any | null> {
+    const url = `${environment.backendApiUrl}/api/FoodSelection/DirectLogMealStream`;
+
+    try {
+      // Get auth token
+      const token = await this.authService.getIdToken();
+      if (!token) {
+        onError(new Error('No auth token available'));
+        return null;
+      }
+
+      // Get timezone and client version for headers
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const clientVersion = '1.0.0';
+
+      // Send POST request with streaming response
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-Timezone': timezone,
+          'X-Client-Version': clientVersion
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[DirectLogMeal] HTTP error response:', errorText);
+        onError(new Error(`HTTP error! status: ${response.status}`));
+        return null;
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        onError(new Error('No response body'));
+        return null;
+      }
+
+      let buffer = '';
+
+      // Add timeout tracking
+      let lastChunkTime = Date.now();
+
+      const timeoutCheck = setInterval(() => {
+        if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
+          console.error('[DirectLogMeal] Stream timeout - no data for 60 seconds');
+          clearInterval(timeoutCheck);
+          reader.cancel();
+          onError(new Error('Stream timeout - no data received for 60 seconds'));
+        }
+      }, this.TIMEOUT_CHECK_INTERVAL_MS);
+
+      // Process the stream
+      const processStream = async () => {
+        try {
+          console.log('[DirectLogMeal] Starting stream processing');
+
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              console.log('[DirectLogMeal] Stream done, calling onComplete()');
+              clearInterval(timeoutCheck);
+              onComplete();
+              break;
+            }
+
+            lastChunkTime = Date.now();
+            buffer += decoder.decode(value, { stream: true });
+
+            // Split by double newlines to get SSE messages
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const jsonStr = line.substring(6);
+                try {
+                  const chunk = JSON.parse(jsonStr);
+                  console.log('[DirectLogMeal] Received chunk:', chunk);
+                  onChunk(SearchFoodPhraseResponse.fromJS(chunk));
+                } catch (parseError) {
+                  console.error('[DirectLogMeal] Failed to parse chunk:', parseError, 'Raw:', jsonStr);
+                }
+              }
+            }
+          }
+        } catch (streamError) {
+          console.error('[DirectLogMeal] Stream processing error:', streamError);
+          clearInterval(timeoutCheck);
+          onError(streamError);
+        }
+      };
+
+      processStream();
+
+      // Return cleanup function
+      return {
+        close: () => {
+          clearInterval(timeoutCheck);
+          reader.cancel();
+        },
+        readyState: 1
+      } as any;
+
+    } catch (err) {
+      console.error('[DirectLogMeal] Stream start error', err);
       onError(err);
       return null;
     }
