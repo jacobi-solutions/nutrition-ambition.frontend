@@ -1058,6 +1058,18 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Focus the input element
   private focusInput() {
+    // Don't refocus if the most recent message is a food selection card
+    // This prevents annoying refocus during food logging, but allows refocus
+    // if user sends a new message while an older food card is still visible
+    const lastMessage = this.messages[this.messages.length - 1];
+    const isLastMessageFoodSelection = lastMessage &&
+      (lastMessage.role === MessageRoleTypes.PendingFoodSelection ||
+       lastMessage.role === MessageRoleTypes.PendingEditFoodSelection);
+
+    if (isLastMessageFoodSelection) {
+      return; // Skip refocusing when the most recent message is a food selection card
+    }
+
     // Use setTimeout to ensure the DOM has updated after scrolling
     setTimeout(() => {
       if (this.messageInput && this.messageInput.nativeElement) {
