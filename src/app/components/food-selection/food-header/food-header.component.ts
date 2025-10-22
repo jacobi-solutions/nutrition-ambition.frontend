@@ -57,16 +57,9 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     // Compute display name
     this.displayName = this.food?.name || '';
 
-    // Compute photo from first component's selected food
-    if (this.food?.components && this.food.components.length > 0) {
-      const firstComponent = this.food.components[0];
-      const selectedFood = firstComponent?.matches?.find((m: any) => m.isBestMatch) || firstComponent?.matches?.[0];
-      this.photoThumb = selectedFood?.photoThumb || '';
-      this.photoHighRes = selectedFood?.photoHighRes || '';
-    } else {
-      this.photoThumb = '';
-      this.photoHighRes = '';
-    }
+    // Only show food-level photo if we actually have one (don't fallback to component photo)
+    this.photoThumb = this.food?.photoThumb || '';
+    this.photoHighRes = this.food?.photoHighRes || '';
 
     // Compute serving label and status
     if (this.food && this.food.components && this.food.components.length > 1) {

@@ -4404,6 +4404,8 @@ export class Food implements IFood {
     description?: string | undefined;
     brand?: string | undefined;
     originalPhrase?: string | undefined;
+    photoThumb?: string | undefined;
+    photoHighRes?: string | undefined;
     components?: Component[] | undefined;
     isPending?: boolean;
     statusText?: string | undefined;
@@ -4427,6 +4429,8 @@ export class Food implements IFood {
             this.description = _data["description"];
             this.brand = _data["brand"];
             this.originalPhrase = _data["originalPhrase"];
+            this.photoThumb = _data["photoThumb"];
+            this.photoHighRes = _data["photoHighRes"];
             if (Array.isArray(_data["components"])) {
                 this.components = [] as any;
                 for (let item of _data["components"])
@@ -4454,6 +4458,8 @@ export class Food implements IFood {
         data["description"] = this.description;
         data["brand"] = this.brand;
         data["originalPhrase"] = this.originalPhrase;
+        data["photoThumb"] = this.photoThumb;
+        data["photoHighRes"] = this.photoHighRes;
         if (Array.isArray(this.components)) {
             data["components"] = [];
             for (let item of this.components)
@@ -4474,6 +4480,8 @@ export interface IFood {
     description?: string | undefined;
     brand?: string | undefined;
     originalPhrase?: string | undefined;
+    photoThumb?: string | undefined;
+    photoHighRes?: string | undefined;
     components?: Component[] | undefined;
     isPending?: boolean;
     statusText?: string | undefined;
