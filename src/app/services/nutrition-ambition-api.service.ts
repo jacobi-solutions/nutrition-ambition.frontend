@@ -107,6 +107,26 @@ export interface INutritionAmbitionApiService {
      */
     runResponsesConversation(body: RunChatRequest | undefined): Observable<void>;
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types2(body: SetupGoalsRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    setupGoals(body: SetupGoalsRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types3(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<void>;
+    /**
      * @return Success
      */
     deleteMessage(messageId: string): Observable<void>;
@@ -1193,6 +1213,222 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processRunResponsesConversation(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types2(body: SetupGoalsRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/SetupGoals/types";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTypes2(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTypes2(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
+        }));
+    }
+
+    protected processTypes2(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    setupGoals(body: SetupGoalsRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/SetupGoals";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetupGoals(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetupGoals(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetupGoals(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types3(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/LearnMoreAbout/types";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTypes3(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTypes3(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
+        }));
+    }
+
+    protected processTypes3(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/LearnMoreAbout";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processLearnMoreAbout(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processLearnMoreAbout(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processLearnMoreAbout(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -6042,6 +6278,46 @@ export interface IHydrateAlternateSelectionRequest {
     foodEntryId?: string | undefined;
 }
 
+export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
+    topic?: string | undefined;
+    localDateKey?: string | undefined;
+
+    constructor(data?: ILearnMoreAboutRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.topic = _data["topic"];
+            this.localDateKey = _data["localDateKey"];
+        }
+    }
+
+    static fromJS(data: any): LearnMoreAboutRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new LearnMoreAboutRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["topic"] = this.topic;
+        data["localDateKey"] = this.localDateKey;
+        return data;
+    }
+}
+
+export interface ILearnMoreAboutRequest {
+    topic?: string | undefined;
+    localDateKey?: string | undefined;
+}
+
 export class LogEntryDto implements ILogEntryDto {
     timestampUtc?: Date;
     severity?: string | undefined;
@@ -7087,6 +7363,46 @@ export interface IServingIdentifier {
     foodName?: string | undefined;
     variantIndex?: number;
     servingType?: string | undefined;
+}
+
+export class SetupGoalsRequest implements ISetupGoalsRequest {
+    localDateKey?: string | undefined;
+    isTweaking?: boolean;
+
+    constructor(data?: ISetupGoalsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.localDateKey = _data["localDateKey"];
+            this.isTweaking = _data["isTweaking"];
+        }
+    }
+
+    static fromJS(data: any): SetupGoalsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetupGoalsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["localDateKey"] = this.localDateKey;
+        data["isTweaking"] = this.isTweaking;
+        return data;
+    }
+}
+
+export interface ISetupGoalsRequest {
+    localDateKey?: string | undefined;
+    isTweaking?: boolean;
 }
 
 export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {
