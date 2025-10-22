@@ -687,10 +687,10 @@ ion-item[button]::part(native) {
 
 // Use ::after pseudo-element approach for border and ensure proper positioning
 .breakdown-container ion-item {
-  
+
   position: relative;
   --inner-padding-end: 0;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -701,10 +701,15 @@ ion-item[button]::part(native) {
     background-color: var(--color-olive);
     z-index: 1;
   }
-  
+
   &:last-child::after {
     display: none;
   }
+}
+
+// Hide border on food items when their nutrient drilldown is showing
+.breakdown-container ion-item:has(+ ion-item.drilldown-row.food-drilldown)::after {
+  display: none;
 }
 
 
