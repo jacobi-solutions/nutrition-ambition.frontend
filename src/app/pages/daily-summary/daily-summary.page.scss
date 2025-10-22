@@ -122,11 +122,6 @@
   }
 }
 
-// Ensure meal name input doesn't get lowercased - needs to be outside to have proper specificity
-.editing-entry-container ::ng-deep input.meal-name-input {
-  text-transform: none !important;
-}
-
 // Fix conflicting selected backgrounds - disable Ionic's default selected styling
 ion-item.selected {
   --background: transparent !important;

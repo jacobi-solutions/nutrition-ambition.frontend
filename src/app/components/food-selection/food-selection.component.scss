@@ -10,9 +10,32 @@
   // Smooth height transitions to reduce jumping when content loads
   transition: height 0.3s ease-in-out, min-height 0.3s ease-in-out;
   overflow: visible;
+  position: relative;
 
   &.read-only {
     background: var(--color-light-smoke) !important;
+  }
+
+  // Share button positioned at top right of entire card
+  > .share-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    --padding-start: 8px;
+    --padding-end: 8px;
+    margin: 0;
+    height: 32px;
+    z-index: 10;
+    --border-radius: 50%;
+    border-radius: 50%;
+    ion-icon {
+      font-size: 22px;
+      color: var(--ion-color-medium);
+    }
+
+    &:hover ion-icon {
+      color: var(--color-sage);
+    }
   }
   
   .empty-state {

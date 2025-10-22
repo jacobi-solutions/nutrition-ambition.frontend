@@ -1,4 +1,15 @@
 <div class="food-selection-container" [class.read-only]="isReadOnly">
+  <!-- Share button (only show when read-only/completed) - positioned absolutely in top right of entire card -->
+  <ion-button
+    *ngIf="isReadOnly && message.mealSelection?.foodEntryId"
+    fill="clear"
+    size="small"
+    class="share-btn"
+    (click)="onShareMeal($event)"
+    type="button">
+    <ion-icon slot="icon-only" name="share-outline"></ion-icon>
+  </ion-button>
+
   <div class="food-selection-container-inner">
 
     <!-- Normal content -->

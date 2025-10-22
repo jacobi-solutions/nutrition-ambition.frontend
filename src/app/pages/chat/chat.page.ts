@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController } from '@ionic/angular/standalone';
+import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController, ModalController } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
@@ -24,7 +24,9 @@ import {
     SearchFoodPhraseRequest,
     NutritionAmbitionApiService,
     GetSharedMealRequest,
-    UpdateMealSelectionRequest
+    UpdateMealSelectionRequest,
+    CreateSharedMealRequest,
+    CreateSharedMealResponse
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -34,6 +36,7 @@ import { format } from 'date-fns';
 import { ToastService } from '../../services/toast.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { AnalyticsService } from '../../services/analytics.service';
+import { ShareMealModalComponent } from '../../components/share-meal-modal/share-meal-modal.component';
 
 // Type for handling both camelCase and PascalCase responses from backend
 type ChatMessagesResponseVariant = ChatMessagesResponse | {
@@ -123,7 +126,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     private cdr: ChangeDetectorRef,
     private analytics: AnalyticsService, // Firebase Analytics tracking
     private ngZone: NgZone,
-    private apiService: NutritionAmbitionApiService
+    private apiService: NutritionAmbitionApiService,
+    private modalController: ModalController
   ) {
     // Add the icons explicitly to the library
     addIcons({
@@ -1460,6 +1464,65 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
       this.cdr.detectChanges();
     }
     this.isLoading = false;
+  }
+
+  /**
+   * Handle share meal button click from food-selection component
+   * Creates a shareable link for the completed meal entry
+   */
+  async onShareMeal(message: DisplayMessage): Promise<void> {
+    try {
+      // Ensure we have a food entry ID to share
+      const foodEntryId = message.mealSelection?.foodEntryId;
+      if (!foodEntryId) {
+        this.toastService.showToast({
+          message: 'Cannot share this meal - no food entry found',
+          color: 'danger'
+        });
+        return;
+      }
+
+      // Create share request
+      const request = new CreateSharedMealRequest({ foodEntryId });
+      const response = await this.apiService.createSharedMeal(request).toPromise();
+
+      if (!response?.isSuccess) {
+        this.toastService.showToast({
+          message: 'Failed to create share link',
+          color: 'danger'
+        });
+        return;
+      }
+
+      // Extract meal name for modal display
+      const mealName = message.mealName || message.mealSelection?.mealName || 'Food Entry';
+
+      // Open share modal with QR code and copy link functionality
+      const modal = await this.modalController.create({
+        component: ShareMealModalComponent,
+        componentProps: {
+          shareUrl: response.shareUrl,
+          mealName: mealName,
+          expiresDate: response.expiresDateUtc
+        },
+        cssClass: 'share-meal-modal'
+      });
+
+      await modal.present();
+
+      // Track analytics event
+      this.analytics.trackEvent('meal_shared', {
+        mealName: mealName,
+        shareToken: response.shareToken,
+        source: 'chat'
+      });
+    } catch (error) {
+      console.error('Error sharing meal:', error);
+      this.toastService.showToast({
+        message: 'Failed to share meal',
+        color: 'danger'
+      });
+    }
   }
 
   // Helper: Check if a message represents an incomplete meal (never completed)
