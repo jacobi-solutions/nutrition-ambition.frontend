@@ -1618,8 +1618,25 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.showAddInput = false;
     this.addFoodMode = 'default';
 
-    // Track initial food count to know where to insert streaming results
-    const initialFoodCount = this.computedFoods.length;
+    // Sync computedFoods to message before starting stream to ensure consistency
+    // This ensures message.mealSelection.foods reflects current UI state
+    if (!this.message.mealSelection) {
+      this.message.mealSelection = new MealSelection({ foods: [] });
+    }
+    if (!this.message.mealSelection?.foods) {
+      this.message.mealSelection!.foods = [];
+    }
+
+    // Sync current computedFoods to message.mealSelection.foods
+    this.message.mealSelection!.foods = this.computedFoods.map(foodDisplay => {
+      const food = new Food(foodDisplay as any); // Copy all properties from FoodDisplay
+      return food;
+    });
+
+    // Now track initial food count (message and computedFoods are in sync)
+    const initialFoodCount = this.message.mealSelection!.foods!.length;
+
+    console.log('[AI Search] Initial food count:', initialFoodCount, 'foods:', this.message.mealSelection!.foods);
 
     // Create loading placeholder food immediately
     const loadingFood: FoodDisplay = new FoodDisplay({
@@ -1681,10 +1698,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             }
 
             // Replace streamed foods in message (keep existing, replace new portion)
+            const existingFoods = this.message.mealSelection!.foods!.slice(0, initialFoodCount);
             this.message.mealSelection!.foods = [
-              ...this.message.mealSelection!.foods!.slice(0, initialFoodCount),
+              ...existingFoods,
               ...chunk.foodOptions
             ];
+
+            console.log('[AI Search] After chunk, keeping', existingFoods.length, 'existing foods, adding', chunk.foodOptions.length, 'new foods. Total:', this.message.mealSelection!.foods!.length);
 
             // Use computeAllFoods to properly handle structure changes and state
             // This handles single->multi component transitions gracefully
