@@ -5,7 +5,7 @@ import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSp
 import { ViewWillEnter } from '@ionic/angular';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
-import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlaneSharp, search } from 'ionicons/icons';
+import { addOutline, barcodeSharp, camera, closeCircleOutline, create, paperPlaneSharp, search, star } from 'ionicons/icons';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { DateService } from '../../services/date.service';
@@ -137,7 +137,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       barcodeSharp,
       addOutline,
       closeCircleOutline,
-      search
+      search,
+      star
     });
   }
 
@@ -957,10 +958,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     this.analytics.trackFabToggle(this.isOpen);
   }
 
-  handleAction(action: 'photo' | 'barcode' | 'quick-search') {
+  handleAction(action: 'photo' | 'barcode' | 'quick-search' | 'favorites') {
     console.log('handleAction called with action:', action);
     // Determine if the action is implemented
-    const implementedActions = ['quick-search']; // Quick search is implemented
+    const implementedActions = ['quick-search', 'favorites']; // Quick search and favorites are implemented
     const isImplemented = implementedActions.includes(action);
 
     // Track analytics for all FAB actions
@@ -992,6 +993,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         // This is implemented, so track as a successful action
         this.analytics.trackActionClick('quick_search_open', 'fab_menu', { source: 'chat_page' });
         this.createManualFoodEntry();
+        break;
+      case 'favorites':
+        // Track favorites open action
+        this.analytics.trackActionClick('favorites_open', 'fab_menu', { source: 'chat_page' });
+        this.openFavorites();
         break;
     }
 
@@ -1054,6 +1060,59 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       console.error('Error creating manual food entry:', error);
       this.toastService.showToast({
         message: 'Failed to create food entry',
+        color: 'danger',
+        duration: 2000
+      });
+    }
+  }
+
+  // Open favorites to select a food for quick re-logging
+  async openFavorites(): Promise<void> {
+    console.log('openFavorites called, selectedDate:', this.selectedDate);
+    try {
+      // For now, create an empty food selection card that will open with favorites
+      // We'll implement the favorites UI component next
+      const request = new UpdateMealSelectionRequest({
+        messageId: undefined,
+        localDateKey: this.selectedDate,
+        foods: []
+      });
+
+      const response = await this.apiService.updateMealSelection(request).toPromise();
+
+      if (response?.isSuccess && response.messageId) {
+        const newMessage: DisplayMessage = {
+          id: response.messageId,
+          text: '',
+          isUser: false,
+          timestamp: new Date(),
+          role: MessageRoleTypes.PendingFoodSelection,
+          mealSelection: new MealSelection({
+            mealName: 'Food Entry',
+            foods: []
+          }),
+          mealName: 'Food Entry',
+          isStreaming: false,
+          isPartial: false,
+          autoOpenFavorites: true // New flag to auto-open favorites
+        };
+
+        this.messages = [...this.messages, newMessage];
+
+        setTimeout(() => {
+          this.content.scrollToBottom(300);
+        }, 100);
+      } else {
+        this.toastService.showToast({
+          message: 'Failed to open favorites',
+          color: 'danger',
+          duration: 2000
+        });
+      }
+    } catch (error) {
+      console.error('Error opening favorites:', error);
+      this.toastService.showToast({
+        message: 'Failed to open favorites',
         color: 'danger',
         duration: 2000
       });

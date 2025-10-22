@@ -30,6 +30,7 @@ export interface DisplayMessage {
     createdDateUtc?: Date;
     lastUpdatedDateUtc?: Date;
 
-    // manual food entry flag
+    // manual food entry flags
     autoOpenQuickAdd?: boolean;
+    autoOpenFavorites?: boolean;
   }
