@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
   IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
   IonSegment, IonSegmentButton, IonLabel, IonSpinner, IonBadge, IonChip, IonInput,
-  IonSelect, IonSelectOption, IonBackButton, IonAlert,
+  IonSelect, IonSelectOption, IonBackButton, IonAlert, IonProgressBar,
   AlertController, ModalController
 } from '@ionic/angular/standalone';
 import { Router } from '@angular/router';
@@ -78,7 +78,7 @@ addIcons({
     FormsModule,
     IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
     IonSegment, IonSegmentButton, IonLabel, IonSpinner, IonBadge, IonChip, IonInput,
-    IonSelect, IonSelectOption, IonBackButton, IonAlert
+    IonSelect, IonSelectOption, IonBackButton, IonAlert, IonProgressBar
   ]
 })
 export class AdminPage implements OnInit, OnDestroy {
@@ -132,6 +132,7 @@ export class AdminPage implements OnInit, OnDestroy {
   guidelineFiles: any[] = [];
   isLoadingGuidelineFiles = false;
   isUploadingFile = false;
+  uploadProgress = 0;
 
   constructor(
     private accountsService: AccountsService,
@@ -873,7 +874,11 @@ export class AdminPage implements OnInit, OnDestroy {
 
     try {
       this.isUploadingFile = true;
-      const response = await this.adminService.uploadGuidelineFile(file);
+      this.uploadProgress = 0;
+
+      const response = await this.adminService.uploadGuidelineFile(file, (progress) => {
+        this.uploadProgress = Math.round(progress);
+      });
 
       if (response.isSuccess) {
         await this.showToast('File uploaded successfully!', 'success');
@@ -886,6 +891,7 @@ export class AdminPage implements OnInit, OnDestroy {
       await this.showToast('Error uploading file', 'danger');
     } finally {
       this.isUploadingFile = false;
+      this.uploadProgress = 0;
       // Reset file input
       event.target.value = '';
     }
