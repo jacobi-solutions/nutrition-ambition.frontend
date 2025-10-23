@@ -222,7 +222,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         this.isLoading = false;
 
         // Focus the input after response is processed
-        setTimeout(() => this.focusInput(), 300);
+        // Disabled: annoying on mobile when keyboard pops up
+        // setTimeout(() => this.focusInput(), 300);
       }
     });
     
@@ -810,7 +811,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           this.analytics.trackPageView('Chat');
 
           // Focus the input after completion
-          setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          // Disabled: annoying on mobile when keyboard pops up
+          // setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
         });
       },
       (error: any) => {
@@ -850,7 +852,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         if (!this.isUserScrolledUp) {
           this.scrollToBottom();
         }
-        this.focusInput();
+        // Disabled: annoying on mobile when keyboard pops up
+        // this.focusInput();
       }
     );
   }
@@ -993,7 +996,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           this.activeStream = null;
 
           // Focus the input after completion
-          setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          // Disabled: annoying on mobile when keyboard pops up
+          // setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
         });
       },
       (error: any) => {
@@ -1031,7 +1035,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         if (!this.isUserScrolledUp) {
           this.scrollToBottom();
         }
-        this.focusInput();
+        // Disabled: annoying on mobile when keyboard pops up
+        // this.focusInput();
       }
     );
   }
@@ -1174,7 +1179,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           this.activeStream = null;
 
           // Focus the input after completion
-          setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          // Disabled: annoying on mobile when keyboard pops up
+          // setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
         });
       },
       (error: any) => {
@@ -1212,7 +1218,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         if (!this.isUserScrolledUp) {
           this.scrollToBottom();
         }
-        this.focusInput();
+        // Disabled: annoying on mobile when keyboard pops up
+        // this.focusInput();
       }
     );
   }
@@ -1812,7 +1819,8 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     this.isLoading = false;
 
     // Focus the input after cancellation
-    this.focusInput();
+    // Disabled: annoying on mobile when keyboard pops up
+    // this.focusInput();
   }
 
   private handleCancelError(error: any, message: DisplayMessage, messageIndex: number): void {
