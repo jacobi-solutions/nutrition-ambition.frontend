@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController, ModalController } from '@ionic/angular/standalone';
+import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController, ModalController, Platform } from '@ionic/angular/standalone';
 import { ViewWillEnter } from '@ionic/angular';
 import { AppHeaderComponent } from '../../components/header/header.component';
 import { addIcons } from 'ionicons';
@@ -103,6 +103,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   // Flag to skip auto-retry after loading a shared meal
   private skipNextAutoRetry = false;
 
+  // Platform detection - only auto-focus on desktop, not mobile
+  private isMobile = false;
+
   // Track messages by ID to preserve component instances during updates
   trackMessage(index: number, message: DisplayMessage): string {
     return message.id || `${index}`;
@@ -131,7 +134,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     private analytics: AnalyticsService, // Firebase Analytics tracking
     private ngZone: NgZone,
     private apiService: NutritionAmbitionApiService,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private platform: Platform
   ) {
     // Add the icons explicitly to the library
     addIcons({
@@ -143,6 +147,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       closeCircleOutline,
       search
     });
+
+    // Detect if we're on a mobile platform (iOS or Android)
+    // Auto-focus is annoying on mobile when keyboard pops up, but helpful on desktop
+    this.isMobile = this.platform.is('ios') || this.platform.is('android');
   }
 
   async ngOnInit() {
@@ -221,9 +229,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         // Turn off loading indicator
         this.isLoading = false;
 
-        // Focus the input after response is processed
-        // Disabled: annoying on mobile when keyboard pops up
-        // setTimeout(() => this.focusInput(), 300);
+        // Focus the input after response is processed (desktop only)
+        if (!this.isMobile) {
+          setTimeout(() => this.focusInput(), 300);
+        }
       }
     });
     
@@ -810,9 +819,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           this.analytics.trackChatMessageSent(sentMessage.length);
           this.analytics.trackPageView('Chat');
 
-          // Focus the input after completion
-          // Disabled: annoying on mobile when keyboard pops up
-          // setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          // Focus the input after completion (desktop only)
+          if (!this.isMobile) {
+            setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          }
         });
       },
       (error: any) => {
@@ -852,8 +862,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         if (!this.isUserScrolledUp) {
           this.scrollToBottom();
         }
-        // Disabled: annoying on mobile when keyboard pops up
-        // this.focusInput();
+        // Focus input on error (desktop only)
+        if (!this.isMobile) {
+          this.focusInput();
+        }
       }
     );
   }
@@ -995,9 +1007,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           this.isStreamingActive = false;
           this.activeStream = null;
 
-          // Focus the input after completion
-          // Disabled: annoying on mobile when keyboard pops up
-          // setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          // Focus the input after completion (desktop only)
+          if (!this.isMobile) {
+            setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          }
         });
       },
       (error: any) => {
@@ -1035,8 +1048,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         if (!this.isUserScrolledUp) {
           this.scrollToBottom();
         }
-        // Disabled: annoying on mobile when keyboard pops up
-        // this.focusInput();
+        // Focus input on error (desktop only)
+        if (!this.isMobile) {
+          this.focusInput();
+        }
       }
     );
   }
@@ -1178,9 +1193,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           this.isStreamingActive = false;
           this.activeStream = null;
 
-          // Focus the input after completion
-          // Disabled: annoying on mobile when keyboard pops up
-          // setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          // Focus the input after completion (desktop only)
+          if (!this.isMobile) {
+            setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          }
         });
       },
       (error: any) => {
@@ -1218,17 +1234,31 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         if (!this.isUserScrolledUp) {
           this.scrollToBottom();
         }
-        // Disabled: annoying on mobile when keyboard pops up
-        // this.focusInput();
+        // Focus input on error (desktop only)
+        if (!this.isMobile) {
+          this.focusInput();
+        }
       }
     );
   }
 
   // Handle keydown events for textarea
   onKeyDown(e: KeyboardEvent) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault();
-      this.sendMessage();
+    if (e.key === 'Enter') {
+      if (this.isMobile) {
+        // Mobile: Only send with Ctrl/Cmd + Enter (default Enter creates new line)
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          this.sendMessage();
+        }
+      } else {
+        // Desktop: Enter sends message, Shift + Enter creates new line
+        if (!e.shiftKey) {
+          e.preventDefault();
+          this.sendMessage();
+        }
+        // Shift + Enter allows default behavior (new line)
+      }
     }
   }
   
@@ -1818,9 +1848,10 @@ onEditFoodSelectionConfirmed(evt: SubmitEditServingSelectionRequest): void {
     // Turn off loading indicator
     this.isLoading = false;
 
-    // Focus the input after cancellation
-    // Disabled: annoying on mobile when keyboard pops up
-    // this.focusInput();
+    // Focus the input after cancellation (desktop only)
+    if (!this.isMobile) {
+      this.focusInput();
+    }
   }
 
   private handleCancelError(error: any, message: DisplayMessage, messageIndex: number): void {
