@@ -95,6 +95,21 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    getGuidelineFileUploadUrl(body: GetGuidelineFileUploadUrlRequest | undefined): Observable<GetGuidelineFileUploadUrlResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    confirmGuidelineFileUpload(body: ConfirmGuidelineFileUploadRequest | undefined): Observable<ConfirmGuidelineFileUploadResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getGuidelineFileViewUrl(body: GetGuidelineFileViewUrlRequest | undefined): Observable<GetGuidelineFileViewUrlResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
@@ -106,6 +121,26 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     runResponsesConversation(body: RunChatRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types2(body: SetupGoalsRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    setupGoals(body: SetupGoalsRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types3(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<void>;
     /**
      * @return Success
      */
@@ -1070,6 +1105,174 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
+    getGuidelineFileUploadUrl(body: GetGuidelineFileUploadUrlRequest | undefined): Observable<GetGuidelineFileUploadUrlResponse> {
+        let url_ = this.baseUrl + "/api/Admin/GetGuidelineFileUploadUrl";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetGuidelineFileUploadUrl(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetGuidelineFileUploadUrl(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetGuidelineFileUploadUrlResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetGuidelineFileUploadUrlResponse>;
+        }));
+    }
+
+    protected processGetGuidelineFileUploadUrl(response: HttpResponseBase): Observable<GetGuidelineFileUploadUrlResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetGuidelineFileUploadUrlResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetGuidelineFileUploadUrlResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    confirmGuidelineFileUpload(body: ConfirmGuidelineFileUploadRequest | undefined): Observable<ConfirmGuidelineFileUploadResponse> {
+        let url_ = this.baseUrl + "/api/Admin/ConfirmGuidelineFileUpload";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processConfirmGuidelineFileUpload(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processConfirmGuidelineFileUpload(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ConfirmGuidelineFileUploadResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ConfirmGuidelineFileUploadResponse>;
+        }));
+    }
+
+    protected processConfirmGuidelineFileUpload(response: HttpResponseBase): Observable<ConfirmGuidelineFileUploadResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ConfirmGuidelineFileUploadResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ConfirmGuidelineFileUploadResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getGuidelineFileViewUrl(body: GetGuidelineFileViewUrlRequest | undefined): Observable<GetGuidelineFileViewUrlResponse> {
+        let url_ = this.baseUrl + "/api/Admin/GetGuidelineFileViewUrl";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetGuidelineFileViewUrl(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetGuidelineFileViewUrl(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetGuidelineFileViewUrlResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetGuidelineFileViewUrlResponse>;
+        }));
+    }
+
+    protected processGetGuidelineFileViewUrl(response: HttpResponseBase): Observable<GetGuidelineFileViewUrlResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetGuidelineFileViewUrlResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetGuidelineFileViewUrlResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/Conversation/GetChatMessages";
         url_ = url_.replace(/[?&]$/, "");
@@ -1212,6 +1415,222 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processRunResponsesConversation(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types2(body: SetupGoalsRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/SetupGoals/types";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTypes2(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTypes2(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
+        }));
+    }
+
+    protected processTypes2(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    setupGoals(body: SetupGoalsRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/SetupGoals";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetupGoals(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetupGoals(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetupGoals(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types3(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/LearnMoreAbout/types";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTypes3(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTypes3(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
+        }));
+    }
+
+    protected processTypes3(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/LearnMoreAbout";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processLearnMoreAbout(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processLearnMoreAbout(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processLearnMoreAbout(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -3789,6 +4208,142 @@ export interface IComponentServing {
     statusText?: string | undefined;
 }
 
+export class ConfirmGuidelineFileUploadRequest implements IConfirmGuidelineFileUploadRequest {
+    objectName?: string | undefined;
+    fileName?: string | undefined;
+    contentType?: string | undefined;
+
+    constructor(data?: IConfirmGuidelineFileUploadRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.objectName = _data["objectName"];
+            this.fileName = _data["fileName"];
+            this.contentType = _data["contentType"];
+        }
+    }
+
+    static fromJS(data: any): ConfirmGuidelineFileUploadRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ConfirmGuidelineFileUploadRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["objectName"] = this.objectName;
+        data["fileName"] = this.fileName;
+        data["contentType"] = this.contentType;
+        return data;
+    }
+}
+
+export interface IConfirmGuidelineFileUploadRequest {
+    objectName?: string | undefined;
+    fileName?: string | undefined;
+    contentType?: string | undefined;
+}
+
+export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFileUploadResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    openAiFileId?: string | undefined;
+    openAiFileApiId?: string | undefined;
+    vectorStoreId?: string | undefined;
+    status?: string | undefined;
+    cloudStorageObjectName?: string | undefined;
+
+    constructor(data?: IConfirmGuidelineFileUploadResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.openAiFileId = _data["openAiFileId"];
+            this.openAiFileApiId = _data["openAiFileApiId"];
+            this.vectorStoreId = _data["vectorStoreId"];
+            this.status = _data["status"];
+            this.cloudStorageObjectName = _data["cloudStorageObjectName"];
+        }
+    }
+
+    static fromJS(data: any): ConfirmGuidelineFileUploadResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ConfirmGuidelineFileUploadResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["openAiFileId"] = this.openAiFileId;
+        data["openAiFileApiId"] = this.openAiFileApiId;
+        data["vectorStoreId"] = this.vectorStoreId;
+        data["status"] = this.status;
+        data["cloudStorageObjectName"] = this.cloudStorageObjectName;
+        return data;
+    }
+}
+
+export interface IConfirmGuidelineFileUploadResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    openAiFileId?: string | undefined;
+    openAiFileApiId?: string | undefined;
+    vectorStoreId?: string | undefined;
+    status?: string | undefined;
+    cloudStorageObjectName?: string | undefined;
+}
+
 export class CreateSharedMealRequest implements ICreateSharedMealRequest {
     foodEntryId?: string | undefined;
 
@@ -5811,6 +6366,258 @@ export interface IGetFeedbackWithAccountInfoResponse {
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 }
 
+export class GetGuidelineFileUploadUrlRequest implements IGetGuidelineFileUploadUrlRequest {
+    fileName?: string | undefined;
+    contentType?: string | undefined;
+
+    constructor(data?: IGetGuidelineFileUploadUrlRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fileName = _data["fileName"];
+            this.contentType = _data["contentType"];
+        }
+    }
+
+    static fromJS(data: any): GetGuidelineFileUploadUrlRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetGuidelineFileUploadUrlRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fileName"] = this.fileName;
+        data["contentType"] = this.contentType;
+        return data;
+    }
+}
+
+export interface IGetGuidelineFileUploadUrlRequest {
+    fileName?: string | undefined;
+    contentType?: string | undefined;
+}
+
+export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploadUrlResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    signedUrl?: string | undefined;
+    objectName?: string | undefined;
+    expiresAt?: Date | undefined;
+
+    constructor(data?: IGetGuidelineFileUploadUrlResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.signedUrl = _data["signedUrl"];
+            this.objectName = _data["objectName"];
+            this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): GetGuidelineFileUploadUrlResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetGuidelineFileUploadUrlResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["signedUrl"] = this.signedUrl;
+        data["objectName"] = this.objectName;
+        data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IGetGuidelineFileUploadUrlResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    signedUrl?: string | undefined;
+    objectName?: string | undefined;
+    expiresAt?: Date | undefined;
+}
+
+export class GetGuidelineFileViewUrlRequest implements IGetGuidelineFileViewUrlRequest {
+    openAiFileId?: string | undefined;
+    objectName?: string | undefined;
+
+    constructor(data?: IGetGuidelineFileViewUrlRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.openAiFileId = _data["openAiFileId"];
+            this.objectName = _data["objectName"];
+        }
+    }
+
+    static fromJS(data: any): GetGuidelineFileViewUrlRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetGuidelineFileViewUrlRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["openAiFileId"] = this.openAiFileId;
+        data["objectName"] = this.objectName;
+        return data;
+    }
+}
+
+export interface IGetGuidelineFileViewUrlRequest {
+    openAiFileId?: string | undefined;
+    objectName?: string | undefined;
+}
+
+export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrlResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    signedUrl?: string | undefined;
+    expiresAt?: Date | undefined;
+    fileName?: string | undefined;
+    contentType?: string | undefined;
+
+    constructor(data?: IGetGuidelineFileViewUrlResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.signedUrl = _data["signedUrl"];
+            this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
+            this.fileName = _data["fileName"];
+            this.contentType = _data["contentType"];
+        }
+    }
+
+    static fromJS(data: any): GetGuidelineFileViewUrlResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetGuidelineFileViewUrlResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["signedUrl"] = this.signedUrl;
+        data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
+        data["fileName"] = this.fileName;
+        data["contentType"] = this.contentType;
+        return data;
+    }
+}
+
+export interface IGetGuidelineFileViewUrlResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    signedUrl?: string | undefined;
+    expiresAt?: Date | undefined;
+    fileName?: string | undefined;
+    contentType?: string | undefined;
+}
+
 export class GetGuidelineFilesRequest implements IGetGuidelineFilesRequest {
 
     constructor(data?: IGetGuidelineFilesRequest) {
@@ -6544,6 +7351,46 @@ export interface IHydrateAlternateSelectionRequest {
     foodEntryId?: string | undefined;
 }
 
+export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
+    topic?: string | undefined;
+    localDateKey?: string | undefined;
+
+    constructor(data?: ILearnMoreAboutRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.topic = _data["topic"];
+            this.localDateKey = _data["localDateKey"];
+        }
+    }
+
+    static fromJS(data: any): LearnMoreAboutRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new LearnMoreAboutRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["topic"] = this.topic;
+        data["localDateKey"] = this.localDateKey;
+        return data;
+    }
+}
+
+export interface ILearnMoreAboutRequest {
+    topic?: string | undefined;
+    localDateKey?: string | undefined;
+}
+
 export class LogEntryDto implements ILogEntryDto {
     timestampUtc?: Date;
     severity?: string | undefined;
@@ -6959,6 +7806,7 @@ export class OpenAiFile implements IOpenAiFile {
     uploadedByAccountId?: string | undefined;
     status?: string | undefined;
     errorMessage?: string | undefined;
+    cloudStorageObjectName?: string | undefined;
 
     constructor(data?: IOpenAiFile) {
         if (data) {
@@ -6984,6 +7832,7 @@ export class OpenAiFile implements IOpenAiFile {
             this.uploadedByAccountId = _data["uploadedByAccountId"];
             this.status = _data["status"];
             this.errorMessage = _data["errorMessage"];
+            this.cloudStorageObjectName = _data["cloudStorageObjectName"];
         }
     }
 
@@ -7009,6 +7858,7 @@ export class OpenAiFile implements IOpenAiFile {
         data["uploadedByAccountId"] = this.uploadedByAccountId;
         data["status"] = this.status;
         data["errorMessage"] = this.errorMessage;
+        data["cloudStorageObjectName"] = this.cloudStorageObjectName;
         return data;
     }
 }
@@ -7027,6 +7877,7 @@ export interface IOpenAiFile {
     uploadedByAccountId?: string | undefined;
     status?: string | undefined;
     errorMessage?: string | undefined;
+    cloudStorageObjectName?: string | undefined;
 }
 
 export class RegisterAccountRequest implements IRegisterAccountRequest {
@@ -7817,6 +8668,46 @@ export interface IServingIdentifier {
     foodName?: string | undefined;
     variantIndex?: number;
     servingType?: string | undefined;
+}
+
+export class SetupGoalsRequest implements ISetupGoalsRequest {
+    localDateKey?: string | undefined;
+    isTweaking?: boolean;
+
+    constructor(data?: ISetupGoalsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.localDateKey = _data["localDateKey"];
+            this.isTweaking = _data["isTweaking"];
+        }
+    }
+
+    static fromJS(data: any): SetupGoalsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetupGoalsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["localDateKey"] = this.localDateKey;
+        data["isTweaking"] = this.isTweaking;
+        return data;
+    }
+}
+
+export interface ISetupGoalsRequest {
+    localDateKey?: string | undefined;
+    isTweaking?: boolean;
 }
 
 export class SubmitEditServingSelectionRequest implements ISubmitEditServingSelectionRequest {

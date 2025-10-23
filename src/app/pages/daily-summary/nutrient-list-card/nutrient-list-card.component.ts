@@ -34,10 +34,24 @@ export class NutrientListCardComponent {
   }
 
   formatConsumedTarget(nutrient: NutrientBreakdownDisplay): string {
-    const consumed = nutrient.totalAmount != null ? nutrient.totalAmount.toFixed(1) : '0.0';
-    const target = nutrient.minTarget != null ? nutrient.minTarget.toFixed(1) : '0.0';
-    const unit = nutrient.unit || 'g';
-    return `${consumed}${unit} / ${target}${unit}`;
+    const amount = nutrient.totalAmount || 0;
+    const unit = nutrient.unit || 'mg';
+    const formattedAmount = `${amount.toFixed(unit === 'kcal' ? 0 : 1)} ${unit}`;
+    const min = nutrient.minTarget;
+    const max = nutrient.maxTarget;
+
+    const formatValue = (v: number) => v >= 10 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/, '');
+
+    if (min != null && max != null) {
+      if (min === max) return `${formattedAmount} / ≤ ${formatValue(max)} ${unit}`;
+      return `${formattedAmount} / (${formatValue(min)} - ${formatValue(max)} ${unit})`;
+    } else if (max != null) {
+      return `${formattedAmount} / ≤ ${formatValue(max)} ${unit}`;
+    } else if (min != null) {
+      return `${formattedAmount} / ≥ ${formatValue(min)} ${unit}`;
+    }
+
+    return formattedAmount;
   }
 
   formatAmountWithFoodUnit(food: any): string {

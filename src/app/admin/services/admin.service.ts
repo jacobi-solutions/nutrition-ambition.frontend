@@ -30,6 +30,10 @@ import {
   GetGuidelineFilesResponse,
   DeleteGuidelineFileRequest,
   DeleteGuidelineFileResponse,
+  GetGuidelineFileUploadUrlRequest,
+  GetGuidelineFileUploadUrlResponse,
+  ConfirmGuidelineFileUploadRequest,
+  ConfirmGuidelineFileUploadResponse,
   ErrorDto
 } from '../../services/nutrition-ambition-api.service';
 
@@ -409,37 +413,118 @@ export class AdminService {
   }
 
   /**
-   * Upload a guideline file to OpenAI
+   * Upload a guideline file using Cloud Storage direct upload
+   * Step 1: Get signed upload URL
+   * Step 2: Upload directly to Cloud Storage
+   * Step 3: Confirm upload and trigger backend processing
    */
-  async uploadGuidelineFile(file: File): Promise<UploadGuidelineFileResponse> {
+  async uploadGuidelineFile(
+    file: File,
+    onProgress?: (progress: number) => void
+  ): Promise<UploadGuidelineFileResponse> {
     try {
-      // Read file as ArrayBuffer
-      const arrayBuffer = await file.arrayBuffer();
+      const contentType = file.type || 'application/octet-stream';
 
-      // Convert to base64
-      const uint8Array = new Uint8Array(arrayBuffer);
-      let binary = '';
-      for (let i = 0; i < uint8Array.byteLength; i++) {
-        binary += String.fromCharCode(uint8Array[i]);
-      }
-      const base64Data = btoa(binary);
-
-      const request = new UploadGuidelineFileRequest({
+      // Step 1: Get signed upload URL from backend
+      const uploadUrlRequest = new GetGuidelineFileUploadUrlRequest({
         fileName: file.name,
-        contentType: file.type || 'application/octet-stream',
-        base64Data: base64Data
+        contentType: contentType
       });
 
-      const response = await firstValueFrom(this.apiService.uploadGuidelineFile(request));
+      const uploadUrlResponse = await firstValueFrom(
+        this.apiService.getGuidelineFileUploadUrl(uploadUrlRequest)
+      );
+
+      if (!uploadUrlResponse.isSuccess || !uploadUrlResponse.signedUrl || !uploadUrlResponse.objectName) {
+        const errorResponse = new UploadGuidelineFileResponse();
+        errorResponse.errors = uploadUrlResponse.errors || [];
+        if (errorResponse.errors.length === 0) {
+          errorResponse.errors.push(new ErrorDto({
+            errorMessage: 'Failed to get upload URL from server.'
+          }));
+        }
+        return errorResponse;
+      }
+
+      // Step 2: Upload file directly to Cloud Storage using XMLHttpRequest for progress tracking
+      await this.uploadToCloudStorage(file, uploadUrlResponse.signedUrl, onProgress);
+
+      // Step 3: Confirm upload and trigger backend processing (OpenAI upload)
+      const confirmRequest = new ConfirmGuidelineFileUploadRequest({
+        objectName: uploadUrlResponse.objectName,
+        fileName: file.name,
+        contentType: contentType
+      });
+
+      const confirmResponse = await firstValueFrom(
+        this.apiService.confirmGuidelineFileUpload(confirmRequest)
+      );
+
+      // Map confirm response to upload response for backward compatibility
+      const response = new UploadGuidelineFileResponse();
+      response.errors = confirmResponse.errors;
+      response.openAiFileId = confirmResponse.openAiFileId;
+      response.openAiFileApiId = confirmResponse.openAiFileApiId;
+      response.vectorStoreId = confirmResponse.vectorStoreId;
+      response.status = confirmResponse.status;
+
       return response;
     } catch (error) {
       const errorResponse = new UploadGuidelineFileResponse();
       if (!errorResponse.errors) {
         errorResponse.errors = [];
       }
-      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while uploading the file.' }));
+      errorResponse.errors.push(new ErrorDto({
+        errorMessage: error instanceof Error ? error.message : 'An error occurred while uploading the file.'
+      }));
       return errorResponse;
     }
+  }
+
+  /**
+   * Upload file directly to Cloud Storage using XMLHttpRequest (for progress tracking)
+   */
+  private uploadToCloudStorage(
+    file: File,
+    signedUrl: string,
+    onProgress?: (progress: number) => void
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      // Track upload progress
+      if (onProgress) {
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = (event.loaded / event.total) * 100;
+            onProgress(percentComplete);
+          }
+        });
+      }
+
+      // Handle completion
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Cloud Storage upload failed with status ${xhr.status}`));
+        }
+      });
+
+      // Handle errors
+      xhr.addEventListener('error', () => {
+        reject(new Error('Network error during Cloud Storage upload'));
+      });
+
+      xhr.addEventListener('abort', () => {
+        reject(new Error('Cloud Storage upload was aborted'));
+      });
+
+      // Send PUT request to signed URL
+      xhr.open('PUT', signedUrl);
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+      xhr.send(file);
+    });
   }
 
   /**

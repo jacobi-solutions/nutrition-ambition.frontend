@@ -1003,9 +1003,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       }
     });
 
-    if (correctedCount > 0) {
-      console.log(`[State Correction] Fixed ${correctedCount} stuck isPending flags`);
-    }
 
     // Capture existing UI state before rebuilding
     const uiStateMap = new Map<string, any>();
@@ -1637,8 +1634,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Now track initial food count (message and computedFoods are in sync)
     const initialFoodCount = this.message.mealSelection!.foods!.length;
 
-    console.log('[AI Search] Initial food count:', initialFoodCount, 'foods:', this.message.mealSelection!.foods);
-
     // Create loading placeholder food immediately
     const loadingFood: FoodDisplay = new FoodDisplay({
       id: 'loading-' + Date.now(),
@@ -1669,8 +1664,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       localDateKey: this.dateService.getSelectedDate()
     });
 
-    console.log('[AI Search] Starting DirectLogMealStream for phrase:', phrase);
-
     try {
       let finalFoods: Food[] = [];
 
@@ -1678,12 +1671,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         request,
         (chunk) => {
           // Process streaming chunk
-          console.log('[AI Search] Received chunk:', {
-            isPartial: chunk.isPartial,
-            processingStage: chunk.processingStage,
-            foodCount: chunk.foodOptions?.length || 0,
-            hasData: !!chunk.foodOptions && chunk.foodOptions.length > 0
-          });
+     
 
           // Update foods progressively as we receive data
           if (chunk.foodOptions && chunk.foodOptions.length > 0) {
@@ -1705,8 +1693,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               ...chunk.foodOptions
             ];
 
-            console.log('[AI Search] After chunk, keeping', existingFoods.length, 'existing foods, adding', chunk.foodOptions.length, 'new foods. Total:', this.message.mealSelection!.foods!.length);
-
             // Use computeAllFoods to properly handle structure changes and state
             // This handles single->multi component transitions gracefully
             this.computeAllFoods();
@@ -1715,8 +1701,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         },
         () => {
           // Stream complete - message was already updated during streaming chunks
-          console.log('[AI Search] DirectLogMealStream completed successfully');
-
+        
           // Just trigger a final recompute to ensure everything is in the correct state
           // (No need to append foods again - they were already added during streaming)
           this.computeAllFoods();
@@ -2290,9 +2275,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           // If we didn't have a message ID before, we have one now
           if (!this.message.id && response.messageId) {
             this.message.id = response.messageId;
-            console.log('Created message via auto-save:', response.messageId);
+           
           } else {
-            console.log('Auto-saved meal selection to database');
+            
           }
         } else {
           console.warn('Failed to auto-save meal selection:', response.errors);

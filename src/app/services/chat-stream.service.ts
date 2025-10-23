@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse } from './nutrition-ambition-api.service';
+import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse, SetupGoalsRequest, LearnMoreAboutRequest } from './nutrition-ambition-api.service';
 import { AuthService } from './auth.service';
 import { DateService } from './date.service';
 
@@ -83,16 +83,14 @@ export class ChatStreamService {
       // Process the stream
       const processStream = async () => {
         try {
-          let iterationCount = 0;
-          console.log('[SSE] Starting stream processing');
+          let iterationCount = 0; 
 
           while (true) {
-            iterationCount++;
-            console.log(`[SSE] Iteration ${iterationCount}: Waiting for chunk...`);
+            iterationCount++; 
             const { done, value } = await reader.read();
 
             if (done) {
-              console.log('[SSE] Stream done, calling onComplete()');
+             
               clearInterval(timeoutCheck);
               onComplete();
               break;
@@ -103,53 +101,53 @@ export class ChatStreamService {
 
             // Decode the chunk and add to buffer
             const chunk = decoder.decode(value, { stream: true });
-            console.log(`[SSE] Received chunk (${chunk.length} bytes):`, chunk.substring(0, 200));
+            
             buffer += chunk;
 
             // Process complete lines
             const lines = buffer.split('\n');
             buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
-            console.log(`[SSE] Processing ${lines.length} lines`);
+           
             for (const line of lines) {
               if (line.trim() === '') {
-                console.log('[SSE] Skipping empty line');
+               
                 continue;
               }
 
               if (line.startsWith('data: ')) {
                 try {
                   const jsonData = line.substring(6);
-                  console.log('[SSE] Parsing JSON data:', jsonData.substring(0, 200));
+                 
                   const rawData = JSON.parse(jsonData);
 
                   // Use the generated fromJS method to properly deserialize nested objects
                   // This ensures ServingIdentifier and other complex objects have their toJSON methods
                   const parsed = ChatMessagesResponse.fromJS(rawData);
-                  console.log('[SSE] Parsed response. IsSuccess:', parsed.isSuccess, 'MessageCount:', parsed.messages?.length);
+                  
 
                   // Check for error responses from backend
                   if (!parsed.isSuccess && parsed.errors && parsed.errors.length > 0) {
-                    console.error('[SSE] Error response from backend:', parsed.errors);
+                    
                     clearInterval(timeoutCheck);
                     reader.cancel();
                     onError(new Error(parsed.errors[0]?.errorMessage || 'Server error'));
                     return;
                   }
 
-                  console.log('[SSE] Calling onChunk with parsed data');
+
                   onChunk(parsed);
-                  console.log('[SSE] onChunk completed');
+                  
                 } catch (err) {
-                  console.error('[SSE] Stream parse error for line:', line, err);
+                 
                 }
               } else {
-                console.log('[SSE] Line does not start with "data: ":', line);
+                
               }
             }
           }
         } catch (err) {
-          console.error('[SSE] Stream read error', err);
+         
           clearInterval(timeoutCheck);
           onError(err);
         }
@@ -168,7 +166,7 @@ export class ChatStreamService {
       } as any;
 
     } catch (err) {
-      console.error('Stream start error', err);
+      
       onError(err);
       return null;
     }
@@ -212,7 +210,7 @@ export class ChatStreamService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[DirectLogMeal] HTTP error response:', errorText);
+       
         onError(new Error(`HTTP error! status: ${response.status}`));
         return null;
       }
@@ -242,13 +240,13 @@ export class ChatStreamService {
       // Process the stream
       const processStream = async () => {
         try {
-          console.log('[DirectLogMeal] Starting stream processing');
+         
 
           while (true) {
             const { done, value } = await reader.read();
 
             if (done) {
-              console.log('[DirectLogMeal] Stream done, calling onComplete()');
+             
               clearInterval(timeoutCheck);
               onComplete();
               break;
@@ -266,16 +264,16 @@ export class ChatStreamService {
                 const jsonStr = line.substring(6);
                 try {
                   const chunk = JSON.parse(jsonStr);
-                  console.log('[DirectLogMeal] Received chunk:', chunk);
+                  
                   onChunk(SearchFoodPhraseResponse.fromJS(chunk));
                 } catch (parseError) {
-                  console.error('[DirectLogMeal] Failed to parse chunk:', parseError, 'Raw:', jsonStr);
+                 
                 }
               }
             }
           }
         } catch (streamError) {
-          console.error('[DirectLogMeal] Stream processing error:', streamError);
+         
           clearInterval(timeoutCheck);
           onError(streamError);
         }
@@ -293,7 +291,254 @@ export class ChatStreamService {
       } as any;
 
     } catch (err) {
-      console.error('[DirectLogMeal] Stream start error', err);
+     
+      onError(err);
+      return null;
+    }
+  }
+
+  async setupGoalsStream(
+    request: SetupGoalsRequest,
+    onChunk: (data: ChatMessagesResponse) => void,
+    onComplete: () => void,
+    onError: (error: any) => void
+  ): Promise<EventSource | null> {
+    const url = `${this.baseUrl}/SetupGoals`;
+
+    try {
+      const token = await this.authService.getIdToken();
+      if (!token) {
+        onError(new Error('No auth token available'));
+        return null;
+      }
+
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const clientVersion = '1.0.0';
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-Timezone': timezone,
+          'X-Client-Version': clientVersion
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+       
+        onError(new Error(`HTTP error! status: ${response.status}`));
+        return null;
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        onError(new Error('No response body'));
+        return null;
+      }
+
+      let buffer = '';
+      let lastChunkTime = Date.now();
+
+      const timeoutCheck = setInterval(() => {
+        if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
+         
+          clearInterval(timeoutCheck);
+          reader.cancel();
+          onError(new Error('Stream timeout - no data received'));
+        }
+      }, this.TIMEOUT_CHECK_INTERVAL_MS);
+
+      const processStream = async () => {
+        try {
+          
+
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              clearInterval(timeoutCheck);
+              onComplete();
+              break;
+            }
+
+            lastChunkTime = Date.now();
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.trim() === '') continue;
+
+              if (line.startsWith('data: ')) {
+                try {
+                  const jsonData = line.substring(6);
+                  const rawData = JSON.parse(jsonData);
+                  const parsed = ChatMessagesResponse.fromJS(rawData);
+
+                  if (!parsed.isSuccess && parsed.errors && parsed.errors.length > 0) {
+                    console.error('[SetupGoals] Error response:', parsed.errors);
+                    clearInterval(timeoutCheck);
+                    reader.cancel();
+                    onError(new Error(parsed.errors[0]?.errorMessage || 'Server error'));
+                    return;
+                  }
+
+                  onChunk(parsed);
+                } catch (err) {
+                  console.error('[SetupGoals] Parse error:', err);
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[SetupGoals] Stream processing error:', err);
+          clearInterval(timeoutCheck);
+          onError(err);
+        }
+      };
+
+      processStream();
+
+      return {
+        close: () => {
+          clearInterval(timeoutCheck);
+          reader.cancel();
+        },
+        readyState: 1
+      } as any;
+
+    } catch (err) {
+      console.error('[SetupGoals] Stream start error', err);
+      onError(err);
+      return null;
+    }
+  }
+
+  async learnMoreAboutStream(
+    request: LearnMoreAboutRequest,
+    onChunk: (data: ChatMessagesResponse) => void,
+    onComplete: () => void,
+    onError: (error: any) => void
+  ): Promise<EventSource | null> {
+    const url = `${this.baseUrl}/LearnMoreAbout`;
+
+    try {
+      const token = await this.authService.getIdToken();
+      if (!token) {
+        onError(new Error('No auth token available'));
+        return null;
+      }
+
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const clientVersion = '1.0.0';
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-Timezone': timezone,
+          'X-Client-Version': clientVersion
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('LearnMoreAbout HTTP error:', errorText);
+        onError(new Error(`HTTP error! status: ${response.status}`));
+        return null;
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        onError(new Error('No response body'));
+        return null;
+      }
+
+      let buffer = '';
+      let lastChunkTime = Date.now();
+
+      const timeoutCheck = setInterval(() => {
+        if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
+          console.error('LearnMoreAbout stream timeout');
+          clearInterval(timeoutCheck);
+          reader.cancel();
+          onError(new Error('Stream timeout - no data received'));
+        }
+      }, this.TIMEOUT_CHECK_INTERVAL_MS);
+
+      const processStream = async () => {
+        try {
+
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              clearInterval(timeoutCheck);
+              onComplete();
+              break;
+            }
+
+            lastChunkTime = Date.now();
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.trim() === '') continue;
+
+              if (line.startsWith('data: ')) {
+                try {
+                  const jsonData = line.substring(6);
+                  const rawData = JSON.parse(jsonData);
+                  const parsed = ChatMessagesResponse.fromJS(rawData);
+
+                  if (!parsed.isSuccess && parsed.errors && parsed.errors.length > 0) {
+                    console.error('[LearnMoreAbout] Error response:', parsed.errors);
+                    clearInterval(timeoutCheck);
+                    reader.cancel();
+                    onError(new Error(parsed.errors[0]?.errorMessage || 'Server error'));
+                    return;
+                  }
+
+                  onChunk(parsed);
+                } catch (err) {
+                  console.error('[LearnMoreAbout] Parse error:', err);
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[LearnMoreAbout] Stream processing error:', err);
+          clearInterval(timeoutCheck);
+          onError(err);
+        }
+      };
+
+      processStream();
+
+      return {
+        close: () => {
+          clearInterval(timeoutCheck);
+          reader.cancel();
+        },
+        readyState: 1
+      } as any;
+
+    } catch (err) {
+      console.error('[LearnMoreAbout] Stream start error', err);
       onError(err);
       return null;
     }

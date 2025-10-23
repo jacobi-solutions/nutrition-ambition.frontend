@@ -9,7 +9,9 @@ import {
   SubmitServingSelectionRequest,
   UserSelectedServing,
   ErrorDto,
-  ChatMessage
+  ChatMessage,
+  SetupGoalsRequest,
+  LearnMoreAboutRequest
 } from './nutrition-ambition-api.service';
 import { DateService } from './date.service';
 import { ChatStreamService } from './chat-stream.service';
@@ -39,7 +41,15 @@ export class ChatService {
     messages?: ChatMessage[];
   } | null>(null);
   public pendingEdit$ = this.pendingEditSubject.asObservable();
-  
+
+  // Subject to trigger setup goals streaming (handled by chat page)
+  private setupGoalsTriggerSubject = new Subject<{ localDateKey: string, isTweaking: boolean }>();
+  public setupGoalsTrigger$ = this.setupGoalsTriggerSubject.asObservable();
+
+  // Subject to trigger learn more about streaming (handled by chat page)
+  private learnMoreAboutTriggerSubject = new Subject<{ topic: string, localDateKey: string }>();
+  public learnMoreAboutTrigger$ = this.learnMoreAboutTriggerSubject.asObservable();
+
 
 
   constructor(
@@ -118,59 +128,22 @@ export class ChatService {
   
   
   // Learn more about a specific topic in chat
+  // Triggers the streaming (actual streaming handled by chat page)
   learnMoreAbout(topic: string, localDateKey: string): Observable<any> {
-    // TODO: Re-enable when backend endpoint is restored
-    return throwError(() => new Error('learnMoreAbout endpoint not available'));
-
-    // // Create the request to the backend
-    // const request = new LearnMoreAboutRequest({
-    //   topic: topic,
-    //   localDateKey: localDateKey
-    // });
-
-    // // Call the API and handle the response
-    // return this.apiService.learnMoreAbout(request).pipe(
-    //   map(response => {
-    //     // Emit a new message received event to indicate the response is complete
-    //     if (response.isSuccess) {
-    //       // Emit the response so the chat page can reload messages
-    //       this.learnMoreAboutResponseSubject.next(response);
-    //     }
-
-    //     return response;
-    //   }),
-    //   catchError(error => {
-    //     return throwError(() => error);
-    //   })
-    // );
+    // Emit trigger for chat page to handle the actual streaming
+    this.learnMoreAboutTriggerSubject.next({ topic, localDateKey });
+    // Return success immediately - the chat page will handle the streaming
+    return of({ isSuccess: true });
   }
 
 
   // Set up or tweak nutrition goals in chat
+  // Triggers the streaming (actual streaming handled by chat page)
   setupGoals(localDateKey: string, isTweaking: boolean = false): Observable<any> {
-    // TODO: Re-enable when backend endpoint is restored
-    return throwError(() => new Error('setupGoals endpoint not available'));
-    // // Create the request to the backend
-    // const request = new SetupGoalsRequest({
-    //   localDateKey: localDateKey,
-    //   isTweaking: isTweaking
-    // });
-
-    // // Call the API and handle the response
-    // return this.apiService.setupGoals(request).pipe(
-    //   map(response => {
-    //     // Emit a new message received event to indicate the response is complete
-    //     if (response.isSuccess) {
-    //       // Emit the response so the chat page can reload messages
-    //       this.learnMoreAboutResponseSubject.next(response);
-    //     }
-
-    //     return response;
-    //   }),
-    //   catchError(error => {
-    //     return throwError(() => error);
-    //   })
-    // );
+    // Emit trigger for chat page to handle the actual streaming
+    this.setupGoalsTriggerSubject.next({ localDateKey, isTweaking });
+    // Return success immediately - the chat page will handle the streaming
+    return of({ isSuccess: true });
   }
 
 
