@@ -525,7 +525,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         componentId,
         selectedMatch: plainMatch,
         messageId: this.message?.id, // Provide message context for parent food lookup
-        foodEntryId: undefined, // TODO: Set this if we're in edit mode
+        foodEntryId: undefined, // Not needed for chat-based selection (uses messageId instead)
         localDateKey: '' // Will be set by service
       } as HydrateAlternateSelectionRequest;
 
