@@ -10,7 +10,7 @@ steps:
       - |
         npm ci --legacy-peer-deps
         npm install -g @angular/cli
-        npm run build
+        npm run build -- --configuration=development
 
   # 2️⃣ Deploy to Firebase Hosting (dev target)
   - name: 'node:20'
