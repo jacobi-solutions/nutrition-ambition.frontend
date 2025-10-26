@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "nutrition-ambition"
+  },
+  "targets": {
+    "nutrition-ambition": {
+      "hosting": {
+        "prod": ["nutritionambition"],
+        "dev": ["nutritionambition-dev"]
+      }
+    }
   }
 }
