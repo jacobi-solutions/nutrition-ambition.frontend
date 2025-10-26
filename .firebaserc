@@ -5,8 +5,8 @@
   "targets": {
     "nutrition-ambition": {
       "hosting": {
-        "prod": ["nutritionambition"],
-        "dev": ["nutritionambition-dev"]
+        "prod": ["nutrition-ambition"],
+        "dev": ["nutrition-ambition-dev"]
       }
     }
   }
