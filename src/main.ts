@@ -88,10 +88,20 @@ bootstrapApplication(AppComponent, {
     // Initialize Firebase Auth with durable persistence
     provideAuth(() => {
       const app = getApp();
-      return initializeAuth(app, {
+      const auth = initializeAuth(app, {
         persistence: [indexedDBLocalPersistence, browserLocalPersistence],
         popupRedirectResolver: browserPopupRedirectResolver,
       });
+    
+      // 👇 Add this line to set the tenant ID dynamically
+      if (environment.tenantId) {
+        auth.tenantId = environment.tenantId;
+        console.log('✅ Using Firebase tenant:', environment.tenantId);
+      } else {
+        console.log('✅ Using default Firebase tenant');
+      }
+    
+      return auth;
     }),
 
     // Provide HttpClient with ApiInterceptor

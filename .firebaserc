@@ -6,7 +6,7 @@
     "nutrition-ambition": {
       "hosting": {
         "prod": ["nutrition-ambition"],
-        "dev": ["nutrition-ambition-dev"]
+        "dev": ["dev-nutrition-ambition"]
       }
     }
   }

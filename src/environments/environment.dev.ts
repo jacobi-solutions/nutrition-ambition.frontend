@@ -17,7 +17,8 @@ export const environment = {
     "authDomain": "nutrition-ambition.firebaseapp.com",
     "messagingSenderId": "496562523884",
     "measurementId": "G-9EEG64HG46"
-  }
+  },
+  tenantId: 'development-096qj'
 };
 
 /*
