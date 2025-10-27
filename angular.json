@@ -75,6 +75,12 @@
               "outputHashing": "all",
               "serviceWorker": "ngsw-config.json"
             },
+            "local": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            },
             "development": {
               "fileReplacements": [
                 {
@@ -99,6 +105,9 @@
             "production": {
               "buildTarget": "app:build:production"
             },
+            "local": {
+              "buildTarget": "app:build:local"
+            },
             "development": {
               "buildTarget": "app:build:development"
             },
@@ -106,7 +115,7 @@
               "progress": false
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "local"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
