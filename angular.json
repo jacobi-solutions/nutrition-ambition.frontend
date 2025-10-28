@@ -75,6 +75,28 @@
               "outputHashing": "all",
               "serviceWorker": "ngsw-config.json"
             },
+            "uat": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "20kb",
+                  "maximumError": "40kb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.uat.ts"
+                }
+              ],
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json"
+            },
             "local": {
               "optimization": false,
               "extractLicenses": false,
@@ -104,6 +126,9 @@
           "configurations": {
             "production": {
               "buildTarget": "app:build:production"
+            },
+            "uat": {
+              "buildTarget": "app:build:uat"
             },
             "local": {
               "buildTarget": "app:build:local"
