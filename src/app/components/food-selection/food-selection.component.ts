@@ -42,6 +42,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   isReadOnly = false;
   isEditMode = false;
   addFoodMode: 'default' | 'quick' | 'favorites' | 'barcode' = 'quick';
+  private lastNonBarcodeMode: 'default' | 'quick' | 'favorites' = 'quick'; // Remember last mode for persistence
   isAddingFood = false;
   quickSearchResults: any[] = [];
   isQuickSearching = false;
@@ -640,6 +641,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
         // Clear search input after successful quick add
         this.addFoodComponent?.clear();
+
+        // Restore the last used mode (keep it selected for next add)
+        this.addFoodMode = this.lastNonBarcodeMode;
       } else {
         // Clear loading state on error
         this.onComponentChanged(foodIndex, componentId, {
@@ -2114,13 +2118,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Add food methods
   async setAddFoodMode(mode: 'default' | 'quick' | 'favorites' | 'barcode'): Promise<void> {
     if (mode === 'barcode') {
-      // Scan barcode and add food
+      // Scan barcode and add food, but don't change the visible mode
       await this.scanBarcodeAndAddFood();
       return;
     }
 
     const previousMode = this.addFoodMode;
     this.addFoodMode = mode;
+    this.lastNonBarcodeMode = mode; // Remember this mode for after adding food
     this.cdr.detectChanges();
 
     // If switching to quick mode and there's already text typed, trigger instant search
@@ -2451,6 +2456,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
         // Clear search input after successful favorite add
         this.addFoodComponent?.clear();
+
+        // Restore the last used mode (keep it selected for next add)
+        this.addFoodMode = this.lastNonBarcodeMode;
 
         await this.showSuccessToast('Added from favorites');
       } else {

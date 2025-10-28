@@ -52,12 +52,15 @@ export class SearchFoodComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.currentPhrase = this.initialPhrase;
-    // Focus the textarea and set initial height after view update
+    // Set initial height but don't auto-focus (prevents keyboard popup)
     setTimeout(() => {
       if (this.addFoodTextarea) {
         const textarea = this.addFoodTextarea.nativeElement;
         textarea.style.height = '38px'; // Start with single-line height
-        textarea.focus();
+        // Only focus for default mode (AI sparkles), not quick add or favorites
+        if (this.mode === 'default') {
+          textarea.focus();
+        }
       }
     }, 50);
   }
