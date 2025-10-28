@@ -119,8 +119,7 @@ export class SearchFoodComponent implements OnInit, OnChanges {
     const phraseToSubmit = this.currentPhrase.trim();
 
     // Clear input immediately after submission (don't wait for stream completion)
-    this.currentPhrase = '';
-    this.isSubmittingNewFood = false; // Reset state immediately
+    this.clear();
 
     // Emit the phrase after clearing
     this.phraseSubmitted.emit(phraseToSubmit);
@@ -267,6 +266,7 @@ export class SearchFoodComponent implements OnInit, OnChanges {
   selectResult(result: any): void {
     this.showDropdown = false;
     this.clickListenerEnabled = false;
+    this.clear(); // Clear input immediately when selecting from dropdown
     this.resultSelected.emit(result);
   }
 
