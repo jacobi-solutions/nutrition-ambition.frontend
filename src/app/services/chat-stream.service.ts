@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse, SetupGoalsRequest, LearnMoreAboutRequest } from './nutrition-ambition-api.service';
+import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse, SetupGoalsRequest, LearnMoreAboutRequest, BarcodeSearchRequest } from './nutrition-ambition-api.service';
 import { AuthService } from './auth.service';
 import { DateService } from './date.service';
 
@@ -16,6 +16,151 @@ export class ChatStreamService {
     private authService: AuthService,
     private dateService: DateService
   ) {}
+
+  /**
+   * Generic SSE stream handler to eliminate code duplication
+   * @param url - The API endpoint URL
+   * @param requestBody - The request body to send
+   * @param responseClass - The response class with fromJS method for deserialization
+   * @param onChunk - Callback for each parsed chunk
+   * @param onComplete - Callback when stream completes
+   * @param onError - Callback for errors
+   * @returns Stream handle for cleanup
+   */
+  private async handleSSEStream<T extends { isSuccess?: boolean; errors?: any[] }>(
+    url: string,
+    requestBody: any,
+    responseClass: { fromJS: (data: any) => T },
+    onChunk: (data: T) => void,
+    onComplete: () => void,
+    onError: (error: any) => void
+  ): Promise<any | null> {
+    try {
+      // Get auth token
+      const token = await this.authService.getIdToken();
+      if (!token) {
+        onError(new Error('No auth token available'));
+        return null;
+      }
+
+      // Get timezone and client version for headers
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const clientVersion = '1.0.0';
+
+      // Send POST request with streaming response
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-Timezone': timezone,
+          'X-Client-Version': clientVersion
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[SSEStream] HTTP error response:', errorText);
+        onError(new Error(`HTTP error! status: ${response.status}`));
+        return null;
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        onError(new Error('No response body'));
+        return null;
+      }
+
+      let buffer = '';
+
+      // Add timeout tracking
+      let lastChunkTime = Date.now();
+
+      const timeoutCheck = setInterval(() => {
+        if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
+          console.error('[SSEStream] Stream timeout - no data for 60 seconds');
+          clearInterval(timeoutCheck);
+          reader.cancel();
+          onError(new Error('Stream timeout - no data received for 60 seconds'));
+        }
+      }, this.TIMEOUT_CHECK_INTERVAL_MS);
+
+      // Process the stream
+      const processStream = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              clearInterval(timeoutCheck);
+              onComplete();
+              break;
+            }
+
+            // Update activity timestamp
+            lastChunkTime = Date.now();
+
+            // Decode the chunk and add to buffer
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+
+            // Process complete lines
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+            for (const line of lines) {
+              if (line.trim() === '') {
+                continue; // Skip empty lines
+              }
+
+              if (line.startsWith('data: ')) {
+                try {
+                  const jsonData = line.substring(6);
+                  const rawData = JSON.parse(jsonData);
+
+                  // Use the generated fromJS method to properly deserialize
+                  const parsed = responseClass.fromJS(rawData);
+
+                  // Check for error responses from backend
+                  if (!parsed.isSuccess && parsed.errors && parsed.errors.length > 0) {
+                    clearInterval(timeoutCheck);
+                    reader.cancel();
+                    onError(new Error(parsed.errors[0]?.errorMessage || 'Server error'));
+                    return;
+                  }
+
+                  onChunk(parsed);
+                } catch (parseError) {
+                  console.error('[SSEStream] Parse error:', parseError);
+                }
+              }
+            }
+          }
+        } catch (streamError) {
+          clearInterval(timeoutCheck);
+          onError(streamError);
+        }
+      };
+
+      processStream();
+
+      // Return cleanup function
+      return {
+        close: () => {
+          clearInterval(timeoutCheck);
+          reader.cancel();
+        },
+        readyState: 1
+      } as any;
+
+    } catch (err) {
+      onError(err);
+      return null;
+    }
+  }
 
   async runResponsesConversationStream(
     request: RunChatRequest,
@@ -173,8 +318,20 @@ export class ChatStreamService {
   }
 
   /**
-   * Streams food data directly from LogMeal tool to append to an existing message.
-   * Used for AI search (sparkles icon) without creating new messages.
+   * Streams barcode scan results with exact match and alternatives
+   */
+  async barcodeScanStream(
+    request: BarcodeSearchRequest,
+    onChunk: (data: SearchFoodPhraseResponse) => void,
+    onComplete: () => void,
+    onError: (error: any) => void
+  ): Promise<any | null> {
+    const url = `${environment.backendApiUrl}/api/FoodSelection/SearchBarcode`;
+    return this.handleSSEStream(url, request, SearchFoodPhraseResponse, onChunk, onComplete, onError);
+  }
+
+  /**
+   * Streams AI-parsed food data for direct meal logging
    */
   async directLogMealStream(
     request: DirectLogMealRequest,
@@ -183,118 +340,7 @@ export class ChatStreamService {
     onError: (error: any) => void
   ): Promise<any | null> {
     const url = `${environment.backendApiUrl}/api/FoodSelection/DirectLogMealStream`;
-
-    try {
-      // Get auth token
-      const token = await this.authService.getIdToken();
-      if (!token) {
-        onError(new Error('No auth token available'));
-        return null;
-      }
-
-      // Get timezone and client version for headers
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const clientVersion = '1.0.0';
-
-      // Send POST request with streaming response
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'X-Timezone': timezone,
-          'X-Client-Version': clientVersion
-        },
-        body: JSON.stringify(request),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-       
-        onError(new Error(`HTTP error! status: ${response.status}`));
-        return null;
-      }
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (!reader) {
-        onError(new Error('No response body'));
-        return null;
-      }
-
-      let buffer = '';
-
-      // Add timeout tracking
-      let lastChunkTime = Date.now();
-
-      const timeoutCheck = setInterval(() => {
-        if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
-          console.error('[DirectLogMeal] Stream timeout - no data for 60 seconds');
-          clearInterval(timeoutCheck);
-          reader.cancel();
-          onError(new Error('Stream timeout - no data received for 60 seconds'));
-        }
-      }, this.TIMEOUT_CHECK_INTERVAL_MS);
-
-      // Process the stream
-      const processStream = async () => {
-        try {
-         
-
-          while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-             
-              clearInterval(timeoutCheck);
-              onComplete();
-              break;
-            }
-
-            lastChunkTime = Date.now();
-            buffer += decoder.decode(value, { stream: true });
-
-            // Split by double newlines to get SSE messages
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const jsonStr = line.substring(6);
-                try {
-                  const chunk = JSON.parse(jsonStr);
-                  
-                  onChunk(SearchFoodPhraseResponse.fromJS(chunk));
-                } catch (parseError) {
-                 
-                }
-              }
-            }
-          }
-        } catch (streamError) {
-         
-          clearInterval(timeoutCheck);
-          onError(streamError);
-        }
-      };
-
-      processStream();
-
-      // Return cleanup function
-      return {
-        close: () => {
-          clearInterval(timeoutCheck);
-          reader.cancel();
-        },
-        readyState: 1
-      } as any;
-
-    } catch (err) {
-     
-      onError(err);
-      return null;
-    }
+    return this.handleSSEStream(url, request, SearchFoodPhraseResponse, onChunk, onComplete, onError);
   }
 
   async setupGoalsStream(

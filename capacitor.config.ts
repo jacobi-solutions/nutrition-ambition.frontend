@@ -1,9 +1,13 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.nutrition-ambition.app',
+  appId: 'app.nutritionambition',
   appName: 'Nutrition Ambition',
-  webDir: 'www',
+  webDir: 'dist',
+  ios: {
+    // Minimum iOS version required for MLKit Barcode Scanning
+    minVersion: '15.5'
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,

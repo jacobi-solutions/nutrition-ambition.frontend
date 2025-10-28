@@ -429,3 +429,31 @@ ion-toast.toast-above-input {
   --width: calc(100% - 32px) !important;
   --max-width: 500px !important;
 }
+
+/* ========== Share Meal Modal Styling ========== */
+/* Centered modal with fixed size - not full screen */
+.share-meal-modal {
+  --width: 90%;
+  --max-width: 420px;
+  --height: 77vh;
+  --border-radius: 2.25rem;
+
+  .modal-wrapper {
+    height: 75vh !important;
+    max-height: 75vh !important;
+    border-radius: 2.25rem;
+  }
+}
+
+.barcode-scanner-modal {
+  --width: 90%;
+  --max-width: 420px;
+  --height: 77vh;
+  --border-radius: 2.25rem;
+
+  .modal-wrapper {
+    height: 75vh !important;
+    max-height: 75vh !important;
+    border-radius: 2.25rem;
+  }
+}

@@ -1013,16 +1013,4 @@ ion-card-header .info-btn {
   }
 }
 
-// Share meal modal styling - centered, not full screen
-::ng-deep .share-meal-modal {
-  --width: 90%;
-  --max-width: 420px;
-  --height: 77vh;
-  --border-radius: 2.25rem;
-
-  .modal-wrapper {
-    height: 75vh !important;
-    max-height: 75vh !important;
-    border-radius: 2.25rem;
-  }
-}
+// Share meal modal styling moved to global.scss for app-wide consistency

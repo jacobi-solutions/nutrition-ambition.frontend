@@ -214,6 +214,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    searchBarcode(body: BarcodeSearchRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getInstantAlternatives(body: GetInstantAlternativesRequest | undefined): Observable<GetInstantAlternativesResponse>;
     /**
      * @param body (optional) 
@@ -2427,6 +2432,58 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
+    searchBarcode(body: BarcodeSearchRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/FoodSelection/SearchBarcode";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSearchBarcode(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSearchBarcode(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSearchBarcode(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getInstantAlternatives(body: GetInstantAlternativesRequest | undefined): Observable<GetInstantAlternativesResponse> {
         let url_ = this.baseUrl + "/api/FoodSelection/GetInstantAlternatives";
         url_ = url_.replace(/[?&]$/, "");
@@ -2955,6 +3012,42 @@ export enum AssistantModeTypes {
     Default = "Default",
     GoalSetting = "GoalSetting",
     UserFeedback = "UserFeedback",
+}
+
+export class BarcodeSearchRequest implements IBarcodeSearchRequest {
+    upc?: string | undefined;
+
+    constructor(data?: IBarcodeSearchRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.upc = _data["upc"];
+        }
+    }
+
+    static fromJS(data: any): BarcodeSearchRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new BarcodeSearchRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["upc"] = this.upc;
+        return data;
+    }
+}
+
+export interface IBarcodeSearchRequest {
+    upc?: string | undefined;
 }
 
 export class BuildStamp implements IBuildStamp {

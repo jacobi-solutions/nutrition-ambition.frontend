@@ -80,6 +80,13 @@
             <ion-icon name="sparkles"></ion-icon>
           </div>
 
+          <div
+            class="mode-icon"
+            [class.active]="addFoodMode === 'quick'"
+            (click)="setAddFoodMode('quick')">
+            <ion-icon name="search"></ion-icon>
+          </div>
+          
           <!-- Only show star if favorites exist and finished loading -->
           <div
             *ngIf="shouldShowFavoritesStar"
@@ -89,14 +96,9 @@
             <ion-icon name="star"></ion-icon>
           </div>
 
+          
           <div
             class="mode-icon"
-            [class.active]="addFoodMode === 'quick'"
-            (click)="setAddFoodMode('quick')">
-            <ion-icon name="search"></ion-icon>
-          </div>
-          <div
-            class="mode-icon disabled"
             [class.active]="addFoodMode === 'barcode'"
             (click)="setAddFoodMode('barcode')">
             <ion-icon name="barcode"></ion-icon>

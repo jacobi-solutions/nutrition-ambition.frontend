@@ -15,6 +15,7 @@ import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { ChatStreamService } from 'src/app/services/chat-stream.service';
 import { FavoritesService } from 'src/app/services/favorites.service';
+import { BarcodeService } from 'src/app/services/barcode.service';
 import { IonIcon } from '@ionic/angular/standalone';
 import { ServingIdentifierUtil, NutrientScalingUtil } from './food-selection.util';
 
@@ -55,6 +56,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   private cancelTimeout: any = null;
   // Precomputed foods array with all display state embedded - eliminates all method calls in template
   computedFoods: FoodDisplay[] = [];
+  // Active stream handle for cleanup
+  private activeBarcodeStream?: any;
 
   // Meal name editing state
   isEditingMealName = false;
@@ -68,7 +71,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     private dateService: DateService,
     private foodSelectionService: FoodSelectionService,
     private chatStreamService: ChatStreamService,
-    private favoritesService: FavoritesService
+    private favoritesService: FavoritesService,
+    private barcodeService: BarcodeService
   ) {
     addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal, sparkles, search, barcode, closeOutline, shareOutline, star });
   }
@@ -261,7 +265,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   ngOnDestroy(): void {
-    // Component cleanup
+    // Cancel active barcode stream if exists
+    if (this.activeBarcodeStream) {
+      this.activeBarcodeStream.close();
+      this.activeBarcodeStream = undefined;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -2106,7 +2114,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   // Add food methods
   async setAddFoodMode(mode: 'default' | 'quick' | 'favorites' | 'barcode'): Promise<void> {
     if (mode === 'barcode') {
-      await this.showErrorToast('Barcode scanning coming soon!');
+      // Scan barcode and add food
+      await this.scanBarcodeAndAddFood();
       return;
     }
 
@@ -2129,6 +2138,88 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // If clicking favorites again when already in favorites mode, re-open dropdown
     if (mode === 'favorites' && previousMode === 'favorites' && this.addFoodComponent) {
       this.addFoodComponent.onTextareaClick();
+    }
+  }
+
+  async scanBarcodeAndAddFood(): Promise<void> {
+    try {
+      // Cancel previous stream if exists
+      if (this.activeBarcodeStream) {
+        this.activeBarcodeStream.close();
+        this.activeBarcodeStream = undefined;
+      }
+
+      // Generate unique stream ID for this barcode scan
+      const streamId = `barcode-${Date.now()}`;
+
+      // Create loading placeholder
+      const loadingFood = new FoodDisplay({
+        id: `loading-${streamId}`,
+        name: 'Scanning barcode...',
+        quantity: 1,
+        streamId: streamId,
+        components: []
+      });
+
+      // Add loading placeholder to UI
+      this.computedFoods = [...this.computedFoods, loadingFood];
+      this.cdr.detectChanges();
+
+      // Use barcode service to scan and stream results
+      const result = await this.barcodeService.scanAndLookupStream(
+        (chunk) => {
+          // Process streaming chunk - same pattern as AI search
+
+          if (chunk.foodOptions && chunk.foodOptions.length > 0) {
+            // Tag incoming foods with this stream's ID
+            const taggedFoods = chunk.foodOptions.map(food => ({
+              ...food,
+              streamId: streamId
+            }));
+
+            // Remove this stream's previous foods (loading placeholder or earlier chunks)
+            // and add the new foods from this chunk
+            this.computedFoods = [
+              ...this.computedFoods.filter(f => f.streamId !== streamId),
+              ...taggedFoods.map(f => new FoodDisplay(f))
+            ];
+
+            // Update message object with all current foods for backend sync
+            if (!this.message.mealSelection) {
+              this.message.mealSelection = new MealSelection({ foods: [] });
+            }
+            this.message.mealSelection!.foods = this.computedFoods.map(foodDisplay => {
+              const food = new Food(foodDisplay as any);
+              return food;
+            });
+
+            this.cdr.detectChanges();
+          }
+        },
+        () => {
+          // Stream complete - clear stream handle
+          this.activeBarcodeStream = undefined;
+          console.log('[FoodSelectionComponent] Barcode stream complete');
+        },
+        (error) => {
+          // Stream error - clear stream handle
+          this.activeBarcodeStream = undefined;
+          console.error('[FoodSelectionComponent] Barcode stream error:', error);
+        }
+      );
+
+      if (!result) {
+        // User cancelled or scan failed - already handled by barcode service
+        return;
+      }
+
+      // Store stream handle for cleanup
+      this.activeBarcodeStream = result.stream;
+
+      console.log('[FoodSelectionComponent] Started barcode stream for UPC:', result.upc);
+    } catch (error) {
+      console.error('[FoodSelectionComponent] Error scanning barcode:', error);
+      await this.showErrorToast('Failed to add food from barcode');
     }
   }
 

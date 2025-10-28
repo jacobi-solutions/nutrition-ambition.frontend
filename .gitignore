@@ -71,15 +71,9 @@ lerna-debug.log*
 /platforms
 /plugins
 
-# Android
-/android/app/build
-/android/.gradle
-/android/gradle
-/android/local.properties
-
-# iOS
-/ios/Pods
-/ios/build
+# Capacitor native projects (generated from web code, no need to commit)
+/android
+/ios
 
 # Misc
 /.firebase

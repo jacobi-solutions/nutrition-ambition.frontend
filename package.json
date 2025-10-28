@@ -1,6 +1,6 @@
 {
   "name": "nutrition-ambition-frontend",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "author": "Ionic Framework",
   "homepage": "https://ionicframework.com/",
   "scripts": {
@@ -27,9 +27,12 @@
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
     "@angular/service-worker": "^19.1.7",
+    "@capacitor-mlkit/barcode-scanning": "^7.3.0",
+    "@capacitor/android": "^6.2.0",
     "@capacitor/app": "6.0.2",
     "@capacitor/core": "6.2.0",
     "@capacitor/haptics": "6.0.2",
+    "@capacitor/ios": "^6.2.0",
     "@capacitor/keyboard": "6.0.3",
     "@capacitor/status-bar": "6.0.2",
     "@ionic/angular": "^8.0.0",
@@ -37,6 +40,7 @@
     "angularx-qrcode": "^20.0.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.3.1",
+    "html5-qrcode": "^2.3.8",
     "ionicons": "^7.0.0",
     "marked": "^15.0.11",
     "rxjs": "~7.8.0",
