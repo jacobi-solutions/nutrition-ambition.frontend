@@ -1,9 +1,10 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, ViewChild, ElementRef, NO_ERRORS_SCHEMA, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { addIcons } from 'ionicons';
-import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal, sparkles, search, barcode, closeOutline, shareOutline } from 'ionicons/icons';
-import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, GetInstantAlternativesRequest, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood, HydrateAlternateSelectionRequest, UpdateMealSelectionRequest, DirectLogMealRequest, MealSelection } from 'src/app/services/nutrition-ambition-api.service';
+import { createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal, sparkles, search, barcode, closeOutline, shareOutline, star } from 'ionicons/icons';
+import { ComponentMatch, ComponentServing, SubmitServingSelectionRequest, UserSelectedServing, SubmitEditServingSelectionRequest, MessageRoleTypes, NutritionAmbitionApiService, SearchFoodPhraseRequest, GetInstantAlternativesRequest, UserSelectedFoodQuantity, ComponentDescription, Food, Component as ComponentOfFood, HydrateAlternateSelectionRequest, UpdateMealSelectionRequest, DirectLogMealRequest, MealSelection, FavoriteFoodDto } from 'src/app/services/nutrition-ambition-api.service';
 import { SearchFoodComponent } from './search-food/search-food.component';
 import { FoodSelectionActionsComponent } from './food-selection-actions/food-selection-actions.component';
 import { FoodComponent } from './food/food.component';
@@ -13,6 +14,7 @@ import { ToastService } from 'src/app/services/toast.service';
 import { DateService } from 'src/app/services/date.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { ChatStreamService } from 'src/app/services/chat-stream.service';
+import { FavoritesService } from 'src/app/services/favorites.service';
 import { IonIcon } from '@ionic/angular/standalone';
 import { ServingIdentifierUtil, NutrientScalingUtil } from './food-selection.util';
 
@@ -38,11 +40,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   isReadOnly = false;
   isEditMode = false;
-  showAddInput = false;
-  addFoodMode: 'default' | 'quick' | 'barcode' = 'default';
+  addFoodMode: 'default' | 'quick' | 'favorites' | 'barcode' = 'quick';
   isAddingFood = false;
   quickSearchResults: any[] = [];
   isQuickSearching = false;
+
+  // Favorites data
+  favorites: any[] = [];
+  shouldShowFavoritesStar = false;
+  isLoadingFavorites = false;
 
   isSubmitting = false;
   isCanceling = false;
@@ -61,9 +67,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     private apiService: NutritionAmbitionApiService,
     private dateService: DateService,
     private foodSelectionService: FoodSelectionService,
-    private chatStreamService: ChatStreamService
+    private chatStreamService: ChatStreamService,
+    private favoritesService: FavoritesService
   ) {
-    addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal, sparkles, search, barcode, closeOutline, shareOutline });
+    addIcons({ createOutline, chevronUpOutline, chevronDownOutline, trashOutline, send, addCircleOutline, ellipsisHorizontal, sparkles, search, barcode, closeOutline, shareOutline, star });
   }
 
   get hasPayload(): boolean {
@@ -234,15 +241,17 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     return false;
   }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.isReadOnly = this.message.role === MessageRoleTypes.CompletedFoodSelection || this.message.role === MessageRoleTypes.CompletedEditFoodSelection;
     this.isEditMode = this.message.role === MessageRoleTypes.PendingEditFoodSelection;
     this.isAddingFood = false; // Ensure this is always false on init
     this.computeAllFoods();
 
-    // Auto-open quick add if requested (for manual food entry via FAB)
+    // Load favorites immediately when card opens
+    await this.loadFavorites();
+
+    // Auto-set quick mode if requested (for manual food entry via FAB)
     if (this.message.autoOpenQuickAdd) {
-      this.showAddInput = true;
       this.addFoodMode = 'quick';
       delete this.message.autoOpenQuickAdd; // Clear flag after using
       this.cdr.detectChanges();
@@ -581,9 +590,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               comp.id === componentId ? updatedComponent : comp
             ) || [];
 
+            // For single-component foods, propagate the component's photo to food level
+            const shouldPropagatePhoto = updatedComponents.length === 1;
             const updatedFood = new FoodDisplay({
               ...currentFood,
-              components: updatedComponents
+              components: updatedComponents,
+              // Set food-level photo from the hydrated match if single-component
+              photoThumb: shouldPropagatePhoto ? (hydratedMatch.photoThumb || currentFood.photoThumb) : currentFood.photoThumb,
+              photoHighRes: shouldPropagatePhoto ? (hydratedMatch.photoHighRes || currentFood.photoHighRes) : currentFood.photoHighRes
             });
 
             // Replace the food in the array
@@ -613,6 +627,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
         // Auto-save the updated meal selection after successful hydration
         this.autoSaveMealSelection();
+
+        // Clear search input after successful quick add
+        this.addFoodComponent?.clear();
       } else {
         // Clear loading state on error
         this.onComponentChanged(foodIndex, componentId, {
@@ -1612,9 +1629,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   async onFoodAdded(phrase: string): Promise<void> {
     this.isAddingFood = false;
 
-    // Hide search input immediately and show "Add more food"
-    this.showAddInput = false;
-    this.addFoodMode = 'default';
+    // Stay in current mode for next add
 
     // Sync computedFoods to message before starting stream to ensure consistency
     // This ensures message.mealSelection.foods reflects current UI state
@@ -1701,11 +1716,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         },
         () => {
           // Stream complete - message was already updated during streaming chunks
-        
+
           // Just trigger a final recompute to ensure everything is in the correct state
           // (No need to append foods again - they were already added during streaming)
           this.computeAllFoods();
           this.cdr.detectChanges();
+
+          // Clear search input after successful add
+          this.addFoodComponent?.clear();
         },
         (error) => {
           // Stream error - remove loading placeholder
@@ -1730,6 +1748,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       message: message,
       duration: 4000,
       color: 'danger'
+    });
+  }
+
+  private async showSuccessToast(message: string): Promise<void> {
+    await this.toastService.showToast({
+      message: message,
+      duration: 2000,
+      color: 'success'
     });
   }
 
@@ -2075,12 +2101,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   // Add food methods
   // Add food methods
-  async setAddFoodMode(mode: 'default' | 'quick' | 'barcode'): Promise<void> {
+  async setAddFoodMode(mode: 'default' | 'quick' | 'favorites' | 'barcode'): Promise<void> {
     if (mode === 'barcode') {
       await this.showErrorToast('Barcode scanning coming soon!');
       return;
     }
 
+    const previousMode = this.addFoodMode;
     this.addFoodMode = mode;
     this.cdr.detectChanges();
 
@@ -2090,12 +2117,24 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       if (currentPhrase && currentPhrase.length >= 3) {
         await this.onInstantSearch(currentPhrase);
       }
+      // If clicking quick mode again when already in quick mode, re-open dropdown
+      if (previousMode === 'quick' && this.addFoodComponent) {
+        this.addFoodComponent.onTextareaClick();
+      }
+    }
+
+    // If clicking favorites again when already in favorites mode, re-open dropdown
+    if (mode === 'favorites' && previousMode === 'favorites' && this.addFoodComponent) {
+      this.addFoodComponent.onTextareaClick();
     }
   }
 
   getPlaceholderText(): string {
     if (this.addFoodMode === 'quick') {
-      return 'Search for one food';
+      return 'Search for specific food';
+    }
+    if (this.addFoodMode === 'favorites') {
+      return 'Search favorites...';
     }
     return 'Describe your meal';
   }
@@ -2109,9 +2148,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       await this.onFoodAdded(phrase);
     }
 
-    // Reset state
-    this.showAddInput = false;
-    this.addFoodMode = 'default';
+    // Stay in current mode for next add
   }
 
   async startQuickAdd(): Promise<void> {
@@ -2145,7 +2182,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   cancelAddFood(): void {
-    this.showAddInput = false;
+    // Just reset mode - input is always visible now
     this.addFoodMode = 'default';
   }
 
@@ -2184,9 +2221,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   async onQuickSearchResultSelected(selectedMatch: ComponentMatch): Promise<void> {
-    // Hide the input area
-    this.showAddInput = false;
-    this.addFoodMode = 'default';
+    // Don't change mode - stay in quick mode for next add
 
     // Keep all alternatives and mark the selected one with isBestMatch flag
     const allAlternatives = this.quickSearchResults.map(match => {
@@ -2225,6 +2260,135 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   /**
+   * Load favorites from backend when card opens.
+   * Sets shouldShowFavoritesStar based on whether favorites exist.
+   */
+  private async loadFavorites(): Promise<void> {
+    this.isLoadingFavorites = true;
+    try {
+      const response = await firstValueFrom(this.favoritesService.loadFavorites());
+      if (response?.isSuccess && response.favorites) {
+        this.favorites = response.favorites;
+        this.shouldShowFavoritesStar = this.favorites.length > 0;
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+      this.shouldShowFavoritesStar = false;
+    } finally {
+      this.isLoadingFavorites = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * Handle result selection from search-food component.
+   * Routes to appropriate handler based on current mode.
+   */
+  handleResultSelected(result: any): void {
+    if (this.addFoodMode === 'favorites') {
+      this.onFavoriteSelected(result);
+    } else if (this.addFoodMode === 'quick') {
+      this.onQuickSearchResultSelected(result);
+    }
+  }
+
+  async onFavoriteSelected(favorite: FavoriteFoodDto): Promise<void> {
+    // Declare tempFoodDisplay outside try block so it's accessible in catch
+    let tempFoodDisplay: FoodDisplay | null = null;
+
+    try {
+      // Don't change mode - stay in favorites mode for next add
+
+      // Immediately show the food from the snapshot with loading state
+      tempFoodDisplay = new FoodDisplay({
+        ...favorite.foodSnapshot!,
+        initialQuantity: favorite.foodSnapshot!.quantity // Set baseline for nutrition calculations
+      });
+      tempFoodDisplay.isExpanded = false; // Keep food collapsed for favorites
+      tempFoodDisplay.isPending = true;
+      tempFoodDisplay.statusText = 'Getting macros...';
+
+      // Components should be collapsed (not in edit mode) for favorites
+      if (tempFoodDisplay.components) {
+        tempFoodDisplay.components.forEach(comp => {
+          comp.isNewAddition = false; // Not a new addition - it's a favorite
+          comp.isExpanded = false; // Keep collapsed
+          comp.isPending = true;
+        });
+      }
+
+      // Add temp food immediately so user sees it right away
+      this.computedFoods = [...this.computedFoods, tempFoodDisplay];
+      this.cdr.detectChanges();
+
+      // Call backend to relog the favorite and get a fresh Food instance with new IDs
+      const localDateKey = this.dateService.getSelectedDate();
+      const response = await firstValueFrom(this.favoritesService.relogFavorite(favorite.id!, localDateKey));
+
+      if (response?.isSuccess && response.food) {
+        // Replace temp food with the real one from backend
+        const foodDisplay = new FoodDisplay({
+          ...response.food,
+          initialQuantity: response.food.quantity // Set baseline for nutrition calculations
+        });
+        foodDisplay.isExpanded = false; // Keep food collapsed
+
+        // Components should be collapsed (not in edit mode) with servings already selected
+        if (foodDisplay.components) {
+          foodDisplay.components.forEach(comp => {
+            comp.isNewAddition = false; // Not a new addition
+            comp.isExpanded = false; // Keep collapsed
+          });
+        }
+
+        // Replace the temp food with the real one
+        const tempIndex = this.computedFoods.indexOf(tempFoodDisplay);
+        if (tempIndex >= 0) {
+          this.computedFoods = [
+            ...this.computedFoods.slice(0, tempIndex),
+            foodDisplay,
+            ...this.computedFoods.slice(tempIndex + 1)
+          ];
+        }
+        this.cdr.detectChanges();
+
+        // Auto-save the meal selection
+        this.autoSaveMealSelection();
+
+        // Clear search input after successful favorite add
+        this.addFoodComponent?.clear();
+
+        await this.showSuccessToast('Added from favorites');
+      } else {
+        // Remove temp food on error
+        const tempIndex = this.computedFoods.indexOf(tempFoodDisplay);
+        if (tempIndex >= 0) {
+          this.computedFoods = [
+            ...this.computedFoods.slice(0, tempIndex),
+            ...this.computedFoods.slice(tempIndex + 1)
+          ];
+          this.cdr.detectChanges();
+        }
+        await this.showErrorToast('Failed to add favorite');
+      }
+    } catch (error) {
+      console.error('Error adding favorite:', error);
+      // Remove temp food on exception to prevent stuck "Analyzing..." state
+      if (tempFoodDisplay) {
+        const tempIndex = this.computedFoods.indexOf(tempFoodDisplay);
+        if (tempIndex >= 0) {
+          this.computedFoods = [
+            ...this.computedFoods.slice(0, tempIndex),
+            ...this.computedFoods.slice(tempIndex + 1)
+          ];
+          this.cdr.detectChanges();
+        }
+      }
+      await this.showErrorToast('Failed to add favorite');
+    }
+  }
+
+  /**
    * Auto-saves the current meal selection to the database.
    * Called after changes like deletions and hydrations to persist state without full submission.
    * If no message ID exists yet, creates a new message (for manual food entries).
@@ -2241,6 +2405,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         id: foodDisplay.id,
         name: foodDisplay.name,
         quantity: foodDisplay.quantity,
+        singularUnit: foodDisplay.singularUnit,
+        pluralUnit: foodDisplay.pluralUnit,
+        description: foodDisplay.description,
+        brand: foodDisplay.brand,
+        originalPhrase: foodDisplay.originalPhrase,
+        photoThumb: foodDisplay.photoThumb,
+        photoHighRes: foodDisplay.photoHighRes,
         components: foodDisplay.components?.map(compDisplay => {
           const comp = new ComponentOfFood({
             id: compDisplay.id,

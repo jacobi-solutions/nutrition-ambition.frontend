@@ -80,6 +80,11 @@
   text-transform: none;
   transition: all 0.3s ease, transform 0.2s ease;
 
+  // Ionic CSS custom properties for activated (pressed) state
+  --background-activated: transparent;
+  --background-activated-opacity: 0.08;
+  --color-activated: var(--ion-color-medium);
+
   &:hover {
     --color: #000;
     --border-color: #000;

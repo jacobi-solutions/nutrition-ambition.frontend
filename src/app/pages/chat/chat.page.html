@@ -89,25 +89,11 @@
 <ion-footer class="chat-footer">
   
   <div class="fab-and-input">
-    <!-- Custom Floating FAB -->
+    <!-- Simplified FAB - directly creates food-selection card -->
     <div class="manual-fab-wrapper">
-      <button class="manual-fab-icon-button" [class.open]="isOpen" (click)="toggleFab()">
-        <ion-icon [name]="isOpen ? 'close-circle-outline' : 'add-outline'"></ion-icon>
+      <button class="manual-fab-icon-button" (click)="createManualFoodEntry()" aria-label="Add food">
+        <ion-icon name="add-outline"></ion-icon>
       </button>
-      
-
-
-      <div class="manual-fab-actions" *ngIf="isOpen">
-        <button class="fab-action" title="Quick search" (click)="handleAction('quick-search')">
-          <ion-icon name="search"></ion-icon>
-        </button>
-        <button class="fab-action" title="Scan barcode" (click)="handleAction('barcode')">
-          <ion-icon name="barcode-sharp"></ion-icon>
-        </button>
-        <button class="fab-action" title="Take a photo" (click)="handleAction('photo')">
-          <ion-icon name="camera"></ion-icon>
-        </button>
-      </div>
     </div>
     <!-- Chat input container -->
     <div class="input-group">

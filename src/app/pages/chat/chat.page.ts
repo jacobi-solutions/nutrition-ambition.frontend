@@ -71,7 +71,6 @@ type ChatMessagesResponseVariant = ChatMessagesResponse | {
 export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter {
   MessageRoleTypes = MessageRoleTypes;
   private animationCtrl = inject(AnimationController);
-  isOpen = false;
   messages: DisplayMessage[] = [];
   userMessage: string = '';
   isLoading: boolean = false;
@@ -1352,60 +1351,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     }, 250); // Single 250ms delay for DOM rendering
   }
 
-  toggleFab() {
-    this.isOpen = !this.isOpen;
-    // Track FAB toggle analytics
-    this.analytics.trackFabToggle(this.isOpen);
-  }
-
-  handleAction(action: 'photo' | 'barcode' | 'quick-search') {
-    // Determine if the action is implemented
-    const implementedActions = ['quick-search']; // Quick search is implemented
-    const isImplemented = implementedActions.includes(action);
-
-    // Track analytics for all FAB actions
-    this.analytics.trackFabAction(action, isImplemented);
-
-    // Here we would implement the actual functionality
-    switch(action) {
-      case 'photo':
-        // Track unimplemented feature
-        this.analytics.trackUnimplementedFeature('fab_action', 'photo', 'chat_page');
-        // Show toast for unimplemented feature
-        this.toastService.showToast({
-          message: 'Photo capture not implemented yet. Check back soon!',
-          duration: 1500,
-          color: 'medium'
-        });
-        break;
-      case 'barcode':
-        // Track unimplemented feature
-        this.analytics.trackUnimplementedFeature('fab_action', 'barcode', 'chat_page');
-        // Show toast for unimplemented feature
-        this.toastService.showToast({
-          message: 'Barcode scanner not implemented yet. Check back soon!',
-          duration: 1500,
-          color: 'medium'
-        });
-        break;
-      case 'quick-search':
-        // This is implemented, so track as a successful action
-        this.analytics.trackActionClick('quick_search_open', 'fab_menu', { source: 'chat_page' });
-        this.createManualFoodEntry();
-        break;
-    }
-
-    // Close the FAB after action is clicked
-    setTimeout(() => {
-      this.isOpen = false;
-      // Track FAB close after action
-      this.analytics.trackFabToggle(false);
-    }, 300);
-  }
 
   // Create an empty food selection card for manual entry
+  // Opens with quick search mode by default, showing all 4 mode options
   async createManualFoodEntry(): Promise<void> {
     try {
+      // Track FAB click analytics
+      this.analytics.trackActionClick('fab_add_food', 'chat_page');
+
       // Call backend immediately to create the message
       const request = new UpdateMealSelectionRequest({
         messageId: undefined, // No ID yet - backend will create
@@ -1417,6 +1370,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
       if (response?.isSuccess && response.messageId) {
         // Create the UI message with the returned messageId
+        // autoOpenQuickAdd flag tells food-selection to default to quick search mode with input visible
         const newMessage: DisplayMessage = {
           id: response.messageId, // Use the real ID from backend
           text: '',
@@ -1430,7 +1384,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           mealName: 'Food Entry',
           isStreaming: false,
           isPartial: false,
-          autoOpenQuickAdd: true
+          autoOpenQuickAdd: true // Opens card with search input visible and mode selector showing all 4 options
         };
 
         // Add to messages array

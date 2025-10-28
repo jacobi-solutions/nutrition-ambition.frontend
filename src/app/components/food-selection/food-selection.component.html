@@ -65,15 +65,12 @@
 
     <!-- Add more food section -->
     <div *ngIf="hasPayload && !isReadOnly && !hasAnyPending && !isSubmitting" class="add-more-food-section">
+      <!-- Input with mode selector icons - always shown -->
+      <div class="add-food-input-container">
+        <!-- Header text - only show if foods already exist -->
+        <div *ngIf="computedFoods.length === 0" class="add-food-header">Add first food</div>
+        <div *ngIf="computedFoods.length > 0" class="add-food-header">Add another food</div>
 
-      <!-- Initial "Add another food" button -->
-      <div *ngIf="!showAddInput" class="add-something-display" (click)="showAddInput = true">
-        <div class="add-something-text">Add another food</div>
-        <ion-icon name="add-circle-outline" class="add-something-icon"></ion-icon>
-      </div>
-
-      <!-- Input with mode selector icons -->
-      <div *ngIf="showAddInput" class="add-food-input-container">
         <!-- Mode selector icons -->
         <div class="mode-selector">
           <div
@@ -82,6 +79,16 @@
             (click)="setAddFoodMode('default')">
             <ion-icon name="sparkles"></ion-icon>
           </div>
+
+          <!-- Only show star if favorites exist and finished loading -->
+          <div
+            *ngIf="shouldShowFavoritesStar"
+            class="mode-icon"
+            [class.active]="addFoodMode === 'favorites'"
+            (click)="setAddFoodMode('favorites')">
+            <ion-icon name="star"></ion-icon>
+          </div>
+
           <div
             class="mode-icon"
             [class.active]="addFoodMode === 'quick'"
@@ -94,23 +101,18 @@
             (click)="setAddFoodMode('barcode')">
             <ion-icon name="barcode"></ion-icon>
           </div>
-          <div class="spacer"></div>
-          <div
-            class="mode-icon close-icon"
-            (click)="cancelAddFood()">
-            <ion-icon name="close-outline"></ion-icon>
-          </div>
         </div>
 
-        <!-- Text input (uses existing search-food component) -->
+        <!-- Unified search component (handles quick search, favorites, and default modes) -->
         <app-search-food
           [placeholder]="getPlaceholderText()"
           [mode]="addFoodMode === 'barcode' ? 'default' : addFoodMode"
           [searchResults]="quickSearchResults"
+          [favoritesData]="favorites"
           [isSearching]="isQuickSearching"
           (phraseSubmitted)="onAddFoodSubmitted($event)"
           (instantSearch)="onInstantSearch($event)"
-          (resultSelected)="onQuickSearchResultSelected($event)"
+          (resultSelected)="handleResultSelected($event)"
           (editCanceled)="cancelAddFood()">
         </app-search-food>
       </div>

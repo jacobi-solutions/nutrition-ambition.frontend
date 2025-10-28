@@ -154,6 +154,21 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    getFavorites(body: GetFavoritesRequest | undefined): Observable<GetFavoritesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    relogFavorite(body: RelogFavoriteRequest | undefined): Observable<RelogFavoriteResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    removeFavorite(body: RemoveFavoriteRequest | undefined): Observable<RemoveFavoriteResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     deleteFoodEntry(body: DeleteFoodEntryRequest | undefined): Observable<DeleteFoodEntryResponse>;
     /**
      * @param body (optional) 
@@ -1734,6 +1749,174 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<GetDetailedSummaryResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getFavorites(body: GetFavoritesRequest | undefined): Observable<GetFavoritesResponse> {
+        let url_ = this.baseUrl + "/api/Favorites/GetFavorites";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetFavorites(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetFavorites(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetFavoritesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetFavoritesResponse>;
+        }));
+    }
+
+    protected processGetFavorites(response: HttpResponseBase): Observable<GetFavoritesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetFavoritesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetFavoritesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    relogFavorite(body: RelogFavoriteRequest | undefined): Observable<RelogFavoriteResponse> {
+        let url_ = this.baseUrl + "/api/Favorites/RelogFavorite";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRelogFavorite(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRelogFavorite(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RelogFavoriteResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RelogFavoriteResponse>;
+        }));
+    }
+
+    protected processRelogFavorite(response: HttpResponseBase): Observable<RelogFavoriteResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = RelogFavoriteResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<RelogFavoriteResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    removeFavorite(body: RemoveFavoriteRequest | undefined): Observable<RemoveFavoriteResponse> {
+        let url_ = this.baseUrl + "/api/Favorites/RemoveFavorite";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRemoveFavorite(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRemoveFavorite(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<RemoveFavoriteResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<RemoveFavoriteResponse>;
+        }));
+    }
+
+    protected processRemoveFavorite(response: HttpResponseBase): Observable<RemoveFavoriteResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = RemoveFavoriteResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<RemoveFavoriteResponse>(null as any);
     }
 
     /**
@@ -4810,6 +4993,62 @@ export interface IErrorDto {
     errorCode?: string | undefined;
 }
 
+export class FavoriteFoodDto implements IFavoriteFoodDto {
+    id?: string | undefined;
+    foodSnapshot?: Food;
+    mealType?: MealType;
+    timesLogged?: number;
+    lastLoggedDateUtc?: Date;
+    score?: number;
+
+    constructor(data?: IFavoriteFoodDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.foodSnapshot = _data["foodSnapshot"] ? Food.fromJS(_data["foodSnapshot"]) : <any>undefined;
+            this.mealType = _data["mealType"];
+            this.timesLogged = _data["timesLogged"];
+            this.lastLoggedDateUtc = _data["lastLoggedDateUtc"] ? new Date(_data["lastLoggedDateUtc"].toString()) : <any>undefined;
+            this.score = _data["score"];
+        }
+    }
+
+    static fromJS(data: any): FavoriteFoodDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new FavoriteFoodDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["foodSnapshot"] = this.foodSnapshot ? this.foodSnapshot.toJSON() : <any>undefined;
+        data["mealType"] = this.mealType;
+        data["timesLogged"] = this.timesLogged;
+        data["lastLoggedDateUtc"] = this.lastLoggedDateUtc ? this.lastLoggedDateUtc.toISOString() : <any>undefined;
+        data["score"] = this.score;
+        return data;
+    }
+}
+
+export interface IFavoriteFoodDto {
+    id?: string | undefined;
+    foodSnapshot?: Food;
+    mealType?: MealType;
+    timesLogged?: number;
+    lastLoggedDateUtc?: Date;
+    score?: number;
+}
+
 export class FeedbackEntry implements IFeedbackEntry {
     id?: string | undefined;
     createdDateUtc?: Date;
@@ -5726,6 +5965,120 @@ export interface IGetDetailedSummaryResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     dailySummary?: DailySummary;
+}
+
+export class GetFavoritesRequest implements IGetFavoritesRequest {
+
+    constructor(data?: IGetFavoritesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): GetFavoritesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetFavoritesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+export interface IGetFavoritesRequest {
+}
+
+export class GetFavoritesResponse implements IGetFavoritesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    favorites?: FavoriteFoodDto[] | undefined;
+
+    constructor(data?: IGetFavoritesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            if (Array.isArray(_data["favorites"])) {
+                this.favorites = [] as any;
+                for (let item of _data["favorites"])
+                    this.favorites!.push(FavoriteFoodDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): GetFavoritesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetFavoritesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        if (Array.isArray(this.favorites)) {
+            data["favorites"] = [];
+            for (let item of this.favorites)
+                data["favorites"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IGetFavoritesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    favorites?: FavoriteFoodDto[] | undefined;
 }
 
 export class GetFeedbackWithAccountInfoRequest implements IGetFeedbackWithAccountInfoRequest {
@@ -7085,6 +7438,14 @@ export interface IMealSelection {
     isPending?: boolean;
 }
 
+export enum MealType {
+    Unknown = "Unknown",
+    Breakfast = "Breakfast",
+    Lunch = "Lunch",
+    Dinner = "Dinner",
+    Snack = "Snack",
+}
+
 export enum MessageRoleTypes {
     User = "User",
     Assistant = "Assistant",
@@ -7420,6 +7781,234 @@ export interface IRegisterAccountRequest {
     email?: string | undefined;
     timeZoneId?: string | undefined;
     isAnonymous?: boolean;
+}
+
+export class RelogFavoriteRequest implements IRelogFavoriteRequest {
+    favoriteId?: string | undefined;
+    localDateKey?: string | undefined;
+    mealName?: string | undefined;
+
+    constructor(data?: IRelogFavoriteRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.favoriteId = _data["favoriteId"];
+            this.localDateKey = _data["localDateKey"];
+            this.mealName = _data["mealName"];
+        }
+    }
+
+    static fromJS(data: any): RelogFavoriteRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RelogFavoriteRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["favoriteId"] = this.favoriteId;
+        data["localDateKey"] = this.localDateKey;
+        data["mealName"] = this.mealName;
+        return data;
+    }
+}
+
+export interface IRelogFavoriteRequest {
+    favoriteId?: string | undefined;
+    localDateKey?: string | undefined;
+    mealName?: string | undefined;
+}
+
+export class RelogFavoriteResponse implements IRelogFavoriteResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    food?: Food;
+
+    constructor(data?: IRelogFavoriteResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.food = _data["food"] ? Food.fromJS(_data["food"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): RelogFavoriteResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new RelogFavoriteResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["food"] = this.food ? this.food.toJSON() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IRelogFavoriteResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    food?: Food;
+}
+
+export class RemoveFavoriteRequest implements IRemoveFavoriteRequest {
+    favoriteId?: string | undefined;
+
+    constructor(data?: IRemoveFavoriteRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.favoriteId = _data["favoriteId"];
+        }
+    }
+
+    static fromJS(data: any): RemoveFavoriteRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new RemoveFavoriteRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["favoriteId"] = this.favoriteId;
+        return data;
+    }
+}
+
+export interface IRemoveFavoriteRequest {
+    favoriteId?: string | undefined;
+}
+
+export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+
+    constructor(data?: IRemoveFavoriteResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+        }
+    }
+
+    static fromJS(data: any): RemoveFavoriteResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new RemoveFavoriteResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        return data;
+    }
+}
+
+export interface IRemoveFavoriteResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
 }
 
 export class Request implements IRequest {

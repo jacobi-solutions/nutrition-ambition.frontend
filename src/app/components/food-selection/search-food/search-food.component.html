@@ -7,7 +7,8 @@
         [(ngModel)]="currentPhrase"
         (keydown)="onKeyDown($event)"
         [placeholder]="placeholder"
-        (input)="onTextareaInput($event)">
+        (input)="onTextareaInput($event)"
+        (click)="onTextareaClick()">
       </textarea>
       <button
         *ngIf="mode === 'default'"
@@ -20,19 +21,22 @@
       </button>
   </div>
 
-  <!-- Quick search dropdown -->
-  <div *ngIf="mode === 'quick' && showDropdown" class="search-results-dropdown">
-    <div *ngIf="isSearching" class="search-loading">
+  <!-- Search results / favorites dropdown -->
+  <div *ngIf="shouldShowDropdown" class="search-results-dropdown">
+    <!-- Loading state (quick search only) -->
+    <div *ngIf="mode === 'quick' && isSearching" class="search-loading">
       <div class="loading-text">Searching...</div>
     </div>
 
-    <div *ngIf="!isSearching && searchResults.length === 0" class="no-results">
+    <!-- No results -->
+    <div *ngIf="!isSearching && displayResults.length === 0" class="no-results">
       <div class="no-results-text">No results found</div>
     </div>
 
-    <div *ngIf="!isSearching && searchResults.length > 0" class="results-list">
+    <!-- Results list (both quick search and favorites) -->
+    <div *ngIf="displayResults.length > 0" class="results-list">
       <div
-        *ngFor="let result of searchResults"
+        *ngFor="let result of displayResults"
         class="result-item"
         (click)="selectResult(result)">
         <div class="result-photo">
