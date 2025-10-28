@@ -1648,13 +1648,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       return food;
     });
 
-    // Now track initial food count (message and computedFoods are in sync)
-    const initialFoodCount = this.message.mealSelection!.foods!.length;
+    // Create unique stream ID to track foods from this specific search
+    const streamId = 'stream-' + Date.now();
 
-    // Create loading placeholder food immediately
+    // Create loading placeholder food immediately with stream ID
     const loadingFood: FoodDisplay = new FoodDisplay({
       id: 'loading-' + Date.now(),
       name: '',
+      streamId: streamId, // Tag with stream ID for tracking
       components: [new ComponentDisplay({
         id: 'loading-component',
         isSearching: true,  // Shows "analyzing food entry" with thinking dots
@@ -1669,10 +1670,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     });
 
     // Add loading placeholder to UI immediately
-    this.computedFoods = [
-      ...this.computedFoods.slice(0, initialFoodCount),
-      loadingFood
-    ];
+    this.computedFoods = [...this.computedFoods, loadingFood];
     this.cdr.detectChanges();
 
     const request = new DirectLogMealRequest({
@@ -1688,31 +1686,35 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         request,
         (chunk) => {
           // Process streaming chunk
-     
+
 
           // Update foods progressively as we receive data
           if (chunk.foodOptions && chunk.foodOptions.length > 0) {
             // Store latest foods
             finalFoods = chunk.foodOptions;
 
-            // Update message object with latest foods
+            // Tag incoming foods with this stream's ID
+            const taggedFoods = chunk.foodOptions.map(food => ({
+              ...food,
+              streamId: streamId
+            }));
+
+            // Remove this stream's previous foods (loading placeholder or earlier chunks)
+            // and add the new foods from this chunk
+            this.computedFoods = [
+              ...this.computedFoods.filter(f => f.streamId !== streamId),
+              ...taggedFoods.map(f => new FoodDisplay(f))
+            ];
+
+            // Update message object with all current foods for backend sync
             if (!this.message.mealSelection) {
               this.message.mealSelection = new MealSelection({ foods: [] });
             }
-            if (!this.message.mealSelection?.foods) {
-              this.message.mealSelection!.foods = [];
-            }
+            this.message.mealSelection!.foods = this.computedFoods.map(foodDisplay => {
+              const food = new Food(foodDisplay as any);
+              return food;
+            });
 
-            // Replace streamed foods in message (keep existing, replace new portion)
-            const existingFoods = this.message.mealSelection!.foods!.slice(0, initialFoodCount);
-            this.message.mealSelection!.foods = [
-              ...existingFoods,
-              ...chunk.foodOptions
-            ];
-
-            // Use computeAllFoods to properly handle structure changes and state
-            // This handles single->multi component transitions gracefully
-            this.computeAllFoods();
             this.cdr.detectChanges();
           }
         },
@@ -1724,13 +1726,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           this.computeAllFoods();
           this.cdr.detectChanges();
 
-          // Clear search input after successful add
-          this.addFoodComponent?.clear();
+          // Note: Search input already cleared immediately on submit (in submitPhrase method)
         },
         (error) => {
-          // Stream error - remove loading placeholder
+          // Stream error - remove foods from this stream only
           console.error('[AI Search] DirectLogMealStream error:', error);
-          this.computedFoods = this.computedFoods.slice(0, initialFoodCount);
+          this.computedFoods = this.computedFoods.filter(f => f.streamId !== streamId);
           this.cdr.detectChanges();
           this.showErrorToast('Failed to add food. Please try again.');
         }
@@ -1738,7 +1739,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     } catch (error) {
       console.error('[AI Search] Error starting DirectLogMealStream:', error);
       // Remove loading placeholder on error
-      this.computedFoods = this.computedFoods.slice(0, initialFoodCount);
+      this.computedFoods = this.computedFoods.filter(f => f.streamId !== streamId);
       this.cdr.detectChanges();
       await this.showErrorToast('Failed to add food. Please try again.');
     }

@@ -116,8 +116,14 @@ export class SearchFoodComponent implements OnInit, OnChanges {
       return;
     }
 
-    this.isSubmittingNewFood = true;
-    this.phraseSubmitted.emit(this.currentPhrase.trim());
+    const phraseToSubmit = this.currentPhrase.trim();
+
+    // Clear input immediately after submission (don't wait for stream completion)
+    this.currentPhrase = '';
+    this.isSubmittingNewFood = false; // Reset state immediately
+
+    // Emit the phrase after clearing
+    this.phraseSubmitted.emit(phraseToSubmit);
   }
 
   onKeyDown(event: KeyboardEvent): void {
@@ -284,6 +290,7 @@ export class SearchFoodComponent implements OnInit, OnChanges {
     this.currentPhrase = '';
     this.showDropdown = false;
     this.clickListenerEnabled = false;
+    this.isSubmittingNewFood = false; // Reset submission state
     if (this.addFoodTextarea) {
       const textarea = this.addFoodTextarea.nativeElement;
       textarea.style.height = '38px'; // Reset to initial height

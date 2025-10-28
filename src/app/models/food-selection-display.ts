@@ -92,6 +92,9 @@ export class FoodDisplay extends Food {
   // Nutrition calculation baseline
   initialQuantity?: number;
 
+  // Stream tracking for concurrent searches
+  streamId?: string;
+
   // Enhanced components with display flags
   components?: ComponentDisplay[] | undefined;
 
@@ -102,6 +105,7 @@ export class FoodDisplay extends Food {
     this.isEditingExpanded = data.isEditingExpanded;
     this.editingQuantity = data.editingQuantity;
     this.initialQuantity = data.initialQuantity;
+    this.streamId = data.streamId;
     this.components = data.components;
   }
 
@@ -113,6 +117,7 @@ export class FoodDisplay extends Food {
       this.isEditingExpanded = _data["isEditingExpanded"];
       this.editingQuantity = _data["editingQuantity"];
       this.initialQuantity = _data["initialQuantity"];
+      this.streamId = _data["streamId"];
       if (Array.isArray(_data["components"])) {
         this.components = [] as any;
         for (let item of _data["components"])
