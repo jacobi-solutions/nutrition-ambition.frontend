@@ -247,8 +247,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     this.isAddingFood = false; // Ensure this is always false on init
     this.computeAllFoods();
 
-    // Load favorites immediately when card opens
-    await this.loadFavorites();
+    // Load favorites only for editable (non-readonly) cards
+    if (!this.isReadOnly) {
+      await this.loadFavorites();
+    }
 
     // Auto-set quick mode if requested (for manual food entry via FAB)
     if (this.message.autoOpenQuickAdd) {
