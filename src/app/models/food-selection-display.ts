@@ -107,6 +107,11 @@ export class FoodDisplay extends Food {
     this.initialQuantity = data.initialQuantity;
     this.streamId = data.streamId;
     this.components = data.components;
+
+    // Properly initialize nested objects by calling init() if data is provided
+    if (data && Object.keys(data).length > 0) {
+      this.init(data);
+    }
   }
 
   init(_data?: any) {
