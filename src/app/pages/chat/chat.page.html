@@ -10,7 +10,7 @@
   (refresh)="onRefresh()">
 </app-header>
 
-<ion-content [fullscreen]="true" [scrollEvents]="true" (ionScroll)="onScroll($event)" #content>
+<ion-content [fullscreen]="true" #content>
   <!-- Pull-to-refresh functionality -->
   <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
     <ion-refresher-content

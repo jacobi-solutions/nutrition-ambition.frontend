@@ -86,11 +86,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Streaming optimization
   private streamUpdateTimeout: any;
-  private isUserScrolledUp = false;
   private lastScrollTime = 0;
   private scrollDebounceMs = 1000; // Only autoscroll once per second
   isStreamingActive = false; // Prevent multiple concurrent messages (public for template)
   private activeStream: any = null; // Store active stream for cancellation
+  private hasScrolledForCurrentStream = false; // Track if we've already scrolled for the current stream
 
   // Streaming configuration constants
   private readonly STREAM_THROTTLE_MS = 50;
@@ -598,6 +598,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     this.userMessage = '';
     this.isLoading = true;
     this.isStreamingActive = true; // Disable sending while streaming
+    this.hasScrolledForCurrentStream = false; // Reset scroll tracking for new stream
 
     // Reset textarea height
     if (this.messageInput && this.messageInput.nativeElement) {
@@ -663,7 +664,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
               // Create or update the meal selection message
               if (streamingMessageIndex === -1) {
-                // First chunk - create the message and always scroll
+                // First chunk - create the message and scroll once
                 streamingMessageIndex = this.messages.length;
                 this.messages = [...this.messages, {
                   id: messageId, // Use backend's stable MongoDB ID from the first chunk
@@ -678,13 +679,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   processingStage: processingStage,
                   mealSelectionIsPending: mealSelection?.isPending || false
                 }];
-                this.scrollToBottom();
-                // Reset scroll flag after scroll animation completes (300ms + buffer)
-                setTimeout(() => {
-                  this.isUserScrolledUp = false;
-                }, 600);
+
+                // Scroll only once for the entire stream
+                if (!this.hasScrolledForCurrentStream) {
+                  this.scrollToBottom();
+                  this.hasScrolledForCurrentStream = true;
+                }
               } else {
-                // Subsequent chunks - update existing message
+                // Subsequent chunks - update existing message (no auto-scroll)
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
 
@@ -701,11 +703,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   processingStage: processingStage
                 };
                 this.messages = updatedMessages;
-
-                // Only scroll if user hasn't scrolled up
-                if (!this.isUserScrolledUp) {
-                  this.scrollToBottom();
-                }
               }
 
               this.cdr.detectChanges();
@@ -713,6 +710,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           } else {
             // Regular text streaming (existing logic)
             pendingContent = content;
+
+            // Check if this is the first chunk and scroll immediately (outside throttle)
+            if (streamingMessageIndex === -1 && !this.hasScrolledForCurrentStream) {
+              this.scrollToBottom();
+              this.hasScrolledForCurrentStream = true;
+            }
 
             // Clear existing timeout
             if (this.streamUpdateTimeout) {
@@ -732,7 +735,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
                 // Create the assistant message bubble on first chunk
                 if (streamingMessageIndex === -1) {
-                  // First chunk - create the message and always scroll
+                  // First chunk - create the message
                   streamingMessageIndex = this.messages.length;
                   const streamingMessageId = `streaming-${Date.now()}`;
                   this.messages = [...this.messages, {
@@ -743,11 +746,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                     role: MessageRoleTypes.Assistant,
                     isStreaming: true
                   }];
-                  this.scrollToBottom();
-                  // Reset scroll flag after scroll animation completes (300ms + buffer)
-                  setTimeout(() => {
-                    this.isUserScrolledUp = false;
-                  }, 600);
                 } else {
                   // Subsequent chunks - update existing message
                   const updatedMessages = [...this.messages];
@@ -758,11 +756,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                     isStreaming: true
                   };
                   this.messages = updatedMessages;
-
-                  // Only auto-scroll if user hasn't scrolled up
-                  if (!this.isUserScrolledUp) {
-                    this.scrollToBottom();
-                  }
                 }
 
                 this.cdr.detectChanges();
@@ -791,11 +784,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             };
             this.messages = updatedMessages;
             this.cdr.detectChanges();
-
-            // Scroll to bottom on completion if not scrolled up
-            if (!this.isUserScrolledUp) {
-              this.scrollToBottom();
-            }
           } else if (pendingContent && pendingContent.trim().length > 0) {
             // Message was never created during streaming (arrived too fast) - create it now
             this.isLoading = false;
@@ -858,9 +846,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         // else: message was removed (user cancelled) - don't show error
 
         this.cdr.detectChanges();
-        if (!this.isUserScrolledUp) {
-          this.scrollToBottom();
-        }
         // Focus input on error (desktop only)
         if (!this.isMobile) {
           this.focusInput();
@@ -874,6 +859,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Set loading state
     this.isLoading = true;
     this.isStreamingActive = true; // Disable sending while streaming
+    this.hasScrolledForCurrentStream = false; // Reset scroll tracking for new stream
 
     // Track if we've added the assistant message yet
     let streamingMessageIndex = -1;
@@ -937,12 +923,13 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   role: MessageRoleTypes.Assistant,
                   isStreaming: true
                 }];
-                this.scrollToBottom();
-                setTimeout(() => {
-                  this.isUserScrolledUp = false;
-                }, 600);
+                // Scroll only once for the entire stream
+                if (!this.hasScrolledForCurrentStream) {
+                  this.scrollToBottom();
+                  this.hasScrolledForCurrentStream = true;
+                }
               } else {
-                // Subsequent chunks - update existing message
+                // Subsequent chunks - update existing message (no auto-scroll)
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
                 updatedMessages[streamingMessageIndex] = {
@@ -951,11 +938,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   isStreaming: true
                 };
                 this.messages = updatedMessages;
-
-                // Only auto-scroll if user hasn't scrolled up
-                if (!this.isUserScrolledUp) {
-                  this.scrollToBottom();
-                }
               }
 
               this.cdr.detectChanges();
@@ -983,11 +965,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             };
             this.messages = updatedMessages;
             this.cdr.detectChanges();
-
-            // Scroll to bottom on completion if not scrolled up
-            if (!this.isUserScrolledUp) {
-              this.scrollToBottom();
-            }
           } else if (pendingContent && pendingContent.trim().length > 0) {
             // Message was never created during streaming - create it now
             this.isLoading = false;
@@ -1044,9 +1021,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         }
 
         this.cdr.detectChanges();
-        if (!this.isUserScrolledUp) {
-          this.scrollToBottom();
-        }
         // Focus input on error (desktop only)
         if (!this.isMobile) {
           this.focusInput();
@@ -1060,6 +1034,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Set loading state
     this.isLoading = true;
     this.isStreamingActive = true; // Disable sending while streaming
+    this.hasScrolledForCurrentStream = false; // Reset scroll tracking for new stream
 
     // Track if we've added the assistant message yet
     let streamingMessageIndex = -1;
@@ -1123,12 +1098,13 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   role: MessageRoleTypes.Assistant,
                   isStreaming: true
                 }];
-                this.scrollToBottom();
-                setTimeout(() => {
-                  this.isUserScrolledUp = false;
-                }, 600);
+                // Scroll only once for the entire stream
+                if (!this.hasScrolledForCurrentStream) {
+                  this.scrollToBottom();
+                  this.hasScrolledForCurrentStream = true;
+                }
               } else {
-                // Subsequent chunks - update existing message
+                // Subsequent chunks - update existing message (no auto-scroll)
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
                 updatedMessages[streamingMessageIndex] = {
@@ -1137,11 +1113,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   isStreaming: true
                 };
                 this.messages = updatedMessages;
-
-                // Only auto-scroll if user hasn't scrolled up
-                if (!this.isUserScrolledUp) {
-                  this.scrollToBottom();
-                }
               }
 
               this.cdr.detectChanges();
@@ -1169,11 +1140,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             };
             this.messages = updatedMessages;
             this.cdr.detectChanges();
-
-            // Scroll to bottom on completion if not scrolled up
-            if (!this.isUserScrolledUp) {
-              this.scrollToBottom();
-            }
           } else if (pendingContent && pendingContent.trim().length > 0) {
             // Message was never created during streaming - create it now
             this.isLoading = false;
@@ -1230,9 +1196,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         }
 
         this.cdr.detectChanges();
-        if (!this.isUserScrolledUp) {
-          this.scrollToBottom();
-        }
         // Focus input on error (desktop only)
         if (!this.isMobile) {
           this.focusInput();
@@ -1292,23 +1255,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     textarea.style.height = newHeight + 'px';
   }
   
-  // Handle scroll events
-  async onScroll(event: any) {
-    // Check if user has scrolled up from the bottom
-    if (this.content) {
-      const scrollElement = await this.content.getScrollElement();
-      const scrollTop = scrollElement.scrollTop;
-      const scrollHeight = scrollElement.scrollHeight;
-      const clientHeight = scrollElement.clientHeight;
-
-      // Consider user at bottom if within 100px of bottom
-      const threshold = 100;
-      this.isUserScrolledUp = (scrollTop + clientHeight + threshold) < scrollHeight;
-    }
-  }
-
   private async scrollToBottom() {
-    // Note: Caller is responsible for checking isUserScrolledUp before calling this
     // Update last scroll time
     this.lastScrollTime = Date.now();
 

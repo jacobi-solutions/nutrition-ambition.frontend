@@ -6873,9 +6873,12 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
     activityLevel?: string | undefined;
     baseCalories?: number | undefined;
     hasTargets?: boolean;
+    isOverride?: boolean;
+    baselineCalories?: number | undefined;
     goals?: string[] | undefined;
     goalSummary?: string | undefined;
     nutrientTargets?: NutrientTarget[] | undefined;
+    baselineNutrientTargets?: NutrientTarget[] | undefined;
 
     constructor(data?: IGetProfileAndTargetsResponse) {
         if (data) {
@@ -6908,6 +6911,8 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
             this.activityLevel = _data["activityLevel"];
             this.baseCalories = _data["baseCalories"];
             this.hasTargets = _data["hasTargets"];
+            this.isOverride = _data["isOverride"];
+            this.baselineCalories = _data["baselineCalories"];
             if (Array.isArray(_data["goals"])) {
                 this.goals = [] as any;
                 for (let item of _data["goals"])
@@ -6918,6 +6923,11 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
                 this.nutrientTargets = [] as any;
                 for (let item of _data["nutrientTargets"])
                     this.nutrientTargets!.push(NutrientTarget.fromJS(item));
+            }
+            if (Array.isArray(_data["baselineNutrientTargets"])) {
+                this.baselineNutrientTargets = [] as any;
+                for (let item of _data["baselineNutrientTargets"])
+                    this.baselineNutrientTargets!.push(NutrientTarget.fromJS(item));
             }
         }
     }
@@ -6951,6 +6961,8 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
         data["activityLevel"] = this.activityLevel;
         data["baseCalories"] = this.baseCalories;
         data["hasTargets"] = this.hasTargets;
+        data["isOverride"] = this.isOverride;
+        data["baselineCalories"] = this.baselineCalories;
         if (Array.isArray(this.goals)) {
             data["goals"] = [];
             for (let item of this.goals)
@@ -6961,6 +6973,11 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
             data["nutrientTargets"] = [];
             for (let item of this.nutrientTargets)
                 data["nutrientTargets"].push(item.toJSON());
+        }
+        if (Array.isArray(this.baselineNutrientTargets)) {
+            data["baselineNutrientTargets"] = [];
+            for (let item of this.baselineNutrientTargets)
+                data["baselineNutrientTargets"].push(item.toJSON());
         }
         return data;
     }
@@ -6983,9 +7000,12 @@ export interface IGetProfileAndTargetsResponse {
     activityLevel?: string | undefined;
     baseCalories?: number | undefined;
     hasTargets?: boolean;
+    isOverride?: boolean;
+    baselineCalories?: number | undefined;
     goals?: string[] | undefined;
     goalSummary?: string | undefined;
     nutrientTargets?: NutrientTarget[] | undefined;
+    baselineNutrientTargets?: NutrientTarget[] | undefined;
 }
 
 export class GetSharedMealRequest implements IGetSharedMealRequest {
