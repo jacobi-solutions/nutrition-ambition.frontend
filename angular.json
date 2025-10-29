@@ -70,6 +70,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
+                },
+                {
+                  "replace": "src/manifest.webmanifest",
+                  "with": "src/manifest.prod.webmanifest"
                 }
               ],
               "outputHashing": "all",
@@ -92,6 +96,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.uat.ts"
+                },
+                {
+                  "replace": "src/manifest.webmanifest",
+                  "with": "src/manifest.uat.webmanifest"
                 }
               ],
               "outputHashing": "all",
@@ -108,6 +116,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.dev.ts"
+                },
+                {
+                  "replace": "src/manifest.webmanifest",
+                  "with": "src/manifest.dev.webmanifest"
                 }
               ],
               "optimization": false,

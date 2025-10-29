@@ -1,6 +1,6 @@
 {
-    "name": "Nutrition Ambition",
-    "short_name": "Nutrition",
+    "name": "Local Nutrition Ambition",
+    "short_name": "Local Nutrition",
     "description": "Track your nutrition and daily goals with ease.",
     "start_url": "/",
     "display": "standalone",
@@ -15,8 +15,13 @@
         "type": "image/png"
       },
       {
-        "src": "assets/logo-icons/LogoIcon-72x72.png",
-        "sizes": "72x72",
+        "src": "assets/logo-icons/LogoIcon-96x96.png",
+        "sizes": "96x96",
+        "type": "image/png"
+      },
+      {
+        "src": "assets/logo-icons/LogoIcon-180x180.png",
+        "sizes": "180x180",
         "type": "image/png"
       },
       {
@@ -26,10 +31,20 @@
         "purpose": "any maskable"
       },
       {
+        "src": "assets/logo-icons/LogoIcon-256x256.png",
+        "sizes": "256x256",
+        "type": "image/png"
+      },
+      {
         "src": "assets/logo-icons/LogoIcon-512x512.png",
         "sizes": "512x512",
         "type": "image/png",
         "purpose": "any maskable"
+      },
+      {
+        "src": "assets/logo-icons/LogoIcon-1024x1024.png",
+        "sizes": "1024x1024",
+        "type": "image/png"
       }
     ],
   
