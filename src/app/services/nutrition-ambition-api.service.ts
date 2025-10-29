@@ -3016,6 +3016,7 @@ export enum AssistantModeTypes {
 
 export class BarcodeSearchRequest implements IBarcodeSearchRequest {
     upc?: string | undefined;
+    messageId?: string | undefined;
 
     constructor(data?: IBarcodeSearchRequest) {
         if (data) {
@@ -3029,6 +3030,7 @@ export class BarcodeSearchRequest implements IBarcodeSearchRequest {
     init(_data?: any) {
         if (_data) {
             this.upc = _data["upc"];
+            this.messageId = _data["messageId"];
         }
     }
 
@@ -3042,12 +3044,14 @@ export class BarcodeSearchRequest implements IBarcodeSearchRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["upc"] = this.upc;
+        data["messageId"] = this.messageId;
         return data;
     }
 }
 
 export interface IBarcodeSearchRequest {
     upc?: string | undefined;
+    messageId?: string | undefined;
 }
 
 export class BuildStamp implements IBuildStamp {

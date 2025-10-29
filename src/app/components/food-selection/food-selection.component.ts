@@ -843,16 +843,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             const servingId = this.getOriginalServingId(component?.id ?? '');
             const selectedServing = this.getSelectedServing(component?.id ?? '');
 
-            console.log('[CONFIRM DEBUG] Component:', component);
-            console.log('[CONFIRM DEBUG] selectedFood:', selectedFood);
-            console.log('[CONFIRM DEBUG] servingId:', servingId);
-            console.log('[CONFIRM DEBUG] selectedServing:', selectedServing);
-            console.log('[CONFIRM DEBUG] Check result:', {
-              hasProviderFoodId: !!(selectedFood as any)?.providerFoodId,
-              hasServingId: !!servingId,
-              hasSelectedServing: !!selectedServing
-            });
-
             if ((selectedFood as any)?.providerFoodId && servingId && selectedServing) {
               // Use effectiveQuantity for both values - it's what the user sees/edited
               const effectiveQuantity = (selectedServing as any).effectiveQuantity || 1;
@@ -874,11 +864,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         }
       }
     }
-
-    console.log('[CONFIRM REQUEST] Full request object:', req);
-    console.log('[CONFIRM REQUEST] Selections count:', req.selections.length);
-    console.log('[CONFIRM REQUEST] First selection:', req.selections[0]);
-    console.log('[CONFIRM REQUEST] Serialized:', JSON.stringify(req.toJSON()));
 
     this.isSubmitting = true;
     this.selectionConfirmed.emit(req);
@@ -2185,23 +2170,19 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.computedFoods = [...this.computedFoods, loadingFood];
       this.cdr.detectChanges();
 
+      // Check for message ID
+      if (!this.message?.id) {
+        await this.showErrorToast('Cannot scan barcode: message ID is missing');
+        this.computedFoods = this.computedFoods.filter(f => f.streamId !== streamId);
+        return;
+      }
+
       // Use barcode service to scan and stream results
       const result = await this.barcodeService.scanAndLookupStream(
+        this.message.id,
         (chunk) => {
           // Process streaming chunk - same pattern as AI search
-          console.log('[BARCODE DEBUG] Received chunk:', chunk);
-
           if (chunk.foodOptions && chunk.foodOptions.length > 0) {
-            console.log('[BARCODE DEBUG] Food options:', chunk.foodOptions);
-            const firstFood = chunk.foodOptions[0];
-            const firstComponent = firstFood?.components?.[0];
-            const firstMatch = firstComponent?.matches?.[0];
-            console.log('[BARCODE DEBUG] First food:', firstFood);
-            console.log('[BARCODE DEBUG] First component:', firstComponent);
-            console.log('[BARCODE DEBUG] First component.selectedComponentId:', firstComponent?.selectedComponentId);
-            console.log('[BARCODE DEBUG] First match:', firstMatch);
-            console.log('[BARCODE DEBUG] First match.selectedServingId:', firstMatch?.selectedServingId);
-            console.log('[BARCODE DEBUG] First match.servings:', firstMatch?.servings);
             // Tag incoming foods with this stream's ID
             const taggedFoods = chunk.foodOptions.map(food => ({
               ...food,

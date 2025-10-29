@@ -5,9 +5,17 @@
   "targets": {
     "nutrition-ambition": {
       "hosting": {
-        "prod": ["nutrition-ambition"],
-        "dev": ["dev-nutrition-ambition"]
+        "prod": [
+          "nutrition-ambition"
+        ],
+        "dev": [
+          "dev-nutrition-ambition"
+        ],
+        "uat": [
+          "uat-nutrition-ambition"
+        ]
       }
     }
-  }
+  },
+  "etags": {}
 }

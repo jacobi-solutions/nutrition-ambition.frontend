@@ -24,12 +24,14 @@ export class BarcodeService {
 
   /**
    * Scan a barcode and stream food information back
+   * @param messageId - The message ID to append foods to
    * @param onChunk - Callback for each chunk of food data
    * @param onComplete - Callback when streaming completes
    * @param onError - Callback for errors
    * @returns Object with UPC string and stream handle for cleanup, or null if scan failed
    */
   async scanAndLookupStream(
+    messageId: string,
     onChunk: (data: SearchFoodPhraseResponse) => void,
     onComplete: () => void,
     onError: (error: any) => void
@@ -67,7 +69,7 @@ export class BarcodeService {
 
       // Start the stream
       const stream = await this.chatStreamService.barcodeScanStream(
-        new BarcodeSearchRequest({ upc }),
+        new BarcodeSearchRequest({ upc, messageId }),
         onChunk,
         () => {
           // Provide success haptic
