@@ -87,13 +87,13 @@
             <ion-icon name="search"></ion-icon>
           </div>
           
-          <!-- Only show star if favorites exist and finished loading -->
+          <!-- Only show heart if favorites exist and finished loading -->
           <div
             *ngIf="shouldShowFavoritesStar"
             class="mode-icon"
             [class.active]="addFoodMode === 'favorites'"
             (click)="setAddFoodMode('favorites')">
-            <ion-icon name="star"></ion-icon>
+            <ion-icon name="heart"></ion-icon>
           </div>
 
           
