@@ -387,18 +387,17 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   // Get macronutrients for meal showing nutrients
   get mealShowingNutrientsMacros(): any[] {
     if (!this.mealShowingNutrients?.nutrients) return [];
-    const order = ['calories', 'energy_kcal', 'protein', 'total_fat', 'fat', 'carbohydrate'];
+    const order = ['calories', 'protein', 'fat', 'carbohydrate'];
     return order
       .map(key => this.mealShowingNutrients?.nutrients?.find(n => n.nutrientKey?.toLowerCase() === key.toLowerCase()))
-      .filter((n): n is any => !!n)
-      .filter((n, index, self) => index === self.findIndex(t => t.nutrientKey === n.nutrientKey)); // Remove duplicates
+      .filter((n): n is any => !!n);
   }
 
   // Get micronutrients for meal showing nutrients
   get mealShowingNutrientsMicros(): any[] {
     if (!this.mealShowingNutrients?.nutrients) return [];
     return this.mealShowingNutrients.nutrients
-      .filter(n => !['calories', 'energy_kcal', 'protein', 'total_fat', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
+      .filter(n => !['calories', 'protein', 'fat', 'carbohydrate'].includes(n.nutrientKey?.toLowerCase() || ''))
       .sort((a, b) => {
         return ((a as any)['sortOrder'] ?? 9999) - ((b as any)['sortOrder'] ?? 9999);
       });

@@ -125,75 +125,111 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private aggregateFoodMacros(food: FoodDisplay): { calories: number | null; protein: number | null; fat: number | null; carbs: number | null } {
+    console.log('🔍 aggregateFoodMacros called for food:', food?.name);
     const aggregated = { calories: 0, protein: 0, fat: 0, carbs: 0 };
     let hasAnyNutrients = false;
 
     if (!food?.components) {
+      console.log('❌ No components found in food');
       return { calories: null, protein: null, fat: null, carbs: null };
     }
 
+    console.log(`📦 Processing ${food.components.length} components`);
+
     for (const component of food.components) {
+      console.log('  🔧 Component:', component);
+
       // Get the selected serving from component data (same pattern as food-header)
       const selectedMatch = component.matches?.find((m: any) => m.isBestMatch) || component.matches?.[0];
-      if (!selectedMatch) continue;
+      console.log('  🎯 Selected match:', selectedMatch?.displayName, 'MatchCount:', component.matches?.length);
+
+      if (!selectedMatch) {
+        console.log('  ❌ No selected match found');
+        continue;
+      }
 
       const selectedServing = selectedMatch.servings?.find((s: any) =>
         ServingIdentifierUtil.areEqual(s.servingId, selectedMatch.selectedServingId)
       ) || selectedMatch.servings?.[0];
 
-      if (!selectedServing) continue;
+      console.log('  📊 Selected serving:', selectedServing);
+      console.log('  📊 Serving nutrients:', selectedServing?.nutrients);
+
+      if (!selectedServing) {
+        console.log('  ❌ No selected serving found');
+        continue;
+      }
 
       // Use the utility to get properly scaled nutrients (handles alternative servings)
       const scaledNutrients = NutrientScalingUtil.getScaledNutrients(selectedServing, selectedMatch);
-      if (!scaledNutrients) continue;
+      console.log('  ⚖️  Scaled nutrients:', scaledNutrients);
+
+      if (!scaledNutrients) {
+        console.log('  ❌ getScaledNutrients returned null');
+        continue;
+      }
 
       const scaledCalories = NutrientScalingUtil.getMacro(scaledNutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']);
+      console.log('  🔥 Calories:', scaledCalories);
       if (scaledCalories !== null) {
         aggregated.calories += scaledCalories;
         hasAnyNutrients = true;
       }
 
       const scaledProtein = NutrientScalingUtil.getMacro(scaledNutrients, ['protein', 'Protein']);
+      console.log('  💪 Protein:', scaledProtein);
       if (scaledProtein !== null) {
         aggregated.protein += scaledProtein;
         hasAnyNutrients = true;
       }
 
       const scaledFat = NutrientScalingUtil.getMacro(scaledNutrients, ['fat', 'Fat', 'total_fat']);
+      console.log('  🧈 Fat:', scaledFat);
       if (scaledFat !== null) {
         aggregated.fat += scaledFat;
         hasAnyNutrients = true;
       }
 
       const scaledCarbs = NutrientScalingUtil.getMacro(scaledNutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']);
+      console.log('  🍞 Carbs:', scaledCarbs);
       if (scaledCarbs !== null) {
         aggregated.carbs += scaledCarbs;
         hasAnyNutrients = true;
       }
     }
 
+    console.log('📊 Aggregated before quantity scaling:', aggregated, 'hasAnyNutrients:', hasAnyNutrients);
+
     // Apply food-level quantity normalization using initialQuantity
     const foodQuantity = food?.quantity || 1;
     const initialQuantity = food?.initialQuantity;
 
+    console.log('🔢 Food quantity:', foodQuantity, 'Initial quantity:', initialQuantity);
+
     // For new foods or during loading, initialQuantity may not be set yet
     // In these cases, skip quantity normalization
     if (initialQuantity === undefined || initialQuantity === null) {
-      // Return raw aggregated values without scaling
-      return hasAnyNutrients ? aggregated : { calories: null, protein: null, fat: null, carbs: null };
+      console.log('⚠️  initialQuantity is null/undefined, returning raw aggregated values');
+      const result = hasAnyNutrients ? aggregated : { calories: null, protein: null, fat: null, carbs: null };
+      console.log('✅ Final result (no scaling):', result);
+      return result;
     }
 
     if (hasAnyNutrients) {
       // Normalize by dividing by initial quantity, then scale by current quantity
       const scaleFactor = foodQuantity / initialQuantity;
-      return {
+      console.log('📐 Scale factor:', scaleFactor);
+      const result = {
         calories: aggregated.calories * scaleFactor,
         protein: aggregated.protein * scaleFactor,
         fat: aggregated.fat * scaleFactor,
         carbs: aggregated.carbs * scaleFactor
       };
+      console.log('✅ Final result (with scaling):', result);
+      return result;
     }
 
+    console.log('❌ No nutrients found, returning nulls');
     return { calories: null, protein: null, fat: null, carbs: null };
   }
 
@@ -845,7 +881,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
             if ((selectedFood as any)?.providerFoodId && servingId && selectedServing) {
               // Use effectiveQuantity for both values - it's what the user sees/edited
-              const effectiveQuantity = (selectedServing as any).effectiveQuantity || 1;
+              // Follow established OR-chain pattern: use existing value OR calculate from AI fractions
+              const effectiveQuantity = (selectedServing as any).effectiveQuantity ||
+                ((selectedServing.baseQuantity || 1) *
+                 (selectedServing.aiRecommendedScaleNumerator || 1) /
+                 (selectedServing.aiRecommendedScaleDenominator || 1));
 
               // Get servingIdentifier from selected serving (now properly deserialized with toJSON method)
               const servingIdentifier = selectedServing.servingId;
@@ -907,7 +947,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
             if ((selectedFood as any)?.providerFoodId && servingId && selectedServing) {
               // Use effectiveQuantity for both values - it's what the user sees/edited
-              const effectiveQuantity = (selectedServing as any).effectiveQuantity || 1;
+              // Follow established OR-chain pattern: use existing value OR calculate from AI fractions
+              const effectiveQuantity = (selectedServing as any).effectiveQuantity ||
+                ((selectedServing.baseQuantity || 1) *
+                 (selectedServing.aiRecommendedScaleNumerator || 1) /
+                 (selectedServing.aiRecommendedScaleDenominator || 1));
 
               // Get servingIdentifier from selected serving (now properly deserialized with toJSON method)
               const servingIdentifier = selectedServing.servingId;
@@ -2458,7 +2502,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         }
         this.cdr.detectChanges();
 
-        // Auto-save the meal selection
+        // Auto-save state (like quick search) - user will click Confirm manually
         this.autoSaveMealSelection();
 
         // Clear search input after successful favorite add
@@ -2466,8 +2510,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
         // Restore the last used mode (keep it selected for next add)
         this.addFoodMode = this.lastNonBarcodeMode;
-
-        await this.showSuccessToast('Added from favorites');
       } else {
         // Remove temp food on error
         const tempIndex = this.computedFoods.indexOf(tempFoodDisplay);

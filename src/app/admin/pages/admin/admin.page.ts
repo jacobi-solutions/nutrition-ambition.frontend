@@ -257,14 +257,15 @@ export class AdminPage implements OnInit, OnDestroy {
     const alert = await this.alertController.create({
       header: 'Delete Account',
       message: `Are you sure you want to delete the account for "${account.email}"? This will permanently delete the account and all associated data including:
-      
+
       • All feedback entries
       • All chat messages
       • All food entries
+      • All food favorites
       • All daily targets
       • All user profiles
       • All daily summaries
-      
+
       This action cannot be undone.`,
       buttons: [
         {
@@ -307,14 +308,15 @@ export class AdminPage implements OnInit, OnDestroy {
     const alert = await this.alertController.create({
       header: 'Clear Account Data',
       message: `Are you sure you want to clear all data for "${account.email}"? This will permanently delete all associated data while keeping the account:
-      
+
       • All feedback entries
       • All chat messages
       • All food entries
+      • All food favorites
       • All daily targets
       • All user profiles
       • All daily summaries
-      
+
       The account itself will be preserved but reset to a clean state. This action cannot be undone.`,
       buttons: [
         {
@@ -399,7 +401,7 @@ export class AdminPage implements OnInit, OnDestroy {
 
   formatDataCountsBreakdown(dataCounts: any): { label: string, count: number, icon: string }[] {
     const breakdown = [];
-    
+
     if (dataCounts) {
       if (dataCounts.Feedback > 0) {
         breakdown.push({ label: 'Feedback Entries', count: dataCounts.Feedback, icon: 'chatbubbles-outline' });
@@ -413,6 +415,9 @@ export class AdminPage implements OnInit, OnDestroy {
       if (dataCounts.FoodEntries > 0) {
         breakdown.push({ label: 'Food Entries', count: dataCounts.FoodEntries, icon: 'restaurant-outline' });
       }
+      if (dataCounts.FoodFavorites > 0) {
+        breakdown.push({ label: 'Food Favorites', count: dataCounts.FoodFavorites, icon: 'star-outline' });
+      }
       if (dataCounts.UserProfiles > 0) {
         breakdown.push({ label: 'User Profiles', count: dataCounts.UserProfiles, icon: 'person-circle-outline' });
       }
@@ -420,7 +425,7 @@ export class AdminPage implements OnInit, OnDestroy {
         breakdown.push({ label: 'Daily Summaries', count: dataCounts.DailySummaries, icon: 'calendar-outline' });
       }
     }
-    
+
     return breakdown;
   }
 

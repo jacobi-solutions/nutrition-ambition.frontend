@@ -64,8 +64,8 @@ export class NutrientScalingUtil {
       nutrients[key] >= 0 // Must be non-negative
     );
 
-    // Need at least 3 nutrients to consider it meaningful data
-    return nutrientKeys.length > 3;
+    // Need at least 1 nutrient to consider it meaningful data (changed from > 3 to >= 1)
+    return nutrientKeys.length >= 1;
   }
 
   /**
