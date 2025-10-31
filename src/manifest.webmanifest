@@ -1,6 +1,6 @@
 {
-    "name": "Local Nutrition Ambition",
-    "short_name": "Local Nutrition",
+    "name": "Nutrition Ambition",
+    "short_name": "Nutrition",
     "description": "Track your nutrition and daily goals with ease.",
     "start_url": "/",
     "display": "standalone",
