@@ -701,10 +701,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   const mergedFoods = [...existingFoods];
 
                   // Merge or append each streaming food by foodId
-                  streamingFoods.forEach(streamingFood => {
+                  streamingFoods.forEach((streamingFood: any) => {
                     if (streamingFood.id) {
                       // Find existing food with same id
-                      const existingIndex = mergedFoods.findIndex(f => f.id === streamingFood.id);
+                      const existingIndex = mergedFoods.findIndex((f: any) => f.id === streamingFood.id);
                       if (existingIndex >= 0) {
                         // Replace existing food with streaming update
                         mergedFoods[existingIndex] = streamingFood;
