@@ -840,18 +840,22 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   private async confirmRegularSelections(): Promise<void> {
-    // Validate that all quick-added foods have been populated
-    const hasEmptyFoods = this.computedFoods.some(food =>
-      !food.components ||
-      food.components.length === 0 ||
-      !food.components[0].matches ||
-      food.components[0].matches.length === 0
+    // Filter out empty foods automatically (foods with no matches selected)
+    const validFoods = this.computedFoods.filter(food =>
+      food.components &&
+      food.components.length > 0 &&
+      food.components[0].matches &&
+      food.components[0].matches.length > 0
     );
 
-    if (hasEmptyFoods) {
-      await this.showErrorToast('Please complete or remove empty foods before submitting');
+    // If all foods are empty, show helpful message
+    if (validFoods.length === 0) {
+      await this.showErrorToast('Nothing to confirm... add some foods?');
       return;
     }
+
+    // Update computedFoods to only include valid foods
+    this.computedFoods = validFoods;
 
     const req = new SubmitServingSelectionRequest();
     req.pendingMessageId = this.message.id;
