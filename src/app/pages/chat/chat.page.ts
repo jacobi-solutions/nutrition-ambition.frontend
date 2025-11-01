@@ -690,12 +690,44 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
 
+                // Merge foods by foodId instead of replacing entire mealSelection
+                // This preserves user changes (like favorites) made during streaming
+                let mergedMealSelection = mealSelection;
+                if (existingMessage.mealSelection && mealSelection) {
+                  const existingFoods = existingMessage.mealSelection.foods || [];
+                  const streamingFoods = mealSelection.foods || [];
+
+                  // Start with existing foods
+                  const mergedFoods = [...existingFoods];
+
+                  // Merge or append each streaming food by foodId
+                  streamingFoods.forEach(streamingFood => {
+                    if (streamingFood.id) {
+                      // Find existing food with same id
+                      const existingIndex = mergedFoods.findIndex(f => f.id === streamingFood.id);
+                      if (existingIndex >= 0) {
+                        // Replace existing food with streaming update
+                        mergedFoods[existingIndex] = streamingFood;
+                      } else {
+                        // Append new food from streaming
+                        mergedFoods.push(streamingFood);
+                      }
+                    }
+                  });
+
+                  // Create merged mealSelection with updated foods array
+                  mergedMealSelection = {
+                    ...mealSelection,
+                    foods: mergedFoods
+                  };
+                }
+
                 updatedMessages[streamingMessageIndex] = {
                   ...existingMessage,
                   // Use the stable message ID from backend (already extracted above)
                   id: messageId || existingMessage.id,
                   text: content || '',
-                  mealSelection: mealSelection,
+                  mealSelection: mergedMealSelection,
                   mealName: mealSelection?.mealName,
                   mealSelectionIsPending: mealSelection?.isPending || false,
                   isStreaming: isPartial,
