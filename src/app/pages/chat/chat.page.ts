@@ -662,8 +662,13 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
               // Extract stable message ID from backend (generated at start of streaming)
               const messageId = (assistantMessage as any).Id || (assistantMessage as any).id;
 
+              // Check if message already exists by messageId (not by streamingMessageIndex)
+              const existingMessageIndex = messageId
+                ? this.messages.findIndex(m => m.id === messageId)
+                : -1;
+
               // Create or update the meal selection message
-              if (streamingMessageIndex === -1) {
+              if (existingMessageIndex === -1) {
                 // First chunk - create the message and scroll once
                 streamingMessageIndex = this.messages.length;
                 this.messages = [...this.messages, {
@@ -686,38 +691,54 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   this.hasScrolledForCurrentStream = true;
                 }
               } else {
+                // Update streamingMessageIndex to the existing message
+                streamingMessageIndex = existingMessageIndex;
                 // Subsequent chunks - update existing message (no auto-scroll)
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
 
-                // Merge foods by foodId instead of replacing entire mealSelection
-                // This preserves user changes (like favorites) made during streaming
+                // Merge foods by food.id instead of replacing entire mealSelection
+                // This preserves user-added foods (favorites, quick searches) during streaming
                 let mergedMealSelection = mealSelection;
                 if (existingMessage.mealSelection && mealSelection) {
                   const existingFoods = existingMessage.mealSelection.foods || [];
                   const streamingFoods = mealSelection.foods || [];
 
-                  // Start with existing foods
+                  console.log('🔄 ===== FOOD MERGE START =====');
+                  console.log(`📨 MessageId: ${messageId}`);
+                  console.log(`📦 Existing foods (${existingFoods.length}):`, existingFoods.map((f: any) => ({ name: f.name, id: f.id })));
+                  console.log(`📥 Streaming foods (${streamingFoods.length}):`, streamingFoods.map((f: any) => ({ name: f.name, id: f.id })));
+
+                  // Start with all existing foods
                   const mergedFoods = [...existingFoods];
 
-                  // Merge or append each streaming food by foodId
+                  // For each streaming food, either update existing or append new
                   streamingFoods.forEach((streamingFood: any) => {
+                    console.log(`\n🔍 Processing: "${streamingFood.name}" (id: ${streamingFood.id})`);
                     if (streamingFood.id) {
-                      // Find existing food with same id
                       const existingIndex = mergedFoods.findIndex((f: any) => f.id === streamingFood.id);
+                      console.log(`   Search result: ${existingIndex >= 0 ? `Found at index ${existingIndex}` : 'NOT FOUND'}`);
                       if (existingIndex >= 0) {
-                        // Replace existing food with streaming update
+                        // Update existing food (streaming update)
+                        console.log(`   ✅ UPDATING existing food at index ${existingIndex}`);
                         mergedFoods[existingIndex] = streamingFood;
                       } else {
-                        // Append new food from streaming
+                        // Append new food (user action during streaming)
+                        console.log(`   ➕ APPENDING as new food (will create duplicate if same food)`);
                         mergedFoods.push(streamingFood);
                       }
+                    } else {
+                      console.log(`   ⚠️ WARNING: Food has NO ID - skipping merge`);
                     }
                   });
 
-                  // Create merged mealSelection with updated foods array
+                  console.log(`\n📊 Final merged foods (${mergedFoods.length}):`, mergedFoods.map((f: any) => ({ name: f.name, id: f.id })));
+                  console.log('🔄 ===== FOOD MERGE END =====\n');
+
+                  // Preserve mealSelection.id for future multi-meal-selection support
                   mergedMealSelection = {
                     ...mealSelection,
+                    id: existingMessage.mealSelection.id || mealSelection.id,
                     foods: mergedFoods
                   };
                 }

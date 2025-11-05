@@ -2941,6 +2941,7 @@ export class AccountResponse implements IAccountResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     account?: Account;
 
     constructor(data?: IAccountResponse) {
@@ -2966,6 +2967,7 @@ export class AccountResponse implements IAccountResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.account = _data["account"] ? Account.fromJS(_data["account"]) : <any>undefined;
         }
     }
@@ -2991,6 +2993,7 @@ export class AccountResponse implements IAccountResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["account"] = this.account ? this.account.toJSON() : <any>undefined;
         return data;
     }
@@ -3005,6 +3008,7 @@ export interface IAccountResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     account?: Account;
 }
 
@@ -3351,6 +3355,7 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     messages?: ChatMessage[] | undefined;
 
     constructor(data?: IChatMessagesResponse) {
@@ -3376,6 +3381,7 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -3405,6 +3411,7 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -3423,6 +3430,7 @@ export interface IChatMessagesResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     messages?: ChatMessage[] | undefined;
 }
 
@@ -3475,6 +3483,7 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -3503,6 +3512,7 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.dataCleared = _data["dataCleared"];
             this.clearedAccountId = _data["clearedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -3537,6 +3547,7 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["dataCleared"] = this.dataCleared;
         data["clearedAccountId"] = this.clearedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -3560,6 +3571,7 @@ export interface IClearAccountDataResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -3619,6 +3631,7 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     feedbackEntry?: FeedbackEntry;
 
     constructor(data?: ICompleteFeedbackResponse) {
@@ -3644,6 +3657,7 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.feedbackEntry = _data["feedbackEntry"] ? FeedbackEntry.fromJS(_data["feedbackEntry"]) : <any>undefined;
         }
     }
@@ -3669,6 +3683,7 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["feedbackEntry"] = this.feedbackEntry ? this.feedbackEntry.toJSON() : <any>undefined;
         return data;
     }
@@ -3683,6 +3698,7 @@ export interface ICompleteFeedbackResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     feedbackEntry?: FeedbackEntry;
 }
 
@@ -4183,6 +4199,7 @@ export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFile
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -4212,6 +4229,7 @@ export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFile
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.openAiFileId = _data["openAiFileId"];
             this.openAiFileApiId = _data["openAiFileApiId"];
             this.vectorStoreId = _data["vectorStoreId"];
@@ -4241,6 +4259,7 @@ export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFile
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["openAiFileId"] = this.openAiFileId;
         data["openAiFileApiId"] = this.openAiFileApiId;
         data["vectorStoreId"] = this.vectorStoreId;
@@ -4259,6 +4278,7 @@ export interface IConfirmGuidelineFileUploadResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -4311,6 +4331,7 @@ export class CreateSharedMealResponse implements ICreateSharedMealResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     shareToken?: string | undefined;
     shareUrl?: string | undefined;
     preview?: MealPreview;
@@ -4339,6 +4360,7 @@ export class CreateSharedMealResponse implements ICreateSharedMealResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.shareToken = _data["shareToken"];
             this.shareUrl = _data["shareUrl"];
             this.preview = _data["preview"] ? MealPreview.fromJS(_data["preview"]) : <any>undefined;
@@ -4367,6 +4389,7 @@ export class CreateSharedMealResponse implements ICreateSharedMealResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["shareToken"] = this.shareToken;
         data["shareUrl"] = this.shareUrl;
         data["preview"] = this.preview ? this.preview.toJSON() : <any>undefined;
@@ -4384,6 +4407,7 @@ export interface ICreateSharedMealResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     shareToken?: string | undefined;
     shareUrl?: string | undefined;
     preview?: MealPreview;
@@ -4527,6 +4551,7 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -4555,6 +4580,7 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.accountDeleted = _data["accountDeleted"];
             this.deletedAccountId = _data["deletedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -4589,6 +4615,7 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["accountDeleted"] = this.accountDeleted;
         data["deletedAccountId"] = this.deletedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -4612,6 +4639,7 @@ export interface IDeleteAccountResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -4663,6 +4691,7 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     deleted?: boolean;
 
     constructor(data?: IDeleteFeedbackResponse) {
@@ -4688,6 +4717,7 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.deleted = _data["deleted"];
         }
     }
@@ -4713,6 +4743,7 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["deleted"] = this.deleted;
         return data;
     }
@@ -4727,6 +4758,7 @@ export interface IDeleteFeedbackResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     deleted?: boolean;
 }
 
@@ -4783,6 +4815,7 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
 
     constructor(data?: IDeleteFoodEntryResponse) {
         if (data) {
@@ -4807,6 +4840,7 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
         }
     }
 
@@ -4831,6 +4865,7 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         return data;
     }
 }
@@ -4844,6 +4879,7 @@ export interface IDeleteFoodEntryResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
 }
 
 export class DeleteGuidelineFileRequest implements IDeleteGuidelineFileRequest {
@@ -4891,6 +4927,7 @@ export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
 
     constructor(data?: IDeleteGuidelineFileResponse) {
         if (data) {
@@ -4915,6 +4952,7 @@ export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
         }
     }
 
@@ -4939,6 +4977,7 @@ export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         return data;
     }
 }
@@ -4952,6 +4991,7 @@ export interface IDeleteGuidelineFileResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
 }
 
 export class DirectLogMealRequest implements IDirectLogMealRequest {
@@ -5718,6 +5758,7 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -5744,6 +5785,7 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.accountId = _data["accountId"];
             if (_data["dataCounts"]) {
                 this.dataCounts = {} as any;
@@ -5776,6 +5818,7 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["accountId"] = this.accountId;
         if (this.dataCounts) {
             data["dataCounts"] = {};
@@ -5797,6 +5840,7 @@ export interface IGetAccountDataCountsResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -5841,6 +5885,7 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     accounts?: Account[] | undefined;
 
     constructor(data?: IGetAllAccountsResponse) {
@@ -5866,6 +5911,7 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             if (Array.isArray(_data["accounts"])) {
                 this.accounts = [] as any;
                 for (let item of _data["accounts"])
@@ -5895,6 +5941,7 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         if (Array.isArray(this.accounts)) {
             data["accounts"] = [];
             for (let item of this.accounts)
@@ -5913,6 +5960,7 @@ export interface IGetAllAccountsResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     accounts?: Account[] | undefined;
 }
 
@@ -5997,6 +6045,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     dailySummary?: DailySummary;
 
     constructor(data?: IGetDetailedSummaryResponse) {
@@ -6022,6 +6071,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.dailySummary = _data["dailySummary"] ? DailySummary.fromJS(_data["dailySummary"]) : <any>undefined;
         }
     }
@@ -6047,6 +6097,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["dailySummary"] = this.dailySummary ? this.dailySummary.toJSON() : <any>undefined;
         return data;
     }
@@ -6061,6 +6112,7 @@ export interface IGetDetailedSummaryResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     dailySummary?: DailySummary;
 }
 
@@ -6103,6 +6155,7 @@ export class GetFavoritesResponse implements IGetFavoritesResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     favorites?: FavoriteFoodDto[] | undefined;
 
     constructor(data?: IGetFavoritesResponse) {
@@ -6128,6 +6181,7 @@ export class GetFavoritesResponse implements IGetFavoritesResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             if (Array.isArray(_data["favorites"])) {
                 this.favorites = [] as any;
                 for (let item of _data["favorites"])
@@ -6157,6 +6211,7 @@ export class GetFavoritesResponse implements IGetFavoritesResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         if (Array.isArray(this.favorites)) {
             data["favorites"] = [];
             for (let item of this.favorites)
@@ -6175,6 +6230,7 @@ export interface IGetFavoritesResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     favorites?: FavoriteFoodDto[] | undefined;
 }
 
@@ -6239,6 +6295,7 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 
     constructor(data?: IGetFeedbackWithAccountInfoResponse) {
@@ -6264,6 +6321,7 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             if (Array.isArray(_data["feedbackWithAccounts"])) {
                 this.feedbackWithAccounts = [] as any;
                 for (let item of _data["feedbackWithAccounts"])
@@ -6293,6 +6351,7 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         if (Array.isArray(this.feedbackWithAccounts)) {
             data["feedbackWithAccounts"] = [];
             for (let item of this.feedbackWithAccounts)
@@ -6311,6 +6370,7 @@ export interface IGetFeedbackWithAccountInfoResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 }
 
@@ -6363,6 +6423,7 @@ export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploa
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     signedUrl?: string | undefined;
     objectName?: string | undefined;
     expiresAt?: Date | undefined;
@@ -6390,6 +6451,7 @@ export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploa
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.signedUrl = _data["signedUrl"];
             this.objectName = _data["objectName"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
@@ -6417,6 +6479,7 @@ export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploa
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["signedUrl"] = this.signedUrl;
         data["objectName"] = this.objectName;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
@@ -6433,6 +6496,7 @@ export interface IGetGuidelineFileUploadUrlResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     signedUrl?: string | undefined;
     objectName?: string | undefined;
     expiresAt?: Date | undefined;
@@ -6487,6 +6551,7 @@ export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrl
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     signedUrl?: string | undefined;
     expiresAt?: Date | undefined;
     fileName?: string | undefined;
@@ -6515,6 +6580,7 @@ export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrl
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.signedUrl = _data["signedUrl"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
             this.fileName = _data["fileName"];
@@ -6543,6 +6609,7 @@ export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrl
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["signedUrl"] = this.signedUrl;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
         data["fileName"] = this.fileName;
@@ -6560,6 +6627,7 @@ export interface IGetGuidelineFileViewUrlResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     signedUrl?: string | undefined;
     expiresAt?: Date | undefined;
     fileName?: string | undefined;
@@ -6605,6 +6673,7 @@ export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     files?: OpenAiFile[] | undefined;
 
     constructor(data?: IGetGuidelineFilesResponse) {
@@ -6630,6 +6699,7 @@ export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             if (Array.isArray(_data["files"])) {
                 this.files = [] as any;
                 for (let item of _data["files"])
@@ -6659,6 +6729,7 @@ export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         if (Array.isArray(this.files)) {
             data["files"] = [];
             for (let item of this.files)
@@ -6677,6 +6748,7 @@ export interface IGetGuidelineFilesResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     files?: OpenAiFile[] | undefined;
 }
 
@@ -6733,6 +6805,7 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
@@ -6761,6 +6834,7 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.originalPhrase = _data["originalPhrase"];
             this.componentId = _data["componentId"];
             if (Array.isArray(_data["alternatives"])) {
@@ -6793,6 +6867,7 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["originalPhrase"] = this.originalPhrase;
         data["componentId"] = this.componentId;
         if (Array.isArray(this.alternatives)) {
@@ -6814,6 +6889,7 @@ export interface IGetInstantAlternativesResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
@@ -6865,6 +6941,7 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     age?: number | undefined;
     sex?: string | undefined;
     heightFeet?: number | undefined;
@@ -6903,6 +6980,7 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.age = _data["age"];
             this.sex = _data["sex"];
             this.heightFeet = _data["heightFeet"];
@@ -6953,6 +7031,7 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["age"] = this.age;
         data["sex"] = this.sex;
         data["heightFeet"] = this.heightFeet;
@@ -6992,6 +7071,7 @@ export interface IGetProfileAndTargetsResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     age?: number | undefined;
     sex?: string | undefined;
     heightFeet?: number | undefined;
@@ -7057,6 +7137,7 @@ export class GetSharedMealResponse implements IGetSharedMealResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     mealData?: MealSelection;
     sharedByAccountId?: string | undefined;
     isExpired?: boolean;
@@ -7084,6 +7165,7 @@ export class GetSharedMealResponse implements IGetSharedMealResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.mealData = _data["mealData"] ? MealSelection.fromJS(_data["mealData"]) : <any>undefined;
             this.sharedByAccountId = _data["sharedByAccountId"];
             this.isExpired = _data["isExpired"];
@@ -7111,6 +7193,7 @@ export class GetSharedMealResponse implements IGetSharedMealResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["mealData"] = this.mealData ? this.mealData.toJSON() : <any>undefined;
         data["sharedByAccountId"] = this.sharedByAccountId;
         data["isExpired"] = this.isExpired;
@@ -7127,6 +7210,7 @@ export interface IGetSharedMealResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     mealData?: MealSelection;
     sharedByAccountId?: string | undefined;
     isExpired?: boolean;
@@ -7184,6 +7268,7 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -7210,6 +7295,7 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -7240,6 +7326,7 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -7259,6 +7346,7 @@ export interface IGetUserChatMessagesResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -7484,6 +7572,7 @@ export interface IMealPreview {
 }
 
 export class MealSelection implements IMealSelection {
+    id?: string | undefined;
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
     foods?: Food[] | undefined;
@@ -7504,6 +7593,7 @@ export class MealSelection implements IMealSelection {
 
     init(_data?: any) {
         if (_data) {
+            this.id = _data["id"];
             this.mealName = _data["mealName"];
             this.pendingMessageId = _data["pendingMessageId"];
             if (Array.isArray(_data["foods"])) {
@@ -7528,6 +7618,7 @@ export class MealSelection implements IMealSelection {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
         data["mealName"] = this.mealName;
         data["pendingMessageId"] = this.pendingMessageId;
         if (Array.isArray(this.foods)) {
@@ -7545,6 +7636,7 @@ export class MealSelection implements IMealSelection {
 }
 
 export interface IMealSelection {
+    id?: string | undefined;
     mealName?: string | undefined;
     pendingMessageId?: string | undefined;
     foods?: Food[] | undefined;
@@ -7904,6 +7996,7 @@ export class RelogFavoriteRequest implements IRelogFavoriteRequest {
     favoriteId?: string | undefined;
     localDateKey?: string | undefined;
     mealName?: string | undefined;
+    messageId?: string | undefined;
 
     constructor(data?: IRelogFavoriteRequest) {
         if (data) {
@@ -7919,6 +8012,7 @@ export class RelogFavoriteRequest implements IRelogFavoriteRequest {
             this.favoriteId = _data["favoriteId"];
             this.localDateKey = _data["localDateKey"];
             this.mealName = _data["mealName"];
+            this.messageId = _data["messageId"];
         }
     }
 
@@ -7934,6 +8028,7 @@ export class RelogFavoriteRequest implements IRelogFavoriteRequest {
         data["favoriteId"] = this.favoriteId;
         data["localDateKey"] = this.localDateKey;
         data["mealName"] = this.mealName;
+        data["messageId"] = this.messageId;
         return data;
     }
 }
@@ -7942,6 +8037,7 @@ export interface IRelogFavoriteRequest {
     favoriteId?: string | undefined;
     localDateKey?: string | undefined;
     mealName?: string | undefined;
+    messageId?: string | undefined;
 }
 
 export class RelogFavoriteResponse implements IRelogFavoriteResponse {
@@ -7953,6 +8049,7 @@ export class RelogFavoriteResponse implements IRelogFavoriteResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     food?: Food;
 
     constructor(data?: IRelogFavoriteResponse) {
@@ -7978,6 +8075,7 @@ export class RelogFavoriteResponse implements IRelogFavoriteResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.food = _data["food"] ? Food.fromJS(_data["food"]) : <any>undefined;
         }
     }
@@ -8003,6 +8101,7 @@ export class RelogFavoriteResponse implements IRelogFavoriteResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["food"] = this.food ? this.food.toJSON() : <any>undefined;
         return data;
     }
@@ -8017,6 +8116,7 @@ export interface IRelogFavoriteResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     food?: Food;
 }
 
@@ -8065,6 +8165,7 @@ export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
 
     constructor(data?: IRemoveFavoriteResponse) {
         if (data) {
@@ -8089,6 +8190,7 @@ export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
         }
     }
 
@@ -8113,6 +8215,7 @@ export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         return data;
     }
 }
@@ -8126,6 +8229,7 @@ export interface IRemoveFavoriteResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
 }
 
 export class Request implements IRequest {
@@ -8167,6 +8271,7 @@ export class Response implements IResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
 
     constructor(data?: IResponse) {
         if (data) {
@@ -8191,6 +8296,7 @@ export class Response implements IResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
         }
     }
 
@@ -8215,6 +8321,7 @@ export class Response implements IResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         return data;
     }
 }
@@ -8228,6 +8335,7 @@ export interface IResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
 }
 
 export class RunChatRequest implements IRunChatRequest {
@@ -8363,6 +8471,7 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 
@@ -8389,6 +8498,7 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.searchPhrase = _data["searchPhrase"];
             if (Array.isArray(_data["foodOptions"])) {
                 this.foodOptions = [] as any;
@@ -8419,6 +8529,7 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["searchPhrase"] = this.searchPhrase;
         if (Array.isArray(this.foodOptions)) {
             data["foodOptions"] = [];
@@ -8438,6 +8549,7 @@ export interface ISearchFoodPhraseResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 }
@@ -8515,6 +8627,7 @@ export class SearchLogsResponse implements ISearchLogsResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 
@@ -8541,6 +8654,7 @@ export class SearchLogsResponse implements ISearchLogsResponse {
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             if (Array.isArray(_data["items"])) {
                 this.items = [] as any;
                 for (let item of _data["items"])
@@ -8571,6 +8685,7 @@ export class SearchLogsResponse implements ISearchLogsResponse {
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         if (Array.isArray(this.items)) {
             data["items"] = [];
             for (let item of this.items)
@@ -8590,6 +8705,7 @@ export interface ISearchLogsResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 }
@@ -9018,6 +9134,7 @@ export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -9046,6 +9163,7 @@ export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse
             this.isPartial = _data["isPartial"];
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
             this.openAiFileId = _data["openAiFileId"];
             this.openAiFileApiId = _data["openAiFileApiId"];
             this.vectorStoreId = _data["vectorStoreId"];
@@ -9074,6 +9192,7 @@ export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse
         data["isPartial"] = this.isPartial;
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
         data["openAiFileId"] = this.openAiFileId;
         data["openAiFileApiId"] = this.openAiFileApiId;
         data["vectorStoreId"] = this.vectorStoreId;
@@ -9091,6 +9210,7 @@ export interface IUploadGuidelineFileResponse {
     isPartial?: boolean;
     processingStage?: string | undefined;
     messageId?: string | undefined;
+    foodId?: string | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
