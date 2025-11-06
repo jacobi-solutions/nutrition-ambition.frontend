@@ -704,36 +704,22 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   const existingFoods = existingMessage.mealSelection.foods || [];
                   const streamingFoods = mealSelection.foods || [];
 
-                  console.log('🔄 ===== FOOD MERGE START =====');
-                  console.log(`📨 MessageId: ${messageId}`);
-                  console.log(`📦 Existing foods (${existingFoods.length}):`, existingFoods.map((f: any) => ({ name: f.name, id: f.id })));
-                  console.log(`📥 Streaming foods (${streamingFoods.length}):`, streamingFoods.map((f: any) => ({ name: f.name, id: f.id })));
-
                   // Start with all existing foods
                   const mergedFoods = [...existingFoods];
 
                   // For each streaming food, either update existing or append new
                   streamingFoods.forEach((streamingFood: any) => {
-                    console.log(`\n🔍 Processing: "${streamingFood.name}" (id: ${streamingFood.id})`);
                     if (streamingFood.id) {
                       const existingIndex = mergedFoods.findIndex((f: any) => f.id === streamingFood.id);
-                      console.log(`   Search result: ${existingIndex >= 0 ? `Found at index ${existingIndex}` : 'NOT FOUND'}`);
                       if (existingIndex >= 0) {
                         // Update existing food (streaming update)
-                        console.log(`   ✅ UPDATING existing food at index ${existingIndex}`);
                         mergedFoods[existingIndex] = streamingFood;
                       } else {
                         // Append new food (user action during streaming)
-                        console.log(`   ➕ APPENDING as new food (will create duplicate if same food)`);
                         mergedFoods.push(streamingFood);
                       }
-                    } else {
-                      console.log(`   ⚠️ WARNING: Food has NO ID - skipping merge`);
                     }
                   });
-
-                  console.log(`\n📊 Final merged foods (${mergedFoods.length}):`, mergedFoods.map((f: any) => ({ name: f.name, id: f.id })));
-                  console.log('🔄 ===== FOOD MERGE END =====\n');
 
                   // Preserve mealSelection.id for future multi-meal-selection support
                   mergedMealSelection = {

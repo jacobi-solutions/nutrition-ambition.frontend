@@ -38,7 +38,8 @@ import {
   chevronUpOutline,
   chevronDownOutline,
   personAddOutline,
-  linkOutline
+  linkOutline,
+  syncOutline
 } from 'ionicons/icons';
 
 // Register all icons used in this component
@@ -65,7 +66,8 @@ addIcons({
   'chevron-up-outline': chevronUpOutline,
   'chevron-down-outline': chevronDownOutline,
   'person-add-outline': personAddOutline,
-  'link-outline': linkOutline
+  'link-outline': linkOutline,
+  'sync-outline': syncOutline
 });
 
 @Component({
@@ -117,7 +119,7 @@ export class AdminPage implements OnInit, OnDestroy {
   feedbackTypes = ['bug', 'feature', 'other'];
   
   // Current view
-  currentView: 'overview' | 'feedback' | 'accounts' | 'guidelines' = 'feedback';
+  currentView: 'overview' | 'feedback' | 'accounts' | 'guidelines' | 'migrations' = 'feedback';
 
   // Accounts management
   accounts: Account[] = [];
@@ -133,6 +135,10 @@ export class AdminPage implements OnInit, OnDestroy {
   isLoadingGuidelineFiles = false;
   isUploadingFile = false;
   uploadProgress = 0;
+
+  // Migrations management
+  isMigratingCanonicalUnits = false;
+  migrationResult: { migratedCount: number; errorCount: number } | null = null;
 
   constructor(
     private accountsService: AccountsService,
@@ -190,6 +196,8 @@ export class AdminPage implements OnInit, OnDestroy {
       await this.switchToAccounts();
     } else if (newView === 'guidelines') {
       await this.switchToGuidelines();
+    } else if (newView === 'migrations') {
+      await this.switchToMigrations();
     }
   }
 
@@ -218,6 +226,12 @@ export class AdminPage implements OnInit, OnDestroy {
   async switchToGuidelines() {
     this.currentView = 'guidelines';
     await this.loadGuidelineFiles();
+  }
+
+  async switchToMigrations() {
+    this.currentView = 'migrations';
+    // Reset migration result when switching to migrations view
+    this.migrationResult = null;
   }
 
   // Data loading
@@ -940,5 +954,53 @@ export class AdminPage implements OnInit, OnDestroy {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+
+  // Migrations Management
+
+  async migrateCanonicalUnits() {
+    const alert = await this.alertController.create({
+      header: 'Migrate Canonical Units',
+      message: `This will migrate all CanonicalServingUnit documents from ObjectId to string GUID format. This is a one-time migration to fix documents created before the ID generator was properly configured. Continue?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Run Migration',
+          handler: async () => {
+            try {
+              this.isMigratingCanonicalUnits = true;
+              this.migrationResult = null;
+
+              const response = await this.adminService.migrateCanonicalUnits();
+
+              if (response.isSuccess) {
+                this.migrationResult = {
+                  migratedCount: response.migratedCount || 0,
+                  errorCount: response.errorCount || 0
+                };
+
+                if (response.errorCount === 0) {
+                  await this.showToast(`Migration complete! ${response.migratedCount} documents migrated successfully.`, 'success');
+                } else {
+                  await this.showToast(`Migration complete with errors. ${response.migratedCount} migrated, ${response.errorCount} errors.`, 'warning');
+                }
+              } else {
+                const errorMessage = response.errors?.[0]?.errorMessage || 'Migration failed';
+                await this.showToast(errorMessage, 'danger');
+              }
+            } catch (error) {
+              await this.showToast('Error running migration', 'danger');
+            } finally {
+              this.isMigratingCanonicalUnits = false;
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
   }
 }

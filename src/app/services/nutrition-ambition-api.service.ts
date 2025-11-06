@@ -110,6 +110,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    migrateCanonicalUnits(body: MigrateCanonicalUnitsRequest | undefined): Observable<MigrateCanonicalUnitsResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
@@ -1268,6 +1273,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<GetGuidelineFileViewUrlResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    migrateCanonicalUnits(body: MigrateCanonicalUnitsRequest | undefined): Observable<MigrateCanonicalUnitsResponse> {
+        let url_ = this.baseUrl + "/api/Admin/MigrateCanonicalUnits";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMigrateCanonicalUnits(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMigrateCanonicalUnits(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<MigrateCanonicalUnitsResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<MigrateCanonicalUnitsResponse>;
+        }));
+    }
+
+    protected processMigrateCanonicalUnits(response: HttpResponseBase): Observable<MigrateCanonicalUnitsResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MigrateCanonicalUnitsResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<MigrateCanonicalUnitsResponse>(null as any);
     }
 
     /**
@@ -2942,6 +3003,7 @@ export class AccountResponse implements IAccountResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     account?: Account;
 
     constructor(data?: IAccountResponse) {
@@ -2968,6 +3030,7 @@ export class AccountResponse implements IAccountResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.account = _data["account"] ? Account.fromJS(_data["account"]) : <any>undefined;
         }
     }
@@ -2994,6 +3057,7 @@ export class AccountResponse implements IAccountResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["account"] = this.account ? this.account.toJSON() : <any>undefined;
         return data;
     }
@@ -3009,6 +3073,7 @@ export interface IAccountResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     account?: Account;
 }
 
@@ -3230,6 +3295,8 @@ export class ChatMessage implements IChatMessage {
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
+    pendingMealSelectionId?: string | undefined;
+    mealSelectionSummary?: MealSelectionSummary;
     mealSelections?: MealSelection[] | undefined;
     retryCount?: number;
     modelUsed?: string | undefined;
@@ -3267,6 +3334,8 @@ export class ChatMessage implements IChatMessage {
             this.responseId = _data["responseId"];
             this.assistantMode = _data["assistantMode"];
             this.assistantPhase = _data["assistantPhase"];
+            this.pendingMealSelectionId = _data["pendingMealSelectionId"];
+            this.mealSelectionSummary = _data["mealSelectionSummary"] ? MealSelectionSummary.fromJS(_data["mealSelectionSummary"]) : <any>undefined;
             if (Array.isArray(_data["mealSelections"])) {
                 this.mealSelections = [] as any;
                 for (let item of _data["mealSelections"])
@@ -3308,6 +3377,8 @@ export class ChatMessage implements IChatMessage {
         data["responseId"] = this.responseId;
         data["assistantMode"] = this.assistantMode;
         data["assistantPhase"] = this.assistantPhase;
+        data["pendingMealSelectionId"] = this.pendingMealSelectionId;
+        data["mealSelectionSummary"] = this.mealSelectionSummary ? this.mealSelectionSummary.toJSON() : <any>undefined;
         if (Array.isArray(this.mealSelections)) {
             data["mealSelections"] = [];
             for (let item of this.mealSelections)
@@ -3338,6 +3409,8 @@ export interface IChatMessage {
     responseId?: string | undefined;
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
+    pendingMealSelectionId?: string | undefined;
+    mealSelectionSummary?: MealSelectionSummary;
     mealSelections?: MealSelection[] | undefined;
     retryCount?: number;
     modelUsed?: string | undefined;
@@ -3356,6 +3429,7 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     messages?: ChatMessage[] | undefined;
 
     constructor(data?: IChatMessagesResponse) {
@@ -3382,6 +3456,7 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -3412,6 +3487,7 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -3431,6 +3507,7 @@ export interface IChatMessagesResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     messages?: ChatMessage[] | undefined;
 }
 
@@ -3484,6 +3561,7 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -3513,6 +3591,7 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.dataCleared = _data["dataCleared"];
             this.clearedAccountId = _data["clearedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -3548,6 +3627,7 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["dataCleared"] = this.dataCleared;
         data["clearedAccountId"] = this.clearedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -3572,6 +3652,7 @@ export interface IClearAccountDataResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -3632,6 +3713,7 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     feedbackEntry?: FeedbackEntry;
 
     constructor(data?: ICompleteFeedbackResponse) {
@@ -3658,6 +3740,7 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.feedbackEntry = _data["feedbackEntry"] ? FeedbackEntry.fromJS(_data["feedbackEntry"]) : <any>undefined;
         }
     }
@@ -3684,6 +3767,7 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["feedbackEntry"] = this.feedbackEntry ? this.feedbackEntry.toJSON() : <any>undefined;
         return data;
     }
@@ -3699,6 +3783,7 @@ export interface ICompleteFeedbackResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     feedbackEntry?: FeedbackEntry;
 }
 
@@ -4200,6 +4285,7 @@ export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFile
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -4230,6 +4316,7 @@ export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFile
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.openAiFileId = _data["openAiFileId"];
             this.openAiFileApiId = _data["openAiFileApiId"];
             this.vectorStoreId = _data["vectorStoreId"];
@@ -4260,6 +4347,7 @@ export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFile
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["openAiFileId"] = this.openAiFileId;
         data["openAiFileApiId"] = this.openAiFileApiId;
         data["vectorStoreId"] = this.vectorStoreId;
@@ -4279,6 +4367,7 @@ export interface IConfirmGuidelineFileUploadResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -4332,6 +4421,7 @@ export class CreateSharedMealResponse implements ICreateSharedMealResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     shareToken?: string | undefined;
     shareUrl?: string | undefined;
     preview?: MealPreview;
@@ -4361,6 +4451,7 @@ export class CreateSharedMealResponse implements ICreateSharedMealResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.shareToken = _data["shareToken"];
             this.shareUrl = _data["shareUrl"];
             this.preview = _data["preview"] ? MealPreview.fromJS(_data["preview"]) : <any>undefined;
@@ -4390,6 +4481,7 @@ export class CreateSharedMealResponse implements ICreateSharedMealResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["shareToken"] = this.shareToken;
         data["shareUrl"] = this.shareUrl;
         data["preview"] = this.preview ? this.preview.toJSON() : <any>undefined;
@@ -4408,6 +4500,7 @@ export interface ICreateSharedMealResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     shareToken?: string | undefined;
     shareUrl?: string | undefined;
     preview?: MealPreview;
@@ -4552,6 +4645,7 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -4581,6 +4675,7 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.accountDeleted = _data["accountDeleted"];
             this.deletedAccountId = _data["deletedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -4616,6 +4711,7 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["accountDeleted"] = this.accountDeleted;
         data["deletedAccountId"] = this.deletedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -4640,6 +4736,7 @@ export interface IDeleteAccountResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -4692,6 +4789,7 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     deleted?: boolean;
 
     constructor(data?: IDeleteFeedbackResponse) {
@@ -4718,6 +4816,7 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.deleted = _data["deleted"];
         }
     }
@@ -4744,6 +4843,7 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["deleted"] = this.deleted;
         return data;
     }
@@ -4759,6 +4859,7 @@ export interface IDeleteFeedbackResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     deleted?: boolean;
 }
 
@@ -4816,6 +4917,7 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
 
     constructor(data?: IDeleteFoodEntryResponse) {
         if (data) {
@@ -4841,6 +4943,7 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
         }
     }
 
@@ -4866,6 +4969,7 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         return data;
     }
 }
@@ -4880,6 +4984,7 @@ export interface IDeleteFoodEntryResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
 }
 
 export class DeleteGuidelineFileRequest implements IDeleteGuidelineFileRequest {
@@ -4928,6 +5033,7 @@ export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
 
     constructor(data?: IDeleteGuidelineFileResponse) {
         if (data) {
@@ -4953,6 +5059,7 @@ export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
         }
     }
 
@@ -4978,6 +5085,7 @@ export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         return data;
     }
 }
@@ -4992,6 +5100,7 @@ export interface IDeleteGuidelineFileResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
 }
 
 export class DirectLogMealRequest implements IDirectLogMealRequest {
@@ -5759,6 +5868,7 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -5786,6 +5896,7 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.accountId = _data["accountId"];
             if (_data["dataCounts"]) {
                 this.dataCounts = {} as any;
@@ -5819,6 +5930,7 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["accountId"] = this.accountId;
         if (this.dataCounts) {
             data["dataCounts"] = {};
@@ -5841,6 +5953,7 @@ export interface IGetAccountDataCountsResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -5886,6 +5999,7 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     accounts?: Account[] | undefined;
 
     constructor(data?: IGetAllAccountsResponse) {
@@ -5912,6 +6026,7 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             if (Array.isArray(_data["accounts"])) {
                 this.accounts = [] as any;
                 for (let item of _data["accounts"])
@@ -5942,6 +6057,7 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         if (Array.isArray(this.accounts)) {
             data["accounts"] = [];
             for (let item of this.accounts)
@@ -5961,6 +6077,7 @@ export interface IGetAllAccountsResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     accounts?: Account[] | undefined;
 }
 
@@ -6046,6 +6163,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     dailySummary?: DailySummary;
 
     constructor(data?: IGetDetailedSummaryResponse) {
@@ -6072,6 +6190,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.dailySummary = _data["dailySummary"] ? DailySummary.fromJS(_data["dailySummary"]) : <any>undefined;
         }
     }
@@ -6098,6 +6217,7 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["dailySummary"] = this.dailySummary ? this.dailySummary.toJSON() : <any>undefined;
         return data;
     }
@@ -6113,6 +6233,7 @@ export interface IGetDetailedSummaryResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     dailySummary?: DailySummary;
 }
 
@@ -6156,6 +6277,7 @@ export class GetFavoritesResponse implements IGetFavoritesResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     favorites?: FavoriteFoodDto[] | undefined;
 
     constructor(data?: IGetFavoritesResponse) {
@@ -6182,6 +6304,7 @@ export class GetFavoritesResponse implements IGetFavoritesResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             if (Array.isArray(_data["favorites"])) {
                 this.favorites = [] as any;
                 for (let item of _data["favorites"])
@@ -6212,6 +6335,7 @@ export class GetFavoritesResponse implements IGetFavoritesResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         if (Array.isArray(this.favorites)) {
             data["favorites"] = [];
             for (let item of this.favorites)
@@ -6231,6 +6355,7 @@ export interface IGetFavoritesResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     favorites?: FavoriteFoodDto[] | undefined;
 }
 
@@ -6296,6 +6421,7 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 
     constructor(data?: IGetFeedbackWithAccountInfoResponse) {
@@ -6322,6 +6448,7 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             if (Array.isArray(_data["feedbackWithAccounts"])) {
                 this.feedbackWithAccounts = [] as any;
                 for (let item of _data["feedbackWithAccounts"])
@@ -6352,6 +6479,7 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         if (Array.isArray(this.feedbackWithAccounts)) {
             data["feedbackWithAccounts"] = [];
             for (let item of this.feedbackWithAccounts)
@@ -6371,6 +6499,7 @@ export interface IGetFeedbackWithAccountInfoResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 }
 
@@ -6424,6 +6553,7 @@ export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploa
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     signedUrl?: string | undefined;
     objectName?: string | undefined;
     expiresAt?: Date | undefined;
@@ -6452,6 +6582,7 @@ export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploa
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.signedUrl = _data["signedUrl"];
             this.objectName = _data["objectName"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
@@ -6480,6 +6611,7 @@ export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploa
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["signedUrl"] = this.signedUrl;
         data["objectName"] = this.objectName;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
@@ -6497,6 +6629,7 @@ export interface IGetGuidelineFileUploadUrlResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     signedUrl?: string | undefined;
     objectName?: string | undefined;
     expiresAt?: Date | undefined;
@@ -6552,6 +6685,7 @@ export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrl
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     signedUrl?: string | undefined;
     expiresAt?: Date | undefined;
     fileName?: string | undefined;
@@ -6581,6 +6715,7 @@ export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrl
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.signedUrl = _data["signedUrl"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
             this.fileName = _data["fileName"];
@@ -6610,6 +6745,7 @@ export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrl
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["signedUrl"] = this.signedUrl;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
         data["fileName"] = this.fileName;
@@ -6628,6 +6764,7 @@ export interface IGetGuidelineFileViewUrlResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     signedUrl?: string | undefined;
     expiresAt?: Date | undefined;
     fileName?: string | undefined;
@@ -6674,6 +6811,7 @@ export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     files?: OpenAiFile[] | undefined;
 
     constructor(data?: IGetGuidelineFilesResponse) {
@@ -6700,6 +6838,7 @@ export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             if (Array.isArray(_data["files"])) {
                 this.files = [] as any;
                 for (let item of _data["files"])
@@ -6730,6 +6869,7 @@ export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         if (Array.isArray(this.files)) {
             data["files"] = [];
             for (let item of this.files)
@@ -6749,6 +6889,7 @@ export interface IGetGuidelineFilesResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     files?: OpenAiFile[] | undefined;
 }
 
@@ -6806,6 +6947,7 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
@@ -6835,6 +6977,7 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.originalPhrase = _data["originalPhrase"];
             this.componentId = _data["componentId"];
             if (Array.isArray(_data["alternatives"])) {
@@ -6868,6 +7011,7 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["originalPhrase"] = this.originalPhrase;
         data["componentId"] = this.componentId;
         if (Array.isArray(this.alternatives)) {
@@ -6890,6 +7034,7 @@ export interface IGetInstantAlternativesResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
@@ -6942,6 +7087,7 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     age?: number | undefined;
     sex?: string | undefined;
     heightFeet?: number | undefined;
@@ -6981,6 +7127,7 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.age = _data["age"];
             this.sex = _data["sex"];
             this.heightFeet = _data["heightFeet"];
@@ -7032,6 +7179,7 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["age"] = this.age;
         data["sex"] = this.sex;
         data["heightFeet"] = this.heightFeet;
@@ -7072,6 +7220,7 @@ export interface IGetProfileAndTargetsResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     age?: number | undefined;
     sex?: string | undefined;
     heightFeet?: number | undefined;
@@ -7138,6 +7287,7 @@ export class GetSharedMealResponse implements IGetSharedMealResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     mealData?: MealSelection;
     sharedByAccountId?: string | undefined;
     isExpired?: boolean;
@@ -7166,6 +7316,7 @@ export class GetSharedMealResponse implements IGetSharedMealResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.mealData = _data["mealData"] ? MealSelection.fromJS(_data["mealData"]) : <any>undefined;
             this.sharedByAccountId = _data["sharedByAccountId"];
             this.isExpired = _data["isExpired"];
@@ -7194,6 +7345,7 @@ export class GetSharedMealResponse implements IGetSharedMealResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["mealData"] = this.mealData ? this.mealData.toJSON() : <any>undefined;
         data["sharedByAccountId"] = this.sharedByAccountId;
         data["isExpired"] = this.isExpired;
@@ -7211,6 +7363,7 @@ export interface IGetSharedMealResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     mealData?: MealSelection;
     sharedByAccountId?: string | undefined;
     isExpired?: boolean;
@@ -7269,6 +7422,7 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -7296,6 +7450,7 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -7327,6 +7482,7 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -7347,6 +7503,7 @@ export interface IGetUserChatMessagesResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -7573,14 +7730,19 @@ export interface IMealPreview {
 
 export class MealSelection implements IMealSelection {
     id?: string | undefined;
-    mealName?: string | undefined;
+    createdDateUtc?: Date;
+    lastUpdatedDateUtc?: Date;
+    accountId?: string | undefined;
     pendingMessageId?: string | undefined;
+    mealName?: string | undefined;
+    localDateKey?: string | undefined;
     foods?: Food[] | undefined;
+    isConfirmed?: boolean;
     foodEntryId?: string | undefined;
-    foodId?: string | undefined;
-    componentId?: string | undefined;
     sharedById?: string | undefined;
     isPending?: boolean;
+    foodId?: string | undefined;
+    componentId?: string | undefined;
 
     constructor(data?: IMealSelection) {
         if (data) {
@@ -7594,18 +7756,23 @@ export class MealSelection implements IMealSelection {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
-            this.mealName = _data["mealName"];
+            this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
+            this.lastUpdatedDateUtc = _data["lastUpdatedDateUtc"] ? new Date(_data["lastUpdatedDateUtc"].toString()) : <any>undefined;
+            this.accountId = _data["accountId"];
             this.pendingMessageId = _data["pendingMessageId"];
+            this.mealName = _data["mealName"];
+            this.localDateKey = _data["localDateKey"];
             if (Array.isArray(_data["foods"])) {
                 this.foods = [] as any;
                 for (let item of _data["foods"])
                     this.foods!.push(Food.fromJS(item));
             }
+            this.isConfirmed = _data["isConfirmed"];
             this.foodEntryId = _data["foodEntryId"];
-            this.foodId = _data["foodId"];
-            this.componentId = _data["componentId"];
             this.sharedById = _data["sharedById"];
             this.isPending = _data["isPending"];
+            this.foodId = _data["foodId"];
+            this.componentId = _data["componentId"];
         }
     }
 
@@ -7619,31 +7786,93 @@ export class MealSelection implements IMealSelection {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
-        data["mealName"] = this.mealName;
+        data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
+        data["lastUpdatedDateUtc"] = this.lastUpdatedDateUtc ? this.lastUpdatedDateUtc.toISOString() : <any>undefined;
+        data["accountId"] = this.accountId;
         data["pendingMessageId"] = this.pendingMessageId;
+        data["mealName"] = this.mealName;
+        data["localDateKey"] = this.localDateKey;
         if (Array.isArray(this.foods)) {
             data["foods"] = [];
             for (let item of this.foods)
                 data["foods"].push(item.toJSON());
         }
+        data["isConfirmed"] = this.isConfirmed;
         data["foodEntryId"] = this.foodEntryId;
-        data["foodId"] = this.foodId;
-        data["componentId"] = this.componentId;
         data["sharedById"] = this.sharedById;
         data["isPending"] = this.isPending;
+        data["foodId"] = this.foodId;
+        data["componentId"] = this.componentId;
         return data;
     }
 }
 
 export interface IMealSelection {
     id?: string | undefined;
-    mealName?: string | undefined;
+    createdDateUtc?: Date;
+    lastUpdatedDateUtc?: Date;
+    accountId?: string | undefined;
     pendingMessageId?: string | undefined;
+    mealName?: string | undefined;
+    localDateKey?: string | undefined;
     foods?: Food[] | undefined;
+    isConfirmed?: boolean;
     foodEntryId?: string | undefined;
+    sharedById?: string | undefined;
+    isPending?: boolean;
     foodId?: string | undefined;
     componentId?: string | undefined;
-    sharedById?: string | undefined;
+}
+
+export class MealSelectionSummary implements IMealSelectionSummary {
+    id?: string | undefined;
+    mealName?: string | undefined;
+    foodEntryId?: string | undefined;
+    foodCount?: number;
+    isPending?: boolean;
+
+    constructor(data?: IMealSelectionSummary) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.mealName = _data["mealName"];
+            this.foodEntryId = _data["foodEntryId"];
+            this.foodCount = _data["foodCount"];
+            this.isPending = _data["isPending"];
+        }
+    }
+
+    static fromJS(data: any): MealSelectionSummary {
+        data = typeof data === 'object' ? data : {};
+        let result = new MealSelectionSummary();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["mealName"] = this.mealName;
+        data["foodEntryId"] = this.foodEntryId;
+        data["foodCount"] = this.foodCount;
+        data["isPending"] = this.isPending;
+        return data;
+    }
+}
+
+export interface IMealSelectionSummary {
+    id?: string | undefined;
+    mealName?: string | undefined;
+    foodEntryId?: string | undefined;
+    foodCount?: number;
     isPending?: boolean;
 }
 
@@ -7666,6 +7895,124 @@ export enum MessageRoleTypes {
     CanceledFoodSelection = "CanceledFoodSelection",
     PendingEditFoodSelection = "PendingEditFoodSelection",
     CompletedEditFoodSelection = "CompletedEditFoodSelection",
+}
+
+export class MigrateCanonicalUnitsRequest implements IMigrateCanonicalUnitsRequest {
+
+    constructor(data?: IMigrateCanonicalUnitsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): MigrateCanonicalUnitsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new MigrateCanonicalUnitsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+export interface IMigrateCanonicalUnitsRequest {
+}
+
+export class MigrateCanonicalUnitsResponse implements IMigrateCanonicalUnitsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    migratedCount?: number;
+    errorCount?: number;
+
+    constructor(data?: IMigrateCanonicalUnitsResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.migratedCount = _data["migratedCount"];
+            this.errorCount = _data["errorCount"];
+        }
+    }
+
+    static fromJS(data: any): MigrateCanonicalUnitsResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new MigrateCanonicalUnitsResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["migratedCount"] = this.migratedCount;
+        data["errorCount"] = this.errorCount;
+        return data;
+    }
+}
+
+export interface IMigrateCanonicalUnitsResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    migratedCount?: number;
+    errorCount?: number;
 }
 
 export class NutrientBreakdown implements INutrientBreakdown {
@@ -8050,6 +8397,7 @@ export class RelogFavoriteResponse implements IRelogFavoriteResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     food?: Food;
 
     constructor(data?: IRelogFavoriteResponse) {
@@ -8076,6 +8424,7 @@ export class RelogFavoriteResponse implements IRelogFavoriteResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.food = _data["food"] ? Food.fromJS(_data["food"]) : <any>undefined;
         }
     }
@@ -8102,6 +8451,7 @@ export class RelogFavoriteResponse implements IRelogFavoriteResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["food"] = this.food ? this.food.toJSON() : <any>undefined;
         return data;
     }
@@ -8117,6 +8467,7 @@ export interface IRelogFavoriteResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     food?: Food;
 }
 
@@ -8166,6 +8517,7 @@ export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
 
     constructor(data?: IRemoveFavoriteResponse) {
         if (data) {
@@ -8191,6 +8543,7 @@ export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
         }
     }
 
@@ -8216,6 +8569,7 @@ export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         return data;
     }
 }
@@ -8230,6 +8584,7 @@ export interface IRemoveFavoriteResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
 }
 
 export class Request implements IRequest {
@@ -8272,6 +8627,7 @@ export class Response implements IResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
 
     constructor(data?: IResponse) {
         if (data) {
@@ -8297,6 +8653,7 @@ export class Response implements IResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
         }
     }
 
@@ -8322,6 +8679,7 @@ export class Response implements IResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         return data;
     }
 }
@@ -8336,6 +8694,7 @@ export interface IResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
 }
 
 export class RunChatRequest implements IRunChatRequest {
@@ -8472,6 +8831,7 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 
@@ -8499,6 +8859,7 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.searchPhrase = _data["searchPhrase"];
             if (Array.isArray(_data["foodOptions"])) {
                 this.foodOptions = [] as any;
@@ -8530,6 +8891,7 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["searchPhrase"] = this.searchPhrase;
         if (Array.isArray(this.foodOptions)) {
             data["foodOptions"] = [];
@@ -8550,6 +8912,7 @@ export interface ISearchFoodPhraseResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 }
@@ -8628,6 +8991,7 @@ export class SearchLogsResponse implements ISearchLogsResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 
@@ -8655,6 +9019,7 @@ export class SearchLogsResponse implements ISearchLogsResponse {
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             if (Array.isArray(_data["items"])) {
                 this.items = [] as any;
                 for (let item of _data["items"])
@@ -8686,6 +9051,7 @@ export class SearchLogsResponse implements ISearchLogsResponse {
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         if (Array.isArray(this.items)) {
             data["items"] = [];
             for (let item of this.items)
@@ -8706,6 +9072,7 @@ export interface ISearchLogsResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 }
@@ -9135,6 +9502,7 @@ export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -9164,6 +9532,7 @@ export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse
             this.processingStage = _data["processingStage"];
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
             this.openAiFileId = _data["openAiFileId"];
             this.openAiFileApiId = _data["openAiFileApiId"];
             this.vectorStoreId = _data["vectorStoreId"];
@@ -9193,6 +9562,7 @@ export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse
         data["processingStage"] = this.processingStage;
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
         data["openAiFileId"] = this.openAiFileId;
         data["openAiFileApiId"] = this.openAiFileApiId;
         data["vectorStoreId"] = this.vectorStoreId;
@@ -9211,6 +9581,7 @@ export interface IUploadGuidelineFileResponse {
     processingStage?: string | undefined;
     messageId?: string | undefined;
     foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;

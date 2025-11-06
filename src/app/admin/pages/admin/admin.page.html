@@ -59,6 +59,14 @@
             {{ guidelineFiles.length }}
           </ion-badge>
         </button>
+
+        <button
+          class="nav-item"
+          [class.active]="currentView === 'migrations'"
+          (click)="currentView = 'migrations'; switchToMigrations()">
+          <ion-icon name="sync-outline"></ion-icon>
+          <span>Migrations</span>
+        </button>
       </div>
 
       <!-- Mobile Navigation (fallback) -->
@@ -79,6 +87,10 @@
         <ion-segment-button value="guidelines">
           <ion-label>Guidelines</ion-label>
           <ion-icon name="document-outline"></ion-icon>
+        </ion-segment-button>
+        <ion-segment-button value="migrations">
+          <ion-label>Migrations</ion-label>
+          <ion-icon name="sync-outline"></ion-icon>
         </ion-segment-button>
       </ion-segment>
     </div>
@@ -606,6 +618,68 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Migrations View -->
+      <div *ngIf="currentView === 'migrations'" class="migrations-content">
+        <div class="page-header">
+          <h1>Database Migrations</h1>
+          <p>Run database migrations and data fixes</p>
+        </div>
+
+        <div class="migration-section">
+          <div class="migration-card">
+            <div class="migration-header">
+              <div class="migration-icon">
+                <ion-icon name="sync-outline"></ion-icon>
+              </div>
+              <div>
+                <h3>Migrate Canonical Units to String IDs</h3>
+                <p class="migration-description">
+                  Migrates all CanonicalServingUnit documents from ObjectId format to string GUID format.
+                  This is a one-time migration to fix documents created before the ID generator was properly configured.
+                </p>
+              </div>
+            </div>
+
+            <div class="migration-actions">
+              <ion-button
+                color="primary"
+                (click)="migrateCanonicalUnits()"
+                [disabled]="isMigratingCanonicalUnits">
+                <ion-icon name="sync-outline" slot="start"></ion-icon>
+                {{ isMigratingCanonicalUnits ? 'Migrating...' : 'Run Migration' }}
+              </ion-button>
+            </div>
+
+            <div *ngIf="isMigratingCanonicalUnits" class="migration-progress">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Migration in progress...</p>
+            </div>
+
+            <div *ngIf="migrationResult" class="migration-result">
+              <div class="result-header">
+                <ion-icon
+                  [name]="migrationResult.errorCount === 0 ? 'checkmark-circle-outline' : 'warning-outline'"
+                  [color]="migrationResult.errorCount === 0 ? 'success' : 'warning'">
+                </ion-icon>
+                <h4>Migration Complete</h4>
+              </div>
+              <div class="result-stats">
+                <div class="stat-item">
+                  <span class="stat-label">Documents Migrated:</span>
+                  <span class="stat-value success">{{ migrationResult.migratedCount }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Errors:</span>
+                  <span class="stat-value" [class.danger]="migrationResult.errorCount > 0">
+                    {{ migrationResult.errorCount }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -600,7 +600,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               matches: updatedMatches,
               selectedComponentId: hydratedMatch.providerFoodId || currentComponent.selectedComponentId,
               isSearching: false, // Clear loading state
-              isHydratingAlternateSelection: false
+              isHydratingAlternateSelection: false,
+              isPending: false // Clear pending state after successful hydration
             });
 
             // Update only the specific component while preserving the rest of the food
@@ -643,8 +644,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           this.cdr.detectChanges();
         }
 
-        console.log(`✅ Hydration SUCCESS for component ${componentId}`);
-
         // Auto-save the updated meal selection after successful hydration
         this.autoSaveMealSelection();
 
@@ -654,7 +653,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         // Restore the last used mode (keep it selected for next add)
         this.addFoodMode = this.lastNonBarcodeMode;
       } else {
-        console.log(`❌ Hydration FAILED for component ${componentId} - response not successful`);
         // Clear loading state on error
         this.onComponentChanged(foodIndex, componentId, {
           isSearching: false,
@@ -1408,137 +1406,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     });
   }
 
-  async onEditPhrase(componentId: string): Promise<void> {
-    const food = this.getSelectedFood(componentId);
-    if (!food) return;
-
-    const missingInfo = this.getMissingInformation(food);
-    const component = this.findComponentById(componentId);
-    const originalText = this.getComponentDisplayName(componentId);
-    const suggestionMessage = this.generateSuggestionMessage(originalText, missingInfo);
-    
-    // Show suggestion as a positioned tooltip above the phrase input
-    this.showSuggestionTooltip(componentId, suggestionMessage);
-  }
-
-  private showSuggestionTooltip(componentId: string, message: string): void {
-    // Remove any existing tooltip
-    this.removeSuggestionTooltip();
-    
-    // Find the specific component container using the data attribute
-    const componentContainer = document.querySelector(`[data-component-id="${componentId}"]`) as HTMLElement;
-    if (!componentContainer) {
-      return;
-    }
-    
-    // Look for textarea first (edit mode), then phrase text (display mode)
-    let targetElement = componentContainer.querySelector('textarea.phrase-input') as HTMLElement;
-    if (!targetElement) {
-      targetElement = componentContainer.querySelector('.phrase-text') as HTMLElement;
-    }
-    
-    if (!targetElement) {
-      return;
-    }
-    
-    // Create tooltip element
-    const tooltip = document.createElement('div');
-    tooltip.className = 'suggestion-tooltip';
-    
-    // Make keywords bold in the message
-    const boldMessage = this.makeSuggestionKeywordsBold(message);
-    
-    tooltip.innerHTML = `
-      <div class="tooltip-content">
-        <p>${boldMessage}</p>
-        <button class="tooltip-close" onmousedown="event.preventDefault(); this.parentElement.parentElement.remove();">Got it</button>
-      </div>
-    `;
-    
-    // Position tooltip above the target element
-    const rect = targetElement.getBoundingClientRect();
-    tooltip.style.position = 'fixed';
-    tooltip.style.left = `${rect.left}px`;
-    tooltip.style.top = `${rect.top - 10}px`;
-    tooltip.style.transform = 'translateY(-100%)';
-    tooltip.style.zIndex = '10000';
-    
-    // Add to document
-    document.body.appendChild(tooltip);
-    
-    // Auto-remove after 8 seconds
-    setTimeout(() => {
-      this.removeSuggestionTooltip();
-    }, 4000);
-  }
-  
-  private removeSuggestionTooltip(): void {
-    const existingTooltip = document.querySelector('.suggestion-tooltip');
-    if (existingTooltip) {
-      existingTooltip.remove();
-    }
-  }
-
-  private makeSuggestionKeywordsBold(message: string): string {
-    // List of keywords to make bold
-    const keywords = [
-      'description',
-      'brand name',
-      'cooking method',
-      'size'
-    ];
-    
-    let boldMessage = message;
-    
-    // Replace each keyword with bold version
-    keywords.forEach(keyword => {
-      const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-      boldMessage = boldMessage.replace(regex, `<strong>${keyword}</strong>`);
-    });
-    
-    return boldMessage;
-  }
-
-  private getMissingInformation(food: ComponentMatch): string[] {
-    const missing: string[] = [];
-    
-    if (!food.description || food.description.trim() === '') {
-      missing.push('description');
-    }
-    
-    if (!food.brandName || food.brandName.trim() === '') {
-      missing.push('brand name');
-    }
-    
-    if (!food.cookingMethod || food.cookingMethod.trim() === '') {
-      missing.push('cooking method');
-    }
-    
-    if (!food.size || food.size.trim() === '') {
-      missing.push('size');
-    }
-    
-    return missing;
-  }
-
-  private generateSuggestionMessage(originalPhrase: string, missingInfo: string[]): string {
-    if (missingInfo.length === 0) {
-      return `Your search looks complete! You can try adding more specific details if you'd like better results.`;
-    }
-
-    let suggestion = ``;
-    
-    if (missingInfo.length === 1) {
-      suggestion += `Try adding a ${missingInfo[0]} for better results.`;
-    } else if (missingInfo.length === 2) {
-      suggestion += `Try adding a ${missingInfo[0]} and/or ${missingInfo[1]} for better results.`;
-    } else {
-      const lastItem = missingInfo.pop();
-      suggestion += `Try adding ${missingInfo.join(', ')}, and/or ${lastItem} for better results.`;
-    }
-    
-    return suggestion;
-  }
 
 
 
@@ -2348,8 +2215,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   async onQuickSearchResultSelected(selectedMatch: ComponentMatch): Promise<void> {
     // Don't change mode - stay in quick mode for next add
 
-    console.log(`🔍 Quick search: Adding '${selectedMatch.displayName}' to computedFoods (current count: ${this.computedFoods.length})`);
-
     // Keep all alternatives and mark the selected one with isBestMatch flag
     const allAlternatives = this.quickSearchResults.map(match => {
       const matchCopy = new ComponentMatchDisplay(match);
@@ -2368,7 +2233,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       isSearching: false,
       loadingInstantOptions: false,
       isNewAddition: true,
-      isHydratingAlternateSelection: true // Set loading state for hydration
+      isHydratingAlternateSelection: true, // Set loading state for hydration
+      isPending: true // Mark as pending to disable confirm button during hydration
     });
 
     const newFood = new FoodDisplay({
@@ -2380,7 +2246,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // Append to existing foods
     this.computedFoods = [...this.computedFoods, newFood];
-    console.log(`   After adding: computedFoods now has ${this.computedFoods.length} foods`);
     this.cdr.detectChanges();
 
     // Hydrate the selection to get full nutrition data, servings, and thumbnail
@@ -2528,9 +2393,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       return;
     }
 
-    console.log(`🔄 autoSaveMealSelection: Saving ${this.computedFoods.length} foods to message ${this.message.id}`);
-    console.log(`   Food names: ${this.computedFoods.map(f => f.name).join(', ')}`);
-
     // Convert FoodDisplay[] to Food[] for API
     const foodsForApi: Food[] = this.computedFoods.map(foodDisplay => {
       const food = new Food({
@@ -2578,9 +2440,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           // If we didn't have a message ID before, we have one now
           if (!this.message.id && response.messageId) {
             this.message.id = response.messageId;
-           
+
           } else {
-            
+
+          }
+
+          // Update the mealSelectionIsPending flag if provided in response
+          // This ensures the confirm button is enabled once all foods are hydrated
+          if (response.mealSelectionIsPending !== null && response.mealSelectionIsPending !== undefined) {
+            this.message.mealSelectionIsPending = response.mealSelectionIsPending;
           }
         } else {
           console.warn('Failed to auto-save meal selection:', response.errors);

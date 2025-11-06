@@ -34,6 +34,8 @@ import {
   GetGuidelineFileUploadUrlResponse,
   ConfirmGuidelineFileUploadRequest,
   ConfirmGuidelineFileUploadResponse,
+  MigrateCanonicalUnitsRequest,
+  MigrateCanonicalUnitsResponse,
   ErrorDto
 } from '../../services/nutrition-ambition-api.service';
 
@@ -562,6 +564,24 @@ export class AdminService {
         errorResponse.errors = [];
       }
       errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while deleting the file.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Migrate canonical units from ObjectId to string GUID
+   */
+  async migrateCanonicalUnits(): Promise<MigrateCanonicalUnitsResponse> {
+    try {
+      const request = new MigrateCanonicalUnitsRequest();
+      const response = await firstValueFrom(this.apiService.migrateCanonicalUnits(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new MigrateCanonicalUnitsResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred during migration.' }));
       return errorResponse;
     }
   }
