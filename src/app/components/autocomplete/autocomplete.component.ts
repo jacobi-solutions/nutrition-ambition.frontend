@@ -309,6 +309,22 @@ export class AutocompleteComponent<T = any> implements OnInit, AfterViewInit, On
     }
   }
 
+  onEnterKey(event: Event): void {
+    // Prevent default form submission
+    event.preventDefault();
+
+    // If dropdown is open and we have items, select the first non-disabled item
+    if (this.isDropdownOpen && this.displayItems.length > 0 && !this.loading) {
+      const firstSelectableItem = this.displayItems.find(item =>
+        !item.disabled && item.showInDropdown !== false
+      );
+
+      if (firstSelectableItem) {
+        this.onSelectionChange(firstSelectableItem.value);
+      }
+    }
+  }
+
   // Public methods
   openDropdown(): void {
     this.ngSelect?.open();

@@ -211,8 +211,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     }
 
     // Check if any food, component, match, or serving has isPending = true
+    // Empty meal selection should also be considered "pending" (nothing to confirm)
     if (!this.computedFoods || this.computedFoods.length === 0) {
-      return false;
+      return true;
     }
 
     for (const food of this.computedFoods) {
@@ -420,76 +421,78 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       return;
     }
 
-    const component = this.findComponentById(componentId);
-    if (!component?.matches) return;
-
-    // Find the food index containing this component
+    // Find which food contains this component
     const foodIndex = this.findFoodIndexForComponent(componentId);
     if (foodIndex < 0) return;
 
-    const selectedMatch = component.matches.find((match: any) => match.providerFoodId === foodId) as ComponentMatch | undefined;
+    const currentFood = this.computedFoods[foodIndex];
+    if (!currentFood.components) return;
+
+    const componentIndex = currentFood.components.findIndex(c => c.id === componentId);
+    if (componentIndex < 0) return;
+
+    const component = currentFood.components[componentIndex];
+    const selectedMatch = component.matches?.find((match: any) =>
+      match.providerFoodId === foodId) as ComponentMatch | undefined;
     if (!selectedMatch) return;
 
-    // STRATEGY: Instead of updating in-place (which causes empty dropdown issues),
-    // remove the old food and re-add it fresh using the same flow as quick add.
-    // This ensures the dropdown always has full serving data.
+    // Update matches array to mark the new selection as best match
+    const updatedMatches = component.matches?.map((match: any) => ({
+      ...match,
+      isBestMatch: match.providerFoodId === selectedMatch.providerFoodId
+    })) || [];
 
-    // 1. Capture all alternatives from the existing component
-    const allAlternatives = component.matches || [];
-
-    // 2. Remove the food from computedFoods
-    const newFoods = [
-      ...this.computedFoods.slice(0, foodIndex),
-      ...this.computedFoods.slice(foodIndex + 1)
-    ];
-    this.computedFoods = newFoods;
-    this.cdr.detectChanges();
-
-    // 3. Re-add the food using the quick add flow (which works perfectly)
-    // Mark the selected match and create a fresh food
-    const freshAlternatives = allAlternatives.map((match: any) => {
-      const matchCopy = new ComponentMatchDisplay(match);
-      (matchCopy as any).isBestMatch = match.providerFoodId === selectedMatch.providerFoodId;
-      return matchCopy;
-    });
-
-    const newComponentId = `component-${Date.now()}`;
-    const newComponent = new ComponentDisplay({
-      id: newComponentId,
-      matches: freshAlternatives,
+    // Update the component in-place - mark as hydrating, update matches, and collapse dropdown
+    const updatedComponent = new ComponentDisplay({
+      ...component,
       selectedComponentId: selectedMatch.providerFoodId,
-      isExpanded: true,
-      isSearching: false,
-      loadingInstantOptions: false,
-      isNewAddition: false, // Not a new addition, just a replacement
-      isHydratingAlternateSelection: true // Set loading state for hydration
+      matches: updatedMatches,
+      isHydratingAlternateSelection: true,
+      isExpanded: false // Close dropdown after selection (matches other selection flows)
     });
 
-    const newFood = new FoodDisplay({
-      id: `food-${Date.now()}`,
-      name: selectedMatch.displayName || '',
-      quantity: 1,
-      components: [newComponent]
+    // Update the components array immutably
+    const updatedComponents = [
+      ...currentFood.components.slice(0, componentIndex),
+      updatedComponent,
+      ...currentFood.components.slice(componentIndex + 1)
+    ];
+
+    // Update the food immutably
+    const updatedFood = new FoodDisplay({
+      ...currentFood,
+      components: updatedComponents
     });
 
-    // Insert at the same position where the old food was
+    // Replace in computedFoods array
     this.computedFoods = [
       ...this.computedFoods.slice(0, foodIndex),
-      newFood,
-      ...this.computedFoods.slice(foodIndex)
+      updatedFood,
+      ...this.computedFoods.slice(foodIndex + 1)
     ];
+
     this.cdr.detectChanges();
 
-    // 4. Hydrate the selection to get full nutrition data
-    this.hydrateAlternateSelection(newComponentId, selectedMatch);
+    // Hydrate to get full nutrition data
+    this.hydrateAlternateSelection(componentId, selectedMatch, currentFood.id);
   }
 
-  private async hydrateAlternateSelection(componentId: string, selectedMatch: ComponentMatch): Promise<void> {
+  private async hydrateAlternateSelection(componentId: string, selectedMatch: ComponentMatch, foodId?: string): Promise<void> {
     try {
-      // Find the food index using established pattern
-      const foodIndex = this.findFoodIndexForComponent(componentId);
-      if (foodIndex < 0) {
-        console.error('Could not find component for hydration');
+      // Store the foodId for later lookup (don't rely on index - array can change during async operations)
+      let targetFoodId = foodId;
+      if (!targetFoodId) {
+        // Need to find the foodId from component
+        const foodIndex = this.findFoodIndexForComponent(componentId);
+        if (foodIndex < 0) {
+          console.error('Could not find food for hydration', { componentId });
+          return;
+        }
+        targetFoodId = this.computedFoods[foodIndex]?.id;
+      }
+
+      if (!targetFoodId) {
+        console.error('Could not determine foodId for hydration', { componentId, foodId });
         return;
       }
 
@@ -562,12 +565,23 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       if (response?.isSuccess && response.foodOptions && response.foodOptions.length > 0) {
         const responseFood = response.foodOptions[0];
 
-        // Check if this is a component-only update (indicated by special ID)
-        if (responseFood.id === 'hydrated-component' && responseFood.components?.[0]) {
-          // This is a component update - merge the hydrated component into existing food
+        // Backend always returns a food with single hydrated component
+        // We merge the component and use backend GUIDs to replace temp IDs
+        if (responseFood.components?.[0]) {
           const hydratedComponent = responseFood.components[0];
           const hydratedMatch = hydratedComponent.matches?.[0];
-          const currentFood = this.computedFoods[foodIndex];
+
+          // Re-find the food by ID (array may have changed during async API call due to streaming updates)
+          const foodIndex = this.computedFoods.findIndex(f => f.id === targetFoodId);
+          const currentFood = foodIndex >= 0 ? this.computedFoods[foodIndex] : null;
+
+          // Safety check: ensure food still exists
+          if (!currentFood) {
+            console.error('❌ Hydration ERROR: Food not found by ID', targetFoodId);
+            await this.toastService.showToast({ message: 'Unable to update food selection. Please try again.', color: 'danger' });
+            return;
+          }
+
           const currentComponent = currentFood.components?.find(c => c.id === componentId);
 
           if (currentComponent && hydratedMatch) {
@@ -594,9 +608,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               updatedMatches.unshift(selectedMatch);
             }
 
-            // Create updated component with preserved matches and updated selection
+            // Create updated component with backend GUID, preserved matches, and updated selection
             const updatedComponent = new ComponentDisplay({
               ...currentComponent,
+              id: hydratedComponent.id, // Use backend-generated GUID (not temp ID)
               matches: updatedMatches,
               selectedComponentId: hydratedMatch.providerFoodId || currentComponent.selectedComponentId,
               isSearching: false, // Clear loading state
@@ -609,10 +624,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               comp.id === componentId ? updatedComponent : comp
             ) || [];
 
-            // For single-component foods, propagate the component's photo to food level
-            const shouldPropagatePhoto = updatedComponents.length === 1;
+            // For single-component foods (quick search), use backend food ID. For multi-component, keep existing ID.
+            const isSingleComponent = updatedComponents.length === 1;
+            const shouldPropagatePhoto = isSingleComponent;
+
             const updatedFood = new FoodDisplay({
               ...currentFood,
+              id: isSingleComponent ? responseFood.id : currentFood.id, // Use backend GUID for quick search
               components: updatedComponents,
               // Set food-level photo from the hydrated match if single-component
               photoThumb: shouldPropagatePhoto ? (hydratedMatch.photoThumb || currentFood.photoThumb) : currentFood.photoThumb,
@@ -626,38 +644,38 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               ...this.computedFoods.slice(foodIndex + 1)
             ];
 
+            // Sync to message.mealSelection.foods with backend GUIDs
+            if (!this.message.mealSelection) {
+              this.message.mealSelection = new MealSelection({ foods: [] });
+            }
+            this.message.mealSelection.foods = this.computedFoods.map(foodDisplay => {
+              const food = new Food(foodDisplay as any);
+              return food;
+            });
+
             // Force change detection
             this.cdr.markForCheck();
             this.cdr.detectChanges();
           }
-        } else {
-          // This is a full food replacement (like onFoodAdded pattern)
-          const newFood = new FoodDisplay(responseFood);
-
-          this.computedFoods = [
-            ...this.computedFoods.slice(0, foodIndex),
-            newFood,
-            ...this.computedFoods.slice(foodIndex + 1)
-          ];
-
-          this.cdr.markForCheck();
-          this.cdr.detectChanges();
         }
 
         // Auto-save the updated meal selection after successful hydration
         this.autoSaveMealSelection();
 
-        // Clear search input after successful quick add
-        this.addFoodComponent?.clear();
+        // Note: Don't clear search input here - it was already cleared when user selected the result.
+        // Clearing here would wipe out any new search the user has started while hydration was in progress.
 
         // Restore the last used mode (keep it selected for next add)
         this.addFoodMode = this.lastNonBarcodeMode;
       } else {
         // Clear loading state on error
-        this.onComponentChanged(foodIndex, componentId, {
-          isSearching: false,
-          isHydratingAlternateSelection: false
-        });
+        const errorFoodIndex = this.computedFoods.findIndex(f => f.id === targetFoodId);
+        if (errorFoodIndex >= 0) {
+          this.onComponentChanged(errorFoodIndex, componentId, {
+            isSearching: false,
+            isHydratingAlternateSelection: false
+          });
+        }
         this.cdr.detectChanges();
         await this.showErrorToast('Failed to update food. Please try again.');
       }
@@ -1553,8 +1571,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const streamId = 'stream-' + Date.now();
 
     // Create loading placeholder food immediately with stream ID
+    const loadingFoodId = 'loading-' + Date.now();
     const loadingFood: FoodDisplay = new FoodDisplay({
-      id: 'loading-' + Date.now(),
+      id: loadingFoodId, // Use variable so we can remove this specific placeholder later
       name: '',
       streamId: streamId, // Tag with stream ID for tracking
       components: [new ComponentDisplay({
@@ -1600,12 +1619,82 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
               streamId: streamId
             }));
 
-            // Remove this stream's previous foods (loading placeholder or earlier chunks)
-            // and add the new foods from this chunk
-            this.computedFoods = [
-              ...this.computedFoods.filter(f => f.streamId !== streamId),
-              ...taggedFoods.map(f => new FoodDisplay(f))
-            ];
+            // Remove this stream's loading placeholder before merging real foods
+            const mergedFoods = this.computedFoods.filter(f => f.id !== loadingFoodId);
+
+            taggedFoods.forEach(streamingFood => {
+              if (streamingFood.id) {
+                const existingIndex = mergedFoods.findIndex(f => f.id === streamingFood.id);
+                if (existingIndex >= 0) {
+                  // Preserve UI state and photos from existing food before updating
+                  const existingFood = mergedFoods[existingIndex];
+                  const preservedFoodState = {
+                    isEditingExpanded: existingFood.isEditingExpanded,
+                    isEditing: existingFood.isEditing,
+                    editingQuantity: existingFood.editingQuantity,
+                    isExpanded: existingFood.isExpanded,
+                    photoThumb: existingFood.photoThumb,
+                    photoHighRes: existingFood.photoHighRes
+                  };
+
+                  // Preserve component-level UI state
+                  // IMPORTANT: Also preserve matches array ONLY when component is actively hydrating a user's selection
+                  const componentStateMap = new Map<string, any>();
+                  if (existingFood.components) {
+                    existingFood.components.forEach(comp => {
+                      if (comp.id) {
+                        componentStateMap.set(comp.id, {
+                          isExpanded: comp.isExpanded,
+                          isEditing: comp.isEditing,
+                          editingValue: comp.editingValue,
+                          showingMoreOptions: comp.showingMoreOptions,
+                          isSearching: comp.isSearching,
+                          selectedComponentId: comp.selectedComponentId,
+                          isHydratingAlternateSelection: comp.isHydratingAlternateSelection,
+                          // Preserve matches ONLY when actively hydrating to prevent streaming from overriding user's selection
+                          matches: comp.isHydratingAlternateSelection ? comp.matches : null
+                        });
+                      }
+                    });
+                  }
+
+                  // Transform streaming components with preserved state
+                  const transformedComponents = streamingFood.components?.map((comp: any) => {
+                    const savedState = comp.id ? componentStateMap.get(comp.id) : null;
+                    return new ComponentDisplay({
+                      ...comp,
+                      isExpanded: savedState?.isExpanded || comp.isExpanded || false,
+                      isEditing: savedState?.isEditing || false,
+                      editingValue: savedState?.editingValue || '',
+                      showingMoreOptions: savedState?.showingMoreOptions || false,
+                      isSearching: savedState?.isSearching || false,
+                      selectedComponentId: savedState?.selectedComponentId || comp.selectedComponentId,
+                      isHydratingAlternateSelection: savedState?.isHydratingAlternateSelection || comp.isHydratingAlternateSelection || false,
+                      // Use saved matches if hydrating, otherwise use streaming data
+                      matches: savedState?.matches || comp.matches
+                    });
+                  });
+
+                  // Update existing food in-place (preserves position and UI state)
+                  mergedFoods[existingIndex] = new FoodDisplay({
+                    ...streamingFood,
+                    streamId: streamId,
+                    initialQuantity: streamingFood.quantity, // Store baseline quantity for nutrition calculations
+                    components: transformedComponents, // Use transformed components with preserved state
+                    ...preservedFoodState // Apply preserved food-level UI state
+                  });
+                } else {
+                  // Append new food (no state to preserve for brand new foods)
+                  mergedFoods.push(new FoodDisplay({
+                    ...streamingFood,
+                    streamId: streamId,
+                    initialQuantity: streamingFood.quantity // Store baseline quantity for nutrition calculations
+                  }));
+                }
+              }
+            });
+
+            this.computedFoods = mergedFoods;
 
             // Update message object with all current foods for backend sync
             if (!this.message.mealSelection) {
@@ -1625,6 +1714,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           // Just trigger a final recompute to ensure everything is in the correct state
           // (No need to append foods again - they were already added during streaming)
           this.computeAllFoods();
+
           this.cdr.detectChanges();
 
           // Note: Search input already cleared immediately on submit (in submitPhrase method)
@@ -2046,23 +2136,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       // Generate unique stream ID for this barcode scan
       const streamId = `barcode-${Date.now()}`;
 
-      // Create loading placeholder
-      const loadingFood = new FoodDisplay({
-        id: `loading-${streamId}`,
-        name: 'Scanning barcode...',
-        quantity: 1,
-        streamId: streamId,
-        components: []
-      });
-
-      // Add loading placeholder to UI
-      this.computedFoods = [...this.computedFoods, loadingFood];
-      this.cdr.detectChanges();
-
       // Check for message ID
       if (!this.message?.id) {
         await this.showErrorToast('Cannot scan barcode: message ID is missing');
-        this.computedFoods = this.computedFoods.filter(f => f.streamId !== streamId);
         return;
       }
 
@@ -2102,9 +2178,22 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
           this.activeBarcodeStream = undefined;
         },
         (error) => {
-          // Stream error - clear stream handle
+          // Stream error - clear stream handle and remove placeholder
           this.activeBarcodeStream = undefined;
           console.error('[FoodSelectionComponent] Barcode stream error:', error);
+
+          // Remove any foods from this stream (e.g., "Looking up barcode..." placeholder)
+          this.computedFoods = this.computedFoods.filter(f => f.streamId !== streamId);
+
+          // Update message object
+          if (this.message.mealSelection) {
+            this.message.mealSelection.foods = this.computedFoods.map(foodDisplay => {
+              const food = new Food(foodDisplay as any);
+              return food;
+            });
+          }
+
+          this.cdr.detectChanges();
         }
       );
 
@@ -2225,11 +2314,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // Create a food with the selected match AND all alternatives
     const componentId = `component-${Date.now()}`;
+    const foodId = `food-${Date.now()}`;
     const component = new ComponentDisplay({
       id: componentId,
       matches: allAlternatives,
       selectedComponentId: selectedMatch.providerFoodId, // Use providerFoodId for consistency
-      isExpanded: true,
+      isExpanded: false, // Keep collapsed like favorites - user can click to expand if needed
       isSearching: false,
       loadingInstantOptions: false,
       isNewAddition: true,
@@ -2238,7 +2328,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     });
 
     const newFood = new FoodDisplay({
-      id: `food-${Date.now()}`,
+      id: foodId,
       name: selectedMatch.displayName || '',
       quantity: 1,
       components: [component]
@@ -2246,10 +2336,21 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     // Append to existing foods
     this.computedFoods = [...this.computedFoods, newFood];
+
+    // Sync to message.mealSelection.foods so computeAllFoods() doesn't lose it
+    if (!this.message.mealSelection) {
+      this.message.mealSelection = new MealSelection({ foods: [] });
+    }
+    this.message.mealSelection.foods = this.computedFoods.map(foodDisplay => {
+      const food = new Food(foodDisplay as any);
+      return food;
+    });
+
     this.cdr.detectChanges();
 
     // Hydrate the selection to get full nutrition data, servings, and thumbnail
-    await this.hydrateAlternateSelection(componentId, selectedMatch);
+    // Pass foodId to make lookup more reliable during concurrent updates
+    await this.hydrateAlternateSelection(componentId, selectedMatch, foodId);
   }
 
   /**
@@ -2348,8 +2449,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         // Auto-save state (like quick search) - user will click Confirm manually
         this.autoSaveMealSelection();
 
-        // Clear search input after successful favorite add
-        this.addFoodComponent?.clear();
+        // Note: Don't clear search input here - it was already cleared when user selected the favorite.
+        // Clearing here would wipe out any new search the user has started while hydration was in progress.
 
         // Restore the last used mode (keep it selected for next add)
         this.addFoodMode = this.lastNonBarcodeMode;

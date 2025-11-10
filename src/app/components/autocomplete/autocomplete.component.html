@@ -12,7 +12,8 @@
   (focus)="onFocus()"
   (blur)="onBlur()"
   (open)="onOpen()"
-  (close)="onClose()">
+  (close)="onClose()"
+  (keydown.enter)="onEnterKey($event)">
 
   <!-- Custom label template to show currentDisplayText -->
   <ng-template ng-label-tmp let-item="item">

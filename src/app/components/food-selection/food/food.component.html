@@ -39,6 +39,16 @@
 
   <!-- Single-component food: Display directly as component item -->
   <ng-container *ngIf="!isMultiComponentFood()">
+    <!-- If food has no components but has a name (like "Analyzing..."), show the name -->
+    <div *ngIf="visibleComponents.length === 0 && food.name" class="food-placeholder">
+      <div class="food-name-text">{{ food.name }}</div>
+      <div *ngIf="food.isPending" class="typing-indicator-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+
     <ng-container *ngFor="let component of visibleComponents; trackBy: trackByComponent">
       <app-food-component-item
         [component]="component"

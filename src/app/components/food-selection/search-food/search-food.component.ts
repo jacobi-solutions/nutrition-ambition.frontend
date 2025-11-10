@@ -1,9 +1,11 @@
-import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit, OnChanges, SimpleChanges, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, OnInit, OnChanges, SimpleChanges, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { send, addCircleOutline } from 'ionicons/icons';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-search-food',
@@ -12,7 +14,7 @@ import { send, addCircleOutline } from 'ionicons/icons';
   standalone: true,
   imports: [CommonModule, FormsModule, IonIcon]
 })
-export class SearchFoodComponent implements OnInit, OnChanges {
+export class SearchFoodComponent implements OnInit, OnChanges, OnDestroy {
   @Input() initialPhrase: string = '';
   @Input() placeholder: string = 'What did you eat?';
   @Input() isVisible: boolean = false;
@@ -32,6 +34,10 @@ export class SearchFoodComponent implements OnInit, OnChanges {
   isSubmittingNewFood = false;
   showDropdown = false;
   private clickListenerEnabled = false;
+
+  // Debouncing for instant search
+  private searchSubject = new Subject<string>();
+  private searchSubscription?: Subscription;
 
   constructor(private elementRef: ElementRef) {
     addIcons({ send, addCircleOutline });
@@ -63,6 +69,17 @@ export class SearchFoodComponent implements OnInit, OnChanges {
         }
       }
     }, 50);
+
+    // Set up debounced instant search
+    this.searchSubscription = this.searchSubject.pipe(
+      debounceTime(300), // Wait 300ms after user stops typing (per Nutritionix recommendations)
+      distinctUntilChanged() // Only emit if the search term changed
+    ).subscribe(searchTerm => {
+      // Only emit if we have at least 3 characters (per Nutritionix recommendations)
+      if (searchTerm.length >= 3) {
+        this.instantSearch.emit(searchTerm);
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -81,7 +98,8 @@ export class SearchFoodComponent implements OnInit, OnChanges {
     if (changes['mode'] && !changes['mode'].firstChange) {
       if (this.mode === 'quick' && this.currentPhrase.trim().length >= 3) {
         this.showDropdown = true;
-        this.instantSearch.emit(this.currentPhrase.trim());
+        // Push to debounced search subject instead of emitting directly
+        this.searchSubject.next(this.currentPhrase.trim());
         // Enable click listener after a short delay to prevent immediate closure
         setTimeout(() => {
           this.clickListenerEnabled = true;
@@ -131,7 +149,15 @@ export class SearchFoodComponent implements OnInit, OnChanges {
   onKeyDown(event: KeyboardEvent): void {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      this.submitPhrase();
+
+      // In quick mode, select first result from dropdown
+      if (this.mode === 'quick' && this.showDropdown && this.displayResults.length > 0 && !this.isSearching) {
+        this.selectResult(this.displayResults[0]);
+      }
+      // In default mode, submit to AI chat
+      else if (this.mode === 'default') {
+        this.submitPhrase();
+      }
     } else if (event.key === 'Escape') {
       this.cancel();
     }
@@ -181,7 +207,8 @@ export class SearchFoodComponent implements OnInit, OnChanges {
       if (this.mode === 'quick') {
         if (this.currentPhrase.trim().length > 0) {
           this.showDropdown = true;
-          this.instantSearch.emit(this.currentPhrase.trim());
+          // Push to debounced search subject instead of emitting directly
+          this.searchSubject.next(this.currentPhrase.trim());
           // Enable click listener when dropdown opens via typing
           if (!this.clickListenerEnabled) {
             setTimeout(() => {
@@ -303,5 +330,12 @@ export class SearchFoodComponent implements OnInit, OnChanges {
   // Check if there are changes from the initial value
   hasChanges(): boolean {
     return this.currentPhrase.trim() !== this.initialPhrase.trim() && this.currentPhrase.trim().length > 0;
+  }
+
+  ngOnDestroy(): void {
+    // Clean up search subscription
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
   }
 }

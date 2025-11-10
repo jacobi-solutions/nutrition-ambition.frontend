@@ -142,10 +142,11 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
       // Mark this as an explicit user selection
       this.isExplicitSelection = true;
 
-      // Immediately update displayName to ensure autocomplete shows selected food name
+      // Immediately update both displayName and selectedFood to ensure autocomplete shows selected food name
       this.displayName = selectedItem.displayName || '';
+      this.selectedFood = selectedItem;
 
-      // Trigger change detection so the [initialSearchText]="displayName" binding updates
+      // Trigger change detection so the autocomplete updates immediately
       this.cdr.detectChanges();
 
       this.foodSelected.emit({componentId: this.component.id, food: selectedItem});
@@ -550,12 +551,10 @@ export class FoodComponentItemComponent implements OnInit, OnChanges {
     if (calories === null) return '';
 
     const parts = [];
-    if (calories !== null) parts.push(`${Math.round(calories)} cal`);
-
-    // Only add other macros if they exist (branded foods may only have calories)
-    if (protein !== null) parts.push(`${Math.round(protein)} protein`);
-    if (fat !== null) parts.push(`${Math.round(fat)} fat`);
-    if (carbs !== null) parts.push(`${Math.round(carbs)} carbs`);
+    parts.push(`${Math.round(calories)} cal`);
+    parts.push(`${Math.round(protein || 0)} g protein`);
+    parts.push(`${Math.round(fat || 0)} g fat`);
+    parts.push(`${Math.round(carbs || 0)} g carb`);
 
     return `(${parts.join(', ')})`;
   }
