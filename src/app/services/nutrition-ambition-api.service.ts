@@ -3296,7 +3296,6 @@ export class ChatMessage implements IChatMessage {
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
     pendingMealSelectionId?: string | undefined;
-    mealSelectionSummary?: MealSelectionSummary;
     mealSelections?: MealSelection[] | undefined;
     retryCount?: number;
     modelUsed?: string | undefined;
@@ -3335,7 +3334,6 @@ export class ChatMessage implements IChatMessage {
             this.assistantMode = _data["assistantMode"];
             this.assistantPhase = _data["assistantPhase"];
             this.pendingMealSelectionId = _data["pendingMealSelectionId"];
-            this.mealSelectionSummary = _data["mealSelectionSummary"] ? MealSelectionSummary.fromJS(_data["mealSelectionSummary"]) : <any>undefined;
             if (Array.isArray(_data["mealSelections"])) {
                 this.mealSelections = [] as any;
                 for (let item of _data["mealSelections"])
@@ -3378,7 +3376,6 @@ export class ChatMessage implements IChatMessage {
         data["assistantMode"] = this.assistantMode;
         data["assistantPhase"] = this.assistantPhase;
         data["pendingMealSelectionId"] = this.pendingMealSelectionId;
-        data["mealSelectionSummary"] = this.mealSelectionSummary ? this.mealSelectionSummary.toJSON() : <any>undefined;
         if (Array.isArray(this.mealSelections)) {
             data["mealSelections"] = [];
             for (let item of this.mealSelections)
@@ -3410,7 +3407,6 @@ export interface IChatMessage {
     assistantMode?: AssistantModeTypes;
     assistantPhase?: string | undefined;
     pendingMealSelectionId?: string | undefined;
-    mealSelectionSummary?: MealSelectionSummary;
     mealSelections?: MealSelection[] | undefined;
     retryCount?: number;
     modelUsed?: string | undefined;
@@ -7740,7 +7736,7 @@ export class MealSelection implements IMealSelection {
     isConfirmed?: boolean;
     foodEntryId?: string | undefined;
     sharedById?: string | undefined;
-    isPending?: boolean;
+    readonly isPending?: boolean;
     foodId?: string | undefined;
     componentId?: string | undefined;
 
@@ -7770,7 +7766,7 @@ export class MealSelection implements IMealSelection {
             this.isConfirmed = _data["isConfirmed"];
             this.foodEntryId = _data["foodEntryId"];
             this.sharedById = _data["sharedById"];
-            this.isPending = _data["isPending"];
+            (<any>this).isPending = _data["isPending"];
             this.foodId = _data["foodId"];
             this.componentId = _data["componentId"];
         }
@@ -7822,58 +7818,6 @@ export interface IMealSelection {
     isPending?: boolean;
     foodId?: string | undefined;
     componentId?: string | undefined;
-}
-
-export class MealSelectionSummary implements IMealSelectionSummary {
-    id?: string | undefined;
-    mealName?: string | undefined;
-    foodEntryId?: string | undefined;
-    foodCount?: number;
-    isPending?: boolean;
-
-    constructor(data?: IMealSelectionSummary) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.mealName = _data["mealName"];
-            this.foodEntryId = _data["foodEntryId"];
-            this.foodCount = _data["foodCount"];
-            this.isPending = _data["isPending"];
-        }
-    }
-
-    static fromJS(data: any): MealSelectionSummary {
-        data = typeof data === 'object' ? data : {};
-        let result = new MealSelectionSummary();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["mealName"] = this.mealName;
-        data["foodEntryId"] = this.foodEntryId;
-        data["foodCount"] = this.foodCount;
-        data["isPending"] = this.isPending;
-        return data;
-    }
-}
-
-export interface IMealSelectionSummary {
-    id?: string | undefined;
-    mealName?: string | undefined;
-    foodEntryId?: string | undefined;
-    foodCount?: number;
-    isPending?: boolean;
 }
 
 export enum MealType {
