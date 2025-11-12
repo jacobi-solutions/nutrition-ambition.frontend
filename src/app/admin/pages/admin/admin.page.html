@@ -680,6 +680,67 @@
               </div>
             </div>
           </div>
+
+          <!-- Create Retroactive Favorites Migration -->
+          <div class="migration-card">
+            <div class="migration-header">
+              <div class="migration-icon">
+                <ion-icon name="star-outline"></ion-icon>
+              </div>
+              <div>
+                <h3>Create Retroactive Favorites</h3>
+                <p class="migration-description">
+                  Loops through all users and processes all their food entries (from oldest to newest) to retroactively create favorites.
+                  This populates the favorites system with historical data for users who logged foods before the favorites feature was implemented.
+                </p>
+              </div>
+            </div>
+
+            <div class="migration-actions">
+              <ion-button
+                color="primary"
+                (click)="createRetroactiveFavorites()"
+                [disabled]="isCreatingRetroactiveFavorites">
+                <ion-icon name="star-outline" slot="start"></ion-icon>
+                {{ isCreatingRetroactiveFavorites ? 'Processing...' : 'Create Favorites' }}
+              </ion-button>
+            </div>
+
+            <div *ngIf="isCreatingRetroactiveFavorites" class="migration-progress">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Processing all users and food entries...</p>
+            </div>
+
+            <div *ngIf="retroactiveFavoritesResult" class="migration-result">
+              <div class="result-header">
+                <ion-icon
+                  [name]="retroactiveFavoritesResult.errorCount === 0 ? 'checkmark-circle-outline' : 'warning-outline'"
+                  [color]="retroactiveFavoritesResult.errorCount === 0 ? 'success' : 'warning'">
+                </ion-icon>
+                <h4>Migration Complete</h4>
+              </div>
+              <div class="result-stats">
+                <div class="stat-item">
+                  <span class="stat-label">Users Processed:</span>
+                  <span class="stat-value success">{{ retroactiveFavoritesResult.usersProcessed }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Food Entries Processed:</span>
+                  <span class="stat-value success">{{ retroactiveFavoritesResult.foodEntriesProcessed }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Favorites Created:</span>
+                  <span class="stat-value success">{{ retroactiveFavoritesResult.favoritesCreated }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Errors:</span>
+                  <span class="stat-value" [class.danger]="retroactiveFavoritesResult.errorCount > 0">
+                    {{ retroactiveFavoritesResult.errorCount }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -36,6 +36,8 @@ import {
   ConfirmGuidelineFileUploadResponse,
   MigrateCanonicalUnitsRequest,
   MigrateCanonicalUnitsResponse,
+  CreateRetroactiveFavoritesRequest,
+  CreateRetroactiveFavoritesResponse,
   ErrorDto
 } from '../../services/nutrition-ambition-api.service';
 
@@ -578,6 +580,21 @@ export class AdminService {
       return response;
     } catch (error) {
       const errorResponse = new MigrateCanonicalUnitsResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred during migration.' }));
+      return errorResponse;
+    }
+  }
+
+  async createRetroactiveFavorites(): Promise<CreateRetroactiveFavoritesResponse> {
+    try {
+      const request = new CreateRetroactiveFavoritesRequest();
+      const response = await firstValueFrom(this.apiService.createRetroactiveFavorites(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new CreateRetroactiveFavoritesResponse();
       if (!errorResponse.errors) {
         errorResponse.errors = [];
       }

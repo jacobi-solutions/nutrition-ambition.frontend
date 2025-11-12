@@ -416,30 +416,20 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
   onFoodSelected(componentId: string, food: ComponentMatch): void {
     const foodId = food.providerFoodId;
-    console.log('🔀 COMPONENT REPLACEMENT STARTED:', {
-      componentId,
-      newSelection: food.displayName,
-      providerFoodId: foodId,
-      currentFoodsCount: this.computedFoods.length
-    });
 
     // Prevent selection of loading indicator
     if (!foodId || foodId === 'loading') {
-      console.log('⚠️ Prevented loading indicator selection');
       return;
     }
 
     // Find which food contains this component
     const foodIndex = this.findFoodIndexForComponent(componentId);
-    console.log('🔍 Finding food for component:', { componentId, foodIndex });
     if (foodIndex < 0) return;
 
     const currentFood = this.computedFoods[foodIndex];
-    console.log('🍔 Found food:', { foodId: currentFood.id, foodName: currentFood.name, componentCount: currentFood.components?.length });
     if (!currentFood.components) return;
 
     const componentIndex = currentFood.components.findIndex(c => c.id === componentId);
-    console.log('🔍 Finding component in food:', { componentIndex });
     if (componentIndex < 0) return;
 
     const component = currentFood.components[componentIndex];
@@ -476,27 +466,14 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     });
 
     // Replace in computedFoods array
-    console.log('🔄 Updating computedFoods with replaced component:', {
-      foodIndex,
-      updatedFoodId: updatedFood.id,
-      updatedFoodName: updatedFood.name,
-      beforeCount: this.computedFoods.length
-    });
-
     this.computedFoods = [
       ...this.computedFoods.slice(0, foodIndex),
       updatedFood,
       ...this.computedFoods.slice(foodIndex + 1)
     ];
 
-    console.log('✅ computedFoods updated after replacement:', {
-      afterCount: this.computedFoods.length,
-      allFoodIds: this.computedFoods.map(f => ({ id: f.id, name: f.name, componentCount: f.components?.length }))
-    });
-
     this.cdr.detectChanges();
 
-    console.log('🔄 Starting hydration for replaced component...');
     // Hydrate to get full nutrition data
     this.hydrateAlternateSelection(componentId, selectedMatch, currentFood.id);
   }
@@ -1646,46 +1623,9 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             // Remove this stream's loading placeholder before merging real foods
             const mergedFoods = this.computedFoods.filter(f => f.id !== loadingFoodId);
 
-            console.log('🔄 STREAMING UPDATE START:', {
-              streamId: streamId,
-              loadingFoodIdToRemove: loadingFoodId,
-              BEFORE_FILTER: {
-                count: this.computedFoods.length,
-                foods: this.computedFoods.map(f => ({
-                  id: f.id,
-                  name: f.name,
-                  streamId: (f as any).streamId,
-                  isPending: f.isPending
-                }))
-              },
-              AFTER_FILTER: {
-                count: mergedFoods.length,
-                foods: mergedFoods.map(f => ({
-                  id: f.id,
-                  name: f.name,
-                  streamId: (f as any).streamId
-                }))
-              },
-              INCOMING_FOODS: {
-                count: taggedFoods.length,
-                foods: taggedFoods.map(f => ({
-                  id: f.id,
-                  name: f.name,
-                  isPending: f.isPending
-                }))
-              }
-            });
-
             taggedFoods.forEach(streamingFood => {
               if (streamingFood.id) {
                 const existingIndex = mergedFoods.findIndex(f => f.id === streamingFood.id);
-                console.log('🔍 Processing streaming food:', {
-                  foodId: streamingFood.id,
-                  foodName: streamingFood.name,
-                  isPending: streamingFood.isPending,
-                  existingIndex,
-                  exists: existingIndex >= 0
-                });
 
                 if (existingIndex >= 0) {
                   // Preserve UI state and photos from existing food before updating
@@ -1720,19 +1660,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                     });
                   }
 
-                  console.log('💾 STATE PRESERVATION:', {
-                    foodId: streamingFood.id,
-                    preservedFoodState,
-                    componentStateMapSize: componentStateMap.size,
-                    componentStates: Array.from(componentStateMap.entries()).map(([id, state]) => ({
-                      componentId: id,
-                      isHydratingAlternateSelection: state.isHydratingAlternateSelection,
-                      hasMatchesPreserved: !!state.matches,
-                      matchesCount: state.matches?.length || 0,
-                      selectedComponentId: state.selectedComponentId
-                    }))
-                  });
-
                   // Transform streaming components with preserved state
                   const transformedComponents = streamingFood.components?.map((comp: any) => {
                     const savedState = comp.id ? componentStateMap.get(comp.id) : null;
@@ -1749,16 +1676,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                       matches: savedState?.matches || comp.matches
                     });
 
-                    if (savedState) {
-                      console.log('🔧 Component transformed:', {
-                        componentId: comp.id,
-                        hadSavedState: true,
-                        usedSavedMatches: !!savedState.matches,
-                        finalMatchesCount: transformed.matches?.length || 0,
-                        finalSelectedComponentId: transformed.selectedComponentId
-                      });
-                    }
-
                     return transformed;
                   });
 
@@ -1770,19 +1687,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                     components: transformedComponents, // Use transformed components with preserved state
                     ...preservedFoodState // Apply preserved food-level UI state
                   });
-
-                  console.log('✅ Food updated in mergedFoods:', {
-                    foodId: streamingFood.id,
-                    index: existingIndex,
-                    finalComponentCount: transformedComponents?.length || 0
-                  });
                 } else {
                   // Append new food (no state to preserve for brand new foods)
-                  console.log('🆕 Appending NEW food:', {
-                    foodId: streamingFood.id,
-                    foodName: streamingFood.name,
-                    isPending: streamingFood.isPending
-                  });
                   mergedFoods.push(new FoodDisplay({
                     ...streamingFood,
                     streamId: streamId,
@@ -1790,27 +1696,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
                   }));
                 }
               }
-            });
-
-            // Log foods that were preserved (not updated by this stream)
-            const streamFoodIds = new Set(taggedFoods.map(f => f.id));
-            const preservedFoods = mergedFoods.filter(f => !streamFoodIds.has(f.id));
-            console.log('🔒 Foods preserved (not from this stream):', {
-              streamId: streamId,
-              count: preservedFoods.length,
-              foods: preservedFoods.map(f => ({
-                id: f.id,
-                name: f.name,
-                streamId: (f as any).streamId,
-                hasStreamId: !!(f as any).streamId,
-                isPending: f.isPending
-              }))
-            });
-
-            console.log('🎯 FINAL MERGE COMPLETE:', {
-              streamId: streamId,
-              totalFoodsNow: mergedFoods.length,
-              foodList: mergedFoods.map(f => ({ id: f.id, name: f.name, isPending: f.isPending, componentCount: f.components?.length || 0 }))
             });
 
             this.computedFoods = mergedFoods;
@@ -2416,17 +2301,11 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.quickSearchResults = [];
     } finally {
       this.isQuickSearching = false;
-      this.cdr.detectChanges();
+      this.cdr.detectChanges(); 
     }
   }
 
   async onQuickSearchResultSelected(selectedMatch: ComponentMatch): Promise<void> {
-    console.log('⚡ QUICK ADD STARTED:', {
-      selectedMatch: selectedMatch.displayName,
-      providerFoodId: selectedMatch.providerFoodId,
-      currentFoodsCount: this.computedFoods.length
-    });
-
     // Don't change mode - stay in quick mode for next add
 
     // Keep all alternatives and mark the selected one with isBestMatch flag
@@ -2440,8 +2319,6 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     // Create a food with the selected match AND all alternatives
     const componentId = `component-${Date.now()}`;
     const foodId = `food-${Date.now()}`;
-
-    console.log('🆔 Generated IDs for quick add:', { foodId, componentId });
 
     const component = new ComponentDisplay({
       id: componentId,
@@ -2462,19 +2339,8 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       components: [component]
     });
 
-    console.log('➕ Adding new food to computedFoods:', {
-      beforeCount: this.computedFoods.length,
-      newFoodId: foodId,
-      newFoodName: newFood.name
-    });
-
     // Append to existing foods
     this.computedFoods = [...this.computedFoods, newFood];
-
-    console.log('✅ computedFoods updated:', {
-      afterCount: this.computedFoods.length,
-      allFoodIds: this.computedFoods.map(f => ({ id: f.id, name: f.name, isPending: f.isPending }))
-    });
 
     // Sync to message.mealSelection.foods so computeAllFoods() doesn't lose it
     if (!this.message.mealSelection) {

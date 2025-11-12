@@ -115,6 +115,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    createRetroactiveFavorites(body: CreateRetroactiveFavoritesRequest | undefined): Observable<CreateRetroactiveFavoritesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getChatMessages(body: GetChatMessagesRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
@@ -1329,6 +1334,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<MigrateCanonicalUnitsResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    createRetroactiveFavorites(body: CreateRetroactiveFavoritesRequest | undefined): Observable<CreateRetroactiveFavoritesResponse> {
+        let url_ = this.baseUrl + "/api/Admin/CreateRetroactiveFavorites";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateRetroactiveFavorites(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateRetroactiveFavorites(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CreateRetroactiveFavoritesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CreateRetroactiveFavoritesResponse>;
+        }));
+    }
+
+    protected processCreateRetroactiveFavorites(response: HttpResponseBase): Observable<CreateRetroactiveFavoritesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateRetroactiveFavoritesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<CreateRetroactiveFavoritesResponse>(null as any);
     }
 
     /**
@@ -4369,6 +4430,132 @@ export interface IConfirmGuidelineFileUploadResponse {
     vectorStoreId?: string | undefined;
     status?: string | undefined;
     cloudStorageObjectName?: string | undefined;
+}
+
+export class CreateRetroactiveFavoritesRequest implements ICreateRetroactiveFavoritesRequest {
+
+    constructor(data?: ICreateRetroactiveFavoritesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+    }
+
+    static fromJS(data: any): CreateRetroactiveFavoritesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateRetroactiveFavoritesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        return data;
+    }
+}
+
+export interface ICreateRetroactiveFavoritesRequest {
+}
+
+export class CreateRetroactiveFavoritesResponse implements ICreateRetroactiveFavoritesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    usersProcessed?: number;
+    foodEntriesProcessed?: number;
+    favoritesCreated?: number;
+    errorCount?: number;
+
+    constructor(data?: ICreateRetroactiveFavoritesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.usersProcessed = _data["usersProcessed"];
+            this.foodEntriesProcessed = _data["foodEntriesProcessed"];
+            this.favoritesCreated = _data["favoritesCreated"];
+            this.errorCount = _data["errorCount"];
+        }
+    }
+
+    static fromJS(data: any): CreateRetroactiveFavoritesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateRetroactiveFavoritesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["usersProcessed"] = this.usersProcessed;
+        data["foodEntriesProcessed"] = this.foodEntriesProcessed;
+        data["favoritesCreated"] = this.favoritesCreated;
+        data["errorCount"] = this.errorCount;
+        return data;
+    }
+}
+
+export interface ICreateRetroactiveFavoritesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    usersProcessed?: number;
+    foodEntriesProcessed?: number;
+    favoritesCreated?: number;
+    errorCount?: number;
 }
 
 export class CreateSharedMealRequest implements ICreateSharedMealRequest {

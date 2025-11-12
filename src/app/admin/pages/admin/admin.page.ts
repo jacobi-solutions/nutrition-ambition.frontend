@@ -139,6 +139,8 @@ export class AdminPage implements OnInit, OnDestroy {
   // Migrations management
   isMigratingCanonicalUnits = false;
   migrationResult: { migratedCount: number; errorCount: number } | null = null;
+  isCreatingRetroactiveFavorites = false;
+  retroactiveFavoritesResult: { usersProcessed: number; foodEntriesProcessed: number; favoritesCreated: number; errorCount: number } | null = null;
 
   constructor(
     private accountsService: AccountsService,
@@ -995,6 +997,60 @@ export class AdminPage implements OnInit, OnDestroy {
               await this.showToast('Error running migration', 'danger');
             } finally {
               this.isMigratingCanonicalUnits = false;
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async createRetroactiveFavorites() {
+    const alert = await this.alertController.create({
+      header: 'Create Retroactive Favorites',
+      message: `This will loop through all users and process all their food entries (from oldest to newest) to retroactively create favorites. This may take several minutes depending on the number of users and entries. Continue?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Create Favorites',
+          handler: async () => {
+            try {
+              this.isCreatingRetroactiveFavorites = true;
+              this.retroactiveFavoritesResult = null;
+
+              const response = await this.adminService.createRetroactiveFavorites();
+
+              if (response.isSuccess) {
+                this.retroactiveFavoritesResult = {
+                  usersProcessed: response.usersProcessed || 0,
+                  foodEntriesProcessed: response.foodEntriesProcessed || 0,
+                  favoritesCreated: response.favoritesCreated || 0,
+                  errorCount: response.errorCount || 0
+                };
+
+                if (response.errorCount === 0) {
+                  await this.showToast(
+                    `Migration complete! Processed ${response.usersProcessed} users, ${response.foodEntriesProcessed} entries, created ${response.favoritesCreated} favorites.`,
+                    'success'
+                  );
+                } else {
+                  await this.showToast(
+                    `Migration complete with errors. Processed ${response.usersProcessed} users, created ${response.favoritesCreated} favorites, ${response.errorCount} errors.`,
+                    'warning'
+                  );
+                }
+              } else {
+                const errorMessage = response.errors?.[0]?.errorMessage || 'Migration failed';
+                await this.showToast(errorMessage, 'danger');
+              }
+            } catch (error) {
+              await this.showToast('Error running migration', 'danger');
+            } finally {
+              this.isCreatingRetroactiveFavorites = false;
             }
           }
         }
