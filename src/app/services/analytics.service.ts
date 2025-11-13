@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, Injector, runInInjectionContext } from '@angular/core';
 import { Analytics, logEvent, setUserId } from '@angular/fire/analytics';
 import { Auth } from '@angular/fire/auth';
 
@@ -8,15 +8,18 @@ import { Auth } from '@angular/fire/auth';
 export class AnalyticsService {
   private analytics = inject(Analytics);
   private auth = inject(Auth);
+  private injector = inject(Injector);
 
   constructor() {
     // Whenever auth state changes, set the userId in analytics
     this.auth.onAuthStateChanged(user => {
-      if (user) {
-        setUserId(this.analytics, user.uid);
-      } else {
-        setUserId(this.analytics, null);
-      }
+      runInInjectionContext(this.injector, () => {
+        if (user) {
+          setUserId(this.analytics, user.uid);
+        } else {
+          setUserId(this.analytics, null);
+        }
+      });
     });
   }
 

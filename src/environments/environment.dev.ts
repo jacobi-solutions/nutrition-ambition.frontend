@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  backendApiUrl: 'https://dev-api.nutritionambition.app/',
+  backendApiUrl: 'https://dev-api.nutritionambition.app',
   frontendUrl: 'https://dev.nutritionambition.app',
 
   storageBucketBaseUrl: 'https://storage.googleapis.com/nutritionambition.app',

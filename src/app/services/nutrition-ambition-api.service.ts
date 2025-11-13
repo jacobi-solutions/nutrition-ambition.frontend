@@ -35,6 +35,16 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    getUnacknowledgedFeedback(body: Request | undefined): Observable<GetFeedbackResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    markFeedbackAsShown(body: MarkFeedbackAsShownRequest | undefined): Observable<Response>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getFeedbackWithAccountInfo(body: GetFeedbackWithAccountInfoRequest | undefined): Observable<GetFeedbackWithAccountInfoResponse>;
     /**
      * @param body (optional) 
@@ -419,6 +429,118 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processChangePassword(response: HttpResponseBase): Observable<Response> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = Response.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<Response>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    getUnacknowledgedFeedback(body: Request | undefined): Observable<GetFeedbackResponse> {
+        let url_ = this.baseUrl + "/api/Accounts/GetUnacknowledgedFeedback";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetUnacknowledgedFeedback(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetUnacknowledgedFeedback(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<GetFeedbackResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<GetFeedbackResponse>;
+        }));
+    }
+
+    protected processGetUnacknowledgedFeedback(response: HttpResponseBase): Observable<GetFeedbackResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = GetFeedbackResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<GetFeedbackResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    markFeedbackAsShown(body: MarkFeedbackAsShownRequest | undefined): Observable<Response> {
+        let url_ = this.baseUrl + "/api/Accounts/MarkFeedbackAsShown";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMarkFeedbackAsShown(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMarkFeedbackAsShown(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Response>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Response>;
+        }));
+    }
+
+    protected processMarkFeedbackAsShown(response: HttpResponseBase): Observable<Response> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -5627,6 +5749,7 @@ export class Food implements IFood {
     description?: string | undefined;
     brand?: string | undefined;
     originalPhrase?: string | undefined;
+    foodPictureDescription?: string | undefined;
     photoThumb?: string | undefined;
     photoHighRes?: string | undefined;
     components?: Component[] | undefined;
@@ -5652,6 +5775,7 @@ export class Food implements IFood {
             this.description = _data["description"];
             this.brand = _data["brand"];
             this.originalPhrase = _data["originalPhrase"];
+            this.foodPictureDescription = _data["foodPictureDescription"];
             this.photoThumb = _data["photoThumb"];
             this.photoHighRes = _data["photoHighRes"];
             if (Array.isArray(_data["components"])) {
@@ -5681,6 +5805,7 @@ export class Food implements IFood {
         data["description"] = this.description;
         data["brand"] = this.brand;
         data["originalPhrase"] = this.originalPhrase;
+        data["foodPictureDescription"] = this.foodPictureDescription;
         data["photoThumb"] = this.photoThumb;
         data["photoHighRes"] = this.photoHighRes;
         if (Array.isArray(this.components)) {
@@ -5703,6 +5828,7 @@ export interface IFood {
     description?: string | undefined;
     brand?: string | undefined;
     originalPhrase?: string | undefined;
+    foodPictureDescription?: string | undefined;
     photoThumb?: string | undefined;
     photoHighRes?: string | undefined;
     components?: Component[] | undefined;
@@ -6540,6 +6666,114 @@ export interface IGetFavoritesResponse {
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
     favorites?: FavoriteFoodDto[] | undefined;
+}
+
+export class GetFeedbackResponse implements IGetFeedbackResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    feedbackEntries?: FeedbackEntry[] | undefined;
+    feedbackEntry?: FeedbackEntry;
+    feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
+
+    constructor(data?: IGetFeedbackResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            if (Array.isArray(_data["feedbackEntries"])) {
+                this.feedbackEntries = [] as any;
+                for (let item of _data["feedbackEntries"])
+                    this.feedbackEntries!.push(FeedbackEntry.fromJS(item));
+            }
+            this.feedbackEntry = _data["feedbackEntry"] ? FeedbackEntry.fromJS(_data["feedbackEntry"]) : <any>undefined;
+            if (Array.isArray(_data["feedbackWithAccounts"])) {
+                this.feedbackWithAccounts = [] as any;
+                for (let item of _data["feedbackWithAccounts"])
+                    this.feedbackWithAccounts!.push(FeedbackWithAccount.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): GetFeedbackResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetFeedbackResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        if (Array.isArray(this.feedbackEntries)) {
+            data["feedbackEntries"] = [];
+            for (let item of this.feedbackEntries)
+                data["feedbackEntries"].push(item.toJSON());
+        }
+        data["feedbackEntry"] = this.feedbackEntry ? this.feedbackEntry.toJSON() : <any>undefined;
+        if (Array.isArray(this.feedbackWithAccounts)) {
+            data["feedbackWithAccounts"] = [];
+            for (let item of this.feedbackWithAccounts)
+                data["feedbackWithAccounts"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export interface IGetFeedbackResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    feedbackEntries?: FeedbackEntry[] | undefined;
+    feedbackEntry?: FeedbackEntry;
+    feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 }
 
 export class GetFeedbackWithAccountInfoRequest implements IGetFeedbackWithAccountInfoRequest {
@@ -7861,6 +8095,50 @@ export interface ILogEntryDto {
     traceId?: string | undefined;
     sourceService?: string | undefined;
     extra?: { [key: string]: string; } | undefined;
+}
+
+export class MarkFeedbackAsShownRequest implements IMarkFeedbackAsShownRequest {
+    feedbackIds?: string[] | undefined;
+
+    constructor(data?: IMarkFeedbackAsShownRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["feedbackIds"])) {
+                this.feedbackIds = [] as any;
+                for (let item of _data["feedbackIds"])
+                    this.feedbackIds!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): MarkFeedbackAsShownRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarkFeedbackAsShownRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.feedbackIds)) {
+            data["feedbackIds"] = [];
+            for (let item of this.feedbackIds)
+                data["feedbackIds"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IMarkFeedbackAsShownRequest {
+    feedbackIds?: string[] | undefined;
 }
 
 export class MealPreview implements IMealPreview {
