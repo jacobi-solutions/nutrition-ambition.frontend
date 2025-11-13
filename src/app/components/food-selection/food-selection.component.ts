@@ -1865,7 +1865,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         localDateKey: this.dateService.getSelectedDate()
       });
 
-      const response = await this.apiService.getInstantAlternatives(request).toPromise();
+      const response = await this.foodSelectionService.getInstantAlternatives(request).toPromise();
 
       if (response?.isSuccess && response.alternatives) {
         // Get currently selected food to preserve it
@@ -1966,7 +1966,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         localDateKey: this.dateService.getSelectedDate()
       });
 
-      const response = await this.apiService.getInstantAlternatives(request).toPromise();
+      const response = await this.foodSelectionService.getInstantAlternatives(request).toPromise();
 
       if (response?.isSuccess && response.alternatives) {
         // Set success state
@@ -2285,11 +2285,10 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     try {
       const request = new GetInstantAlternativesRequest({
         originalPhrase: query,
-        componentId: `quick-search-${Date.now()}`, // Temporary ID for search
         localDateKey: this.dateService.getSelectedDate()
       });
 
-      const response = await this.apiService.getInstantAlternatives(request).toPromise();
+      const response = await this.foodSelectionService.getInstantAlternatives(request).toPromise();
 
       if (response?.isSuccess && response.alternatives) {
         this.quickSearchResults = response.alternatives;
