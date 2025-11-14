@@ -27,6 +27,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/legal/terms-of-service/terms-of-service.page').then(m => m.TermsOfServicePage)
   },
   {
+    path: 'legal/data-deletion',
+    loadComponent: () => import('./pages/legal/data-deletion/data-deletion.page').then(m => m.DataDeletionPage)
+  },
+  {
     path: 'change-password',
     loadComponent: () => import('./pages/auth/change-password/change-password.page').then(m => m.ChangePasswordPage),
     canActivate: [AuthGuard]

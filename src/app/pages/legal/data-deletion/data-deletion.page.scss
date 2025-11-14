@@ -1,0 +1,141 @@
+ion-content {
+  --background: var(--color-bone, #f5f3ef);
+}
+
+// Add top padding when using fullscreen to account for header
+ion-content[fullscreen] {
+  --padding-top: 96px; // Approximate height of the two-row header
+}
+
+.data-deletion-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.data-deletion-container h1 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--color-charcoal);
+  margin-bottom: 0.75rem;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+.last-updated {
+  font-family: var(--font-primary);
+  font-size: 0.875rem;
+  color: var(--color-smoke);
+  text-align: center;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.operator-info {
+  font-family: var(--font-primary);
+  font-size: 0.875rem;
+  color: var(--color-smoke);
+  text-align: center;
+  margin-bottom: 0.25rem;
+  line-height: 1.4;
+
+  a {
+    color: var(--color-olive);
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &:last-of-type {
+    margin-bottom: 2rem;
+  }
+}
+
+.section {
+  margin-bottom: 2rem;
+  background-color: #fff;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.04);
+}
+
+.section h2 {
+  font-family: var(--font-primary);
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--color-olive);
+  margin-bottom: 1rem;
+}
+
+.section p {
+  font-family: var(--font-primary);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-charcoal);
+  margin-bottom: 1rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  a {
+    color: var(--color-olive);
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.email-highlight {
+  text-align: center;
+  font-size: 1.125rem;
+  margin: 1.5rem 0;
+
+  a {
+    color: var(--color-olive);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    background-color: rgba(139, 152, 90, 0.1);
+    border-radius: 0.5rem;
+    display: inline-block;
+
+    &:hover {
+      background-color: rgba(139, 152, 90, 0.2);
+      text-decoration: none;
+    }
+  }
+}
+
+.section ul {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section li {
+  font-family: var(--font-primary);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-charcoal);
+  margin-bottom: 0.5rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  strong {
+    font-weight: 600;
+    color: var(--color-olive);
+  }
+}
