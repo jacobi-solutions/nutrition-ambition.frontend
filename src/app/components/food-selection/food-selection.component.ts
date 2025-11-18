@@ -97,7 +97,12 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   }
 
   get mealMacroSummary(): string {
+    console.log('[MEAL_CALC] Starting meal-level calculation');
+    console.log('  - Meal name:', this.message.mealSelection?.mealName || 'unknown');
+    console.log('  - Number of foods:', this.computedFoods?.length || 0);
+
     if (!this.computedFoods || this.computedFoods.length === 0) {
+      console.log('  - No foods found, returning empty string');
       return '';
     }
 
@@ -106,14 +111,38 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     let totalFat = 0;
     let totalCarbs = 0;
 
+    console.log('  - Processing foods:');
     // Sum up macros from all foods using the same logic as food-header component
-    for (const food of this.computedFoods) {
+    for (let i = 0; i < this.computedFoods.length; i++) {
+      const food = this.computedFoods[i];
+      console.log(`  - Food ${i + 1}:`, food.name || 'unknown');
+
       const foodMacros = this.aggregateFoodMacros(food);
-      if (foodMacros.calories !== null) totalCalories += foodMacros.calories;
-      if (foodMacros.protein !== null) totalProtein += foodMacros.protein;
-      if (foodMacros.fat !== null) totalFat += foodMacros.fat;
-      if (foodMacros.carbs !== null) totalCarbs += foodMacros.carbs;
+      console.log(`    - Food macros returned:`, foodMacros);
+
+      if (foodMacros.calories !== null) {
+        totalCalories += foodMacros.calories;
+        console.log(`    - Added ${foodMacros.calories} calories, running total: ${totalCalories}`);
+      }
+      if (foodMacros.protein !== null) {
+        totalProtein += foodMacros.protein;
+        console.log(`    - Added ${foodMacros.protein} protein, running total: ${totalProtein}`);
+      }
+      if (foodMacros.fat !== null) {
+        totalFat += foodMacros.fat;
+        console.log(`    - Added ${foodMacros.fat} fat, running total: ${totalFat}`);
+      }
+      if (foodMacros.carbs !== null) {
+        totalCarbs += foodMacros.carbs;
+        console.log(`    - Added ${foodMacros.carbs} carbs, running total: ${totalCarbs}`);
+      }
     }
+
+    console.log('  - Pre-rounding totals:');
+    console.log('    - Calories:', totalCalories);
+    console.log('    - Protein:', totalProtein);
+    console.log('    - Fat:', totalFat);
+    console.log('    - Carbs:', totalCarbs);
 
     // Round to whole numbers
     const cal = Math.round(totalCalories);
@@ -121,22 +150,42 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
     const fat = Math.round(totalFat);
     const carbs = Math.round(totalCarbs);
 
-    return `(${cal} cal, ${protein} g protein, ${fat} g fat, ${carbs} g carb)`;
+    console.log('  - Final meal totals (rounded):');
+    console.log('    - Calories:', cal);
+    console.log('    - Protein:', protein);
+    console.log('    - Fat:', fat);
+    console.log('    - Carbs:', carbs);
+
+    const result = `(${cal} cal, ${protein} g protein, ${fat} g fat, ${carbs} g carb)`;
+    console.log('  - Meal summary string:', result);
+    return result;
   }
 
   private aggregateFoodMacros(food: FoodDisplay): { calories: number | null; protein: number | null; fat: number | null; carbs: number | null } {
+    console.log('[FOOD_CALC] Starting food-level calculation for:', food?.name || 'unknown');
+    console.log('  - Food ID:', food?.id);
+    console.log('  - Food quantity:', food?.quantity);
+    console.log('  - Food initialQuantity:', food?.initialQuantity);
+    console.log('  - Number of components:', food?.components?.length || 0);
+
     const aggregated = { calories: 0, protein: 0, fat: 0, carbs: 0 };
     let hasAnyNutrients = false;
 
     if (!food?.components) {
+      console.log('  - ERROR: No components found');
       return { calories: null, protein: null, fat: null, carbs: null };
     }
 
-    for (const component of food.components) {
+    console.log('  - Processing components:');
+    for (let i = 0; i < food.components.length; i++) {
+      const component = food.components[i];
+      console.log(`  - Component ${i + 1}:`, component.selectedComponentId || 'unknown');
+
       // Get the selected serving from component data (same pattern as food-header)
       const selectedMatch = component.matches?.find((m: any) => m.isBestMatch) || component.matches?.[0];
 
       if (!selectedMatch) {
+        console.log('    - No selected match found');
         continue;
       }
 
@@ -145,62 +194,97 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       ) || selectedMatch.servings?.[0];
 
       if (!selectedServing) {
+        console.log('    - No selected serving found');
         continue;
       }
+
+      console.log('    - Selected serving:', selectedServing.description);
 
       // Use the utility to get properly scaled nutrients (handles alternative servings)
       const scaledNutrients = NutrientScalingUtil.getScaledNutrients(selectedServing, selectedMatch);
 
       if (!scaledNutrients) {
+        console.log('    - No scaled nutrients returned');
         continue;
       }
 
       const scaledCalories = NutrientScalingUtil.getMacro(scaledNutrients, ['calories', 'Calories', 'energy_kcal', 'Energy']);
       if (scaledCalories !== null) {
+        console.log(`    - Component calories: ${scaledCalories}`);
         aggregated.calories += scaledCalories;
         hasAnyNutrients = true;
       }
 
       const scaledProtein = NutrientScalingUtil.getMacro(scaledNutrients, ['protein', 'Protein']);
       if (scaledProtein !== null) {
+        console.log(`    - Component protein: ${scaledProtein}`);
         aggregated.protein += scaledProtein;
         hasAnyNutrients = true;
       }
 
       const scaledFat = NutrientScalingUtil.getMacro(scaledNutrients, ['fat', 'Fat', 'total_fat']);
       if (scaledFat !== null) {
+        console.log(`    - Component fat: ${scaledFat}`);
         aggregated.fat += scaledFat;
         hasAnyNutrients = true;
       }
 
       const scaledCarbs = NutrientScalingUtil.getMacro(scaledNutrients, ['carbohydrate', 'Carbohydrate', 'carbohydrates', 'carbs']);
       if (scaledCarbs !== null) {
+        console.log(`    - Component carbs: ${scaledCarbs}`);
         aggregated.carbs += scaledCarbs;
         hasAnyNutrients = true;
       }
     }
 
+    console.log('  - Aggregated component totals:', aggregated);
+
     // Apply food-level quantity normalization using initialQuantity
     const foodQuantity = food?.quantity || 1;
     const initialQuantity = food?.initialQuantity;
 
+    console.log('  - Food-level quantity scaling:');
+    console.log('    - foodQuantity:', foodQuantity);
+    console.log('    - initialQuantity:', initialQuantity);
+
     // For new foods or during loading, initialQuantity may not be set yet
-    // In these cases, skip quantity normalization
+    // In these cases, multiply by food.quantity directly (backend behavior)
     if (initialQuantity === undefined || initialQuantity === null) {
-      return hasAnyNutrients ? aggregated : { calories: null, protein: null, fat: null, carbs: null };
+      console.log('    - initialQuantity is undefined/null - multiplying by food.quantity directly');
+      console.log('    - This matches backend behavior for initial load');
+
+      if (hasAnyNutrients) {
+        const result = {
+          calories: aggregated.calories * foodQuantity,
+          protein: aggregated.protein * foodQuantity,
+          fat: aggregated.fat * foodQuantity,
+          carbs: aggregated.carbs * foodQuantity
+        };
+        console.log('  - Final food macros (direct multiplication):', result);
+        return result;
+      } else {
+        console.log('  - No nutrients found, returning nulls');
+        return { calories: null, protein: null, fat: null, carbs: null };
+      }
     }
 
     if (hasAnyNutrients) {
       // Normalize by dividing by initial quantity, then scale by current quantity
       const scaleFactor = foodQuantity / initialQuantity;
-      return {
+      console.log('    - Scale factor:', scaleFactor, `(${foodQuantity} / ${initialQuantity})`);
+
+      const result = {
         calories: aggregated.calories * scaleFactor,
         protein: aggregated.protein * scaleFactor,
         fat: aggregated.fat * scaleFactor,
         carbs: aggregated.carbs * scaleFactor
       };
+
+      console.log('  - Final food macros (after scaling):', result);
+      return result;
     }
 
+    console.log('  - No nutrients found, returning nulls');
     return { calories: null, protein: null, fat: null, carbs: null };
   }
 
@@ -344,8 +428,13 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   onFoodQuantityChange(foodIndex: number, newQuantity: number): void {
     const food = this.computedFoods[foodIndex];
     if (food) {
+      // If this is the first user edit (initialQuantity not set), capture the current quantity
+      const initialQuantity = food.initialQuantity !== undefined ? food.initialQuantity : food.quantity;
+
       this.computedFoods[foodIndex] = new FoodDisplay({
-        ...food, quantity: newQuantity
+        ...food,
+        quantity: newQuantity,
+        initialQuantity: initialQuantity // Set on first edit, preserve on subsequent edits
       });
     }
 
@@ -1099,6 +1188,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
             editingQuantity: food.editingQuantity,
             isEditing: food.isEditing,
             isExpanded: food.isExpanded,
+            initialQuantity: food.initialQuantity, // Preserve initialQuantity across UI updates
             componentStates
           });
         }
@@ -1166,7 +1256,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
         editingQuantity: savedFoodState?.editingQuantity,
         isEditing: savedFoodState?.isEditing,
         isExpanded: savedFoodState?.isExpanded,
-        initialQuantity: food.quantity, // Store baseline quantity for nutrition calculations (no default)
+        initialQuantity: savedFoodState?.initialQuantity, // Only preserve from saved UI state, undefined on initial load
       });
     });
 

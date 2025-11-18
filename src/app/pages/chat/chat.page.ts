@@ -704,22 +704,49 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   const existingFoods = existingMessage.mealSelection.foods || [];
                   const streamingFoods = mealSelection.foods || [];
 
+                  console.log('[FOOD_CREATION] Merging foods during streaming');
+                  console.log('  - Existing foods count:', existingFoods.length);
+                  console.log('  - Streaming foods count:', streamingFoods.length);
+
                   // Start with all existing foods
                   const mergedFoods = [...existingFoods];
 
                   // For each streaming food, either update existing or append new
                   streamingFoods.forEach((streamingFood: any) => {
                     if (streamingFood.id) {
+                      console.log('  - Processing streaming food:', streamingFood.name || 'unknown');
+                      console.log('    - Food ID:', streamingFood.id);
+                      console.log('    - Food quantity:', streamingFood.quantity);
+                      console.log('    - Food initialQuantity:', streamingFood.initialQuantity);
+                      console.log('    - Food components count:', streamingFood.components?.length || 0);
+
+                      // Log first component details if available
+                      if (streamingFood.components?.length > 0) {
+                        const firstComp = streamingFood.components[0];
+                        const firstMatch = firstComp.matches?.[0];
+                        const firstServing = firstMatch?.servings?.[0];
+                        if (firstServing) {
+                          console.log('    - First component serving:');
+                          console.log('      - userConfirmedQuantity:', firstServing.userConfirmedQuantity);
+                          console.log('      - aiRecommendedScale:', `${firstServing.aiRecommendedScaleNumerator}/${firstServing.aiRecommendedScaleDenominator}`);
+                          console.log('      - baseQuantity:', firstServing.baseQuantity);
+                        }
+                      }
+
                       const existingIndex = mergedFoods.findIndex((f: any) => f.id === streamingFood.id);
                       if (existingIndex >= 0) {
                         // Update existing food (streaming update)
+                        console.log('    - Updating existing food at index:', existingIndex);
                         mergedFoods[existingIndex] = streamingFood;
                       } else {
                         // Append new food (user action during streaming)
+                        console.log('    - Appending new food');
                         mergedFoods.push(streamingFood);
                       }
                     }
                   });
+
+                  console.log('  - Final merged foods count:', mergedFoods.length);
 
                   // Preserve mealSelection.id for future multi-meal-selection support
                   mergedMealSelection = {

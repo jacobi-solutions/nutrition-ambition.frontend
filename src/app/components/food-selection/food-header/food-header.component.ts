@@ -187,12 +187,20 @@ export class FoodHeaderComponent implements OnInit, OnChanges {
     const foodQuantity = this.food?.quantity || 1;
     const initialQuantity = this.food?.initialQuantity;
 
+    // For new foods or during loading, initialQuantity may not be set yet
+    // In these cases, use food quantity directly (multiply by food.quantity)
     if (initialQuantity === undefined || initialQuantity === null) {
-      throw new Error(`initialQuantity is required for nutrition calculations but is missing for food: ${this.food?.name || 'unknown'}`);
-    }
-
-    if (hasAnyNutrients) {
-      // Normalize by dividing by initial quantity, then scale by current quantity
+      if (hasAnyNutrients) {
+        // Just multiply by food quantity (backend behavior)
+        return {
+          calories: aggregated.calories * foodQuantity,
+          protein: aggregated.protein * foodQuantity,
+          fat: aggregated.fat * foodQuantity,
+          carbs: aggregated.carbs * foodQuantity
+        };
+      }
+    } else if (hasAnyNutrients) {
+      // User has edited quantity - normalize by dividing by initial quantity, then scale by current quantity
       const scaleFactor = foodQuantity / initialQuantity;
       return {
         calories: aggregated.calories * scaleFactor,

@@ -34,20 +34,71 @@ export class NutrientScalingUtil {
    * fallback scaling from base serving for alternative servings.
    */
   static getScaledNutrients(serving: ComponentServingDisplay, selectedFood: ComponentMatch | null): { [key: string]: number } | null {
+    console.log('[NUTRIENT_SCALING] Starting calculation for component:', selectedFood?.displayName || 'unknown');
+    console.log('  - Serving description:', serving?.description);
+
+    if (!serving) {
+      console.log('  - ERROR: No serving provided');
+      return null;
+    }
+
+    // Log all the input values
+    const effectiveQuantity = serving.effectiveQuantity;
+    const baseQuantity = serving.baseQuantity || 1;
+    const aiNumerator = serving.aiRecommendedScaleNumerator || 1;
+    const aiDenominator = serving.aiRecommendedScaleDenominator || 1;
+    const userConfirmedQty = serving.userConfirmedQuantity;
+
+    console.log('  - Input values:');
+    console.log('    - baseQuantity:', baseQuantity);
+    console.log('    - effectiveQuantity:', effectiveQuantity);
+    console.log('    - userConfirmedQuantity:', userConfirmedQty);
+    console.log('    - aiRecommendedScale:', `${aiNumerator}/${aiDenominator} = ${aiNumerator/aiDenominator}`);
+
     // Get the effective quantity from the ComponentServingDisplay object
     const currentQuantity = serving.effectiveQuantity || ((serving.baseQuantity || 1) * (serving.aiRecommendedScaleNumerator || 1) / (serving.aiRecommendedScaleDenominator || 1)) || 1;
+
+    console.log('  - Calculated currentQuantity:', currentQuantity);
+    console.log('    - Formula used:', effectiveQuantity ? 'effectiveQuantity' : 'baseQuantity * aiScale');
 
     // All servings now have nutrient data from backend
     if (serving.nutrients && this.hasNutrientData(serving.nutrients)) {
       // Calculate unit scale factor: nutrients are for baseQuantity, so convert to per-unit
       const unitScaleFactor = 1 / (serving.baseQuantity || 1);
+      console.log('  - Unit scale factor:', unitScaleFactor, `(1 / ${serving.baseQuantity || 1})`);
+
       const scaledNutrients: { [key: string]: number } = {};
-      for (const [key, value] of Object.entries(serving.nutrients)) {
-        scaledNutrients[key] = value * unitScaleFactor * currentQuantity;
+
+      // Log key nutrients before and after scaling
+      const keyNutrients = ['calories', 'protein', 'fat', 'carbohydrate', 'fiber', 'sugar'];
+      console.log('  - Raw nutrients (key values):');
+      for (const key of keyNutrients) {
+        if (serving.nutrients[key] !== undefined) {
+          console.log(`    - ${key}: ${serving.nutrients[key]}`);
+        }
       }
+
+      for (const [key, value] of Object.entries(serving.nutrients)) {
+        const scaledValue = value * unitScaleFactor * currentQuantity;
+        scaledNutrients[key] = scaledValue;
+
+        // Log scaling calculation for key nutrients
+        if (keyNutrients.includes(key)) {
+          console.log(`  - Scaling ${key}: ${value} * ${unitScaleFactor} * ${currentQuantity} = ${scaledValue}`);
+        }
+      }
+
+      console.log('  - Final scaled nutrients:', {
+        calories: scaledNutrients['calories'],
+        protein: scaledNutrients['protein'],
+        fat: scaledNutrients['fat'],
+        carbohydrate: scaledNutrients['carbohydrate']
+      });
+
       return scaledNutrients;
     }
 
+    console.log('  - ERROR: No valid nutrient data found');
     return null;
   }
 
