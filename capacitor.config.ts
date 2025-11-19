@@ -4,6 +4,11 @@ const config: CapacitorConfig = {
   appId: 'app.nutritionambition.mobile',
   appName: 'Nutrition Ambition',
   webDir: 'dist',
+  android: {
+    buildOptions: {
+      javaVersion: '17'
+    }
+  },
   ios: {
     // Minimum iOS version required for MLKit Barcode Scanning
     minVersion: '15.5'
