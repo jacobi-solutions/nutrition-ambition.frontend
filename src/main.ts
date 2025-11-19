@@ -36,7 +36,6 @@ import {
   chevronForwardCircleOutline,
   personCircle
 } from 'ionicons/icons';
-import { provideServiceWorker } from '@angular/service-worker';
 
 addIcons({
   'log-out-outline': logOutOutline,
@@ -115,9 +114,6 @@ bootstrapApplication(AppComponent, {
 
     // Screen & User tracking services
     ScreenTrackingService,
-    UserTrackingService, provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWhenStable:30000'
-          }),
+    UserTrackingService,
   ],
 });

@@ -28,10 +28,9 @@ import {
   chevronBackOutline, 
   logOutOutline, 
   personCircle, 
-  logInOutline, 
+  logInOutline,
   chevronForwardOutline,
   settingsOutline,
-  downloadOutline,
   informationCircleOutline,
   keyOutline
 } from 'ionicons/icons';
@@ -39,8 +38,6 @@ import { DateService } from 'src/app/services/date.service';
 import { AnalyticsService } from 'src/app/services/analytics.service';
 import { Subscription } from 'rxjs';
 import { format } from 'date-fns';
-import { PwaInstallService } from 'src/app/services/pwa-install.service';
-import { PwaInstallComponent } from '../pwa-install/pwa-install.component';
 import { SettingsPopoverComponent } from '../settings-popover/settings-popover.component';
 
 @Component({
@@ -111,31 +108,25 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   // Unique ID for popover trigger to avoid conflicts between page instances
   triggerId: string = `settings-trigger-${Math.random().toString(36).substr(2, 9)}`;
 
-  canInstall: boolean = false;
   @ViewChild('settingsPopover') settingsPopover!: IonPopover;
 
   constructor(
-    private authService: AuthService, 
+    private authService: AuthService,
     private router: Router,
     private cdRef: ChangeDetectorRef,
-    private pwa: PwaInstallService,
-    private popoverCtrl: PopoverController,
     private analyticsService: AnalyticsService
   ) {
     // Add the icons explicitly to the library
-    addIcons({ 
-      chevronBackOutline, 
-      logOutOutline, 
-      personCircle, 
-      logInOutline, 
+    addIcons({
+      chevronBackOutline,
+      logOutOutline,
+      personCircle,
+      logInOutline,
       chevronForwardOutline,
       settingsOutline,
-      downloadOutline,
       informationCircleOutline,
       keyOutline
     });
-
-    this.canInstall = this.pwa.canInstall();
   }
 
   ngOnInit() {
@@ -268,30 +259,6 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
       case 'signout':
         this.onLogout();
         break;
-      case 'download':
-        await this.installPwa(event);
-        break;
-    }
-  }
-
-  async installPwa(event?: Event) {
-    const result = await this.pwa.install();
-
-    // Android/Chrome prompt path (no message → handled natively)
-    if (result?.outcome) {
-      // Analytics are now tracked in PwaInstallService
-      return;
-    }
-
-    // Everyone else → show instructions popover
-    if (result?.message) {
-      const popover = await this.popoverCtrl.create({
-        component: PwaInstallComponent,
-        componentProps: { message: result.message },
-        event: event,
-        translucent: true,
-      });
-      await popover.present();
     }
   }
 } 
