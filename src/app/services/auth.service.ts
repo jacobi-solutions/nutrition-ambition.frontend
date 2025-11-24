@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { NutritionAmbitionApiService, ChangePasswordRequest, RegisterAccountRequest } from './nutrition-ambition-api.service';
 import { AnalyticsService } from './analytics.service';
+import { isNativePlatform } from '../utils/platform.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -346,10 +347,17 @@ export class AuthService {
   }
 
   async signInWithGoogle(): Promise<void> {
+    // Prevent Google sign-in on native platforms to avoid blank screen issues
+    // Google Identity Services (GIS) causes iOS/Android to hang during initialization
+    if (isNativePlatform()) {
+      console.warn('⚠️ Google sign-in is not supported on native platforms. Use email/password instead.');
+      throw new Error('Google sign-in is only available on web. Please use email/password authentication.');
+    }
+
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(this.authInstance, provider);
-      
+
       // For Google sign-in, we need to create backend account if it's a new user
       // Note: Google sign-in could be either login or signup, so we'll try to create
       // the account and handle the "user already exists" gracefully

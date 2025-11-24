@@ -2,7 +2,8 @@ import { enableProdMode, ErrorHandler, Injectable, isDevMode } from '@angular/co
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
 import { RouteReuseStrategy } from '@angular/router';
-import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone'; 
+import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
+import { Capacitor } from '@capacitor/core';
 
 // Firebase and AngularFire imports
 import { initializeApp, provideFirebaseApp, getApp } from '@angular/fire/app';
@@ -71,6 +72,21 @@ export class GlobalErrorHandler implements ErrorHandler {
   }
 }
 
+// Suppress Google Identity Services errors in native environments
+// This prevents GIS initialization errors from halting Angular bootstrap on iOS/Android
+window.addEventListener("error", (e) => {
+  const errorString = String(e.error || e.message || '');
+  const isGoogleError = errorString.includes('gapi') ||
+                        errorString.includes('google') ||
+                        errorString.includes('gsi') ||
+                        errorString.includes('accounts.google.com');
+
+  if (isGoogleError && Capacitor.isNativePlatform()) {
+    console.warn('⚠️ Suppressed Google Identity error in native environment:', errorString);
+    e.preventDefault();
+  }
+});
+
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
@@ -87,19 +103,29 @@ bootstrapApplication(AppComponent, {
     // Initialize Firebase Auth with durable persistence
     provideAuth(() => {
       const app = getApp();
-      const auth = initializeAuth(app, {
+      const isNative = Capacitor.isNativePlatform();
+
+      // Configure auth differently for web vs native to prevent Google Identity issues
+      const authConfig: any = {
         persistence: [indexedDBLocalPersistence, browserLocalPersistence],
-        popupRedirectResolver: browserPopupRedirectResolver,
-      });
-    
-      // 👇 Add this line to set the tenant ID dynamically
+      };
+
+      // Only add popupRedirectResolver on web platforms
+      // On native (iOS/Android), this can trigger Google Identity Services and cause blank screens
+      if (!isNative) {
+        authConfig.popupRedirectResolver = browserPopupRedirectResolver;
+      }
+
+      const auth = initializeAuth(app, authConfig);
+
+      // Set the tenant ID dynamically
       if (environment.tenantId) {
         auth.tenantId = environment.tenantId;
-        console.log('✅ Using Firebase tenant:', environment.tenantId);
+        console.log('✅ Using Firebase tenant:', environment.tenantId, isNative ? '(native)' : '(web)');
       } else {
-        console.log('✅ Using default Firebase tenant');
+        console.log('✅ Using default Firebase tenant', isNative ? '(native)' : '(web)');
       }
-    
+
       return auth;
     }),
 

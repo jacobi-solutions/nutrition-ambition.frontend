@@ -28,6 +28,7 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "baseHref": "./",
             "assets": [
               {
                 "glob": "**/*",
