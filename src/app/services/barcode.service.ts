@@ -83,18 +83,33 @@ export class BarcodeService {
         (error) => {
           console.error('[BarcodeService] Stream error:', error);
 
-          // Track error
+          // Determine if this is a "not found" error or an actual technical error
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          const isNotFound = errorMessage.includes('No food found for barcode');
+
+          // Track error with appropriate reason
           this.analyticsService.trackEvent('barcode_scan_failed', {
             upc,
-            reason: 'stream_error',
-            error: error instanceof Error ? error.message : 'unknown'
+            reason: isNotFound ? 'not_found' : 'stream_error',
+            error: errorMessage
           });
 
-          this.toastService.showToast({
-            message: 'Failed to process barcode. Please try again.',
-            duration: 3000,
-            color: 'danger'
-          });
+          // Show appropriate toast based on error type
+          if (isNotFound) {
+            // Barcode not in system - informational, not an error
+            this.toastService.showToast({
+              message: "We don't have that barcode in our system yet. Please try searching or entering manually.",
+              duration: 4000,
+              color: 'medium'
+            });
+          } else {
+            // Actual technical error
+            this.toastService.showToast({
+              message: 'Something went wrong scanning the barcode. Please try again.',
+              duration: 3000,
+              color: 'danger'
+            });
+          }
 
           onError(error);
         }

@@ -10,8 +10,8 @@ export const environment = {
     projectId: "nutrition-ambition",
     storageBucket: "nutrition-ambition.firebasestorage.app",
     messagingSenderId: "496562523884",
-    appId: "1:496562523884:web:aae9cec957ae6d491f1fc9",
-    measurementId: "G-YR1NTFC9TN"
+    appId: "1:496562523884:web:d709330c10dbcc761f1fc9",
+    measurementId: "G-9EEG64HG46"
   },
   tenantId: null
 };
