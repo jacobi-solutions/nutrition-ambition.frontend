@@ -1,13 +1,8 @@
 <div class="settings-dropdown">
   <ion-list>
-    <ion-item button routerLink="/change-password" (click)="onNavigateToResetPassword()" detail="false">
-      <ion-icon name="key" slot="start"></ion-icon>
-      <ion-label>{{ "Change Password" | titlecase }}</ion-label>
-    </ion-item>
-
-    <ion-item button routerLink="/legal" (click)="onNavigateToLegal()" detail="false">
-      <ion-icon name="document-text" slot="start"></ion-icon>
-      <ion-label>Legal</ion-label>
+    <ion-item button routerLink="/account-management" (click)="onNavigateToAccountManagement()" detail="false">
+      <ion-icon name="person-circle" slot="start"></ion-icon>
+      <ion-label>My Account</ion-label>
     </ion-item>
 
     <ion-item button (click)="onAction('signout')" detail="false">

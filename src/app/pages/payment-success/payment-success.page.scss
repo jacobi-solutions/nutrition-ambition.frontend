@@ -1,0 +1,117 @@
+.payment-success-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding-bottom: 20px;
+}
+
+ion-card {
+  background-color: #fff;
+  border-radius: 2.25rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+  margin: 1rem 0;
+  width: 100%;
+
+  ion-card-content {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 2rem;
+    text-align: center;
+  }
+}
+
+.icon-container {
+  margin-bottom: 1.5rem;
+
+  .success-icon {
+    font-size: 4rem;
+    color: #4caf50;
+  }
+}
+
+h2 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--ion-color-dark);
+  margin: 0 0 0.5rem 0;
+}
+
+p {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  color: var(--ion-color-medium);
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
+}
+
+.processing-info {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 1.5rem;
+
+  .processing-spinner {
+    color: var(--color-salmon);
+    width: 2.5rem;
+    height: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .processing-text {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--ion-color-dark);
+    margin: 0 0 0.5rem 0;
+  }
+
+  .processing-subtext {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.875rem;
+    color: var(--ion-color-medium);
+    margin: 0;
+  }
+}
+
+.redirect-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  color: var(--color-olive);
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+.timeout-state {
+  .timeout-help {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.875rem;
+    color: var(--ion-color-medium);
+    line-height: 1.6;
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: rgba(255, 193, 7, 0.1);
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+  }
+}
+
+.button-container {
+  margin-top: 2rem;
+
+  ion-button {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    text-transform: none;
+    --border-radius: 2rem;
+    height: 44px;
+  }
+}
+
+.salmon-button {
+  --background: var(--color-salmon);
+  --background-activated: var(--color-salmon);
+  --background-focused: var(--color-salmon);
+  --background-hover: var(--color-salmon);
+  --color: white;
+  --border-radius: 2rem;
+}

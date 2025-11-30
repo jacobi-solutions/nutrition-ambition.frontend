@@ -12,8 +12,7 @@ import { addIcons } from 'ionicons';
 import {
   logOut,
   informationCircle,
-  key,
-  documentText
+  personCircle
 } from 'ionicons/icons';
 import { APP_VERSION } from '../../../environments/version';
 
@@ -42,8 +41,7 @@ export class SettingsPopoverComponent {
     addIcons({
       logOut,
       informationCircle,
-      key,
-      documentText
+      personCircle
     });
   }
 
@@ -52,12 +50,7 @@ export class SettingsPopoverComponent {
     this.dismiss();
   }
 
-  onNavigateToResetPassword() {
-    this.dismiss();
-    // Navigation will be handled by the routerLink
-  }
-
-  onNavigateToLegal() {
+  onNavigateToAccountManagement() {
     this.dismiss();
     // Navigation will be handled by the routerLink
   }

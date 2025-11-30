@@ -1,0 +1,287 @@
+<app-header title="Account Management"></app-header>
+
+<ion-content class="ion-padding">
+  <div class="account-management-container">
+    <div *ngIf="isLoading" class="loading-container">
+      <ion-spinner></ion-spinner>
+    </div>
+
+    <div *ngIf="!isLoading && accountInfo">
+      <!-- Subscription Information -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Subscription</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <!-- Mobile App - Redirect to Web -->
+          <ng-container *ngIf="isMobileApp">
+            <div class="mobile-restriction-container">
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">
+                  <p class="mobile-restriction-message">
+                    To manage your subscription, please visit our website.
+                  </p>
+                </ion-label>
+              </ion-item>
+
+              <div class="button-container">
+                <ion-button
+                  expand="block"
+                  class="salmon-button"
+                  (click)="openWebAccountManagement()">
+                  Manage Subscription
+                </ion-button>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Web Platform - Full Subscription Management -->
+          <ng-container *ngIf="!isMobileApp">
+          <!-- Lifetime Premium User -->
+          <ng-container *ngIf="accountInfo.isPremiumLifetime">
+            <ion-item lines="none">
+              <ion-label>
+                <h3>Status</h3>
+                <p>
+                  <ion-text color="success">
+                    🌟 Lifetime Premium Access
+                  </ion-text>
+                </p>
+              </ion-label>
+            </ion-item>
+
+            <ion-item lines="none">
+              <ion-label>
+                <h3>Type</h3>
+                <p>One-time Purchase</p>
+              </ion-label>
+            </ion-item>
+
+            <ion-item lines="none">
+              <ion-label class="ion-text-wrap">
+                <p class="lifetime-description">
+                  Thank you for being a founding member! You have unlimited access to all premium features!.
+                </p>
+              </ion-label>
+            </ion-item>
+          </ng-container>
+
+          <!-- Already subscribed - show status and cancel option -->
+          <ng-container *ngIf="accountInfo.isPremium && !accountInfo.isPremiumLifetime">
+            <ion-item lines="none">
+              <ion-label>
+                <h3>Status</h3>
+                <p>
+                  <ion-text color="success">
+                    {{ subscriptionStatusText }}
+                  </ion-text>
+                </p>
+              </ion-label>
+            </ion-item>
+
+            <ion-item lines="none" *ngIf="accountInfo.subscriptionCurrentPeriodEndUtc">
+              <ion-label>
+                <h3>Current Period Ends</h3>
+                <p>{{ formatDate(accountInfo.subscriptionCurrentPeriodEndUtc) }}</p>
+              </ion-label>
+            </ion-item>
+
+            <div class="button-container" *ngIf="canCancelSubscription">
+              <ion-button
+                expand="block"
+                color="warning"
+                (click)="cancelSubscription()">
+                Cancel Subscription
+              </ion-button>
+            </div>
+          </ng-container>
+
+          <!-- Not subscribed - show pricing options -->
+          <ng-container *ngIf="!accountInfo.isPremium">
+            <div *ngIf="accountInfo.isEarlyAccess" class="early-access-badge">
+              <p>🌟 Founding Member Pricing</p>
+            </div>
+
+            <div class="pricing-option">
+              <div class="pricing-header">
+                <h3>Monthly</h3>
+                <div class="pricing-amount">
+                  <span *ngIf="accountInfo.isEarlyAccess" class="original-price">$7.49/mo</span>
+                  <span class="current-price">{{ accountInfo.isEarlyAccess ? '$5.49' : '$7.49' }}/mo</span>
+                </div>
+              </div>
+              <ion-button expand="block" class="salmon-button" (click)="openStripeCheckout('monthly')">
+                Subscribe Monthly
+              </ion-button>
+            </div>
+
+            <div class="pricing-option">
+              <div class="pricing-header">
+                <h3>6 Months</h3>
+                <div class="pricing-amount">
+                  <span *ngIf="accountInfo.isEarlyAccess" class="original-price">$6.49/mo</span>
+                  <span class="current-price">{{ accountInfo.isEarlyAccess ? '$4.49' : '$6.49' }}/mo</span>
+                </div>
+                <p class="billing-detail">Billed as {{ accountInfo.isEarlyAccess ? '$26.94' : '$38.94' }} every 6 months</p>
+              </div>
+              <ion-button expand="block" class="salmon-button" (click)="openStripeCheckout('6months')">
+                Subscribe 6 Months
+              </ion-button>
+            </div>
+
+            <div class="pricing-option">
+              <div class="pricing-header">
+                <h3>Annual</h3>
+                <div class="pricing-amount">
+                  <span *ngIf="accountInfo.isEarlyAccess" class="original-price">$5.49/mo</span>
+                  <span class="current-price">{{ accountInfo.isEarlyAccess ? '$3.49' : '$5.49' }}/mo</span>
+                </div>
+                <p class="billing-detail">Billed as {{ accountInfo.isEarlyAccess ? '$41.88' : '$65.88' }} annually</p>
+              </div>
+              <ion-button expand="block" class="salmon-button" (click)="openStripeCheckout('annual')">
+                Subscribe Annually
+              </ion-button>
+            </div>
+
+            <!-- Early Access Lifetime Offer -->
+            <div class="pricing-option lifetime-offer" *ngIf="accountInfo.isEarlyAccess">
+              <div class="pricing-header">
+                <h3>🌟 Founding Member Special</h3>
+                <h3>Lifetime Access</h3>
+                <div class="pricing-amount">
+                  <span class="current-price">$99</span>
+                  <span class="lifetime-label">One-time payment</span>
+                </div>
+              </div>
+              <ion-button expand="block" class="salmon-button" (click)="openStripeCheckout('lifetime')">
+                Get Lifetime Access
+              </ion-button>
+            </div>
+          </ng-container>
+          </ng-container>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Account Information -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Account Information</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-item lines="none">
+            <ion-label>
+              <h3>Email</h3>
+              <p>{{ accountInfo.email }}</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item lines="none">
+            <ion-label>
+              <h3>Account Created</h3>
+              <p>{{ formatDate(accountInfo.createdDateUtc) }}</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item lines="none" *ngIf="accountInfo.trialEndDateUtc">
+            <ion-label>
+              <h3>Trial Ends</h3>
+              <p>{{ formatDate(accountInfo.trialEndDateUtc) }}</p>
+            </ion-label>
+          </ion-item>
+
+          <div class="button-container">
+            <ion-button
+              expand="block"
+              class="gray-button"
+              [routerLink]="['/change-password']">
+              Change Password
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Legal Information -->
+      <ion-card class="legal-card">
+        <ion-card-header>
+          <ion-card-title>Terms of Service</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="legal-description">
+            Review the terms and conditions for using Nutrition Ambition, including user responsibilities, disclaimers, and our beta program details.
+          </p>
+          <div class="button-container">
+            <ion-button
+              expand="block"
+              class="gray-button"
+              [routerLink]="['/legal/terms-of-service']">
+              View Terms of Service
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card class="legal-card">
+        <ion-card-header>
+          <ion-card-title>Privacy Policy</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="legal-description">
+            Learn how we collect, use, and protect your personal information and nutrition data.
+          </p>
+          <div class="button-container">
+            <ion-button
+              expand="block"
+              class="gray-button"
+              [routerLink]="['/legal/privacy-policy']">
+              View Privacy Policy
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card class="legal-card">
+        <ion-card-header>
+          <ion-card-title>Data Deletion</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="legal-description">
+            Learn how to request deletion of your personal data and account from Nutrition Ambition.
+          </p>
+          <div class="button-container">
+            <ion-button
+              expand="block"
+              class="gray-button"
+              [routerLink]="['/legal/data-deletion']">
+              View Data Deletion Policy
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Danger Zone -->
+      <ion-card class="danger-card">
+        <ion-card-header>
+          <ion-card-title>Danger Zone</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-item lines="none">
+            <ion-label class="ion-text-wrap">
+              <h3>Delete Account</h3>
+              <p>
+                Permanently delete your account and all associated data.
+                This action cannot be undone.
+              </p>
+            </ion-label>
+          </ion-item>
+
+          <ion-button
+            expand="block"
+            color="danger"
+            (click)="deleteAccount()">
+            Delete My Account
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  </div>
+</ion-content>

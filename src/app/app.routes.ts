@@ -36,6 +36,21 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'account-management',
+    loadComponent: () => import('./pages/account-management/account-management.page').then(m => m.AccountManagementPage),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'payment-success',
+    loadComponent: () => import('./pages/payment-success/payment-success.page').then(m => m.PaymentSuccessPage),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'payment-cancel',
+    loadComponent: () => import('./pages/payment-cancel/payment-cancel.page').then(m => m.PaymentCancelPage),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'forgot-password-reset',
     loadComponent: () => import('./pages/auth/forgot-password-reset/forgot-password-reset.page').then(m => m.ForgotPasswordResetPage)
   },

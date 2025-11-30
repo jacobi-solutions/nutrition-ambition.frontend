@@ -17,6 +17,18 @@ export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
 
 export interface INutritionAmbitionApiService {
     /**
+     * @return Success
+     */
+    getAccountInfo(): Observable<AccountInfoResponse>;
+    /**
+     * @return Success
+     */
+    cancelSubscription(): Observable<Response>;
+    /**
+     * @return Success
+     */
+    deleteAccount(): Observable<Response>;
+    /**
      * @param body (optional) 
      * @return Success
      */
@@ -75,7 +87,7 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    deleteAccount(body: DeleteAccountRequest | undefined): Observable<DeleteAccountResponse>;
+    deleteAccount2(body: DeleteAccountRequest | undefined): Observable<DeleteAccountResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -254,6 +266,11 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
+    createCheckoutSession(body: CreateCheckoutSessionRequest | undefined): Observable<CreateCheckoutSessionResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getProfileAndTargets(body: GetProfileAndTargetsRequest | undefined): Observable<GetProfileAndTargetsResponse>;
     /**
      * @param body (optional) 
@@ -265,6 +282,10 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     getSharedMeal(body: GetSharedMealRequest | undefined): Observable<GetSharedMealResponse>;
+    /**
+     * @return Success
+     */
+    stripe(): Observable<void>;
     /**
      * @return Success
      */
@@ -280,6 +301,159 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
         this.http = http;
         this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * @return Success
+     */
+    getAccountInfo(): Observable<AccountInfoResponse> {
+        let url_ = this.baseUrl + "/api/AccountManagement/GetAccountInfo";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetAccountInfo(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetAccountInfo(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AccountInfoResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AccountInfoResponse>;
+        }));
+    }
+
+    protected processGetAccountInfo(response: HttpResponseBase): Observable<AccountInfoResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AccountInfoResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<AccountInfoResponse>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    cancelSubscription(): Observable<Response> {
+        let url_ = this.baseUrl + "/api/AccountManagement/CancelSubscription";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCancelSubscription(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCancelSubscription(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Response>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Response>;
+        }));
+    }
+
+    protected processCancelSubscription(response: HttpResponseBase): Observable<Response> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = Response.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<Response>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    deleteAccount(): Observable<Response> {
+        let url_ = this.baseUrl + "/api/AccountManagement/DeleteAccount";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processDeleteAccount(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processDeleteAccount(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Response>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Response>;
+        }));
+    }
+
+    protected processDeleteAccount(response: HttpResponseBase): Observable<Response> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = Response.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<Response>(null as any);
     }
 
     /**
@@ -902,7 +1076,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    deleteAccount(body: DeleteAccountRequest | undefined): Observable<DeleteAccountResponse> {
+    deleteAccount2(body: DeleteAccountRequest | undefined): Observable<DeleteAccountResponse> {
         let url_ = this.baseUrl + "/api/Admin/DeleteAccount";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -919,11 +1093,11 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processDeleteAccount(response_);
+            return this.processDeleteAccount2(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processDeleteAccount(response_ as any);
+                    return this.processDeleteAccount2(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<DeleteAccountResponse>;
                 }
@@ -932,7 +1106,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         }));
     }
 
-    protected processDeleteAccount(response: HttpResponseBase): Observable<DeleteAccountResponse> {
+    protected processDeleteAccount2(response: HttpResponseBase): Observable<DeleteAccountResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2892,6 +3066,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
+    createCheckoutSession(body: CreateCheckoutSessionRequest | undefined): Observable<CreateCheckoutSessionResponse> {
+        let url_ = this.baseUrl + "/api/Payments/CreateCheckoutSession";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateCheckoutSession(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateCheckoutSession(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CreateCheckoutSessionResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CreateCheckoutSessionResponse>;
+        }));
+    }
+
+    protected processCreateCheckoutSession(response: HttpResponseBase): Observable<CreateCheckoutSessionResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateCheckoutSessionResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<CreateCheckoutSessionResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
     getProfileAndTargets(body: GetProfileAndTargetsRequest | undefined): Observable<GetProfileAndTargetsResponse> {
         let url_ = this.baseUrl + "/api/Profile/GetProfileAndTargets";
         url_ = url_.replace(/[?&]$/, "");
@@ -3059,6 +3289,53 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     /**
      * @return Success
      */
+    stripe(): Observable<void> {
+        let url_ = this.baseUrl + "/api/webhooks/stripe";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processStripe(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processStripe(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processStripe(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
     ip(): Observable<void> {
         let url_ = this.baseUrl + "/api/Test/ip";
         url_ = url_.replace(/[?&]$/, "");
@@ -3112,9 +3389,19 @@ export class Account implements IAccount {
     email?: string | undefined;
     timeZoneId?: string | undefined;
     isOwner?: boolean;
+    isEarlyAccess?: boolean;
     hasUnacknowledgedFeedbackResponses?: boolean;
     canDelete?: boolean;
     canClear?: boolean;
+    trialEndDateUtc?: Date | undefined;
+    isPremium?: boolean;
+    isPremiumLifetime?: boolean;
+    subscriptionStatus?: SubscriptionStatus;
+    stripeCustomerId?: string | undefined;
+    stripeSubscriptionId?: string | undefined;
+    subscriptionPriceId?: string | undefined;
+    subscriptionCurrentPeriodEndUtc?: Date | undefined;
+    accountDeletedDateUtc?: Date | undefined;
 
     constructor(data?: IAccount) {
         if (data) {
@@ -3134,9 +3421,19 @@ export class Account implements IAccount {
             this.email = _data["email"];
             this.timeZoneId = _data["timeZoneId"];
             this.isOwner = _data["isOwner"];
+            this.isEarlyAccess = _data["isEarlyAccess"];
             this.hasUnacknowledgedFeedbackResponses = _data["hasUnacknowledgedFeedbackResponses"];
             this.canDelete = _data["canDelete"];
             this.canClear = _data["canClear"];
+            this.trialEndDateUtc = _data["trialEndDateUtc"] ? new Date(_data["trialEndDateUtc"].toString()) : <any>undefined;
+            this.isPremium = _data["isPremium"];
+            this.isPremiumLifetime = _data["isPremiumLifetime"];
+            this.subscriptionStatus = _data["subscriptionStatus"];
+            this.stripeCustomerId = _data["stripeCustomerId"];
+            this.stripeSubscriptionId = _data["stripeSubscriptionId"];
+            this.subscriptionPriceId = _data["subscriptionPriceId"];
+            this.subscriptionCurrentPeriodEndUtc = _data["subscriptionCurrentPeriodEndUtc"] ? new Date(_data["subscriptionCurrentPeriodEndUtc"].toString()) : <any>undefined;
+            this.accountDeletedDateUtc = _data["accountDeletedDateUtc"] ? new Date(_data["accountDeletedDateUtc"].toString()) : <any>undefined;
         }
     }
 
@@ -3156,9 +3453,19 @@ export class Account implements IAccount {
         data["email"] = this.email;
         data["timeZoneId"] = this.timeZoneId;
         data["isOwner"] = this.isOwner;
+        data["isEarlyAccess"] = this.isEarlyAccess;
         data["hasUnacknowledgedFeedbackResponses"] = this.hasUnacknowledgedFeedbackResponses;
         data["canDelete"] = this.canDelete;
         data["canClear"] = this.canClear;
+        data["trialEndDateUtc"] = this.trialEndDateUtc ? this.trialEndDateUtc.toISOString() : <any>undefined;
+        data["isPremium"] = this.isPremium;
+        data["isPremiumLifetime"] = this.isPremiumLifetime;
+        data["subscriptionStatus"] = this.subscriptionStatus;
+        data["stripeCustomerId"] = this.stripeCustomerId;
+        data["stripeSubscriptionId"] = this.stripeSubscriptionId;
+        data["subscriptionPriceId"] = this.subscriptionPriceId;
+        data["subscriptionCurrentPeriodEndUtc"] = this.subscriptionCurrentPeriodEndUtc ? this.subscriptionCurrentPeriodEndUtc.toISOString() : <any>undefined;
+        data["accountDeletedDateUtc"] = this.accountDeletedDateUtc ? this.accountDeletedDateUtc.toISOString() : <any>undefined;
         return data;
     }
 }
@@ -3171,9 +3478,135 @@ export interface IAccount {
     email?: string | undefined;
     timeZoneId?: string | undefined;
     isOwner?: boolean;
+    isEarlyAccess?: boolean;
     hasUnacknowledgedFeedbackResponses?: boolean;
     canDelete?: boolean;
     canClear?: boolean;
+    trialEndDateUtc?: Date | undefined;
+    isPremium?: boolean;
+    isPremiumLifetime?: boolean;
+    subscriptionStatus?: SubscriptionStatus;
+    stripeCustomerId?: string | undefined;
+    stripeSubscriptionId?: string | undefined;
+    subscriptionPriceId?: string | undefined;
+    subscriptionCurrentPeriodEndUtc?: Date | undefined;
+    accountDeletedDateUtc?: Date | undefined;
+}
+
+export class AccountInfoResponse implements IAccountInfoResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    email?: string | undefined;
+    createdDateUtc?: Date;
+    trialEndDateUtc?: Date | undefined;
+    isPremium?: boolean;
+    isPremiumLifetime?: boolean;
+    isEarlyAccess?: boolean;
+    subscriptionStatus?: SubscriptionStatus;
+    subscriptionCurrentPeriodEndUtc?: Date | undefined;
+    subscriptionPriceId?: string | undefined;
+
+    constructor(data?: IAccountInfoResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.email = _data["email"];
+            this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
+            this.trialEndDateUtc = _data["trialEndDateUtc"] ? new Date(_data["trialEndDateUtc"].toString()) : <any>undefined;
+            this.isPremium = _data["isPremium"];
+            this.isPremiumLifetime = _data["isPremiumLifetime"];
+            this.isEarlyAccess = _data["isEarlyAccess"];
+            this.subscriptionStatus = _data["subscriptionStatus"];
+            this.subscriptionCurrentPeriodEndUtc = _data["subscriptionCurrentPeriodEndUtc"] ? new Date(_data["subscriptionCurrentPeriodEndUtc"].toString()) : <any>undefined;
+            this.subscriptionPriceId = _data["subscriptionPriceId"];
+        }
+    }
+
+    static fromJS(data: any): AccountInfoResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new AccountInfoResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["email"] = this.email;
+        data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
+        data["trialEndDateUtc"] = this.trialEndDateUtc ? this.trialEndDateUtc.toISOString() : <any>undefined;
+        data["isPremium"] = this.isPremium;
+        data["isPremiumLifetime"] = this.isPremiumLifetime;
+        data["isEarlyAccess"] = this.isEarlyAccess;
+        data["subscriptionStatus"] = this.subscriptionStatus;
+        data["subscriptionCurrentPeriodEndUtc"] = this.subscriptionCurrentPeriodEndUtc ? this.subscriptionCurrentPeriodEndUtc.toISOString() : <any>undefined;
+        data["subscriptionPriceId"] = this.subscriptionPriceId;
+        return data;
+    }
+}
+
+export interface IAccountInfoResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    email?: string | undefined;
+    createdDateUtc?: Date;
+    trialEndDateUtc?: Date | undefined;
+    isPremium?: boolean;
+    isPremiumLifetime?: boolean;
+    isEarlyAccess?: boolean;
+    subscriptionStatus?: SubscriptionStatus;
+    subscriptionCurrentPeriodEndUtc?: Date | undefined;
+    subscriptionPriceId?: string | undefined;
 }
 
 export class AccountResponse implements IAccountResponse {
@@ -4552,6 +4985,130 @@ export interface IConfirmGuidelineFileUploadResponse {
     vectorStoreId?: string | undefined;
     status?: string | undefined;
     cloudStorageObjectName?: string | undefined;
+}
+
+export class CreateCheckoutSessionRequest implements ICreateCheckoutSessionRequest {
+    priceId?: string | undefined;
+    isLifetime?: boolean;
+
+    constructor(data?: ICreateCheckoutSessionRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.priceId = _data["priceId"];
+            this.isLifetime = _data["isLifetime"];
+        }
+    }
+
+    static fromJS(data: any): CreateCheckoutSessionRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateCheckoutSessionRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["priceId"] = this.priceId;
+        data["isLifetime"] = this.isLifetime;
+        return data;
+    }
+}
+
+export interface ICreateCheckoutSessionRequest {
+    priceId?: string | undefined;
+    isLifetime?: boolean;
+}
+
+export class CreateCheckoutSessionResponse implements ICreateCheckoutSessionResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    checkoutUrl?: string | undefined;
+
+    constructor(data?: ICreateCheckoutSessionResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.checkoutUrl = _data["checkoutUrl"];
+        }
+    }
+
+    static fromJS(data: any): CreateCheckoutSessionResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateCheckoutSessionResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["checkoutUrl"] = this.checkoutUrl;
+        return data;
+    }
+}
+
+export interface ICreateCheckoutSessionResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    checkoutUrl?: string | undefined;
 }
 
 export class CreateRetroactiveFavoritesRequest implements ICreateRetroactiveFavoritesRequest {
@@ -9732,6 +10289,15 @@ export interface ISubmitServingSelectionRequest {
     pendingMessageId?: string | undefined;
     selections?: UserSelectedServing[] | undefined;
     foodQuantities?: UserSelectedFoodQuantity[] | undefined;
+}
+
+export enum SubscriptionStatus {
+    Trial = "Trial",
+    Active = "Active",
+    PastDue = "PastDue",
+    Canceled = "Canceled",
+    Expired = "Expired",
+    Incomplete = "Incomplete",
 }
 
 export class TelemetryContext implements ITelemetryContext {

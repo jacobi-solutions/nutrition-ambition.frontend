@@ -1,0 +1,74 @@
+.payment-cancel-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding-bottom: 20px;
+}
+
+ion-card {
+  background-color: #fff;
+  border-radius: 2.25rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.06);
+  margin: 1rem 0;
+  width: 100%;
+
+  ion-card-content {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 2rem;
+    text-align: center;
+  }
+}
+
+.icon-container {
+  margin-bottom: 1.5rem;
+
+  .cancel-icon {
+    font-size: 4rem;
+    color: var(--ion-color-medium);
+  }
+}
+
+h2 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--ion-color-dark);
+  margin: 0 0 0.5rem 0;
+}
+
+p {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  color: var(--ion-color-medium);
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
+}
+
+.help-text {
+  font-size: 0.875rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 1rem;
+}
+
+.button-container {
+  margin-top: 2rem;
+
+  ion-button {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    text-transform: none;
+    --border-radius: 2rem;
+    height: 44px;
+  }
+}
+
+.salmon-button {
+  --background: var(--color-salmon);
+  --background-activated: var(--color-salmon);
+  --background-focused: var(--color-salmon);
+  --background-hover: var(--color-salmon);
+  --color: white;
+  --border-radius: 2rem;
+}

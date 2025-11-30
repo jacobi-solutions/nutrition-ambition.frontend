@@ -344,7 +344,7 @@ export class AdminService {
         confirmDelete: confirmDelete
       });
 
-      const response = await firstValueFrom(this.apiService.deleteAccount(request));
+      const response = await firstValueFrom(this.apiService.deleteAccount2(request));
       
       if (response.isSuccess) {
       } else {

@@ -1,0 +1,50 @@
+<app-header pageTitle="Payment Successful"></app-header>
+
+<ion-content class="ion-padding">
+  <div class="payment-success-container">
+    <ion-card>
+      <ion-card-content>
+        <!-- Success Icon -->
+        <div class="icon-container">
+          <ion-icon name="checkmark-circle" class="success-icon"></ion-icon>
+        </div>
+
+        <!-- Processing State -->
+        <div *ngIf="isProcessing" class="processing-state">
+          <h2>Payment Successful!</h2>
+          <p>Thank you for your purchase.</p>
+
+          <div class="processing-info">
+            <ion-spinner name="crescent" class="processing-spinner"></ion-spinner>
+            <p class="processing-text">Processing your subscription...</p>
+            <p class="processing-subtext">This usually takes just a few seconds</p>
+          </div>
+        </div>
+
+        <!-- Processing Complete State -->
+        <div *ngIf="processingComplete" class="complete-state">
+          <h2>All Set!</h2>
+          <p>Your subscription is now active.</p>
+          <p class="redirect-text">Redirecting you to your account...</p>
+        </div>
+
+        <!-- Processing Timeout State -->
+        <div *ngIf="processingTimeout" class="timeout-state">
+          <h2>Payment Received!</h2>
+          <p>We're still processing your subscription. This may take a few more moments.</p>
+          <p class="timeout-help">Your subscription will be activated shortly. You can check your account status or refresh the page in a moment.</p>
+        </div>
+
+        <!-- Manual Navigation Button -->
+        <div class="button-container">
+          <ion-button
+            expand="block"
+            class="salmon-button"
+            (click)="navigateToAccount()">
+            Go to Account Management
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

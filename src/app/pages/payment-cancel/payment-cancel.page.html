@@ -1,0 +1,29 @@
+<app-header pageTitle="Checkout Cancelled"></app-header>
+
+<ion-content class="ion-padding">
+  <div class="payment-cancel-container">
+    <ion-card>
+      <ion-card-content>
+        <!-- Cancel Icon -->
+        <div class="icon-container">
+          <ion-icon name="close-circle" class="cancel-icon"></ion-icon>
+        </div>
+
+        <!-- Cancel Message -->
+        <h2>Checkout Cancelled</h2>
+        <p>Your checkout was cancelled and no charges were made.</p>
+        <p class="help-text">If you'd like to subscribe, you can try again from your account management page.</p>
+
+        <!-- Navigation Buttons -->
+        <div class="button-container">
+          <ion-button
+            expand="block"
+            class="salmon-button"
+            (click)="navigateToAccount()">
+            Return to Account Management
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

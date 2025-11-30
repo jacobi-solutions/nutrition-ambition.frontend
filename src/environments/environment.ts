@@ -19,7 +19,16 @@ export const environment = {
     appId: "1:496562523884:web:aae9cec957ae6d491f1fc9",
     measurementId: "G-YR1NTFC9TN"
   },
-  tenantId: 'development-096qj'
+  tenantId: 'development-096qj',
+  stripePrices: {
+    publicMonthly: 'price_1SZFNbGxHs6evYLl0KopKacx',
+    public6Month: 'price_1SZFOOGxHs6evYLlRVFXvaRh',
+    public12Month: 'price_1SZFOjGxHs6evYLlEaX0AfZF',
+    earlyMonthly: 'price_1SZFP1GxHs6evYLlWTkgMrWa',
+    early6Month: 'price_1SZFPGGxHs6evYLl3fHeRMwW',
+    early12Month: 'price_1SZFPWGxHs6evYLlUG3ZgcTq',
+    earlyLifetime: 'price_1SZFPfGxHs6evYLlNmFNtELw'
+  }
 };
 
 /*
