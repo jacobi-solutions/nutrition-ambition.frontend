@@ -63,7 +63,8 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "baseHref": "/"
             },
             "uat": {
               "budgets": [
@@ -84,13 +85,15 @@
                   "with": "src/environments/environment.uat.ts"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "baseHref": "/"
             },
             "local": {
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
-              "namedChunks": true
+              "namedChunks": true,
+              "baseHref": "/"
             },
             "development": {
               "fileReplacements": [
@@ -102,7 +105,30 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
-              "namedChunks": true
+              "namedChunks": true,
+              "baseHref": "/"
+            },
+            "native": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "20kb",
+                  "maximumError": "40kb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
+              "outputHashing": "all",
+              "baseHref": "./"
             },
             "ci": {
               "progress": false

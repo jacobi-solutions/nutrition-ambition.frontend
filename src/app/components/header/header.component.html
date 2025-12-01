@@ -60,30 +60,35 @@
       </ng-template>
     </ion-buttons>
     
-    <!-- Center: Date picker -->
+    <!-- Center: Date picker (only shown when not in back button mode) or Title -->
     <ion-title class="ion-text-center">
-      <div class="date-controls">
-        <ion-datetime-button datetime="datePicker"></ion-datetime-button>
-        <button
-          *ngIf="isViewingHistoricalDate"
-          class="return-to-today-button"
-          (click)="onReturnToToday()">
-          {{ todayDayNumber }}
-          <ion-icon name="chevron-forward-outline"></ion-icon>
-        </button>
-      </div>
-      <ion-modal [keepContentsMounted]="true">
-        <ng-template>
-          <!-- Local date only — uses 'yyyy-MM-dd' format -->
-          <!-- UTC conversion handled via dateService when communicating with backend -->
-          <ion-datetime
-            id="datePicker"
-            [value]="selectedDate"
-            (ionChange)="onDateChanged($event)"
-            presentation="date">
-          </ion-datetime>
-        </ng-template>
-      </ion-modal>
+      <ng-container *ngIf="!showBackButton; else pageTitle">
+        <div class="date-controls">
+          <ion-datetime-button datetime="datePicker"></ion-datetime-button>
+          <button
+            *ngIf="isViewingHistoricalDate"
+            class="return-to-today-button"
+            (click)="onReturnToToday()">
+            {{ todayDayNumber }}
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </button>
+        </div>
+        <ion-modal [keepContentsMounted]="true">
+          <ng-template>
+            <!-- Local date only — uses 'yyyy-MM-dd' format -->
+            <!-- UTC conversion handled via dateService when communicating with backend -->
+            <ion-datetime
+              id="datePicker"
+              [value]="selectedDate"
+              (ionChange)="onDateChanged($event)"
+              presentation="date">
+            </ion-datetime>
+          </ng-template>
+        </ion-modal>
+      </ng-container>
+      <ng-template #pageTitle>
+        {{ title }}
+      </ng-template>
     </ion-title>
     
     <!-- Right: Next day button -->
