@@ -9,6 +9,16 @@
       <ion-spinner></ion-spinner>
     </div>
 
+    <!-- Return to App button (shown when user came from mobile app) -->
+    <div *ngIf="showReturnToApp && !isLoading" class="return-to-app-container">
+      <ion-button
+        expand="block"
+        fill="outline"
+        (click)="returnToApp()">
+        Return to App
+      </ion-button>
+    </div>
+
     <div *ngIf="!isLoading && accountInfo">
       <!-- Subscription Information -->
       <ion-card>

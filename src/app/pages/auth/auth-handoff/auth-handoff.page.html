@@ -1,0 +1,30 @@
+<ion-content class="ion-padding">
+  <div class="handoff-container">
+    <!-- Processing State -->
+    <div *ngIf="isProcessing" class="processing-state">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p class="message">{{ message }}</p>
+    </div>
+
+    <!-- Success State -->
+    <div *ngIf="!isProcessing && !errorMessage" class="success-state">
+      <div class="success-icon">✓</div>
+      <p class="message">{{ message }}</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorMessage" class="error-state">
+      <div class="error-icon">!</div>
+      <p class="error-message">{{ errorMessage }}</p>
+
+      <div class="button-group" *ngIf="showReturnToApp">
+        <ion-button expand="block" (click)="returnToApp()">
+          Return to App
+        </ion-button>
+        <ion-button expand="block" fill="outline" (click)="goToLogin()">
+          Sign In on Web
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</ion-content>

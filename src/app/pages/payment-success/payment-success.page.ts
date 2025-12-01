@@ -41,6 +41,7 @@ export class PaymentSuccessPage implements OnInit, OnDestroy {
   pollAttempts = 0;
   maxPollAttempts = 15; // 15 attempts x 2 seconds = 30 seconds max
   pollInterval: any;
+  showReturnToApp = false;
 
   constructor(
     private accountsService: AccountsService,
@@ -50,6 +51,9 @@ export class PaymentSuccessPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
+    // Check if user came from mobile app
+    this.showReturnToApp = sessionStorage.getItem('authSource') === 'app';
+
     // Start polling for subscription status updates
     await this.startPolling();
   }
@@ -109,5 +113,10 @@ export class PaymentSuccessPage implements OnInit, OnDestroy {
 
   navigateToAccount() {
     this.router.navigate(['/account-management']);
+  }
+
+  returnToApp() {
+    sessionStorage.removeItem('authSource');
+    window.location.href = 'nutritionambition://';
   }
 }

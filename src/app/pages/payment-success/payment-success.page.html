@@ -43,6 +43,13 @@
             (click)="navigateToAccount()">
             Go to Account Management
           </ion-button>
+          <ion-button
+            *ngIf="showReturnToApp"
+            expand="block"
+            fill="outline"
+            (click)="returnToApp()">
+            Return to App
+          </ion-button>
         </div>
       </ion-card-content>
     </ion-card>

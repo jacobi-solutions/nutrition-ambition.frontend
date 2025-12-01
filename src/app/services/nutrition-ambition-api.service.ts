@@ -139,6 +139,16 @@ export interface INutritionAmbitionApiService {
      */
     createRetroactiveFavorites(body: CreateRetroactiveFavoritesRequest | undefined): Observable<CreateRetroactiveFavoritesResponse>;
     /**
+     * @param redirectPath (optional) 
+     * @return Success
+     */
+    createAuthHandoffToken(redirectPath: string | undefined): Observable<CreateAuthHandoffTokenResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    validateHandoff(body: ValidateHandoffRequest | undefined): Observable<ValidateHandoffResponse>;
+    /**
      * @param body (optional) 
      * @return Success
      */
@@ -1686,6 +1696,118 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
             }));
         }
         return _observableOf<CreateRetroactiveFavoritesResponse>(null as any);
+    }
+
+    /**
+     * @param redirectPath (optional) 
+     * @return Success
+     */
+    createAuthHandoffToken(redirectPath: string | undefined): Observable<CreateAuthHandoffTokenResponse> {
+        let url_ = this.baseUrl + "/api/Auth/CreateAuthHandoffToken?";
+        if (redirectPath === null)
+            throw new Error("The parameter 'redirectPath' cannot be null.");
+        else if (redirectPath !== undefined)
+            url_ += "redirectPath=" + encodeURIComponent("" + redirectPath) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreateAuthHandoffToken(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreateAuthHandoffToken(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CreateAuthHandoffTokenResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CreateAuthHandoffTokenResponse>;
+        }));
+    }
+
+    protected processCreateAuthHandoffToken(response: HttpResponseBase): Observable<CreateAuthHandoffTokenResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateAuthHandoffTokenResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<CreateAuthHandoffTokenResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    validateHandoff(body: ValidateHandoffRequest | undefined): Observable<ValidateHandoffResponse> {
+        let url_ = this.baseUrl + "/api/Auth/ValidateHandoff";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processValidateHandoff(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processValidateHandoff(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ValidateHandoffResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ValidateHandoffResponse>;
+        }));
+    }
+
+    protected processValidateHandoff(response: HttpResponseBase): Observable<ValidateHandoffResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ValidateHandoffResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ValidateHandoffResponse>(null as any);
     }
 
     /**
@@ -4985,6 +5107,90 @@ export interface IConfirmGuidelineFileUploadResponse {
     vectorStoreId?: string | undefined;
     status?: string | undefined;
     cloudStorageObjectName?: string | undefined;
+}
+
+export class CreateAuthHandoffTokenResponse implements ICreateAuthHandoffTokenResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    handoffUrl?: string | undefined;
+
+    constructor(data?: ICreateAuthHandoffTokenResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.handoffUrl = _data["handoffUrl"];
+        }
+    }
+
+    static fromJS(data: any): CreateAuthHandoffTokenResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateAuthHandoffTokenResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["handoffUrl"] = this.handoffUrl;
+        return data;
+    }
+}
+
+export interface ICreateAuthHandoffTokenResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    handoffUrl?: string | undefined;
 }
 
 export class CreateCheckoutSessionRequest implements ICreateCheckoutSessionRequest {
@@ -10661,6 +10867,142 @@ export interface IUserSelectedServing {
     editedQuantity?: number | undefined;
     componentId?: string | undefined;
     scaledQuantity?: number | undefined;
+}
+
+export class ValidateHandoffRequest implements IValidateHandoffRequest {
+    nonce?: string | undefined;
+    issuedAt?: number;
+    redirectPath?: string | undefined;
+
+    constructor(data?: IValidateHandoffRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.nonce = _data["nonce"];
+            this.issuedAt = _data["issuedAt"];
+            this.redirectPath = _data["redirectPath"];
+        }
+    }
+
+    static fromJS(data: any): ValidateHandoffRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new ValidateHandoffRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["nonce"] = this.nonce;
+        data["issuedAt"] = this.issuedAt;
+        data["redirectPath"] = this.redirectPath;
+        return data;
+    }
+}
+
+export interface IValidateHandoffRequest {
+    nonce?: string | undefined;
+    issuedAt?: number;
+    redirectPath?: string | undefined;
+}
+
+export class ValidateHandoffResponse implements IValidateHandoffResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    isValid?: boolean;
+    errorCode?: string | undefined;
+    redirectPath?: string | undefined;
+
+    constructor(data?: IValidateHandoffResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.accountId = _data["accountId"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isValid = _data["isValid"];
+            this.errorCode = _data["errorCode"];
+            this.redirectPath = _data["redirectPath"];
+        }
+    }
+
+    static fromJS(data: any): ValidateHandoffResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ValidateHandoffResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["accountId"] = this.accountId;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isValid"] = this.isValid;
+        data["errorCode"] = this.errorCode;
+        data["redirectPath"] = this.redirectPath;
+        return data;
+    }
+}
+
+export interface IValidateHandoffResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    accountId?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    isValid?: boolean;
+    errorCode?: string | undefined;
+    redirectPath?: string | undefined;
 }
 
 export class ApiException extends Error {

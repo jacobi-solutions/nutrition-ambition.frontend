@@ -16,11 +16,13 @@ import {
   LoadingController
 } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
+import { lastValueFrom } from 'rxjs';
 import { AppHeaderComponent } from 'src/app/components/header/header.component';
 import { NutritionAmbitionApiService, Account, SubscriptionStatus, CreateCheckoutSessionRequest } from 'src/app/services/nutrition-ambition-api.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { AccountsService } from 'src/app/services/accounts.service';
 import { PlatformService } from 'src/app/services/platform.service';
+import { AnalyticsService } from 'src/app/services/analytics.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -48,18 +50,23 @@ export class AccountManagementPage implements OnInit {
   accountInfo: Account | null = null;
   isLoading = true;
   SubscriptionStatus = SubscriptionStatus;
+  showReturnToApp = false;
 
   constructor(
     private apiService: NutritionAmbitionApiService,
     private authService: AuthService,
     private accountsService: AccountsService,
     private platformService: PlatformService,
+    private analyticsService: AnalyticsService,
     private alertController: AlertController,
     private loadingController: LoadingController,
     private router: Router
   ) {}
 
   async ngOnInit() {
+    // Check if user came from mobile app
+    this.showReturnToApp = sessionStorage.getItem('authSource') === 'app';
+
     await this.loadAccountInfo();
   }
 
@@ -146,7 +153,7 @@ export class AccountManagementPage implements OnInit {
     await loading.present();
 
     try {
-      const response = await this.apiService.cancelSubscription().toPromise();
+      const response = await lastValueFrom(this.apiService.cancelSubscription());
       if (response?.isSuccess) {
         await this.showSuccess('Subscription canceled successfully. You will retain access until the end of your billing period.');
         await this.loadAccountInfo();
@@ -228,7 +235,7 @@ export class AccountManagementPage implements OnInit {
     await loading.present();
 
     try {
-      const response = await this.apiService.deleteAccount().toPromise();
+      const response = await lastValueFrom(this.apiService.deleteAccount());
       if (response?.isSuccess) {
         await loading.dismiss();
         await this.showSuccess('Your account has been deleted successfully.');
@@ -270,14 +277,38 @@ export class AccountManagementPage implements OnInit {
     return new Date(date).toLocaleDateString();
   }
 
+  returnToApp() {
+    sessionStorage.removeItem('authSource');
+    window.location.href = 'nutritionambition://';
+  }
+
   async openWebAccountManagement() {
+    // Track that user requested handoff
+    this.analyticsService.trackEvent('auth_handoff_requested');
+
+    const loading = await this.loadingController.create({
+      message: 'Preparing...',
+      cssClass: 'custom-loading'
+    });
+    await loading.present();
+
     try {
-      await Browser.open({
-        url: `${environment.frontendUrl}/account-management`,
-        windowName: '_system'
-      });
+      const response = await lastValueFrom(this.apiService.createAuthHandoffToken('/account-management'));
+
+      await loading.dismiss();
+
+      if (response?.isSuccess && response.handoffUrl) {
+        await Browser.open({
+          url: response.handoffUrl,
+          windowName: '_system'
+        });
+      } else {
+        console.error('Failed to create handoff token:', response?.errors);
+        await this.showError('Unable to open account management. Please try again.');
+      }
     } catch (error) {
-      console.error('Error opening browser:', error);
+      await loading.dismiss();
+      console.error('Error creating auth handoff:', error);
       await this.showError('Failed to open browser. Please try again.');
     }
   }
@@ -318,7 +349,7 @@ export class AccountManagementPage implements OnInit {
         isLifetime: isLifetime
       });
 
-      const response = await this.apiService.createCheckoutSession(request).toPromise();
+      const response = await lastValueFrom(this.apiService.createCheckoutSession(request));
 
       await loading.dismiss();
 

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, from, throwError } from 'rxjs';
 import { first, switchMap, catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
+import { PlatformService } from '../services/platform.service';
 import { environment } from 'src/environments/environment';
 import { APP_VERSION, PREVIOUS_COMMIT_HASH } from 'src/environments/version';
 
@@ -17,6 +18,7 @@ export const ApiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: H
   const authService = inject(AuthService);
   const router = inject(Router);
   const zone = inject(NgZone);
+  const platformService = inject(PlatformService);
 
   const apiBaseUrl = environment.backendApiUrl;
 
@@ -28,7 +30,8 @@ export const ApiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: H
     const headers: { [key: string]: string } = {
       'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
       'X-Client-Version': APP_VERSION,
-      'X-Client-PreviousCommitHash': PREVIOUS_COMMIT_HASH
+      'X-Client-PreviousCommitHash': PREVIOUS_COMMIT_HASH,
+      'X-Client-Platform': platformService.getPlatform()
     };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;

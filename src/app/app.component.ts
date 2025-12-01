@@ -4,6 +4,7 @@ import { IonicModule } from '@ionic/angular';
 import { RouterOutlet } from '@angular/router';
 import { AccountsService } from './services/accounts.service';
 import { AuthService } from './services/auth.service';
+import { AnalyticsService } from './services/analytics.service';
 import { take } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
@@ -18,6 +19,7 @@ export class AppComponent implements OnInit {
   title = 'Nutrition Ambition';
 
   private authService = inject(AuthService);
+  private analyticsService = inject(AnalyticsService);
 
   constructor(
     private accountsService: AccountsService

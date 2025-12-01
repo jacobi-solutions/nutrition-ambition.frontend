@@ -59,6 +59,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/auth/firebase-action/firebase-action.page').then(m => m.FirebaseActionPage)
   },
   {
+    path: 'auth-handoff',
+    loadComponent: () => import('./pages/auth/auth-handoff/auth-handoff.page').then(m => m.AuthHandoffPage)
+  },
+  {
     path: 'share/:token',
     loadComponent: () => import('./pages/chat/chat.page').then(m => m.ChatPage),
     canActivate: [AuthGuard]
