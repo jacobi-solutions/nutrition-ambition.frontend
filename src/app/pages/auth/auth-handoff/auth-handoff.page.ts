@@ -134,8 +134,9 @@ export class AuthHandoffPage implements OnInit {
       const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
       const claims = JSON.parse(decoded);
 
+      // Note: "nonce" is a reserved Firebase claim, so backend uses "handoff_nonce"
       return {
-        nonce: claims.claims?.nonce || claims.nonce,
+        nonce: claims.claims?.handoff_nonce || claims.handoff_nonce,
         iat_custom: claims.claims?.iat_custom || claims.iat_custom,
         redirect: claims.claims?.redirect || claims.redirect,
         source: claims.claims?.source || claims.source
