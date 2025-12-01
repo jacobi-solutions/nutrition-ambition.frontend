@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { Auth, signInWithCustomToken } from '@angular/fire/auth';
 import { IonContent, IonSpinner, IonButton } from '@ionic/angular/standalone';
 import { lastValueFrom } from 'rxjs';
@@ -16,7 +16,6 @@ import { AnalyticsService } from 'src/app/services/analytics.service';
 })
 export class AuthHandoffPage implements OnInit {
   private auth = inject(Auth);
-  private route = inject(ActivatedRoute);
   private router = inject(Router);
   private apiService = inject(NutritionAmbitionApiService);
   private analyticsService = inject(AnalyticsService);
@@ -31,8 +30,9 @@ export class AuthHandoffPage implements OnInit {
     this.analyticsService.trackEvent('auth_handoff_loaded');
 
     try {
-      const params = this.route.snapshot.queryParams;
-      const token = params['token'];
+      // Extract token from URL fragment (hash) instead of query params
+      // Safari on iOS strips query params but never modifies the fragment
+      const token = this.extractTokenFromHash();
 
       // Immediately clean URL to remove token from browser history
       this.cleanUrl();
@@ -113,6 +113,18 @@ export class AuthHandoffPage implements OnInit {
 
       await this.handleError(errorCode, errorMessage);
     }
+  }
+
+  private extractTokenFromHash(): string | null {
+    // Extract token from URL fragment: /auth-handoff#token=XYZ
+    const hash = window.location.hash;
+    if (!hash || hash.length <= 1) {
+      return null;
+    }
+
+    // Remove the leading '#' and parse as URL params
+    const params = new URLSearchParams(hash.substring(1));
+    return params.get('token');
   }
 
   private cleanUrl(): void {

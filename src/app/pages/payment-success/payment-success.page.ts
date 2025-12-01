@@ -51,6 +51,10 @@ export class PaymentSuccessPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
+    console.log('[PaymentSuccess] ngOnInit - page loaded');
+    console.log('[PaymentSuccess] URL:', window.location.href);
+    console.log('[PaymentSuccess] sessionStorage authSource:', sessionStorage.getItem('authSource'));
+
     // Check if user came from mobile app
     this.showReturnToApp = sessionStorage.getItem('authSource') === 'app';
 

@@ -298,9 +298,14 @@ export class AccountManagementPage implements OnInit {
       await loading.dismiss();
 
       if (response?.isSuccess && response.handoffUrl) {
+        console.log('Handoff URL:', response.handoffUrl);
+        console.log('Handoff URL length:', response.handoffUrl.length);
+        console.log('URL has token param:', response.handoffUrl.includes('?token='));
+        // Try using _blank instead of _system to use in-app browser
+        // _system was stripping the query params when opening Safari
         await Browser.open({
           url: response.handoffUrl,
-          windowName: '_system'
+          windowName: '_blank'
         });
       } else {
         console.error('Failed to create handoff token:', response?.errors);
@@ -355,6 +360,8 @@ export class AccountManagementPage implements OnInit {
 
       if (response?.isSuccess && response.checkoutUrl) {
         // Open Stripe checkout in same window
+        console.log('[AccountManagement] Redirecting to Stripe checkout:', response.checkoutUrl);
+        console.log('[AccountManagement] Current auth state before redirect - check if persisted');
         window.location.href = response.checkoutUrl;
 
       } else {
