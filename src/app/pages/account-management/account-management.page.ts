@@ -300,7 +300,7 @@ export class AccountManagementPage implements OnInit {
       if (response?.isSuccess && response.handoffUrl) {
         console.log('Handoff URL:', response.handoffUrl);
         console.log('Handoff URL length:', response.handoffUrl.length);
-        console.log('URL has token param:', response.handoffUrl.includes('?token='));
+        console.log('URL has token in hash:', response.handoffUrl.includes('#token='));
         // Try using _blank instead of _system to use in-app browser
         // _system was stripping the query params when opening Safari
         await Browser.open({

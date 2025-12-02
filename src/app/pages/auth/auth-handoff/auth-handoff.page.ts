@@ -24,20 +24,40 @@ export class AuthHandoffPage implements OnInit {
   message = 'Signing you in...';
   errorMessage = '';
   showReturnToApp = false;
+  debugInfo = '';  // Visible debug info for troubleshooting
 
   async ngOnInit() {
     // Track that page was loaded
     this.analyticsService.trackEvent('auth_handoff_loaded');
 
+    // Capture debug info BEFORE any processing
+    const fullUrl = window.location.href;
+    const hash = window.location.hash;
+    const hashLength = hash?.length || 0;
+
+    // Build visible debug info
+    this.debugInfo = `URL: ${fullUrl.substring(0, 60)}...\nHash length: ${hashLength}\nHas #token=: ${hash?.includes('#token=') || hash?.startsWith('token=')}`;
+
+    // Also log to console
+    console.log('[AuthHandoff] Page loaded');
+    console.log('[AuthHandoff] Full URL:', fullUrl);
+    console.log('[AuthHandoff] Hash:', hash);
+    console.log('[AuthHandoff] Hash length:', hashLength);
+
     try {
       // Extract token from URL fragment (hash) instead of query params
       // Safari on iOS strips query params but never modifies the fragment
       const token = this.extractTokenFromHash();
+      console.log('[AuthHandoff] Extracted token:', token ? `${token.substring(0, 50)}...` : 'null');
+
+      // Update debug info with token status
+      this.debugInfo += `\nToken extracted: ${token ? 'YES' : 'NO'}`;
 
       // Immediately clean URL to remove token from browser history
       this.cleanUrl();
 
       if (!token) {
+        console.log('[AuthHandoff] No token found, showing error');
         await this.handleError('invalid', 'Missing authentication token');
         return;
       }
