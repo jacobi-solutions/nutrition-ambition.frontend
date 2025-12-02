@@ -11,6 +11,7 @@ import { APP_VERSION, PREVIOUS_COMMIT_HASH } from 'src/environments/version';
 function isPublicRequest(req: HttpRequest<any>, apiBaseUrl: string): boolean {
   if (!req.url.startsWith(apiBaseUrl)) return true;
   if (req.url.includes('/assets/')) return true;
+  if (req.url.includes('/Auth/ValidateHandoff')) return true;
   return false;
 }
 
