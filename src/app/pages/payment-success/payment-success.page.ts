@@ -51,10 +51,6 @@ export class PaymentSuccessPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
-    console.log('[PaymentSuccess] ngOnInit - page loaded');
-    console.log('[PaymentSuccess] URL:', window.location.href);
-    console.log('[PaymentSuccess] sessionStorage authSource:', sessionStorage.getItem('authSource'));
-
     // Check if user came from mobile app
     this.showReturnToApp = sessionStorage.getItem('authSource') === 'app';
 
@@ -109,8 +105,7 @@ export class PaymentSuccessPage implements OnInit, OnDestroy {
           this.navigateToAccount();
         }, 2000);
       }
-    } catch (error) {
-      console.error('Error checking subscription status:', error);
+    } catch {
       // Continue polling even if there's an error
     }
   }
@@ -121,6 +116,9 @@ export class PaymentSuccessPage implements OnInit, OnDestroy {
 
   returnToApp() {
     sessionStorage.removeItem('authSource');
-    window.location.href = 'nutritionambition://';
+    // Use anchor element click for better iOS Safari compatibility with custom URL schemes
+    const link = document.createElement('a');
+    link.href = 'nutritionambition://';
+    link.click();
   }
 }

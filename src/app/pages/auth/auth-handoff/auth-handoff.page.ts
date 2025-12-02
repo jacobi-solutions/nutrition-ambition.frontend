@@ -24,50 +24,25 @@ export class AuthHandoffPage implements OnInit {
   message = 'Signing you in...';
   errorMessage = '';
   showReturnToApp = false;
-  debugInfo = '';  // Visible debug info for troubleshooting
 
   async ngOnInit() {
-    // Track that page was loaded
     this.analyticsService.trackEvent('auth_handoff_loaded');
-
-    // Capture debug info BEFORE any processing
-    const fullUrl = window.location.href;
-    const hash = window.location.hash;
-    const hashLength = hash?.length || 0;
-
-    // Build visible debug info
-    this.debugInfo = `URL: ${fullUrl.substring(0, 60)}...\nHash length: ${hashLength}\nHas #token=: ${hash?.includes('#token=') || hash?.startsWith('token=')}`;
-
-    // Also log to console
-    console.log('[AuthHandoff] Page loaded');
-    console.log('[AuthHandoff] Full URL:', fullUrl);
-    console.log('[AuthHandoff] Hash:', hash);
-    console.log('[AuthHandoff] Hash length:', hashLength);
 
     try {
       // Extract token from URL fragment (hash) instead of query params
       // Safari on iOS strips query params but never modifies the fragment
       const token = this.extractTokenFromHash();
-      console.log('[AuthHandoff] Extracted token:', token ? `${token.substring(0, 50)}...` : 'null');
-
-      // Update debug info with token status
-      this.debugInfo += `\nToken extracted: ${token ? 'YES' : 'NO'}`;
 
       // Immediately clean URL to remove token from browser history
       this.cleanUrl();
 
       if (!token) {
-        console.log('[AuthHandoff] No token found, showing error');
         await this.handleError('invalid', 'Missing authentication token');
         return;
       }
 
       // Decode JWT to extract claims (nonce, iat_custom, redirect)
       const claims = this.decodeJwtClaims(token);
-
-      // Add decoded claims to debug info
-      this.debugInfo += `\nNonce: ${claims?.nonce ? 'YES' : 'NO'}`;
-      this.debugInfo += `\niat_custom: ${claims?.iat_custom ? 'YES' : 'NO'}`;
 
       if (!claims || !claims.nonce || !claims.iat_custom) {
         await this.handleError('invalid', 'Invalid token format');
@@ -122,8 +97,6 @@ export class AuthHandoffPage implements OnInit {
       }, 500);
 
     } catch (error: any) {
-      console.error('Auth handoff failed:', error);
-
       // Provide user-friendly error messages
       let errorMessage = 'Authentication failed. Please return to the app and try again.';
       let errorCode = 'unknown';
@@ -185,8 +158,7 @@ export class AuthHandoffPage implements OnInit {
         redirect: claims.claims?.redirect || claims.redirect,
         source: claims.claims?.source || claims.source
       };
-    } catch (error) {
-      console.error('Failed to decode JWT claims:', error);
+    } catch {
       return null;
     }
   }
@@ -206,8 +178,10 @@ export class AuthHandoffPage implements OnInit {
   }
 
   returnToApp(): void {
-    // Deep link back to the app
-    window.location.href = 'nutritionambition://';
+    // Use anchor element click for better iOS Safari compatibility with custom URL schemes
+    const link = document.createElement('a');
+    link.href = 'nutritionambition://';
+    link.click();
   }
 
   goToLogin(): void {

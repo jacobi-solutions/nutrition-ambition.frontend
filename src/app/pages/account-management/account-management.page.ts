@@ -80,8 +80,7 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
     try {
       await this.accountsService.loadAccount();
       this.accountInfo = this.accountsService.currentAccount;
-    } catch (error) {
-      console.error('Error loading account info:', error);
+    } catch {
       await this.showError('Failed to load account information');
     } finally {
       this.isLoading = false;
@@ -165,8 +164,7 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
       } else {
         await this.showError(response?.errors?.[0]?.errorMessage || 'Failed to cancel subscription');
       }
-    } catch (error) {
-      console.error('Error canceling subscription:', error);
+    } catch {
       await this.showError('Failed to cancel subscription');
     } finally {
       await loading.dismiss();
@@ -249,8 +247,7 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
       } else {
         await this.showError(response?.errors?.[0]?.errorMessage || 'Failed to delete account');
       }
-    } catch (error) {
-      console.error('Error deleting account:', error);
+    } catch {
       await this.showError('Failed to delete account');
     } finally {
       await loading.dismiss();
@@ -284,7 +281,10 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
 
   returnToApp() {
     sessionStorage.removeItem('authSource');
-    window.location.href = 'nutritionambition://';
+    // Use anchor element click for better iOS Safari compatibility with custom URL schemes
+    const link = document.createElement('a');
+    link.href = 'nutritionambition://';
+    link.click();
   }
 
   async openWebAccountManagement() {
@@ -303,22 +303,15 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
       await loading.dismiss();
 
       if (response?.isSuccess && response.handoffUrl) {
-        console.log('Handoff URL:', response.handoffUrl);
-        console.log('Handoff URL length:', response.handoffUrl.length);
-        console.log('URL has token in hash:', response.handoffUrl.includes('#token='));
-        // Try using _blank instead of _system to use in-app browser
-        // _system was stripping the query params when opening Safari
         await Browser.open({
           url: response.handoffUrl,
           windowName: '_blank'
         });
       } else {
-        console.error('Failed to create handoff token:', response?.errors);
         await this.showError('Unable to open account management. Please try again.');
       }
-    } catch (error) {
+    } catch {
       await loading.dismiss();
-      console.error('Error creating auth handoff:', error);
       await this.showError('Failed to open browser. Please try again.');
     }
   }
@@ -364,20 +357,15 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
       await loading.dismiss();
 
       if (response?.isSuccess && response.checkoutUrl) {
-        // Open Stripe checkout in same window
-        console.log('[AccountManagement] Redirecting to Stripe checkout:', response.checkoutUrl);
-        console.log('[AccountManagement] Current auth state before redirect - check if persisted');
         window.location.href = response.checkoutUrl;
-
       } else {
         await this.showError(
           response?.errors?.[0]?.errorMessage ||
           'Failed to create checkout session. Please try again.'
         );
       }
-    } catch (error) {
+    } catch {
       await loading.dismiss();
-      console.error('Error creating checkout session:', error);
       await this.showError('Failed to create checkout session. Please try again.');
     }
   }

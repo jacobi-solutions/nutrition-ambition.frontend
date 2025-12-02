@@ -17,12 +17,9 @@
       <div class="error-icon">!</div>
       <p class="error-message">{{ errorMessage }}</p>
 
-      <!-- Debug info - visible on error -->
-      <pre *ngIf="debugInfo" style="margin-top: 20px; padding: 10px; background: #f0f0f0; font-size: 11px; text-align: left; white-space: pre-wrap; word-break: break-all; border-radius: 8px;">{{ debugInfo }}</pre>
-
       <div class="button-group" *ngIf="showReturnToApp">
-        <ion-button expand="block" (click)="returnToApp()">
-          Return to App
+        <ion-button expand="block" class="gray-button" (click)="returnToApp()">
+          Return to Mobile App
         </ion-button>
         <ion-button expand="block" fill="outline" (click)="goToLogin()">
           Sign In on Web
