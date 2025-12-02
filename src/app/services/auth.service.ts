@@ -43,30 +43,37 @@ export class AuthService {
 
   constructor() {
     this.authInstance = inject(Auth);
+    console.log('[AuthService] Constructor called, URL:', window.location.href);
 
     // Ensure durable persistence at runtime as a safety net alongside bootstrap config
     setPersistence(this.authInstance, indexedDBLocalPersistence)
       .then(() => {
+        console.log('[AuthService] IndexedDB persistence set successfully');
       })
       .catch((error) => {
+        console.error('[AuthService] Failed to set IndexedDB persistence:', error);
       });
 
     // Listen for auth state changes (login/logout, anonymous/registered)
     onAuthStateChanged(this.authInstance, user => {
+      console.log('[AuthService] onAuthStateChanged fired, user:', user ? user.uid : 'null');
       this._userEmailSubject.next(user?.email ?? null);
       this._userUidSubject.next(user?.uid ?? null);
 
       if (user) {
+        console.log('[AuthService] User authenticated:', user.uid, user.email);
         if (environment.authDebug) {
         }
         this._authRequired$.next(false);
       } else {
+        console.log('[AuthService] No user - auth required');
         if (environment.authDebug) {
         }
         // Manual sign-out or unexpected session loss → require auth UI
         this._authRequired$.next(true);
       }
 
+      console.log('[AuthService] Setting authReady to true');
       this._authReadySubject.next(true); // auth initialized after first event
     });
 

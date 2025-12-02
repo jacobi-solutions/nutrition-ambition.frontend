@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ViewWillEnter } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import {
@@ -46,7 +47,7 @@ import { environment } from 'src/environments/environment';
     IonText
   ],
 })
-export class AccountManagementPage implements OnInit {
+export class AccountManagementPage implements OnInit, ViewWillEnter {
   accountInfo: Account | null = null;
   isLoading = true;
   SubscriptionStatus = SubscriptionStatus;
@@ -66,7 +67,11 @@ export class AccountManagementPage implements OnInit {
   async ngOnInit() {
     // Check if user came from mobile app
     this.showReturnToApp = sessionStorage.getItem('authSource') === 'app';
+  }
 
+  async ionViewWillEnter() {
+    // Reload account info every time the page is shown (not just on init)
+    // This ensures fresh data when navigating back to this page
     await this.loadAccountInfo();
   }
 

@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { NutritionAmbitionApiService, Account, AccountResponse, Request } from './nutrition-ambition-api.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,9 +10,17 @@ export class AccountsService {
   private _accountSubject = new BehaviorSubject<Account | null>(null);
   public account$ = this._accountSubject.asObservable();
 
+  private authService = inject(AuthService);
+
   constructor(
     private apiService: NutritionAmbitionApiService
   ) {
+    // Clear account data when user signs out (userUid$ emits null)
+    this.authService.userUid$.subscribe(uid => {
+      if (uid === null) {
+        this.clearAccount();
+      }
+    });
   }
 
   async loadAccount(): Promise<void> {
@@ -30,5 +39,9 @@ export class AccountsService {
 
   get currentAccount(): Account | null {
     return this._accountSubject.value;
+  }
+
+  clearAccount(): void {
+    this._accountSubject.next(null);
   }
 } 

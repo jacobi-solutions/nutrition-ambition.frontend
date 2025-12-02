@@ -15,10 +15,21 @@ export class AuthGuard implements CanActivate {
 
   canActivate() {
     console.log('[AuthGuard] canActivate called for:', window.location.pathname);
+    console.log('[AuthGuard] Current URL:', window.location.href);
+
+    // Add timeout logging to detect if authReady$ never emits
+    const timeoutId = setTimeout(() => {
+      console.log('[AuthGuard] WARNING: authReady$ has not emitted after 5 seconds!');
+    }, 5000);
+
     return this.authService.authReady$.pipe(
-      filter(ready => ready), // ⏳ Wait until Firebase Auth is initialized
-      take(1),                // ✅ Only take the first ready event
+      filter(ready => {
+        console.log('[AuthGuard] authReady$ emitted:', ready);
+        return ready;
+      }),
+      take(1),
       switchMap(() => {
+        clearTimeout(timeoutId);
         console.log('[AuthGuard] authReady, checking isAuthenticated...');
         return from(this.authService.isAuthenticated());
       }),
