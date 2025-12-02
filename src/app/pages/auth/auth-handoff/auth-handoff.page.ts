@@ -64,6 +64,11 @@ export class AuthHandoffPage implements OnInit {
 
       // Decode JWT to extract claims (nonce, iat_custom, redirect)
       const claims = this.decodeJwtClaims(token);
+
+      // Add decoded claims to debug info
+      this.debugInfo += `\nNonce: ${claims?.nonce ? 'YES' : 'NO'}`;
+      this.debugInfo += `\niat_custom: ${claims?.iat_custom ? 'YES' : 'NO'}`;
+
       if (!claims || !claims.nonce || !claims.iat_custom) {
         await this.handleError('invalid', 'Invalid token format');
         return;
@@ -161,10 +166,17 @@ export class AuthHandoffPage implements OnInit {
         return null;
       }
 
-      // Decode the payload (second part)
+      // Decode the payload (second part) using UTF-8 safe method
+      // iOS Safari's atob() corrupts large Base64 payloads with multi-byte UTF-8 characters
       const payload = parts[1];
-      const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-      const claims = JSON.parse(decoded);
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const claims = JSON.parse(jsonPayload);
 
       // Note: "nonce" is a reserved Firebase claim, so backend uses "handoff_nonce"
       return {
