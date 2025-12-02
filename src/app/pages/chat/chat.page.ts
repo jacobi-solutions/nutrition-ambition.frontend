@@ -287,6 +287,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     if (this.streamUpdateTimeout) {
       clearTimeout(this.streamUpdateTimeout);
     }
+
+    // Ensure tab bar is visible when leaving the page
+    document.body.classList.remove('chat-input-focused');
   }
 
   ngAfterViewInit() {
@@ -1303,7 +1306,17 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       localStorage.removeItem(this.draftStorageKey);
     }
   }
-  
+
+  // Handle chat input focus - hide tab bar to maximize screen space
+  onChatInputFocus() {
+    document.body.classList.add('chat-input-focused');
+  }
+
+  // Handle chat input blur - show tab bar again
+  onChatInputBlur() {
+    document.body.classList.remove('chat-input-focused');
+  }
+
   // Adjust textarea height based on content
   private adjustTextareaHeight(textarea: HTMLTextAreaElement) {
     // Reset height to auto to get the actual scrollHeight

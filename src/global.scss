@@ -457,3 +457,11 @@ ion-toast.toast-above-input {
     border-radius: 2.25rem;
   }
 }
+
+/* ========== Hide Tab Bar When Chat Input Focused ========== */
+/* When user focuses the main chat input, hide the tab bar to maximize screen space */
+body.chat-input-focused {
+  ion-tab-bar {
+    display: none !important;
+  }
+}

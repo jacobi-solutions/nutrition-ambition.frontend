@@ -264,6 +264,12 @@ ion-content[fullscreen] {
   padding-left: 1rem;
   padding-right: .5rem;
   background-color: var(--color-bone);
+
+  // Ensure footer stays above virtual keyboard on Android/Samsung devices
+  // keyboard-inset-height is a CSS env variable exposed when virtual keyboard is open
+  @supports (padding-bottom: env(keyboard-inset-height)) {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom) + env(keyboard-inset-height, 0px));
+  }
 }
 
 .fab-and-input {

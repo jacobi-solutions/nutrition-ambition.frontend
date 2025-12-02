@@ -22,7 +22,7 @@
     <!-- Right: Auth buttons -->
       <ion-buttons slot="end">
         <ion-button *ngIf="isLoggedIn" [id]="triggerId">
-          <span>{{ displayName }}</span>
+          <span class="display-name-text">{{ displayName }}</span>
           <ion-icon slot="end" name="settings-outline"></ion-icon>
         </ion-button>
         <ion-button *ngIf="!isLoggedIn" (click)="onLogin()">

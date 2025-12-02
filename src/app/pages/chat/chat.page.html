@@ -106,6 +106,8 @@
         [(ngModel)]="userMessage"
         (keydown)="onKeyDown($event)"
         (input)="onTextareaInput($event)"
+        (focus)="onChatInputFocus()"
+        (blur)="onChatInputBlur()"
         [disabled]="isLoading"
         rows="1">
       </textarea>

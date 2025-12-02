@@ -94,9 +94,17 @@ ion-header {
         font-size: 0.95rem;
         padding: 0 8px;
         color: var(--color-charcoal) !important;
-        
+
         .button-native {
           color: var(--color-charcoal) !important;
+        }
+
+        .display-name-text {
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          display: inline-block;
         }
       }
     }

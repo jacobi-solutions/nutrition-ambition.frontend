@@ -22,6 +22,12 @@ const config: CapacitorConfig = {
       androidSpinnerStyle: 'large',
       iosSpinnerStyle: 'small',
       spinnerColor: '#999999'
+    },
+    Keyboard: {
+      // Resize the web view when keyboard opens so footer stays visible
+      resize: 'body',
+      // Scroll to focused input on keyboard open
+      scrollPadding: true
     }
   }
 };
