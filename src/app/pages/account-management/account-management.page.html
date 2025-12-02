@@ -1,22 +1,13 @@
 <app-header
   title="Account Management"
-  [showBackButton]="true">
+  [showBackButton]="true"
+  (logout)="onLogout()">
 </app-header>
 
 <ion-content class="ion-padding">
   <div class="account-management-container">
     <div *ngIf="isLoading" class="loading-container">
       <ion-spinner></ion-spinner>
-    </div>
-
-    <!-- Return to App button (shown when user came from mobile app) -->
-    <div *ngIf="showReturnToApp && !isLoading" class="return-to-app-container">
-      <ion-button
-        expand="block"
-        class="gray-button"
-        (click)="returnToApp()">
-        Return to Mobile App
-      </ion-button>
     </div>
 
     <div *ngIf="!isLoading && accountInfo">

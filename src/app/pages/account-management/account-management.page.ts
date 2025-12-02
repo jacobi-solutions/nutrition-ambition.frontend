@@ -51,7 +51,6 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
   accountInfo: Account | null = null;
   isLoading = true;
   SubscriptionStatus = SubscriptionStatus;
-  showReturnToApp = false;
 
   constructor(
     private apiService: NutritionAmbitionApiService,
@@ -65,14 +64,18 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
   ) {}
 
   async ngOnInit() {
-    // Check if user came from mobile app
-    this.showReturnToApp = sessionStorage.getItem('authSource') === 'app';
   }
 
   async ionViewWillEnter() {
     // Reload account info every time the page is shown (not just on init)
     // This ensures fresh data when navigating back to this page
     await this.loadAccountInfo();
+  }
+
+  onLogout() {
+    this.authService.signOutUser().then(() => {
+      this.router.navigate(['/login']);
+    });
   }
 
   async loadAccountInfo() {
@@ -277,14 +280,6 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
   formatDate(date: Date | undefined | null): string {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString();
-  }
-
-  returnToApp() {
-    sessionStorage.removeItem('authSource');
-    // Use anchor element click for better iOS Safari compatibility with custom URL schemes
-    const link = document.createElement('a');
-    link.href = 'nutritionambition://';
-    link.click();
   }
 
   async openWebAccountManagement() {
