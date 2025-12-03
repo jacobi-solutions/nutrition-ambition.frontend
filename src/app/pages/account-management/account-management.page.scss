@@ -102,6 +102,38 @@ ion-card {
   }
 }
 
+.trial-expired-card {
+  background: #fff;
+  border: 2px solid var(--color-salmon);
+
+  .trial-expired-message {
+    text-align: center;
+    padding: 0.5rem 0;
+
+    h2 {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 1.125rem;
+      color: var(--color-olive);
+      margin: 0 0 0.75rem 0;
+    }
+
+    p {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9375rem;
+      color: var(--ion-color-medium);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .offer-deadline {
+      margin-top: 0.75rem;
+      font-weight: 600;
+      color: var(--color-salmon);
+    }
+  }
+}
+
 .danger-card {
   border: 2px solid var(--ion-color-danger);
 

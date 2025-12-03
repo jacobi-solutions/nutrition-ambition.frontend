@@ -90,6 +90,10 @@ export class AccountManagementPage implements OnInit, ViewWillEnter {
     }
   }
 
+  get isTrialExpired(): boolean {
+    return this.accountsService.isTrialExpired;
+  }
+
   get subscriptionStatusText(): string {
     if (!this.accountInfo) return '';
 

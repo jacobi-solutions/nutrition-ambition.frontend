@@ -11,6 +11,35 @@
     </div>
 
     <div *ngIf="!isLoading && accountInfo">
+      <!-- Trial Expired Banner - Early Access Users -->
+      <ion-card *ngIf="isTrialExpired && accountInfo.isEarlyAccess" class="trial-expired-card">
+        <ion-card-content>
+          <div class="trial-expired-message">
+            <h2>Thank You for Helping Us Build Nutrition Ambition!</h2>
+            <p>
+              Your free early access period has ended, but you'll have until December 31st to activate
+              your Founding Member rate. After that, public launch pricing will apply.
+            </p>
+            <p class="offer-deadline">
+              Offer available until December 31st
+            </p>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- Trial Expired Banner - Regular Users -->
+      <ion-card *ngIf="isTrialExpired && !accountInfo.isEarlyAccess" class="trial-expired-card">
+        <ion-card-content>
+          <div class="trial-expired-message">
+            <h2>Your Free Trial Has Ended</h2>
+            <p>
+              Thank you for trying Nutrition Ambition! If you'd like to keep tracking your nutrition
+              and achieving your goals, please subscribe using one of the options below.
+            </p>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
       <!-- Subscription Information -->
       <ion-card>
         <ion-card-header>
