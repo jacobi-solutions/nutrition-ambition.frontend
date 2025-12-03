@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy, inject, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Keyboard } from '@capacitor/keyboard';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonFab, IonFabButton, IonFabList, IonContent, IonFooter, IonIcon, IonSpinner, IonText, IonRefresher, IonRefresherContent, AnimationController, ModalController, Platform } from '@ionic/angular/standalone';
@@ -116,6 +117,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private contextNoteSubscription: Subscription;
   private learnMoreAboutSubscription: Subscription;
   private editFoodSelectionStartedSubscription: Subscription;
+  private keyboardHideListener: any;
+  private viewportResizeHandler: (() => void) | null = null;
+  private lastViewportHeight = 0;
 
   private hasInitialMessage: boolean = false;
   private cancelledMessageIds: Set<string> = new Set();
@@ -158,6 +162,29 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   }
 
   async ngOnInit() {
+    // On native platforms, listen for keyboard hide events to restore tab bar
+    // This handles cases like Android's back swipe gesture to close keyboard
+    if (this.platform.is('capacitor')) {
+      this.keyboardHideListener = await Keyboard.addListener('keyboardDidHide', () => {
+        this.ngZone.run(() => {
+          document.body.classList.remove('chat-input-focused');
+        });
+      });
+    } else if (window.visualViewport) {
+      // On web, use visualViewport resize to detect keyboard hide
+      // When viewport height increases significantly, keyboard is likely closing
+      this.lastViewportHeight = window.visualViewport.height;
+      this.viewportResizeHandler = () => {
+        const currentHeight = window.visualViewport!.height;
+        // If viewport height increased by more than 100px, keyboard likely closed
+        if (currentHeight - this.lastViewportHeight > 100) {
+          document.body.classList.remove('chat-input-focused');
+        }
+        this.lastViewportHeight = currentHeight;
+      };
+      window.visualViewport.addEventListener('resize', this.viewportResizeHandler);
+    }
+
     // Check for share token in route params FIRST - before any subscriptions
     const shareToken = this.route.snapshot.paramMap.get('token');
   
@@ -296,6 +323,14 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Clean up streaming timeout
     if (this.streamUpdateTimeout) {
       clearTimeout(this.streamUpdateTimeout);
+    }
+
+    // Clean up keyboard listeners
+    if (this.keyboardHideListener) {
+      this.keyboardHideListener.remove();
+    }
+    if (this.viewportResizeHandler && window.visualViewport) {
+      window.visualViewport.removeEventListener('resize', this.viewportResizeHandler);
     }
 
     // Ensure tab bar is visible when leaving the page
