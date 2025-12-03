@@ -442,11 +442,18 @@ ion-fab-list {
   &.open {
     background-color: var(--ion-color-light);
     color: var(--ion-color-dark);
-    
+
     ion-icon {
       font-size: 2rem;
       transform: translate(-50%, -50%) rotate(90deg);
     }
+  }
+
+  &.disabled,
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
   }
 }
 

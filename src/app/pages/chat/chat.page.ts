@@ -10,6 +10,7 @@ import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
 import { ChatStreamService } from '../../services/chat-stream.service';
 import { DateService } from '../../services/date.service';
+import { AccountsService } from '../../services/accounts.service';
 import { DisplayMessage } from '../../models/display-message';
 import { ComponentDisplay, FoodDisplay, ComponentMatchDisplay } from '../../models/food-selection-display';
 import {
@@ -105,6 +106,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   // Platform detection - only auto-focus on desktop, not mobile
   private isMobile = false;
 
+  // Restricted access mode - blocks FAB and certain features when user needs to upgrade
+  isRestrictedAccess = false;
+
   // Track messages by ID to preserve component instances during updates
   trackMessage(index: number, message: DisplayMessage): string {
     return message.id || `${index}`;
@@ -126,6 +130,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     private foodSelectionService: FoodSelectionService,
     private authService: AuthService,
     private dateService: DateService,
+    private accountsService: AccountsService,
     private router: Router,
     private route: ActivatedRoute,
     private toastService: ToastService,
@@ -169,6 +174,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     this.dateSubscription = this.dateService.selectedDate$.subscribe(date => {
       this.selectedDate = date;
       this.loadChatHistory(this.dateService.getSelectedDate());
+    });
+
+    // Subscribe to account changes to check restricted access status
+    this.accountsService.account$.subscribe(account => {
+      this.isRestrictedAccess = account?.isRestrictedAccess ?? false;
     });
     
     // Subscribe to context note changes

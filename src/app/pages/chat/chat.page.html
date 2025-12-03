@@ -91,7 +91,11 @@
   <div class="fab-and-input">
     <!-- Simplified FAB - directly creates food-selection card -->
     <div class="manual-fab-wrapper">
-      <button class="manual-fab-icon-button" (click)="createManualFoodEntry()" aria-label="Add food">
+      <button class="manual-fab-icon-button"
+              (click)="createManualFoodEntry()"
+              [disabled]="isRestrictedAccess"
+              [class.disabled]="isRestrictedAccess"
+              aria-label="Add food">
         <ion-icon name="add-outline"></ion-icon>
       </button>
     </div>
