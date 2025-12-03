@@ -139,7 +139,12 @@ ion-input::placeholder {
     --size: 20px;
     --checkbox-background-checked: var(--color-olive);
     flex-shrink: 0;
-    margin-top: 0.125rem; // Align checkbox with first line of text
+    align-items: flex-start;
+  }
+
+  ion-checkbox::part(label) {
+    margin-top: 0; // Remove extra space above text
+    padding-top: 0;
   }
 
   .terms-text {
@@ -147,13 +152,16 @@ ion-input::placeholder {
     font-size: 0.75rem;
     line-height: 1.4;
     color: var(--color-charcoal);
-    flex: 1;
-    min-width: 0; // Critical for flex child text wrapping
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word; // Additional iOS support
-    white-space: normal; // Ensure text wraps
-    margin-inline: .25rem 0px !important;
+  }
+
+  .terms-line {
+    display: inline;
+  }
+}
+
+@media (max-width: 390px) {
+  .terms-checkbox-container .terms-line {
+    display: block !important;
   }
 }
 
