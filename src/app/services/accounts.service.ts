@@ -41,6 +41,14 @@ export class AccountsService {
     return this._accountSubject.value;
   }
 
+  get isTrialExpired(): boolean {
+    const account = this.currentAccount;
+    if (!account) return false;
+    if (account.isPremium || account.isPremiumLifetime) return false;
+    if (!account.trialEndDateUtc) return false;
+    return new Date() > new Date(account.trialEndDateUtc);
+  }
+
   clearAccount(): void {
     this._accountSubject.next(null);
   }
