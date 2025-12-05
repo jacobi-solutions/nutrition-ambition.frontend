@@ -42,6 +42,7 @@ import { ToastService } from '../../services/toast.service';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { AnalyticsService } from '../../services/analytics.service';
 import { ShareMealModalComponent } from '../../components/share-meal-modal/share-meal-modal.component';
+import { RestrictedAccessService } from '../../services/restricted-access.service';
 
 // Type for handling both camelCase and PascalCase responses from backend
 type ChatMessagesResponseVariant = ChatMessagesResponse | {
@@ -109,6 +110,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Restricted access mode - blocks FAB and certain features when user needs to upgrade
   isRestrictedAccess = false;
+  restrictedAccessPhase = '';
 
   // Track messages by ID to preserve component instances during updates
   trackMessage(index: number, message: DisplayMessage): string {
@@ -117,6 +119,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private contextNoteSubscription: Subscription;
   private learnMoreAboutSubscription: Subscription;
   private editFoodSelectionStartedSubscription: Subscription;
+  private restrictedMessageSubscription: Subscription;
   private keyboardHideListener: any;
   private viewportResizeHandler: (() => void) | null = null;
   private lastViewportHeight = 0;
@@ -143,7 +146,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     private ngZone: NgZone,
     private apiService: NutritionAmbitionApiService,
     private modalController: ModalController,
-    private platform: Platform
+    private platform: Platform,
+    private restrictedAccessService: RestrictedAccessService
   ) {
     // Add the icons explicitly to the library
     addIcons({
@@ -164,15 +168,17 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   async ngOnInit() {
     // On native platforms, listen for keyboard hide events to restore tab bar
     // This handles cases like Android's back swipe gesture to close keyboard
+    // Only needed on mobile where we hide the tab bar during input focus
     if (this.platform.is('capacitor')) {
       this.keyboardHideListener = await Keyboard.addListener('keyboardDidHide', () => {
         this.ngZone.run(() => {
           document.body.classList.remove('chat-input-focused');
         });
       });
-    } else if (window.visualViewport) {
-      // On web, use visualViewport resize to detect keyboard hide
+    } else if (this.isMobile && window.visualViewport) {
+      // On mobile web, use visualViewport resize to detect keyboard hide
       // When viewport height increases significantly, keyboard is likely closing
+      // Skip this on desktop since we don't hide the tab bar there
       this.lastViewportHeight = window.visualViewport.height;
       this.viewportResizeHandler = () => {
         const currentHeight = window.visualViewport!.height;
@@ -206,6 +212,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Subscribe to account changes to check restricted access status
     this.accountsService.account$.subscribe(account => {
       this.isRestrictedAccess = account?.isRestrictedAccess ?? false;
+      this.restrictedAccessPhase = account?.restrictedAccessPhase ?? '';
     });
     
     // Subscribe to context note changes
@@ -279,13 +286,19 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       if (this.selectedDate === today && messages && messages.length > 0) {
         this.processAndAddNewMessages(messages);
       }
-      
+
       // Turn off loading indicator
       this.isLoading = false;
     });
-    
 
-    
+    // Subscribe to restricted access messages (emitted when user attempts blocked action)
+    this.restrictedMessageSubscription = this.restrictedAccessService.restrictedMessage$.subscribe((messages) => {
+      if (messages && messages.length > 0) {
+        this.processAndAddNewMessages(messages);
+        this.scrollToBottom();
+      }
+    });
+
     // Get the current user email
     this.authService.userEmail$.subscribe(email => {
       this.userEmail = email;
@@ -318,6 +331,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
     if (this.editFoodSelectionStartedSubscription) {
       this.editFoodSelectionStartedSubscription.unsubscribe();
+    }
+
+    if (this.restrictedMessageSubscription) {
+      this.restrictedMessageSubscription.unsubscribe();
     }
 
     // Clean up streaming timeout
@@ -1352,14 +1369,20 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     }
   }
 
-  // Handle chat input focus - hide tab bar to maximize screen space
+  // Handle chat input focus - hide tab bar to maximize screen space (mobile only)
   onChatInputFocus() {
-    document.body.classList.add('chat-input-focused');
+    // Only hide tab bar on mobile devices where keyboard takes up screen space
+    // On desktop, the tab bar should remain visible at all times
+    if (this.isMobile) {
+      document.body.classList.add('chat-input-focused');
+    }
   }
 
-  // Handle chat input blur - show tab bar again
+  // Handle chat input blur - show tab bar again (mobile only)
   onChatInputBlur() {
-    document.body.classList.remove('chat-input-focused');
+    if (this.isMobile) {
+      document.body.classList.remove('chat-input-focused');
+    }
   }
 
   // Adjust textarea height based on content
@@ -1426,6 +1449,13 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   // Create an empty food selection card for manual entry
   // Opens with quick search mode by default, showing all 4 mode options
   async createManualFoodEntry(): Promise<void> {
+    // If user is in restricted access mode, trigger the restricted access flow instead
+    if (this.isRestrictedAccess && this.restrictedAccessPhase) {
+      const redirectUrl = this.restrictedAccessPhase === 'guestUpgrade' ? '/signup' : '/account-management';
+      this.restrictedAccessService.handleRestrictedAccess(this.restrictedAccessPhase, redirectUrl);
+      return;
+    }
+
     try {
       // Track FAB click analytics
       this.analytics.trackActionClick('fab_add_food', 'chat_page');

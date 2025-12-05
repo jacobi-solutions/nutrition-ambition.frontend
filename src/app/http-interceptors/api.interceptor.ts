@@ -1,10 +1,11 @@
 import { inject, NgZone } from '@angular/core';
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpEvent, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, from, throwError } from 'rxjs';
+import { Observable, from, throwError, EMPTY } from 'rxjs';
 import { first, switchMap, catchError } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 import { PlatformService } from '../services/platform.service';
+import { RestrictedAccessService } from '../services/restricted-access.service';
 import { environment } from 'src/environments/environment';
 import { APP_VERSION, PREVIOUS_COMMIT_HASH } from 'src/environments/version';
 
@@ -20,6 +21,7 @@ export const ApiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: H
   const router = inject(Router);
   const zone = inject(NgZone);
   const platformService = inject(PlatformService);
+  const restrictedAccessService = inject(RestrictedAccessService);
 
   const apiBaseUrl = environment.backendApiUrl;
 
@@ -58,6 +60,19 @@ export const ApiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: H
       const authedReq = addHeaders(token);
       return next(authedReq).pipe(
         catchError(err => {
+          // Handle 403 Restricted Access errors
+          if (restrictedAccessService.isRestrictedAccessError(err)) {
+            const info = restrictedAccessService.getRestrictedAccessInfo(err);
+            if (info) {
+              // Handle the restricted access asynchronously
+              zone.run(() => {
+                restrictedAccessService.handleRestrictedAccess(info.phase, info.redirectUrl);
+              });
+              // Return EMPTY to prevent the error from propagating
+              return EMPTY;
+            }
+          }
+
           if (err?.status !== 401) return throwError(() => err);
 
           return from(authService.getFreshIdToken(true)).pipe(

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { AuthService } from '../../../services/auth.service';
 import { ToastService } from '../../../services/toast.service';
+import { AccountsService } from '../../../services/accounts.service';
 import { Router, RouterModule } from '@angular/router';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonInputPasswordToggle, IonCheckbox } from '@ionic/angular/standalone';
 import { environment } from 'src/environments/environment';
@@ -29,9 +30,10 @@ export class SignupPage {
   isWorking: boolean = false;
 
   constructor(
-    private authService: AuthService, 
+    private authService: AuthService,
     private router: Router,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private accountsService: AccountsService
   ) {}
 
   async onSignup() {
@@ -75,14 +77,17 @@ export class SignupPage {
 
     try {
       await this.authService.registerWithEmail(this.email, this.password);
-      
+
+      // Refresh account data so isRestrictedAccess is updated
+      await this.accountsService.loadAccount();
+
       // Show success toast
       await this.toastService.showToast({
         message: 'Account created. You\'re all set!',
         color: 'success',
         duration: 1500
       });
-      
+
       // Navigate to chat for consistency with login
       this.router.navigate(['/app/chat']);
     } catch (error) {

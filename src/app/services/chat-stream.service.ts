@@ -3,18 +3,20 @@ import { environment } from 'src/environments/environment';
 import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse, SetupGoalsRequest, LearnMoreAboutRequest, BarcodeSearchRequest } from './nutrition-ambition-api.service';
 import { AuthService } from './auth.service';
 import { DateService } from './date.service';
+import { RestrictedAccessService } from './restricted-access.service';
 
 @Injectable({ providedIn: 'root' })
 export class ChatStreamService {
   private baseUrl = `${environment.backendApiUrl}/api/conversation`;
 
   // Streaming timeout configuration
-  private readonly STREAM_TIMEOUT_MS = 60000; 
-  private readonly TIMEOUT_CHECK_INTERVAL_MS = 5000; 
+  private readonly STREAM_TIMEOUT_MS = 60000;
+  private readonly TIMEOUT_CHECK_INTERVAL_MS = 5000;
 
   constructor(
     private authService: AuthService,
-    private dateService: DateService
+    private dateService: DateService,
+    private restrictedAccessService: RestrictedAccessService
   ) {}
 
   /**
@@ -62,6 +64,24 @@ export class ChatStreamService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('[SSEStream] HTTP error response:', errorText);
+
+        // Check for 403 restricted access response
+        if (response.status === 403) {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.isRestricted) {
+              this.restrictedAccessService.handleRestrictedAccess(
+                errorData.phase || '',
+                errorData.redirectUrl || ''
+              );
+              onComplete(); // Complete gracefully instead of error
+              return null;
+            }
+          } catch {
+            // Not a JSON response, continue with normal error handling
+          }
+        }
+
         onError(new Error(`HTTP error! status: ${response.status}`));
         return null;
       }
@@ -199,6 +219,24 @@ export class ChatStreamService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('HTTP error response:', errorText);
+
+        // Check for 403 restricted access response
+        if (response.status === 403) {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.isRestricted) {
+              this.restrictedAccessService.handleRestrictedAccess(
+                errorData.phase || '',
+                errorData.redirectUrl || ''
+              );
+              onComplete(); // Complete gracefully instead of error
+              return null;
+            }
+          } catch {
+            // Not a JSON response, continue with normal error handling
+          }
+        }
+
         onError(new Error(`HTTP error! status: ${response.status}`));
         return null;
       }
@@ -218,7 +256,7 @@ export class ChatStreamService {
 
       const timeoutCheck = setInterval(() => {
         if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
-          console.error('Stream timeout - no data for 30 seconds');
+          console.error('Stream timeout - no data for 60 seconds');
           clearInterval(timeoutCheck);
           reader.cancel();
           onError(new Error('Stream timeout - no data received for 30 seconds'));
@@ -374,7 +412,25 @@ export class ChatStreamService {
 
       if (!response.ok) {
         const errorText = await response.text();
-       
+        console.error('[SetupGoals] HTTP error response:', errorText);
+
+        // Check for 403 restricted access response
+        if (response.status === 403) {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.isRestricted) {
+              this.restrictedAccessService.handleRestrictedAccess(
+                errorData.phase || '',
+                errorData.redirectUrl || ''
+              );
+              onComplete(); // Complete gracefully instead of error
+              return null;
+            }
+          } catch {
+            // Not a JSON response, continue with normal error handling
+          }
+        }
+
         onError(new Error(`HTTP error! status: ${response.status}`));
         return null;
       }
@@ -392,7 +448,7 @@ export class ChatStreamService {
 
       const timeoutCheck = setInterval(() => {
         if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
-         
+          console.error('[SetupGoals] Stream timeout');
           clearInterval(timeoutCheck);
           reader.cancel();
           onError(new Error('Stream timeout - no data received'));
@@ -401,8 +457,6 @@ export class ChatStreamService {
 
       const processStream = async () => {
         try {
-          
-
           while (true) {
             const { done, value } = await reader.read();
 
@@ -498,7 +552,25 @@ export class ChatStreamService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('LearnMoreAbout HTTP error:', errorText);
+        console.error('[LearnMoreAbout] HTTP error response:', errorText);
+
+        // Check for 403 restricted access response
+        if (response.status === 403) {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.isRestricted) {
+              this.restrictedAccessService.handleRestrictedAccess(
+                errorData.phase || '',
+                errorData.redirectUrl || ''
+              );
+              onComplete(); // Complete gracefully instead of error
+              return null;
+            }
+          } catch {
+            // Not a JSON response, continue with normal error handling
+          }
+        }
+
         onError(new Error(`HTTP error! status: ${response.status}`));
         return null;
       }
@@ -516,7 +588,7 @@ export class ChatStreamService {
 
       const timeoutCheck = setInterval(() => {
         if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
-          console.error('LearnMoreAbout stream timeout');
+          console.error('[LearnMoreAbout] Stream timeout');
           clearInterval(timeoutCheck);
           reader.cancel();
           onError(new Error('Stream timeout - no data received'));
@@ -525,7 +597,6 @@ export class ChatStreamService {
 
       const processStream = async () => {
         try {
-
           while (true) {
             const { done, value } = await reader.read();
 
