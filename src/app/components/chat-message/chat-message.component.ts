@@ -85,17 +85,21 @@ export class ChatMessageComponent implements OnChanges {
 
     if (shouldExtractButtons) {
       // Extract all action links and remove them from the text
-      // Use matchAll instead of exec loop to avoid modifying while iterating
+      // Collect matches first to avoid modifying while iterating
       const linkPattern = /\[([^\]]+)\]\((\/[^)]+)\)/g;
-      const matches = [...this.text.matchAll(linkPattern)];
+      const matches: { fullMatch: string; label: string; path: string }[] = [];
+      let match: RegExpExecArray | null;
 
-      for (const match of matches) {
-        const [fullMatch, label, path] = match;
+      while ((match = linkPattern.exec(this.text)) !== null) {
+        matches.push({ fullMatch: match[0], label: match[1], path: match[2] });
+      }
+
+      for (const m of matches) {
         // Only extract if it's one of our action routes
-        if (this.actionRoutes.some(route => path === route || path.startsWith(route + '?'))) {
-          this.actionLinks.push({ label, path });
+        if (this.actionRoutes.some(route => m.path === route || m.path.startsWith(route + '?'))) {
+          this.actionLinks.push({ label: m.label, path: m.path });
           // Remove this link from the processed text
-          processedText = processedText.replace(fullMatch, '');
+          processedText = processedText.replace(m.fullMatch, '');
         }
       }
 
