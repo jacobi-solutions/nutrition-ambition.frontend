@@ -4,6 +4,16 @@
   [attr.aria-live]="isStreaming ? 'polite' : 'off'"
   [attr.aria-busy]="isStreaming"
   role="article">
-  <div class="message-content" [innerHTML]="formattedContent"></div>
+  <div class="message-content" [innerHTML]="processedHtml"></div>
+
+  <!-- Real Angular buttons for action links - not injected via innerHTML -->
+  <button
+    *ngFor="let link of actionLinks"
+    type="button"
+    class="action-button"
+    (click)="onActionClick(link.path)">
+    {{ link.label }}
+  </button>
+
   <!-- <div class="message-time">{{ timestamp | date:'shortTime' }}</div> -->
 </div> 
