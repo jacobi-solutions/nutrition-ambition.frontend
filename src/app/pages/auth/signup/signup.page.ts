@@ -76,10 +76,14 @@ export class SignupPage {
     this.isWorking = true;
 
     try {
+      console.log('[SignupPage] Starting registerWithEmail...');
       await this.authService.registerWithEmail(this.email, this.password);
+      console.log('[SignupPage] registerWithEmail completed');
 
       // Refresh account data so isRestrictedAccess is updated
+      console.log('[SignupPage] Loading account...');
       await this.accountsService.loadAccount();
+      console.log('[SignupPage] Account loaded');
 
       // Show success toast
       await this.toastService.showToast({
@@ -88,6 +92,7 @@ export class SignupPage {
         duration: 1500
       });
 
+      console.log('[SignupPage] Navigating to chat...');
       // Navigate to chat for consistency with login
       this.router.navigate(['/app/chat']);
     } catch (error) {

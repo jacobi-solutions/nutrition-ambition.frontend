@@ -1,9 +1,10 @@
-import { Component, Input, SecurityContext, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, SecurityContext, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { marked } from 'marked';
 import { ChatMessage } from '../../services/nutrition-ambition-api.service';
+import { AccountsService } from '../../services/accounts.service';
 
 /** Represents an action button extracted from markdown links */
 interface ActionLink {
@@ -39,6 +40,8 @@ export class ChatMessageComponent implements OnChanges {
   // Processed content without the action link markdown
   processedHtml: SafeHtml = '';
 
+  private accountsService = inject(AccountsService);
+
   constructor(
     private sanitizer: DomSanitizer,
     public router: Router  // Public so template can access it
@@ -56,6 +59,7 @@ export class ChatMessageComponent implements OnChanges {
    * 2. Convert remaining text to HTML via Markdown
    */
   private processContent(): void {
+    console.log('[ChatMessage] processContent called, text length:', this.text?.length, 'hasActionButtons:', this.hasActionButtons, 'message?.hasActionButtons:', this.message?.hasActionButtons);
     if (!this.text) {
       this.processedHtml = '';
       this.actionLinks = [];
@@ -82,6 +86,7 @@ export class ChatMessageComponent implements OnChanges {
     this.actionLinks = [];
 
     const shouldExtractButtons = this.hasActionButtons || this.message?.hasActionButtons;
+    console.log('[ChatMessage] shouldExtractButtons:', shouldExtractButtons);
 
     if (shouldExtractButtons) {
       // Extract all action links and remove them from the text
@@ -94,14 +99,18 @@ export class ChatMessageComponent implements OnChanges {
         matches.push({ fullMatch: match[0], label: match[1], path: match[2] });
       }
 
+      console.log('[ChatMessage] Found', matches.length, 'link matches in text');
       for (const m of matches) {
+        console.log('[ChatMessage] Checking match:', m.path, 'against actionRoutes:', this.actionRoutes);
         // Only extract if it's one of our action routes
         if (this.actionRoutes.some(route => m.path === route || m.path.startsWith(route + '?'))) {
+          console.log('[ChatMessage] Adding action link:', m.label, m.path);
           this.actionLinks.push({ label: m.label, path: m.path });
           // Remove this link from the processed text
           processedText = processedText.replace(m.fullMatch, '');
         }
       }
+      console.log('[ChatMessage] Final actionLinks count:', this.actionLinks.length);
 
       // Clean up whitespace artifacts from removed links
       processedText = processedText
@@ -116,8 +125,16 @@ export class ChatMessageComponent implements OnChanges {
 
   /**
    * Navigate to the action link path
+   * If navigating to signup, set flag to trigger conversation continuation after signup
    */
   onActionClick(path: string): void {
+    console.log('[ChatMessage] onActionClick called with path:', path);
+    // If user is clicking "Create your account" (navigating to signup from restricted access),
+    // set flag so chat.page.ts will call TriggerConversationContinuation after they return
+    if (path === '/signup' || path.startsWith('/signup?')) {
+      console.log('[ChatMessage] Setting forcedUpgradeFromGuest flag');
+      this.accountsService.setForcedUpgradeFromGuest();
+    }
     this.router.navigateByUrl(path);
   }
 } 

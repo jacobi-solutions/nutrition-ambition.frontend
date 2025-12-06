@@ -284,19 +284,21 @@ export class AuthService {
 
   private async createBackendAccount(email: string | null, isAnonymous: boolean): Promise<void> {
     try {
+      console.log('[AuthService] createBackendAccount starting, isAnonymous:', isAnonymous);
       const request = new RegisterAccountRequest({
         email: email || '',
         timeZoneId: Intl.DateTimeFormat().resolvedOptions().timeZone,
         isAnonymous: isAnonymous
       });
-      
+
       const response = await this._apiService.registerAccount(request).toPromise();
-      
+      console.log('[AuthService] createBackendAccount completed, success:', response?.isSuccess);
+
       if (!response?.isSuccess) {
         const errorMessage = response?.errors?.[0]?.errorMessage || 'Failed to create backend account';
         throw new Error(errorMessage);
       }
-      
+
     } catch (error) {
       throw error;
     }

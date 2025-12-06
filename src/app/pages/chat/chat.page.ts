@@ -31,7 +31,8 @@ import {
     CreateSharedMealRequest,
     CreateSharedMealResponse,
     SetupGoalsRequest,
-    LearnMoreAboutRequest
+    LearnMoreAboutRequest,
+    TriggerConversationContinuationRequest
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -367,8 +368,20 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   
   // This will be called when the view is about to enter
   async ionViewWillEnter() {
+    console.log('[ChatPage] ionViewWillEnter called');
     // Firebase Analytics: Track page view when entering the page
     this.analytics.trackPageView('Chat');
+
+    // Check if user just upgraded from guest - if so, reload chat history and trigger continuation
+    // This needs to happen before other checks since the flag will be consumed in loadChatHistory
+    if (this.accountsService.consumeForcedUpgradeFromGuest()) {
+      console.log('[ChatPage] ionViewWillEnter: User just upgraded from guest, reloading chat history');
+      // Re-set the flag so loadChatHistory's checkForConversationContinuation will see it
+      this.accountsService.setForcedUpgradeFromGuest();
+      // Force reload chat history to get the welcome message and trigger continuation
+      this.loadChatHistory(this.dateService.getSelectedDate());
+      return; // Skip other checks since we're reloading
+    }
 
     // Check for completed pending edits when entering the chat page
     const pendingMessages = this.chatService.consumePendingEditMessages();
@@ -515,6 +528,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       )
       .subscribe({
         next: (response: ChatMessagesResponse | null) => {
+          console.log('[ChatPage] loadChatHistory received response, messages count:', response?.messages?.length ?? 0);
           if (response && response.isSuccess && response.messages && response.messages.length > 0) {
             // Convert API messages to display messages
             // Process messages and filter to only show allowed roles
@@ -579,10 +593,17 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             // Check for incomplete meals after messages are loaded
             this.checkForIncompleteMeals();
 
+            // Check if we need to trigger conversation continuation after guest upgrade
+            this.checkForConversationContinuation();
+
             // Scroll at the end of the next event cycle
             this.scrollToBottom();
+          } else {
+            console.log('[ChatPage] No messages returned, checking for conversation continuation anyway');
+            // Still check for conversation continuation even if no messages returned
+            // (welcome message might not have been saved yet, but flag is set)
+            this.checkForConversationContinuation();
           }
-          // Don't start a conversation automatically - we'll show static message instead
         }
       });
   }
@@ -615,6 +636,195 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       // Backend handles all retry logic automatically
       this.handleIncompleteMeal(incompleteMealMessage);
     }
+  }
+
+  /**
+   * Check if we need to trigger conversation continuation after a forced guest upgrade.
+   * This is called after chat history is loaded, when user returns from signup
+   * after clicking "Create your account" from a restricted access message.
+   */
+  private checkForConversationContinuation(): void {
+    console.log('[ConversationContinuation] checkForConversationContinuation called');
+
+    // Consume the flag (returns true if it was set, then resets to false)
+    const wasForcedUpgrade = this.accountsService.consumeForcedUpgradeFromGuest();
+    console.log('[ConversationContinuation] wasForcedUpgrade:', wasForcedUpgrade);
+
+    if (!wasForcedUpgrade) {
+      console.log('[ConversationContinuation] Flag was not set, skipping');
+      return;
+    }
+
+    // Don't trigger if there's already a stream in progress
+    if (this.isStreamingActive) {
+      console.log('[ConversationContinuation] Stream already active, skipping');
+      return;
+    }
+
+    console.log('[ConversationContinuation] Triggering conversation continuation...');
+    // Trigger conversation continuation to pick up any pending actions
+    this.triggerConversationContinuation();
+  }
+
+  /**
+   * Trigger AI conversation continuation after guest upgrade.
+   * This calls the backend to continue any pending actions (like logging a meal)
+   * that were interrupted when the user was asked to create an account.
+   */
+  private async triggerConversationContinuation(): Promise<void> {
+    const localDateKey = this.dateService.getSelectedDate();
+
+    // Set up streaming state
+    this.isStreamingActive = true;
+    this.hasScrolledForCurrentStream = false;
+    this.isLoading = true;
+
+    let streamingMessageIndex = -1;
+    let pendingContent = '';
+
+    // Create request
+    const request = new TriggerConversationContinuationRequest({
+      localDateKey: localDateKey
+    });
+
+    // Start the stream
+    this.activeStream = await this.chatStreamService.triggerConversationContinuationStream(
+      request,
+      (chunk: ChatMessagesResponse) => {
+        // Check for error response and bail out early
+        if (!chunk.isSuccess && chunk.errors && chunk.errors.length > 0) {
+          console.error('[ConversationContinuation] Received error chunk:', chunk.errors);
+          return;
+        }
+
+        // Handle messages in chunk
+        const chunkVariant = chunk as ChatMessagesResponseVariant;
+        const messages = 'messages' in chunkVariant
+          ? chunkVariant.messages
+          : (chunkVariant as any).Messages;
+
+        if (messages && messages.length > 0) {
+          const assistantMessage = messages[0];
+          const content = 'content' in assistantMessage
+            ? assistantMessage.content
+            : (assistantMessage as any).Content;
+
+          pendingContent = content;
+
+          // Clear existing timeout
+          if (this.streamUpdateTimeout) {
+            clearTimeout(this.streamUpdateTimeout);
+          }
+
+          // Throttle UI updates
+          this.streamUpdateTimeout = setTimeout(() => {
+            this.ngZone.run(() => {
+              this.isLoading = false;
+
+              if (!pendingContent || pendingContent.trim().length === 0) {
+                return;
+              }
+
+              // Create or update streaming message
+              if (streamingMessageIndex === -1) {
+                streamingMessageIndex = this.messages.length;
+                this.messages = [...this.messages, {
+                  id: `continuation-${Date.now()}`,
+                  text: pendingContent || '',
+                  isUser: false,
+                  timestamp: new Date(),
+                  role: MessageRoleTypes.Assistant,
+                  isStreaming: true
+                }];
+                if (!this.hasScrolledForCurrentStream) {
+                  this.scrollToBottom();
+                  this.hasScrolledForCurrentStream = true;
+                }
+              } else {
+                const updatedMessages = [...this.messages];
+                const existingMessage = updatedMessages[streamingMessageIndex];
+                updatedMessages[streamingMessageIndex] = {
+                  ...existingMessage,
+                  text: pendingContent || '',
+                  isStreaming: true
+                };
+                this.messages = updatedMessages;
+              }
+
+              this.cdr.detectChanges();
+            });
+          }, this.STREAM_THROTTLE_MS);
+        }
+
+        // Handle meal selections in chunk (similar to sendMessage pattern)
+        // Use 'as any' to handle both casing variants from backend
+        const chunkMealSelections = (chunk as any).MealSelections || (chunk as any).mealSelections;
+        if (chunkMealSelections && chunkMealSelections.length > 0) {
+          this.ngZone.run(() => {
+            this.processAndAddNewMessages([{
+              role: MessageRoleTypes.PendingFoodSelection,
+              mealSelections: chunkMealSelections
+            } as ChatMessage]);
+            this.cdr.detectChanges();
+            this.scrollToBottom();
+          });
+        }
+      },
+      () => {
+        // Stream complete
+        if (this.streamUpdateTimeout) {
+          clearTimeout(this.streamUpdateTimeout);
+        }
+
+        this.ngZone.run(() => {
+          if (streamingMessageIndex !== -1) {
+            const updatedMessages = [...this.messages];
+            const existingMessage = updatedMessages[streamingMessageIndex];
+            updatedMessages[streamingMessageIndex] = {
+              ...existingMessage,
+              text: existingMessage.text || pendingContent,
+              isStreaming: false,
+              isPartial: false
+            };
+            this.messages = updatedMessages;
+            this.cdr.detectChanges();
+          } else if (pendingContent && pendingContent.trim().length > 0) {
+            this.isLoading = false;
+            this.messages = [...this.messages, {
+              id: `continuation-${Date.now()}`,
+              text: pendingContent,
+              isUser: false,
+              timestamp: new Date(),
+              role: MessageRoleTypes.Assistant,
+              isStreaming: false
+            }];
+            this.cdr.detectChanges();
+            this.scrollToBottom();
+          }
+
+          this.isStreamingActive = false;
+          this.activeStream = null;
+          this.isLoading = false;
+
+          // Focus input after completion (desktop only)
+          if (!this.isMobile) {
+            setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          }
+        });
+      },
+      (error: any) => {
+        // Stream error
+        if (this.streamUpdateTimeout) {
+          clearTimeout(this.streamUpdateTimeout);
+          this.streamUpdateTimeout = null;
+        }
+
+        console.error('[ConversationContinuation] Stream error:', error);
+        this.isLoading = false;
+        this.isStreamingActive = false;
+        this.activeStream = null;
+      }
+    );
   }
 
   // Display a static welcome message in the UI

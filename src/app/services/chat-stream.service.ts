@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse, SetupGoalsRequest, LearnMoreAboutRequest, BarcodeSearchRequest, TriggerWelcomeBackRequest } from './nutrition-ambition-api.service';
+import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse, SetupGoalsRequest, LearnMoreAboutRequest, BarcodeSearchRequest, TriggerConversationContinuationRequest } from './nutrition-ambition-api.service';
 import { AuthService } from './auth.service';
 import { DateService } from './date.service';
 import { RestrictedAccessService } from './restricted-access.service';
@@ -662,16 +662,16 @@ export class ChatStreamService {
   }
 
   /**
-   * Triggers a welcome-back AI response after a guest upgrades to a registered account.
+   * Triggers conversation continuation after a guest upgrades to a registered account.
    * Uses developer message only - no user message is shown in chat history.
    */
-  async triggerWelcomeBackStream(
-    request: TriggerWelcomeBackRequest,
+  async triggerConversationContinuationStream(
+    request: TriggerConversationContinuationRequest,
     onChunk: (data: ChatMessagesResponse) => void,
     onComplete: () => void,
     onError: (error: any) => void
   ): Promise<EventSource | null> {
-    const url = `${this.baseUrl}/TriggerWelcomeBack`;
+    const url = `${this.baseUrl}/TriggerConversationContinuation`;
 
     try {
       const token = await this.authService.getIdToken();
@@ -696,7 +696,7 @@ export class ChatStreamService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[TriggerWelcomeBack] HTTP error response:', errorText);
+        console.error('[TriggerConversationContinuation] HTTP error response:', errorText);
         onError(new Error(`HTTP error! status: ${response.status}`));
         return null;
       }
@@ -714,7 +714,7 @@ export class ChatStreamService {
 
       const timeoutCheck = setInterval(() => {
         if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
-          console.error('[TriggerWelcomeBack] Stream timeout');
+          console.error('[TriggerConversationContinuation] Stream timeout');
           clearInterval(timeoutCheck);
           reader.cancel();
           onError(new Error('Stream timeout - no data received'));
@@ -749,7 +749,7 @@ export class ChatStreamService {
                   const parsed = ChatMessagesResponse.fromJS(rawData);
 
                   if (!parsed.isSuccess && parsed.errors && parsed.errors.length > 0) {
-                    console.error('[TriggerWelcomeBack] Error response:', parsed.errors);
+                    console.error('[TriggerConversationContinuation] Error response:', parsed.errors);
                     clearInterval(timeoutCheck);
                     reader.cancel();
                     onError(new Error(parsed.errors[0]?.errorMessage || 'Server error'));
@@ -758,13 +758,13 @@ export class ChatStreamService {
 
                   onChunk(parsed);
                 } catch (err) {
-                  console.error('[TriggerWelcomeBack] Parse error:', err);
+                  console.error('[TriggerConversationContinuation] Parse error:', err);
                 }
               }
             }
           }
         } catch (err) {
-          console.error('[TriggerWelcomeBack] Stream processing error:', err);
+          console.error('[TriggerConversationContinuation] Stream processing error:', err);
           clearInterval(timeoutCheck);
           onError(err);
         }
@@ -781,7 +781,7 @@ export class ChatStreamService {
       } as any;
 
     } catch (err) {
-      console.error('[TriggerWelcomeBack] Stream start error', err);
+      console.error('[TriggerConversationContinuation] Stream start error', err);
       onError(err);
       return null;
     }

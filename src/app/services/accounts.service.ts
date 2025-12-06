@@ -10,6 +10,10 @@ export class AccountsService {
   private _accountSubject = new BehaviorSubject<Account | null>(null);
   public account$ = this._accountSubject.asObservable();
 
+  // Flag to track if user was forced to upgrade from guest (clicked "Create your account" from restricted access)
+  // When true, chat.page.ts will call TriggerConversationContinuation to continue any pending actions
+  private _forcedUpgradeFromGuest = false;
+
   private authService = inject(AuthService);
 
   constructor(
@@ -51,5 +55,26 @@ export class AccountsService {
 
   clearAccount(): void {
     this._accountSubject.next(null);
+  }
+
+  /**
+   * Set flag indicating user was forced to upgrade from guest mode.
+   * Call this when user clicks "Create your account" from restricted access message.
+   */
+  setForcedUpgradeFromGuest(): void {
+    console.log('[AccountsService] setForcedUpgradeFromGuest called - setting flag to true');
+    this._forcedUpgradeFromGuest = true;
+  }
+
+  /**
+   * Consume the forced upgrade flag (returns value and resets to false).
+   * Call this in chat.page.ts after loading messages to check if we should
+   * trigger conversation continuation.
+   */
+  consumeForcedUpgradeFromGuest(): boolean {
+    const value = this._forcedUpgradeFromGuest;
+    console.log('[AccountsService] consumeForcedUpgradeFromGuest called - current value:', value);
+    this._forcedUpgradeFromGuest = false;
+    return value;
   }
 } 

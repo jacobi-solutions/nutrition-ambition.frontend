@@ -192,12 +192,12 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    types4(body: TriggerWelcomeBackRequest | undefined): Observable<ChatMessagesResponse>;
+    types4(body: TriggerConversationContinuationRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
      */
-    triggerWelcomeBack(body: TriggerWelcomeBackRequest | undefined): Observable<void>;
+    triggerConversationContinuation(body: TriggerConversationContinuationRequest | undefined): Observable<void>;
     /**
      * @return Success
      */
@@ -2270,8 +2270,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    types4(body: TriggerWelcomeBackRequest | undefined): Observable<ChatMessagesResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/TriggerWelcomeBack/types";
+    types4(body: TriggerConversationContinuationRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/TriggerConversationContinuation/types";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -2326,8 +2326,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    triggerWelcomeBack(body: TriggerWelcomeBackRequest | undefined): Observable<void> {
-        let url_ = this.baseUrl + "/api/Conversation/TriggerWelcomeBack";
+    triggerConversationContinuation(body: TriggerConversationContinuationRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/TriggerConversationContinuation";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -2342,11 +2342,11 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processTriggerWelcomeBack(response_);
+            return this.processTriggerConversationContinuation(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processTriggerWelcomeBack(response_ as any);
+                    return this.processTriggerConversationContinuation(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<void>;
                 }
@@ -2355,7 +2355,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         }));
     }
 
-    protected processTriggerWelcomeBack(response: HttpResponseBase): Observable<void> {
+    protected processTriggerConversationContinuation(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -10999,10 +10999,10 @@ export interface ITelemetryContext {
     extras?: { [key: string]: string; } | undefined;
 }
 
-export class TriggerWelcomeBackRequest implements ITriggerWelcomeBackRequest {
+export class TriggerConversationContinuationRequest implements ITriggerConversationContinuationRequest {
     localDateKey?: string | undefined;
 
-    constructor(data?: ITriggerWelcomeBackRequest) {
+    constructor(data?: ITriggerConversationContinuationRequest) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -11017,9 +11017,9 @@ export class TriggerWelcomeBackRequest implements ITriggerWelcomeBackRequest {
         }
     }
 
-    static fromJS(data: any): TriggerWelcomeBackRequest {
+    static fromJS(data: any): TriggerConversationContinuationRequest {
         data = typeof data === 'object' ? data : {};
-        let result = new TriggerWelcomeBackRequest();
+        let result = new TriggerConversationContinuationRequest();
         result.init(data);
         return result;
     }
@@ -11031,7 +11031,7 @@ export class TriggerWelcomeBackRequest implements ITriggerWelcomeBackRequest {
     }
 }
 
-export interface ITriggerWelcomeBackRequest {
+export interface ITriggerConversationContinuationRequest {
     localDateKey?: string | undefined;
 }
 
