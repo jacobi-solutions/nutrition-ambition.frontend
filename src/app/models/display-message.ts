@@ -32,4 +32,7 @@ export interface DisplayMessage {
 
     // manual food entry flag
     autoOpenQuickAdd?: boolean;
+
+    // action buttons flag for restricted access messages
+    hasActionButtons?: boolean;
   }

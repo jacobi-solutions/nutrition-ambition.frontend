@@ -38,6 +38,8 @@ import {
   MigrateCanonicalUnitsResponse,
   CreateRetroactiveFavoritesRequest,
   CreateRetroactiveFavoritesResponse,
+  AdjustAccountDatesRequest,
+  AdjustAccountDatesResponse,
   ErrorDto
 } from '../../services/nutrition-ambition-api.service';
 
@@ -599,6 +601,32 @@ export class AdminService {
         errorResponse.errors = [];
       }
       errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred during migration.' }));
+      return errorResponse;
+    }
+  }
+
+  /**
+   * Adjust account dates (created date and/or trial end date)
+   */
+  async adjustAccountDates(
+    accountId: string,
+    createdDateAdjustmentDays?: number,
+    trialEndDateAdjustmentDays?: number
+  ): Promise<AdjustAccountDatesResponse> {
+    try {
+      const request = new AdjustAccountDatesRequest({
+        accountId: accountId,
+        createdDateAdjustmentDays: createdDateAdjustmentDays,
+        trialEndDateAdjustmentDays: trialEndDateAdjustmentDays
+      });
+      const response = await firstValueFrom(this.apiService.adjustAccountDates(request));
+      return response;
+    } catch (error) {
+      const errorResponse = new AdjustAccountDatesResponse();
+      if (!errorResponse.errors) {
+        errorResponse.errors = [];
+      }
+      errorResponse.errors.push(new ErrorDto({ errorMessage: 'An error occurred while adjusting account dates.' }));
       return errorResponse;
     }
   }

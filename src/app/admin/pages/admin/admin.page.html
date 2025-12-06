@@ -472,6 +472,14 @@
                   <td class="actions-cell">
                     <ion-button
                       size="small"
+                      color="tertiary"
+                      fill="outline"
+                      (click)="openAdjustDatesModal(account); $event.stopPropagation()">
+                      <ion-icon name="calendar-outline" slot="start"></ion-icon>
+                      Dates
+                    </ion-button>
+                    <ion-button
+                      size="small"
                       color="warning"
                       fill="outline"
                       [disabled]="!account.canClear"

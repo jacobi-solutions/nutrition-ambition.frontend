@@ -1,0 +1,125 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Adjust Account Dates</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">
+        <ion-icon name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="modal-content">
+    <!-- Account Info -->
+    <div class="account-info">
+      <h3>{{ account.name || 'Unnamed' }}</h3>
+      <p class="email">{{ account.email }}</p>
+    </div>
+
+    <!-- Created Date Section -->
+    <div class="date-section">
+      <div class="section-header">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <h4>Created Date</h4>
+      </div>
+
+      <div class="current-value">
+        <span class="label">Current:</span>
+        <span class="value">{{ formatDate(account.createdDateUtc) }}</span>
+      </div>
+
+      <div class="adjustment-controls">
+        <ion-button
+          fill="outline"
+          size="small"
+          (click)="decrementCreatedDate()"
+          [disabled]="isSubmitting">
+          <ion-icon name="remove-outline"></ion-icon>
+        </ion-button>
+
+        <div class="adjustment-value" [class.negative]="createdDateAdjustment < 0" [class.positive]="createdDateAdjustment > 0">
+          {{ createdDateAdjustment >= 0 ? '+' : '' }}{{ createdDateAdjustment }} days
+        </div>
+
+        <ion-button
+          fill="outline"
+          size="small"
+          (click)="incrementCreatedDate()"
+          [disabled]="isSubmitting">
+          <ion-icon name="add-outline"></ion-icon>
+        </ion-button>
+      </div>
+
+      <div class="projected-value" *ngIf="createdDateAdjustment !== 0">
+        <span class="label">New value:</span>
+        <span class="value projected">{{ formatDate(getProjectedCreatedDate()) }}</span>
+      </div>
+
+      <ion-button
+        expand="block"
+        color="primary"
+        [disabled]="createdDateAdjustment === 0 || isSubmitting"
+        (click)="applyCreatedDateChange()">
+        <ion-spinner *ngIf="isSubmitting" name="crescent" slot="start"></ion-spinner>
+        <ion-icon *ngIf="!isSubmitting" name="checkmark-outline" slot="start"></ion-icon>
+        Apply Created Date Change
+      </ion-button>
+    </div>
+
+    <!-- Trial End Date Section -->
+    <div class="date-section">
+      <div class="section-header">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <h4>Trial End Date</h4>
+      </div>
+
+      <div class="current-value">
+        <span class="label">Current:</span>
+        <span class="value">{{ formatDate(account.trialEndDateUtc) }}</span>
+      </div>
+
+      <div class="adjustment-controls">
+        <ion-button
+          fill="outline"
+          size="small"
+          (click)="decrementTrialEndDate()"
+          [disabled]="isSubmitting">
+          <ion-icon name="remove-outline"></ion-icon>
+        </ion-button>
+
+        <div class="adjustment-value" [class.negative]="trialEndDateAdjustment < 0" [class.positive]="trialEndDateAdjustment > 0">
+          {{ trialEndDateAdjustment >= 0 ? '+' : '' }}{{ trialEndDateAdjustment }} days
+        </div>
+
+        <ion-button
+          fill="outline"
+          size="small"
+          (click)="incrementTrialEndDate()"
+          [disabled]="isSubmitting">
+          <ion-icon name="add-outline"></ion-icon>
+        </ion-button>
+      </div>
+
+      <div class="projected-value" *ngIf="trialEndDateAdjustment !== 0">
+        <span class="label">New value:</span>
+        <span class="value projected">{{ formatDate(getProjectedTrialEndDate()) }}</span>
+      </div>
+
+      <ion-button
+        expand="block"
+        color="primary"
+        [disabled]="trialEndDateAdjustment === 0 || isSubmitting"
+        (click)="applyTrialEndDateChange()">
+        <ion-spinner *ngIf="isSubmitting" name="crescent" slot="start"></ion-spinner>
+        <ion-icon *ngIf="!isSubmitting" name="checkmark-outline" slot="start"></ion-icon>
+        Apply Trial End Date Change
+      </ion-button>
+    </div>
+
+    <ion-note class="hint">
+      Use negative values to move dates back in time (e.g., -3 moves the date back 3 days).
+      Use positive values to extend dates forward.
+    </ion-note>
+  </div>
+</ion-content>

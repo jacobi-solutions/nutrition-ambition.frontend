@@ -31,7 +31,8 @@ import {
     CreateSharedMealRequest,
     CreateSharedMealResponse,
     SetupGoalsRequest,
-    LearnMoreAboutRequest
+    LearnMoreAboutRequest,
+    TriggerWelcomeBackRequest
 } from '../../services/nutrition-ambition-api.service';
 import { catchError, finalize, of, Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -111,6 +112,9 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   // Restricted access mode - blocks FAB and certain features when user needs to upgrade
   isRestrictedAccess = false;
   restrictedAccessPhase = '';
+
+  // Auto-trigger welcome back message when user upgrades from guest
+  private shouldAutoTriggerWelcomeBack = false;
 
   // Track messages by ID to preserve component instances during updates
   trackMessage(index: number, message: DisplayMessage): string {
@@ -370,6 +374,16 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Firebase Analytics: Track page view when entering the page
     this.analytics.trackPageView('Chat');
 
+    // Check if user just upgraded from guest - if so, trigger auto-continue
+    // This must be checked before loadChatHistory runs, but the actual message
+    // is sent after history loads to ensure proper sequencing
+    const justUpgraded = this.accountsService.consumeJustUpgradedFromGuest();
+    if (justUpgraded) {
+      console.log('[ChatPage] User just upgraded from guest, will auto-continue after history loads');
+      // Set a flag to trigger auto-continue after history loads
+      this.shouldAutoTriggerWelcomeBack = true;
+    }
+
     // Check for completed pending edits when entering the chat page
     const pendingMessages = this.chatService.consumePendingEditMessages();
     if (pendingMessages && pendingMessages.length > 0) {
@@ -551,7 +565,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
               role: msg.role,
               retryCount: msg.retryCount,
               createdDateUtc: msg.createdDateUtc,
-              lastUpdatedDateUtc: msg.lastUpdatedDateUtc
+              lastUpdatedDateUtc: msg.lastUpdatedDateUtc,
+              hasActionButtons: msg.hasActionButtons
             }));
             
             // Insert context notes as display messages
@@ -579,6 +594,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
             // Check for incomplete meals after messages are loaded
             this.checkForIncompleteMeals();
+
+            // Check if we should auto-trigger welcome back message after guest upgrade
+            if (this.shouldAutoTriggerWelcomeBack) {
+              this.shouldAutoTriggerWelcomeBack = false;
+              this.triggerWelcomeBackMessage();
+            }
 
             // Scroll at the end of the next event cycle
             this.scrollToBottom();
@@ -631,6 +652,98 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     
     // Ensure we scroll to the welcome message
     this.scrollToBottom();
+  }
+
+  /**
+   * Triggers an automatic message after a guest user upgrades to a full account.
+   * The backend will detect the transition and instruct the AI to pick up where
+   * the user left off (e.g., logging the meal they tried to log before being restricted).
+   */
+  private async triggerWelcomeBackMessage(): Promise<void> {
+    console.log('[ChatPage] Triggering welcome-back message after guest upgrade');
+
+    // Don't trigger if already streaming
+    if (this.isStreamingActive) {
+      console.log('[ChatPage] Already streaming, skipping welcome-back trigger');
+      return;
+    }
+
+    // Show thinking indicator (same pattern as sendMessage)
+    this.isStreamingActive = true;
+    this.isLoading = true;
+    this.cdr.detectChanges();
+
+    const request = new TriggerWelcomeBackRequest({
+      localDateKey: this.dateService.getSelectedDate()
+    });
+
+    // Track streaming message index
+    let streamingMessageIndex = -1;
+
+    // Track the stream handle for cleanup
+    this.activeStream = await this.chatStreamService.triggerWelcomeBackStream(
+      request,
+      (data: ChatMessagesResponse) => {
+        // Handle streaming chunks - same pattern as sendMessage
+        this.ngZone.run(() => {
+          if (data.messages && data.messages.length > 0) {
+            const lastMessage = data.messages[data.messages.length - 1];
+
+            if (lastMessage.content) {
+              // Hide loading dots when first content arrives
+              this.isLoading = false;
+
+              if (streamingMessageIndex === -1) {
+                // First chunk - add new streaming message
+                streamingMessageIndex = this.messages.length;
+                this.messages.push({
+                  id: lastMessage.id,
+                  text: lastMessage.content,
+                  isUser: false,
+                  timestamp: new Date(),
+                  role: MessageRoleTypes.Assistant,
+                  isStreaming: true,
+                  hasActionButtons: lastMessage.hasActionButtons
+                });
+              } else {
+                // Update existing streaming message
+                this.messages[streamingMessageIndex].text = lastMessage.content;
+                // Update hasActionButtons in case it changed during streaming
+                this.messages[streamingMessageIndex].hasActionButtons = lastMessage.hasActionButtons;
+              }
+
+              this.scrollToBottom();
+              this.cdr.detectChanges();
+            }
+          }
+        });
+      },
+      () => {
+        // On complete
+        this.ngZone.run(() => {
+          console.log('[ChatPage] Welcome-back stream complete');
+          this.isStreamingActive = false;
+          this.isLoading = false;
+
+          // Mark streaming message as complete
+          if (streamingMessageIndex >= 0 && this.messages[streamingMessageIndex]) {
+            this.messages[streamingMessageIndex].isStreaming = false;
+          }
+
+          this.scrollToBottom();
+          this.cdr.detectChanges();
+        });
+      },
+      (error: any) => {
+        // On error
+        this.ngZone.run(() => {
+          console.error('[ChatPage] Welcome-back stream error:', error);
+          this.isStreamingActive = false;
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        });
+      }
+    );
   }
 
   async sendMessage() {
@@ -875,7 +988,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                     isUser: false,
                     timestamp: new Date(),
                     role: MessageRoleTypes.Assistant,
-                    isStreaming: true
+                    isStreaming: true,
+                    hasActionButtons: assistantMessage.hasActionButtons
                   }];
                 } else {
                   // Subsequent chunks - update existing message
@@ -884,7 +998,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   updatedMessages[streamingMessageIndex] = {
                     ...existingMessage,
                     text: pendingContent || '',
-                    isStreaming: true
+                    isStreaming: true,
+                    hasActionButtons: assistantMessage.hasActionButtons
                   };
                   this.messages = updatedMessages;
                 }

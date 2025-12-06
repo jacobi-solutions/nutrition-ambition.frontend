@@ -139,6 +139,11 @@ export interface INutritionAmbitionApiService {
      */
     createRetroactiveFavorites(body: CreateRetroactiveFavoritesRequest | undefined): Observable<CreateRetroactiveFavoritesResponse>;
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    adjustAccountDates(body: AdjustAccountDatesRequest | undefined): Observable<AdjustAccountDatesResponse>;
+    /**
      * @param redirectPath (optional) 
      * @return Success
      */
@@ -183,6 +188,16 @@ export interface INutritionAmbitionApiService {
      * @return Success
      */
     learnMoreAbout(body: LearnMoreAboutRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types4(body: TriggerWelcomeBackRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    triggerWelcomeBack(body: TriggerWelcomeBackRequest | undefined): Observable<void>;
     /**
      * @return Success
      */
@@ -1704,6 +1719,62 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     /**
+     * @param body (optional) 
+     * @return Success
+     */
+    adjustAccountDates(body: AdjustAccountDatesRequest | undefined): Observable<AdjustAccountDatesResponse> {
+        let url_ = this.baseUrl + "/api/Admin/AdjustAccountDates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processAdjustAccountDates(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processAdjustAccountDates(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<AdjustAccountDatesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<AdjustAccountDatesResponse>;
+        }));
+    }
+
+    protected processAdjustAccountDates(response: HttpResponseBase): Observable<AdjustAccountDatesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AdjustAccountDatesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<AdjustAccountDatesResponse>(null as any);
+    }
+
+    /**
      * @param redirectPath (optional) 
      * @return Success
      */
@@ -2177,6 +2248,114 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processLearnMoreAbout(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types4(body: TriggerWelcomeBackRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/TriggerWelcomeBack/types";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTypes4(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTypes4(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
+        }));
+    }
+
+    protected processTypes4(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    triggerWelcomeBack(body: TriggerWelcomeBackRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/TriggerWelcomeBack";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTriggerWelcomeBack(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTriggerWelcomeBack(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processTriggerWelcomeBack(response: HttpResponseBase): Observable<void> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -3884,6 +4063,146 @@ export interface IAccountResponse {
     account?: Account;
 }
 
+export class AdjustAccountDatesRequest implements IAdjustAccountDatesRequest {
+    accountId?: string | undefined;
+    createdDateAdjustmentDays?: number | undefined;
+    trialEndDateAdjustmentDays?: number | undefined;
+
+    constructor(data?: IAdjustAccountDatesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.accountId = _data["accountId"];
+            this.createdDateAdjustmentDays = _data["createdDateAdjustmentDays"];
+            this.trialEndDateAdjustmentDays = _data["trialEndDateAdjustmentDays"];
+        }
+    }
+
+    static fromJS(data: any): AdjustAccountDatesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new AdjustAccountDatesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["accountId"] = this.accountId;
+        data["createdDateAdjustmentDays"] = this.createdDateAdjustmentDays;
+        data["trialEndDateAdjustmentDays"] = this.trialEndDateAdjustmentDays;
+        return data;
+    }
+}
+
+export interface IAdjustAccountDatesRequest {
+    accountId?: string | undefined;
+    createdDateAdjustmentDays?: number | undefined;
+    trialEndDateAdjustmentDays?: number | undefined;
+}
+
+export class AdjustAccountDatesResponse implements IAdjustAccountDatesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    accountId?: string | undefined;
+    previousCreatedDateUtc?: Date | undefined;
+    newCreatedDateUtc?: Date | undefined;
+    previousTrialEndDateUtc?: Date | undefined;
+    newTrialEndDateUtc?: Date | undefined;
+
+    constructor(data?: IAdjustAccountDatesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(ErrorDto.fromJS(item));
+            }
+            this.isSuccess = _data["isSuccess"];
+            this.correlationId = _data["correlationId"];
+            this.stackTrace = _data["stackTrace"];
+            this.isPartial = _data["isPartial"];
+            this.processingStage = _data["processingStage"];
+            this.messageId = _data["messageId"];
+            this.foodId = _data["foodId"];
+            this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.accountId = _data["accountId"];
+            this.previousCreatedDateUtc = _data["previousCreatedDateUtc"] ? new Date(_data["previousCreatedDateUtc"].toString()) : <any>undefined;
+            this.newCreatedDateUtc = _data["newCreatedDateUtc"] ? new Date(_data["newCreatedDateUtc"].toString()) : <any>undefined;
+            this.previousTrialEndDateUtc = _data["previousTrialEndDateUtc"] ? new Date(_data["previousTrialEndDateUtc"].toString()) : <any>undefined;
+            this.newTrialEndDateUtc = _data["newTrialEndDateUtc"] ? new Date(_data["newTrialEndDateUtc"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): AdjustAccountDatesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new AdjustAccountDatesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item.toJSON());
+        }
+        data["isSuccess"] = this.isSuccess;
+        data["correlationId"] = this.correlationId;
+        data["stackTrace"] = this.stackTrace;
+        data["isPartial"] = this.isPartial;
+        data["processingStage"] = this.processingStage;
+        data["messageId"] = this.messageId;
+        data["foodId"] = this.foodId;
+        data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["accountId"] = this.accountId;
+        data["previousCreatedDateUtc"] = this.previousCreatedDateUtc ? this.previousCreatedDateUtc.toISOString() : <any>undefined;
+        data["newCreatedDateUtc"] = this.newCreatedDateUtc ? this.newCreatedDateUtc.toISOString() : <any>undefined;
+        data["previousTrialEndDateUtc"] = this.previousTrialEndDateUtc ? this.previousTrialEndDateUtc.toISOString() : <any>undefined;
+        data["newTrialEndDateUtc"] = this.newTrialEndDateUtc ? this.newTrialEndDateUtc.toISOString() : <any>undefined;
+        return data;
+    }
+}
+
+export interface IAdjustAccountDatesResponse {
+    errors?: ErrorDto[] | undefined;
+    isSuccess?: boolean;
+    correlationId?: string | undefined;
+    stackTrace?: string | undefined;
+    isPartial?: boolean;
+    processingStage?: string | undefined;
+    messageId?: string | undefined;
+    foodId?: string | undefined;
+    mealSelectionIsPending?: boolean | undefined;
+    accountId?: string | undefined;
+    previousCreatedDateUtc?: Date | undefined;
+    newCreatedDateUtc?: Date | undefined;
+    previousTrialEndDateUtc?: Date | undefined;
+    newTrialEndDateUtc?: Date | undefined;
+}
+
 export enum AssistantModeTypes {
     Default = "Default",
     GoalSetting = "GoalSetting",
@@ -4110,6 +4429,7 @@ export class ChatMessage implements IChatMessage {
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
     totalTokens?: number | undefined;
+    hasActionButtons?: boolean;
 
     constructor(data?: IChatMessage) {
         if (data) {
@@ -4152,6 +4472,7 @@ export class ChatMessage implements IChatMessage {
             this.promptTokens = _data["promptTokens"];
             this.completionTokens = _data["completionTokens"];
             this.totalTokens = _data["totalTokens"];
+            this.hasActionButtons = _data["hasActionButtons"];
         }
     }
 
@@ -4194,6 +4515,7 @@ export class ChatMessage implements IChatMessage {
         data["promptTokens"] = this.promptTokens;
         data["completionTokens"] = this.completionTokens;
         data["totalTokens"] = this.totalTokens;
+        data["hasActionButtons"] = this.hasActionButtons;
         return data;
     }
 }
@@ -4221,6 +4543,7 @@ export interface IChatMessage {
     promptTokens?: number | undefined;
     completionTokens?: number | undefined;
     totalTokens?: number | undefined;
+    hasActionButtons?: boolean;
 }
 
 export class ChatMessagesResponse implements IChatMessagesResponse {
@@ -10674,6 +10997,42 @@ export interface ITelemetryContext {
     environment?: string | undefined;
     userAgent?: string | undefined;
     extras?: { [key: string]: string; } | undefined;
+}
+
+export class TriggerWelcomeBackRequest implements ITriggerWelcomeBackRequest {
+    localDateKey?: string | undefined;
+
+    constructor(data?: ITriggerWelcomeBackRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.localDateKey = _data["localDateKey"];
+        }
+    }
+
+    static fromJS(data: any): TriggerWelcomeBackRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new TriggerWelcomeBackRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["localDateKey"] = this.localDateKey;
+        return data;
+    }
+}
+
+export interface ITriggerWelcomeBackRequest {
+    localDateKey?: string | undefined;
 }
 
 export enum UnitKind {

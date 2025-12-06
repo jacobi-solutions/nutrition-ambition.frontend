@@ -14,6 +14,7 @@ import { AdminService } from '../../services/admin.service';
 import { Account, FeedbackEntry, FeedbackWithAccount, ChatMessage } from '../../../services/nutrition-ambition-api.service';
 import { ToastService } from '../../../services/toast.service';
 import { DebugViewComponent } from '../../components/debug-view/debug-view.component';
+import { AdjustDatesModalComponent } from '../../components/adjust-dates-modal/adjust-dates-modal.component';
 import { addIcons } from 'ionicons';
 import {
   analyticsOutline,
@@ -39,7 +40,8 @@ import {
   chevronDownOutline,
   personAddOutline,
   linkOutline,
-  syncOutline
+  syncOutline,
+  calendarOutline
 } from 'ionicons/icons';
 
 // Register all icons used in this component
@@ -67,7 +69,8 @@ addIcons({
   'chevron-down-outline': chevronDownOutline,
   'person-add-outline': personAddOutline,
   'link-outline': linkOutline,
-  'sync-outline': syncOutline
+  'sync-outline': syncOutline,
+  'calendar-outline': calendarOutline
 });
 
 @Component({
@@ -789,6 +792,18 @@ export class AdminPage implements OnInit, OnDestroy {
       cssClass: 'debug-modal', // Full-screen debug view
       backdropDismiss: false, // Don't allow accidental dismissal
       showBackdrop: true
+    });
+
+    await modal.present();
+  }
+
+  async openAdjustDatesModal(account: Account) {
+    const modal = await this.modalController.create({
+      component: AdjustDatesModalComponent,
+      componentProps: {
+        account: account
+      },
+      cssClass: 'adjust-dates-modal'
     });
 
     await modal.present();

@@ -71,7 +71,6 @@
 .message-content {
   font-size: 15px;
   line-height: 1.4;
-  white-space: pre-wrap;
 
   // Explicitly enable text selection for message content
   user-select: text;
@@ -95,6 +94,31 @@
     a {
       color: inherit;
       text-decoration: underline;
+    }
+
+    // Action button styling for restricted access messages
+    button.action-button {
+      display: block;
+      width: 100%;
+      background-color: var(--color-salmon);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 12px;
+      transition: transform 0.15s ease;
+      cursor: pointer;
+
+      &:hover {
+        transform: scale(1.02);
+      }
+
+      &:active {
+        transform: scale(0.98);
+      }
     }
     
     ul, ol {

@@ -49,18 +49,8 @@ export class AuthGuard implements CanActivate {
           await this.accountsService.loadAccount();
         }
 
-        // Allow access to account-management even if trial expired
-        if (targetPath === 'account-management') {
-          return true;
-        }
-
-        // Check if trial has expired
-        if (this.accountsService.isTrialExpired) {
-          console.log('[AuthGuard] Trial expired, redirecting to account-management');
-          this.router.navigate(['/account-management']);
-          return false;
-        }
-
+        // Trial expiration is now handled by RestrictedAccess mode on the backend
+        // which shows paidUpgrade prompts in the chat instead of redirecting
         return true;
       })
     );
