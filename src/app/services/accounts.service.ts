@@ -10,10 +10,6 @@ export class AccountsService {
   private _accountSubject = new BehaviorSubject<Account | null>(null);
   public account$ = this._accountSubject.asObservable();
 
-  // Tracks when a user just upgraded from guest to full account
-  // This is consumed once by chat page to trigger auto-continue behavior
-  private _justUpgradedFromGuest = false;
-
   private authService = inject(AuthService);
 
   constructor(
@@ -55,18 +51,5 @@ export class AccountsService {
 
   clearAccount(): void {
     this._accountSubject.next(null);
-    this._justUpgradedFromGuest = false;
-  }
-
-  // Called after a guest user successfully creates an account
-  setJustUpgradedFromGuest(): void {
-    this._justUpgradedFromGuest = true;
-  }
-
-  // Consumes the flag (returns true once, then resets to false)
-  consumeJustUpgradedFromGuest(): boolean {
-    const value = this._justUpgradedFromGuest;
-    this._justUpgradedFromGuest = false;
-    return value;
   }
 } 

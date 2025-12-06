@@ -76,18 +76,10 @@ export class SignupPage {
     this.isWorking = true;
 
     try {
-      // Check if this is a guest-to-account upgrade before registering
-      const wasAnonymous = this.authService.isAnonymous();
-
       await this.authService.registerWithEmail(this.email, this.password);
 
       // Refresh account data so isRestrictedAccess is updated
       await this.accountsService.loadAccount();
-
-      // If user was anonymous (guest), flag it so chat page can auto-continue
-      if (wasAnonymous) {
-        this.accountsService.setJustUpgradedFromGuest();
-      }
 
       // Show success toast
       await this.toastService.showToast({

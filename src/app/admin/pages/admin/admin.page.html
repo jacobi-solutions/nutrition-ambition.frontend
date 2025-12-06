@@ -478,23 +478,36 @@
                       <ion-icon name="calendar-outline" slot="start"></ion-icon>
                       Dates
                     </ion-button>
+
+                    <!-- Lock/Unlock button for protected accounts -->
+                    <ion-button
+                      *ngIf="!account.canClear || !account.canDelete"
+                      size="small"
+                      [color]="isAccountUnlocked(account) ? 'success' : 'medium'"
+                      [fill]="isAccountUnlocked(account) ? 'solid' : 'outline'"
+                      (click)="isAccountUnlocked(account) ? lockAccount(account) : openProtectionModal(account); $event.stopPropagation()"
+                      class="lock-button">
+                      <ion-icon [name]="isAccountUnlocked(account) ? 'lock-open-outline' : 'lock-closed-outline'" slot="start"></ion-icon>
+                      {{ isAccountUnlocked(account) ? 'Lock' : 'Unlock' }}
+                    </ion-button>
+
                     <ion-button
                       size="small"
                       color="warning"
                       fill="outline"
-                      [disabled]="!account.canClear"
+                      [disabled]="!account.canClear && !isAccountUnlockedForClear(account)"
                       (click)="clearAccountData(account); $event.stopPropagation()">
                       <ion-icon name="refresh-outline" slot="start"></ion-icon>
-                      {{ account.canClear ? 'Clear' : 'Protected' }}
+                      Clear
                     </ion-button>
                     <ion-button
                       size="small"
                       color="danger"
                       fill="outline"
-                      [disabled]="!account.canDelete"
+                      [disabled]="!account.canDelete && !isAccountUnlockedForDelete(account)"
                       (click)="deleteAccount(account); $event.stopPropagation()">
                       <ion-icon name="trash-outline" slot="start"></ion-icon>
-                      {{ account.canDelete ? 'Delete' : 'Protected' }}
+                      Delete
                     </ion-button>
                     <ion-button
                       size="small"

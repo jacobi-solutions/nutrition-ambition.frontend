@@ -15,6 +15,7 @@ import { Account, FeedbackEntry, FeedbackWithAccount, ChatMessage } from '../../
 import { ToastService } from '../../../services/toast.service';
 import { DebugViewComponent } from '../../components/debug-view/debug-view.component';
 import { AdjustDatesModalComponent } from '../../components/adjust-dates-modal/adjust-dates-modal.component';
+import { AccountProtectionModalComponent, UnlockType, AccountProtectionResult } from '../../components/account-protection-modal/account-protection-modal.component';
 import { addIcons } from 'ionicons';
 import {
   analyticsOutline,
@@ -41,7 +42,11 @@ import {
   personAddOutline,
   linkOutline,
   syncOutline,
-  calendarOutline
+  calendarOutline,
+  lockClosedOutline,
+  lockOpenOutline,
+  shieldOutline,
+  shieldCheckmarkOutline
 } from 'ionicons/icons';
 
 // Register all icons used in this component
@@ -70,7 +75,11 @@ addIcons({
   'person-add-outline': personAddOutline,
   'link-outline': linkOutline,
   'sync-outline': syncOutline,
-  'calendar-outline': calendarOutline
+  'calendar-outline': calendarOutline,
+  'lock-closed-outline': lockClosedOutline,
+  'lock-open-outline': lockOpenOutline,
+  'shield-outline': shieldOutline,
+  'shield-checkmark-outline': shieldCheckmarkOutline
 });
 
 @Component({
@@ -132,6 +141,8 @@ export class AdminPage implements OnInit, OnDestroy {
   loadingAccountCounts = new Set<string>();
   lastDeletionAudit: any = null;
   lastClearAudit: any = null;
+  // Tracks which accounts have been unlocked for clear/delete operations
+  unlockedAccounts: { [accountId: string]: UnlockType } = {};
 
   // Guideline files management
   guidelineFiles: any[] = [];
@@ -458,6 +469,57 @@ export class AdminPage implements OnInit, OnDestroy {
 
   getAccountCounts(account: Account): any {
     return this.accountDataCounts[account.id!];
+  }
+
+  // Account protection/unlock methods
+  isAccountUnlockedForClear(account: Account): boolean {
+    const unlockType = this.unlockedAccounts[account.id!];
+    return unlockType === 'clear' || unlockType === 'both';
+  }
+
+  isAccountUnlockedForDelete(account: Account): boolean {
+    const unlockType = this.unlockedAccounts[account.id!];
+    return unlockType === 'delete' || unlockType === 'both';
+  }
+
+  isAccountUnlocked(account: Account): boolean {
+    return !!this.unlockedAccounts[account.id!];
+  }
+
+  getUnlockType(account: Account): UnlockType | undefined {
+    return this.unlockedAccounts[account.id!];
+  }
+
+  async openProtectionModal(account: Account) {
+    const modal = await this.modalController.create({
+      component: AccountProtectionModalComponent,
+      componentProps: {
+        account: account
+      },
+      cssClass: 'account-protection-modal'
+    });
+
+    await modal.present();
+
+    const { data } = await modal.onWillDismiss<AccountProtectionResult>();
+
+    if (data?.unlocked && data.unlockType) {
+      this.unlockedAccounts[account.id!] = data.unlockType;
+      await this.showToast(`Account unlocked for ${this.getUnlockTypeLabel(data.unlockType)}`, 'success');
+    }
+  }
+
+  lockAccount(account: Account) {
+    delete this.unlockedAccounts[account.id!];
+    this.showToast('Account protection restored', 'success');
+  }
+
+  private getUnlockTypeLabel(unlockType: UnlockType): string {
+    switch (unlockType) {
+      case 'clear': return 'clearing data';
+      case 'delete': return 'deletion';
+      case 'both': return 'clearing and deletion';
+    }
   }
 
   async showDeletionAudit() {

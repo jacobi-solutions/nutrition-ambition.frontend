@@ -1,0 +1,68 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Unlock Account Protection</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="dismiss()">
+        <ion-icon name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="modal-content">
+    <!-- Account Info -->
+    <div class="account-info">
+      <div class="shield-icon">
+        <ion-icon name="shield-outline"></ion-icon>
+      </div>
+      <h3>{{ account.name || 'Unnamed' }}</h3>
+      <p class="email">{{ account.email }}</p>
+    </div>
+
+    <div class="warning-section">
+      <ion-icon name="warning-outline" color="warning"></ion-icon>
+      <p>This account is protected. Choose which actions to unlock:</p>
+    </div>
+
+    <!-- Unlock Options -->
+    <div class="unlock-options">
+      <button class="unlock-option" (click)="unlockForClear()">
+        <div class="option-icon clear">
+          <ion-icon name="refresh-outline"></ion-icon>
+        </div>
+        <div class="option-content">
+          <h4>Unlock Clear Data</h4>
+          <p>Allow clearing all data while keeping the account</p>
+        </div>
+        <ion-icon name="lock-open-outline" class="action-icon"></ion-icon>
+      </button>
+
+      <button class="unlock-option" (click)="unlockForDelete()">
+        <div class="option-icon delete">
+          <ion-icon name="trash-outline"></ion-icon>
+        </div>
+        <div class="option-content">
+          <h4>Unlock Delete</h4>
+          <p>Allow permanent account deletion</p>
+        </div>
+        <ion-icon name="lock-open-outline" class="action-icon"></ion-icon>
+      </button>
+
+      <button class="unlock-option both" (click)="unlockForBoth()">
+        <div class="option-icon both">
+          <ion-icon name="lock-open-outline"></ion-icon>
+        </div>
+        <div class="option-content">
+          <h4>Unlock Both</h4>
+          <p>Allow both clearing data and deletion</p>
+        </div>
+        <ion-icon name="lock-open-outline" class="action-icon"></ion-icon>
+      </button>
+    </div>
+
+    <ion-note class="hint">
+      Once unlocked, actions remain available until you lock the account again.
+    </ion-note>
+  </div>
+</ion-content>

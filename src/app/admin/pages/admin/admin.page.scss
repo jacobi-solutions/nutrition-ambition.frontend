@@ -1199,6 +1199,35 @@
   }
 }
 
+// Lock/Unlock button styling
+.lock-button {
+  &[color="success"] {
+    --background: var(--ion-color-success);
+    --color: white;
+
+    &:hover {
+      --background: var(--ion-color-success-shade);
+    }
+  }
+
+  &[color="medium"] {
+    --border-color: var(--ion-color-medium);
+
+    &:hover {
+      --background: var(--ion-color-medium-tint);
+    }
+  }
+}
+
+// Account protection modal styling
+:global(.account-protection-modal) {
+  --width: 450px;
+  --max-width: 95vw;
+  --height: auto;
+  --max-height: 90vh;
+  --border-radius: 16px;
+}
+
 // Deletion audit alert styling
 .deletion-audit-alert {
   .alert-wrapper {
