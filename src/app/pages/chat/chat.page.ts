@@ -34,8 +34,8 @@ import {
     LearnMoreAboutRequest,
     TriggerConversationContinuationRequest
 } from '../../services/nutrition-ambition-api.service';
-import { catchError, finalize, of, Subscription } from 'rxjs';
-import { Router, ActivatedRoute } from '@angular/router';
+import { catchError, filter, finalize, of, Subscription } from 'rxjs';
+import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { ChatMessageComponent } from 'src/app/components/chat-message/chat-message.component';
 import { FoodSelectionComponent } from 'src/app/components/food-selection/food-selection.component';
 import { format } from 'date-fns';
@@ -121,6 +121,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private learnMoreAboutSubscription: Subscription;
   private editFoodSelectionStartedSubscription: Subscription;
   private restrictedMessageSubscription: Subscription;
+  private routerSubscription: Subscription;
   private keyboardHideListener: any;
   private viewportResizeHandler: (() => void) | null = null;
   private lastViewportHeight = 0;
@@ -214,6 +215,27 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     this.accountsService.account$.subscribe(account => {
       this.isRestrictedAccess = account?.isRestrictedAccess ?? false;
       this.restrictedAccessPhase = account?.restrictedAccessPhase ?? '';
+    });
+
+    // Subscribe to router events to detect navigation TO this page
+    // This is needed because ionViewWillEnter may not fire when navigating
+    // back to a cached tab page from outside the tabs (e.g., from /signup)
+    this.routerSubscription = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      // Only handle if we're navigating TO the chat page
+      if (event.urlAfterRedirects === '/app/chat' || event.urlAfterRedirects.startsWith('/app/chat?')) {
+        console.log('[ChatPage] Router NavigationEnd to /app/chat detected');
+        // Check for forced upgrade flag - this handles the case where
+        // ionViewWillEnter doesn't fire when returning from signup
+        if (this.accountsService.consumeForcedUpgradeFromGuest()) {
+          console.log('[ChatPage] Router event: User just upgraded from guest, reloading chat history');
+          // Re-set the flag so loadChatHistory's checkForConversationContinuation will see it
+          this.accountsService.setForcedUpgradeFromGuest();
+          // Force reload chat history to get the welcome message and trigger continuation
+          this.loadChatHistory(this.dateService.getSelectedDate());
+        }
+      }
     });
     
     // Subscribe to context note changes
@@ -336,6 +358,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
     if (this.restrictedMessageSubscription) {
       this.restrictedMessageSubscription.unsubscribe();
+    }
+
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
     }
 
     // Clean up streaming timeout
@@ -1549,19 +1575,10 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   // Handle keydown events for textarea
   onKeyDown(e: KeyboardEvent) {
     if (e.key === 'Enter') {
-      if (this.isMobile) {
-        // Mobile: Only send with Ctrl/Cmd + Enter (default Enter creates new line)
-        if (e.ctrlKey || e.metaKey) {
-          e.preventDefault();
-          this.sendMessage();
-        }
-      } else {
-        // Desktop: Enter sends message, Shift + Enter creates new line
-        if (!e.shiftKey) {
-          e.preventDefault();
-          this.sendMessage();
-        }
-        // Shift + Enter allows default behavior (new line)
+      // Only send with Ctrl/Cmd + Enter; plain Enter creates new line
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        this.sendMessage();
       }
     }
   }

@@ -67,6 +67,14 @@ export class AccountsService {
   }
 
   /**
+   * Check if the forced upgrade flag is set without consuming it.
+   * Use this to decide navigation strategy in signup.page.ts.
+   */
+  get isForcedUpgradeFromGuest(): boolean {
+    return this._forcedUpgradeFromGuest;
+  }
+
+  /**
    * Consume the forced upgrade flag (returns value and resets to false).
    * Call this in chat.page.ts after loading messages to check if we should
    * trigger conversation continuation.

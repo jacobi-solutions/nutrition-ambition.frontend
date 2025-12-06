@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { IonicModule, NavController } from '@ionic/angular';
 import { AuthService } from '../../../services/auth.service';
 import { ToastService } from '../../../services/toast.service';
 import { AccountsService } from '../../../services/accounts.service';
@@ -32,6 +32,7 @@ export class SignupPage {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private navController: NavController,
     private toastService: ToastService,
     private accountsService: AccountsService
   ) {}
@@ -92,9 +93,15 @@ export class SignupPage {
         duration: 1500
       });
 
-      console.log('[SignupPage] Navigating to chat...');
-      // Navigate to chat for consistency with login
-      this.router.navigate(['/app/chat']);
+      // Navigate to chat - use navigateBack only if user came from chat (forced upgrade)
+      // This ensures ionViewWillEnter fires properly when returning to a cached tab page
+      if (this.accountsService.isForcedUpgradeFromGuest) {
+        console.log('[SignupPage] Navigating back to chat (forced upgrade flow)...');
+        this.navController.navigateBack('/app/chat');
+      } else {
+        console.log('[SignupPage] Navigating to chat (normal signup)...');
+        this.router.navigate(['/app/chat']);
+      }
     } catch (error) {
       await this.toastService.showToast({
         message: error instanceof Error ? error.message : 'Failed to create account. Please try again.',
