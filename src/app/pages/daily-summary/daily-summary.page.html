@@ -349,7 +349,8 @@
                 *ngIf="!isLoadingEdit && editingMessage"
                 [message]="editingMessage"
                 (editConfirmed)="onEditConfirmed($event)"
-                (selectionCanceled)="onEditCanceled()">
+                (selectionCanceled)="onEditCanceled()"
+                (restrictedAccess)="onRestrictedAccess($event)">
               </app-food-selection>
             </div>
 

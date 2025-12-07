@@ -226,13 +226,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       // Only handle if we're navigating TO the chat page
       if (event.urlAfterRedirects === '/app/chat' || event.urlAfterRedirects.startsWith('/app/chat?')) {
         console.log('[ChatPage] Router NavigationEnd to /app/chat detected');
-        // Check for forced upgrade flag - this handles the case where
+        // Check for pending upgrade continuation - this handles the case where
         // ionViewWillEnter doesn't fire when returning from signup
-        if (this.accountsService.consumeForcedUpgradeFromGuest()) {
-          console.log('[ChatPage] Router event: User just upgraded from guest, reloading chat history');
-          // Re-set the flag so loadChatHistory's checkForConversationContinuation will see it
-          this.accountsService.setForcedUpgradeFromGuest();
+        if (this.accountsService.hasPendingUpgradeContinuation) {
+          console.log('[ChatPage] Router event: User just upgraded, reloading chat history');
           // Force reload chat history to get the welcome message and trigger continuation
+          // The flags will be consumed in checkForConversationContinuation
           this.loadChatHistory(this.dateService.getSelectedDate());
         }
       }
@@ -398,13 +397,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Firebase Analytics: Track page view when entering the page
     this.analytics.trackPageView('Chat');
 
-    // Check if user just upgraded from guest - if so, reload chat history and trigger continuation
-    // This needs to happen before other checks since the flag will be consumed in loadChatHistory
-    if (this.accountsService.consumeForcedUpgradeFromGuest()) {
-      console.log('[ChatPage] ionViewWillEnter: User just upgraded from guest, reloading chat history');
-      // Re-set the flag so loadChatHistory's checkForConversationContinuation will see it
-      this.accountsService.setForcedUpgradeFromGuest();
+    // Check if user just upgraded - if so, reload chat history and trigger continuation
+    // This needs to happen before other checks since the flags will be consumed in checkForConversationContinuation
+    if (this.accountsService.hasPendingUpgradeContinuation) {
+      console.log('[ChatPage] ionViewWillEnter: User just upgraded, reloading chat history');
       // Force reload chat history to get the welcome message and trigger continuation
+      // The flags will be consumed in checkForConversationContinuation
       this.loadChatHistory(this.dateService.getSelectedDate());
       return; // Skip other checks since we're reloading
     }
@@ -672,12 +670,25 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private checkForConversationContinuation(): void {
     console.log('[ConversationContinuation] checkForConversationContinuation called');
 
-    // Consume the flag (returns true if it was set, then resets to false)
-    const wasForcedUpgrade = this.accountsService.consumeForcedUpgradeFromGuest();
-    console.log('[ConversationContinuation] wasForcedUpgrade:', wasForcedUpgrade);
+    // First check if there's a pending continuation (user clicked upgrade button)
+    // Don't consume yet - just peek at the value
+    const hasPendingContinuation = this.accountsService.hasPendingUpgradeContinuation;
+    console.log('[ConversationContinuation] hasPendingContinuation:', hasPendingContinuation);
 
-    if (!wasForcedUpgrade) {
-      console.log('[ConversationContinuation] Flag was not set, skipping');
+    if (!hasPendingContinuation) {
+      // No pending continuation - don't consume any flags, they might be needed later
+      // (e.g., user navigated to chat but hasn't clicked "Create your account" yet)
+      console.log('[ConversationContinuation] No pending continuation, skipping');
+      return;
+    }
+
+    // Now we know there's a pending continuation - check if we should skip it
+    // Consume both flags since we're making the final decision
+    const shouldSkip = this.accountsService.consumeSkipUpgradeContinuation();
+    this.accountsService.consumePendingUpgradeContinuation(); // Consume pending flag too
+
+    if (shouldSkip) {
+      console.log('[ConversationContinuation] Skip flag was set (FAB/edit scenario), skipping continuation');
       return;
     }
 
@@ -723,7 +734,7 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           return;
         }
 
-        // Handle messages in chunk
+        // Handle both camelCase and PascalCase (backend sends PascalCase)
         const chunkVariant = chunk as ChatMessagesResponseVariant;
         const messages = 'messages' in chunkVariant
           ? chunkVariant.messages
@@ -734,66 +745,175 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
           const content = 'content' in assistantMessage
             ? assistantMessage.content
             : (assistantMessage as any).Content;
+          // Backend sends Role (capital R), check both cases
+          const role = (assistantMessage as any).Role || (assistantMessage as any).role || MessageRoleTypes.Assistant;
+          const mealSelections = (assistantMessage as any).MealSelections || (assistantMessage as any).mealSelections;
 
-          pendingContent = content;
+          // Check if this is a streaming meal selection
+          const isPartial = chunk.isPartial || false;
+          const processingStage = chunk.processingStage;
 
-          // Clear existing timeout
-          if (this.streamUpdateTimeout) {
-            clearTimeout(this.streamUpdateTimeout);
-          }
+          // Handle streaming meal selection differently
+          // Check both string and numeric enum values
+          const isPendingFood = role === MessageRoleTypes.PendingFoodSelection || role === 'PendingFoodSelection' || role === 5;
+          // Always show meal selection card when role is PendingFoodSelection, even if empty (for progressive loading)
+          if (isPendingFood && mealSelections) {
+            const mealSelection = mealSelections[0];
 
-          // Throttle UI updates
-          this.streamUpdateTimeout = setTimeout(() => {
+            // Clear existing timeout
+            if (this.streamUpdateTimeout) {
+              clearTimeout(this.streamUpdateTimeout);
+            }
+
+            // Create or update the meal selection message immediately (no throttle for meal selection)
             this.ngZone.run(() => {
+              // Hide loading dots when first content arrives
               this.isLoading = false;
 
-              if (!pendingContent || pendingContent.trim().length === 0) {
-                return;
-              }
+              // Extract stable message ID from backend (generated at start of streaming)
+              const messageId = (assistantMessage as any).Id || (assistantMessage as any).id;
 
-              // Create or update streaming message
-              if (streamingMessageIndex === -1) {
+              // Check if message already exists by messageId (not by streamingMessageIndex)
+              const existingMessageIndex = messageId
+                ? this.messages.findIndex(m => m.id === messageId)
+                : -1;
+
+              // Create or update the meal selection message
+              if (existingMessageIndex === -1) {
+                // First chunk - create the message and scroll once
                 streamingMessageIndex = this.messages.length;
                 this.messages = [...this.messages, {
-                  id: `continuation-${Date.now()}`,
-                  text: pendingContent || '',
+                  id: messageId, // Use backend's stable MongoDB ID from the first chunk
+                  text: content || '',
                   isUser: false,
                   timestamp: new Date(),
-                  role: MessageRoleTypes.Assistant,
-                  isStreaming: true
+                  role: MessageRoleTypes.PendingFoodSelection,
+                  mealSelection: mealSelection,
+                  mealName: mealSelection?.mealName,
+                  isStreaming: true,
+                  isPartial: isPartial,
+                  processingStage: processingStage,
+                  mealSelectionIsPending: mealSelection?.isPending || false
                 }];
+
+                // Scroll only once for the entire stream
                 if (!this.hasScrolledForCurrentStream) {
                   this.scrollToBottom();
                   this.hasScrolledForCurrentStream = true;
                 }
               } else {
+                // Update streamingMessageIndex to the existing message
+                streamingMessageIndex = existingMessageIndex;
+                // Subsequent chunks - update existing message (no auto-scroll)
                 const updatedMessages = [...this.messages];
                 const existingMessage = updatedMessages[streamingMessageIndex];
+
+                // Merge foods by food.id instead of replacing entire mealSelection
+                // This preserves user-added foods (favorites, quick searches) during streaming
+                let mergedMealSelection = mealSelection;
+                if (existingMessage.mealSelection && mealSelection) {
+                  const existingFoods = existingMessage.mealSelection.foods || [];
+                  const streamingFoods = mealSelection.foods || [];
+
+                  // Start with all existing foods
+                  const mergedFoods = [...existingFoods];
+
+                  // For each streaming food, either update existing or append new
+                  streamingFoods.forEach((streamingFood: any) => {
+                    if (streamingFood.id) {
+                      const existingIndex = mergedFoods.findIndex((f: any) => f.id === streamingFood.id);
+                      if (existingIndex >= 0) {
+                        // Update existing food (streaming update)
+                        mergedFoods[existingIndex] = streamingFood;
+                      } else {
+                        // Append new food (user action during streaming)
+                        mergedFoods.push(streamingFood);
+                      }
+                    }
+                  });
+
+                  // Preserve mealSelection.id for future multi-meal-selection support
+                  mergedMealSelection = {
+                    ...mealSelection,
+                    id: existingMessage.mealSelection.id || mealSelection.id,
+                    foods: mergedFoods
+                  };
+                }
+
                 updatedMessages[streamingMessageIndex] = {
                   ...existingMessage,
-                  text: pendingContent || '',
-                  isStreaming: true
+                  // Use the stable message ID from backend (already extracted above)
+                  id: messageId || existingMessage.id,
+                  text: content || '',
+                  mealSelection: mergedMealSelection,
+                  mealName: mealSelection?.mealName,
+                  mealSelectionIsPending: mealSelection?.isPending || false,
+                  isStreaming: isPartial,
+                  isPartial: isPartial,
+                  processingStage: processingStage
                 };
                 this.messages = updatedMessages;
               }
 
               this.cdr.detectChanges();
             });
-          }, this.STREAM_THROTTLE_MS);
-        }
+          } else {
+            // Regular text streaming (existing logic)
+            pendingContent = content;
 
-        // Handle meal selections in chunk (similar to sendMessage pattern)
-        // Use 'as any' to handle both casing variants from backend
-        const chunkMealSelections = (chunk as any).MealSelections || (chunk as any).mealSelections;
-        if (chunkMealSelections && chunkMealSelections.length > 0) {
-          this.ngZone.run(() => {
-            this.processAndAddNewMessages([{
-              role: MessageRoleTypes.PendingFoodSelection,
-              mealSelections: chunkMealSelections
-            } as ChatMessage]);
-            this.cdr.detectChanges();
-            this.scrollToBottom();
-          });
+            // Check if this is the first chunk and scroll immediately (outside throttle)
+            if (streamingMessageIndex === -1 && !this.hasScrolledForCurrentStream) {
+              this.scrollToBottom();
+              this.hasScrolledForCurrentStream = true;
+            }
+
+            // Clear existing timeout
+            if (this.streamUpdateTimeout) {
+              clearTimeout(this.streamUpdateTimeout);
+            }
+
+            // Throttle UI updates to every 50ms for smoother rendering
+            this.streamUpdateTimeout = setTimeout(() => {
+              this.ngZone.run(() => {
+                // Hide loading dots when first content arrives
+                this.isLoading = false;
+
+                // Skip if content is empty or whitespace
+                if (!pendingContent || pendingContent.trim().length === 0) {
+                  return;
+                }
+
+                // Create the assistant message bubble on first chunk
+                if (streamingMessageIndex === -1) {
+                  // First chunk - create the message
+                  streamingMessageIndex = this.messages.length;
+                  const streamingMessageId = `continuation-${Date.now()}`;
+                  this.messages = [...this.messages, {
+                    id: streamingMessageId,
+                    text: pendingContent || '',
+                    isUser: false,
+                    timestamp: new Date(),
+                    role: MessageRoleTypes.Assistant,
+                    isStreaming: true,
+                    hasActionButtons: assistantMessage.hasActionButtons
+                  }];
+                } else {
+                  // Subsequent chunks - update existing message
+                  const updatedMessages = [...this.messages];
+                  const existingMessage = updatedMessages[streamingMessageIndex];
+                  updatedMessages[streamingMessageIndex] = {
+                    ...existingMessage,
+                    text: pendingContent || '',
+                    isStreaming: true,
+                    hasActionButtons: assistantMessage.hasActionButtons
+                  };
+                  this.messages = updatedMessages;
+                }
+
+                this.cdr.detectChanges();
+              });
+            }, this.STREAM_THROTTLE_MS);
+          }
         }
       },
       () => {
@@ -1004,49 +1124,22 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
                   const existingFoods = existingMessage.mealSelection.foods || [];
                   const streamingFoods = mealSelection.foods || [];
 
-                  console.log('[FOOD_CREATION] Merging foods during streaming');
-                  console.log('  - Existing foods count:', existingFoods.length);
-                  console.log('  - Streaming foods count:', streamingFoods.length);
-
                   // Start with all existing foods
                   const mergedFoods = [...existingFoods];
 
                   // For each streaming food, either update existing or append new
                   streamingFoods.forEach((streamingFood: any) => {
                     if (streamingFood.id) {
-                      console.log('  - Processing streaming food:', streamingFood.name || 'unknown');
-                      console.log('    - Food ID:', streamingFood.id);
-                      console.log('    - Food quantity:', streamingFood.quantity);
-                      console.log('    - Food initialQuantity:', streamingFood.initialQuantity);
-                      console.log('    - Food components count:', streamingFood.components?.length || 0);
-
-                      // Log first component details if available
-                      if (streamingFood.components?.length > 0) {
-                        const firstComp = streamingFood.components[0];
-                        const firstMatch = firstComp.matches?.[0];
-                        const firstServing = firstMatch?.servings?.[0];
-                        if (firstServing) {
-                          console.log('    - First component serving:');
-                          console.log('      - userConfirmedQuantity:', firstServing.userConfirmedQuantity);
-                          console.log('      - aiRecommendedScale:', `${firstServing.aiRecommendedScaleNumerator}/${firstServing.aiRecommendedScaleDenominator}`);
-                          console.log('      - baseQuantity:', firstServing.baseQuantity);
-                        }
-                      }
-
                       const existingIndex = mergedFoods.findIndex((f: any) => f.id === streamingFood.id);
                       if (existingIndex >= 0) {
                         // Update existing food (streaming update)
-                        console.log('    - Updating existing food at index:', existingIndex);
                         mergedFoods[existingIndex] = streamingFood;
                       } else {
                         // Append new food (user action during streaming)
-                        console.log('    - Appending new food');
                         mergedFoods.push(streamingFood);
                       }
                     }
                   });
-
-                  console.log('  - Final merged foods count:', mergedFoods.length);
 
                   // Preserve mealSelection.id for future multi-meal-selection support
                   mergedMealSelection = {
@@ -1679,6 +1772,8 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   async createManualFoodEntry(): Promise<void> {
     // If user is in restricted access mode, trigger the restricted access flow instead
     if (this.isRestrictedAccess && this.restrictedAccessPhase) {
+      // Set skip flag - FAB click has nothing to continue after upgrade
+      this.accountsService.setSkipUpgradeContinuation();
       const redirectUrl = this.restrictedAccessPhase === 'guestUpgrade' ? '/signup' : '/account-management';
       this.restrictedAccessService.handleRestrictedAccess(this.restrictedAccessPhase, redirectUrl);
       return;
@@ -1697,7 +1792,21 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
       const response = await this.apiService.updateMealSelection(request).toPromise();
 
-      if (response?.isSuccess && response.messageId) {
+      // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
+      if (response?.isRestricted) {
+        this.accountsService.setSkipUpgradeContinuation();
+        this.restrictedAccessService.handleRestrictedAccess(
+          response.restrictedAccessPhase || '',
+          response.restrictedAccessRedirectUrl || ''
+        );
+        return;
+      }
+
+      if (!response) {
+        return;
+      }
+
+      if (response.isSuccess && response.messageId) {
         // Create the UI message with the returned messageId
         // autoOpenQuickAdd flag tells food-selection to default to quick search mode with input visible
         const newMessage: DisplayMessage = {
@@ -1863,6 +1972,16 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   onFoodSelectionConfirmed(request: SubmitServingSelectionRequest): void {
     this.foodSelectionService.submitServingSelection(request).subscribe({
       next: (response: ChatMessagesResponse) => {
+        // Handle restricted access
+        if (response?.isRestricted) {
+          this.accountsService.setSkipUpgradeContinuation();
+          this.restrictedAccessService.handleRestrictedAccess(
+            response.restrictedAccessPhase || '',
+            response.restrictedAccessRedirectUrl || ''
+          );
+          return;
+        }
+
         if (!response.isSuccess) {
           this.showErrorToast('Failed to log food selection.');
           return;
@@ -1898,6 +2017,12 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
         this.showErrorToast('Failed to log food selection.');
       }
     });
+  }
+
+  // Handle restricted access event from food-selection component
+  onRestrictedAccess(event: {phase: string, redirectUrl: string}): void {
+    this.accountsService.setSkipUpgradeContinuation();
+    this.restrictedAccessService.handleRestrictedAccess(event.phase, event.redirectUrl);
   }
 
   // Handle edit food selection confirmation for standalone food selection components

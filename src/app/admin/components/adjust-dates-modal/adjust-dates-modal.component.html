@@ -1,6 +1,6 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Adjust Account Dates</ion-title>
+    <ion-title>Shift All Dates</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="dismiss()">
         <ion-icon name="close-outline"></ion-icon>
@@ -17,109 +17,74 @@
       <p class="email">{{ account.email }}</p>
     </div>
 
-    <!-- Created Date Section -->
+    <!-- Shift All Dates Section -->
     <div class="date-section">
       <div class="section-header">
         <ion-icon name="calendar-outline"></ion-icon>
-        <h4>Created Date</h4>
+        <h4>Day Shift</h4>
       </div>
 
-      <div class="current-value">
-        <span class="label">Current:</span>
-        <span class="value">{{ formatDate(account.createdDateUtc) }}</span>
+      <!-- Current dates reference -->
+      <div class="current-values">
+        <div class="current-value">
+          <span class="label">Created:</span>
+          <span class="value">{{ formatDate(account.createdDateUtc) }}</span>
+        </div>
+        <div class="current-value">
+          <span class="label">Trial End:</span>
+          <span class="value">{{ formatDate(account.trialEndDateUtc) }}</span>
+        </div>
       </div>
 
       <div class="adjustment-controls">
         <ion-button
           fill="outline"
           size="small"
-          (click)="decrementCreatedDate()"
+          (click)="decrementDayShift()"
           [disabled]="isSubmitting">
           <ion-icon name="remove-outline"></ion-icon>
         </ion-button>
 
-        <div class="adjustment-value" [class.negative]="createdDateAdjustment < 0" [class.positive]="createdDateAdjustment > 0">
-          {{ createdDateAdjustment >= 0 ? '+' : '' }}{{ createdDateAdjustment }} days
+        <div class="adjustment-value" [class.negative]="dayShift < 0" [class.positive]="dayShift > 0">
+          {{ dayShift >= 0 ? '+' : '' }}{{ dayShift }} days
         </div>
 
         <ion-button
           fill="outline"
           size="small"
-          (click)="incrementCreatedDate()"
+          (click)="incrementDayShift()"
           [disabled]="isSubmitting">
           <ion-icon name="add-outline"></ion-icon>
         </ion-button>
       </div>
 
-      <div class="projected-value" *ngIf="createdDateAdjustment !== 0">
-        <span class="label">New value:</span>
-        <span class="value projected">{{ formatDate(getProjectedCreatedDate()) }}</span>
-      </div>
-
-      <ion-button
-        expand="block"
-        color="primary"
-        [disabled]="createdDateAdjustment === 0 || isSubmitting"
-        (click)="applyCreatedDateChange()">
-        <ion-spinner *ngIf="isSubmitting" name="crescent" slot="start"></ion-spinner>
-        <ion-icon *ngIf="!isSubmitting" name="checkmark-outline" slot="start"></ion-icon>
-        Apply Created Date Change
-      </ion-button>
-    </div>
-
-    <!-- Trial End Date Section -->
-    <div class="date-section">
-      <div class="section-header">
-        <ion-icon name="calendar-outline"></ion-icon>
-        <h4>Trial End Date</h4>
-      </div>
-
-      <div class="current-value">
-        <span class="label">Current:</span>
-        <span class="value">{{ formatDate(account.trialEndDateUtc) }}</span>
-      </div>
-
-      <div class="adjustment-controls">
-        <ion-button
-          fill="outline"
-          size="small"
-          (click)="decrementTrialEndDate()"
-          [disabled]="isSubmitting">
-          <ion-icon name="remove-outline"></ion-icon>
-        </ion-button>
-
-        <div class="adjustment-value" [class.negative]="trialEndDateAdjustment < 0" [class.positive]="trialEndDateAdjustment > 0">
-          {{ trialEndDateAdjustment >= 0 ? '+' : '' }}{{ trialEndDateAdjustment }} days
+      <!-- Projected values -->
+      <div class="projected-values" *ngIf="dayShift !== 0">
+        <div class="projected-value" *ngIf="account.createdDateUtc">
+          <span class="label">New Created:</span>
+          <span class="value projected">{{ formatDate(getProjectedCreatedDate()) }}</span>
         </div>
-
-        <ion-button
-          fill="outline"
-          size="small"
-          (click)="incrementTrialEndDate()"
-          [disabled]="isSubmitting">
-          <ion-icon name="add-outline"></ion-icon>
-        </ion-button>
-      </div>
-
-      <div class="projected-value" *ngIf="trialEndDateAdjustment !== 0">
-        <span class="label">New value:</span>
-        <span class="value projected">{{ formatDate(getProjectedTrialEndDate()) }}</span>
+        <div class="projected-value" *ngIf="account.trialEndDateUtc">
+          <span class="label">New Trial End:</span>
+          <span class="value projected">{{ formatDate(getProjectedTrialEndDate()) }}</span>
+        </div>
       </div>
 
       <ion-button
         expand="block"
         color="primary"
-        [disabled]="trialEndDateAdjustment === 0 || isSubmitting"
-        (click)="applyTrialEndDateChange()">
+        [disabled]="dayShift === 0 || isSubmitting"
+        (click)="applyShift()">
         <ion-spinner *ngIf="isSubmitting" name="crescent" slot="start"></ion-spinner>
         <ion-icon *ngIf="!isSubmitting" name="checkmark-outline" slot="start"></ion-icon>
-        Apply Trial End Date Change
+        Apply Shift
       </ion-button>
     </div>
 
     <ion-note class="hint">
-      Use negative values to move dates back in time (e.g., -3 moves the date back 3 days).
-      Use positive values to extend dates forward.
+      Shifts ALL dates across all collections: Account, ChatMessages, FoodEntries, DailySummaries, UserProfiles, DailyTargets, MealSelections, and FoodFavorites.
+      <br><br>
+      Negative values move dates back (simulating an older account). Positive values move forward (future-dated records will be deleted).
     </ion-note>
   </div>
 </ion-content>

@@ -125,15 +125,17 @@ export class ChatMessageComponent implements OnChanges {
 
   /**
    * Navigate to the action link path
-   * If navigating to signup, set flag to trigger conversation continuation after signup
+   * If navigating to signup or account-management, set flag to trigger conversation continuation after upgrade
    */
   onActionClick(path: string): void {
     console.log('[ChatMessage] onActionClick called with path:', path);
-    // If user is clicking "Create your account" (navigating to signup from restricted access),
+    // If user is clicking upgrade button (signup for guest, account-management for trial),
     // set flag so chat.page.ts will call TriggerConversationContinuation after they return
-    if (path === '/signup' || path.startsWith('/signup?')) {
-      console.log('[ChatMessage] Setting forcedUpgradeFromGuest flag');
-      this.accountsService.setForcedUpgradeFromGuest();
+    const isUpgradePath = path === '/signup' || path.startsWith('/signup?') ||
+                          path === '/account-management' || path.startsWith('/account-management?');
+    if (isUpgradePath) {
+      console.log('[ChatMessage] Setting pendingUpgradeContinuation flag');
+      this.accountsService.setPendingUpgradeContinuation();
     }
     this.router.navigateByUrl(path);
   }

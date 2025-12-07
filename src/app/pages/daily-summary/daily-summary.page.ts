@@ -63,6 +63,8 @@ import { format } from 'date-fns';
 import { FoodSelectionService } from 'src/app/services/food-selection.service';
 import { AnalyticsService } from 'src/app/services/analytics.service';
 import { ShareMealModalComponent } from 'src/app/components/share-meal-modal/share-meal-modal.component';
+import { AccountsService } from 'src/app/services/accounts.service';
+import { RestrictedAccessService } from 'src/app/services/restricted-access.service';
 
 @Component({
   selector: 'app-daily-summary',
@@ -160,6 +162,8 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   private toastService = inject(ToastService);
   private modalController = inject(ModalController);
   private apiService = inject(NutritionAmbitionApiService);
+  private accountsService = inject(AccountsService);
+  private restrictedAccessService = inject(RestrictedAccessService);
 
   constructor(
     private elementRef: ElementRef,
@@ -667,6 +671,16 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   private handleEditEntry(entry: any) {
+    // Check if user is in restricted access mode before allowing edit
+    const account = this.accountsService.currentAccount;
+    if (account?.isRestrictedAccess && account?.restrictedAccessPhase) {
+      // Set skip flag - edit has nothing to continue after upgrade
+      this.accountsService.setSkipUpgradeContinuation();
+      const redirectUrl = account.restrictedAccessPhase === 'guestUpgrade' ? '/signup' : '/account-management';
+      this.restrictedAccessService.handleRestrictedAccess(account.restrictedAccessPhase, redirectUrl);
+      return;
+    }
+
     if (entry.entryType !== 'food') {
       this.showErrorToast('Only food items can be edited.');
       return;
@@ -704,6 +718,18 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     this.foodSelectionService.startEditFoodSelection(req).subscribe({
       next: (resp) => {
         this.isLoadingEdit = false;
+
+        // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
+        if (resp?.isRestricted) {
+          this.accountsService.setSkipUpgradeContinuation();
+          this.restrictedAccessService.handleRestrictedAccess(
+            resp.restrictedAccessPhase || '',
+            resp.restrictedAccessRedirectUrl || ''
+          );
+          this.clearEditingState();
+          return;
+        }
+
         if (!resp?.isSuccess) {
           this.showErrorToast('Failed to start edit. Please try again.');
           this.clearEditingState();
@@ -756,6 +782,17 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
     this.foodSelectionService.submitEditServingSelection(request).subscribe({
       next: (response) => {
+        // Handle restricted access
+        if (response?.isRestricted) {
+          this.accountsService.setSkipUpgradeContinuation();
+          this.restrictedAccessService.handleRestrictedAccess(
+            response.restrictedAccessPhase || '',
+            response.restrictedAccessRedirectUrl || ''
+          );
+          this.clearEditingState();
+          return;
+        }
+
         if (response.isSuccess) {
           this.clearEditingState();
           // Refresh the data to show updated food
@@ -779,9 +816,14 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
   onEditCanceled() {
     this.clearEditingState();
   }
-  
-  
-  
+
+  // Handle restricted access event from food-selection component
+  onRestrictedAccess(event: {phase: string, redirectUrl: string}): void {
+    this.accountsService.setSkipUpgradeContinuation();
+    this.restrictedAccessService.handleRestrictedAccess(event.phase, event.redirectUrl);
+    this.clearEditingState();
+  }
+
   private async handleRemoveEntry(entry: any) {
     this.isPopoverOpen = false;
     // Only allow removal of food entries, not nutrients
@@ -904,6 +946,18 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     // Actually delete via API
     this.foodEntryService.deleteFoodEntry(removedFood.foodItemIds).subscribe({
       next: (response) => {
+        // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
+        if (response?.isRestricted) {
+          // Restore the food since we can't delete in restricted mode
+          this.undoRemoval(foodKey);
+          this.accountsService.setSkipUpgradeContinuation();
+          this.restrictedAccessService.handleRestrictedAccess(
+            response.restrictedAccessPhase || '',
+            response.restrictedAccessRedirectUrl || ''
+          );
+          return;
+        }
+
         if (response.isSuccess) {
           // Refresh to get updated data (both foods and nutrients will be recalculated)
           this.loadDetailedSummary(this.dateService.getSelectedDate(), true);

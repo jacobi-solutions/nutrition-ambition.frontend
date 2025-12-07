@@ -4,6 +4,7 @@ import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodP
 import { AuthService } from './auth.service';
 import { DateService } from './date.service';
 import { RestrictedAccessService } from './restricted-access.service';
+import { AccountsService } from './accounts.service';
 
 @Injectable({ providedIn: 'root' })
 export class ChatStreamService {
@@ -16,7 +17,8 @@ export class ChatStreamService {
   constructor(
     private authService: AuthService,
     private dateService: DateService,
-    private restrictedAccessService: RestrictedAccessService
+    private restrictedAccessService: RestrictedAccessService,
+    private accountsService: AccountsService
   ) {}
 
   /**
@@ -29,7 +31,7 @@ export class ChatStreamService {
    * @param onError - Callback for errors
    * @returns Stream handle for cleanup
    */
-  private async handleSSEStream<T extends { isSuccess?: boolean; errors?: any[] }>(
+  private async handleSSEStream<T extends { isSuccess?: boolean; errors?: any[]; isRestricted?: boolean; restrictedAccessPhase?: string; restrictedAccessRedirectUrl?: string }>(
     url: string,
     requestBody: any,
     responseClass: { fromJS: (data: any) => T },
@@ -144,6 +146,19 @@ export class ChatStreamService {
                   // Use the generated fromJS method to properly deserialize
                   const parsed = responseClass.fromJS(rawData);
 
+                  // Check for restricted access response from backend
+                  if (parsed.isRestricted) {
+                    clearInterval(timeoutCheck);
+                    reader.cancel();
+                    this.accountsService.setSkipUpgradeContinuation();
+                    this.restrictedAccessService.handleRestrictedAccess(
+                      parsed.restrictedAccessPhase || '',
+                      parsed.restrictedAccessRedirectUrl || ''
+                    );
+                    onComplete(); // Complete gracefully
+                    return;
+                  }
+
                   // Check for error responses from backend
                   if (!parsed.isSuccess && parsed.errors && parsed.errors.length > 0) {
                     clearInterval(timeoutCheck);
@@ -219,24 +234,8 @@ export class ChatStreamService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('HTTP error response:', errorText);
-
-        // Check for 403 restricted access response
-        if (response.status === 403) {
-          try {
-            const errorData = JSON.parse(errorText);
-            if (errorData.isRestricted) {
-              this.restrictedAccessService.handleRestrictedAccess(
-                errorData.phase || '',
-                errorData.redirectUrl || ''
-              );
-              onComplete(); // Complete gracefully instead of error
-              return null;
-            }
-          } catch {
-            // Not a JSON response, continue with normal error handling
-          }
-        }
-
+        // Note: Chat messages no longer get 403 - they go through in RestrictedAccess mode
+        // The AI will handle prompting the user to upgrade
         onError(new Error(`HTTP error! status: ${response.status}`));
         return null;
       }

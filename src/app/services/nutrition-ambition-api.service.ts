@@ -3874,6 +3874,9 @@ export class AccountInfoResponse implements IAccountInfoResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     email?: string | undefined;
     createdDateUtc?: Date;
     trialEndDateUtc?: Date | undefined;
@@ -3909,6 +3912,9 @@ export class AccountInfoResponse implements IAccountInfoResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.email = _data["email"];
             this.createdDateUtc = _data["createdDateUtc"] ? new Date(_data["createdDateUtc"].toString()) : <any>undefined;
             this.trialEndDateUtc = _data["trialEndDateUtc"] ? new Date(_data["trialEndDateUtc"].toString()) : <any>undefined;
@@ -3944,6 +3950,9 @@ export class AccountInfoResponse implements IAccountInfoResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["email"] = this.email;
         data["createdDateUtc"] = this.createdDateUtc ? this.createdDateUtc.toISOString() : <any>undefined;
         data["trialEndDateUtc"] = this.trialEndDateUtc ? this.trialEndDateUtc.toISOString() : <any>undefined;
@@ -3968,6 +3977,9 @@ export interface IAccountInfoResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     email?: string | undefined;
     createdDateUtc?: Date;
     trialEndDateUtc?: Date | undefined;
@@ -3990,6 +4002,9 @@ export class AccountResponse implements IAccountResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     account?: Account;
 
     constructor(data?: IAccountResponse) {
@@ -4017,6 +4032,9 @@ export class AccountResponse implements IAccountResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.account = _data["account"] ? Account.fromJS(_data["account"]) : <any>undefined;
         }
     }
@@ -4044,6 +4062,9 @@ export class AccountResponse implements IAccountResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["account"] = this.account ? this.account.toJSON() : <any>undefined;
         return data;
     }
@@ -4060,13 +4081,15 @@ export interface IAccountResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     account?: Account;
 }
 
 export class AdjustAccountDatesRequest implements IAdjustAccountDatesRequest {
     accountId?: string | undefined;
-    createdDateAdjustmentDays?: number | undefined;
-    trialEndDateAdjustmentDays?: number | undefined;
+    dayShift?: number;
 
     constructor(data?: IAdjustAccountDatesRequest) {
         if (data) {
@@ -4080,8 +4103,7 @@ export class AdjustAccountDatesRequest implements IAdjustAccountDatesRequest {
     init(_data?: any) {
         if (_data) {
             this.accountId = _data["accountId"];
-            this.createdDateAdjustmentDays = _data["createdDateAdjustmentDays"];
-            this.trialEndDateAdjustmentDays = _data["trialEndDateAdjustmentDays"];
+            this.dayShift = _data["dayShift"];
         }
     }
 
@@ -4095,16 +4117,14 @@ export class AdjustAccountDatesRequest implements IAdjustAccountDatesRequest {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["accountId"] = this.accountId;
-        data["createdDateAdjustmentDays"] = this.createdDateAdjustmentDays;
-        data["trialEndDateAdjustmentDays"] = this.trialEndDateAdjustmentDays;
+        data["dayShift"] = this.dayShift;
         return data;
     }
 }
 
 export interface IAdjustAccountDatesRequest {
     accountId?: string | undefined;
-    createdDateAdjustmentDays?: number | undefined;
-    trialEndDateAdjustmentDays?: number | undefined;
+    dayShift?: number;
 }
 
 export class AdjustAccountDatesResponse implements IAdjustAccountDatesResponse {
@@ -4117,11 +4137,26 @@ export class AdjustAccountDatesResponse implements IAdjustAccountDatesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     accountId?: string | undefined;
-    previousCreatedDateUtc?: Date | undefined;
-    newCreatedDateUtc?: Date | undefined;
-    previousTrialEndDateUtc?: Date | undefined;
-    newTrialEndDateUtc?: Date | undefined;
+    dayShift?: number;
+    chatMessagesUpdated?: number;
+    foodEntriesUpdated?: number;
+    dailySummariesUpdated?: number;
+    userProfilesUpdated?: number;
+    dailyTargetsUpdated?: number;
+    mealSelectionsUpdated?: number;
+    foodFavoritesUpdated?: number;
+    chatMessagesDeleted?: number;
+    foodEntriesDeleted?: number;
+    dailySummariesDeleted?: number;
+    userProfilesDeleted?: number;
+    dailyTargetsDeleted?: number;
+    mealSelectionsDeleted?: number;
+    readonly totalUpdated?: number;
+    readonly totalDeleted?: number;
 
     constructor(data?: IAdjustAccountDatesResponse) {
         if (data) {
@@ -4147,11 +4182,26 @@ export class AdjustAccountDatesResponse implements IAdjustAccountDatesResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.accountId = _data["accountId"];
-            this.previousCreatedDateUtc = _data["previousCreatedDateUtc"] ? new Date(_data["previousCreatedDateUtc"].toString()) : <any>undefined;
-            this.newCreatedDateUtc = _data["newCreatedDateUtc"] ? new Date(_data["newCreatedDateUtc"].toString()) : <any>undefined;
-            this.previousTrialEndDateUtc = _data["previousTrialEndDateUtc"] ? new Date(_data["previousTrialEndDateUtc"].toString()) : <any>undefined;
-            this.newTrialEndDateUtc = _data["newTrialEndDateUtc"] ? new Date(_data["newTrialEndDateUtc"].toString()) : <any>undefined;
+            this.dayShift = _data["dayShift"];
+            this.chatMessagesUpdated = _data["chatMessagesUpdated"];
+            this.foodEntriesUpdated = _data["foodEntriesUpdated"];
+            this.dailySummariesUpdated = _data["dailySummariesUpdated"];
+            this.userProfilesUpdated = _data["userProfilesUpdated"];
+            this.dailyTargetsUpdated = _data["dailyTargetsUpdated"];
+            this.mealSelectionsUpdated = _data["mealSelectionsUpdated"];
+            this.foodFavoritesUpdated = _data["foodFavoritesUpdated"];
+            this.chatMessagesDeleted = _data["chatMessagesDeleted"];
+            this.foodEntriesDeleted = _data["foodEntriesDeleted"];
+            this.dailySummariesDeleted = _data["dailySummariesDeleted"];
+            this.userProfilesDeleted = _data["userProfilesDeleted"];
+            this.dailyTargetsDeleted = _data["dailyTargetsDeleted"];
+            this.mealSelectionsDeleted = _data["mealSelectionsDeleted"];
+            (<any>this).totalUpdated = _data["totalUpdated"];
+            (<any>this).totalDeleted = _data["totalDeleted"];
         }
     }
 
@@ -4177,11 +4227,26 @@ export class AdjustAccountDatesResponse implements IAdjustAccountDatesResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["accountId"] = this.accountId;
-        data["previousCreatedDateUtc"] = this.previousCreatedDateUtc ? this.previousCreatedDateUtc.toISOString() : <any>undefined;
-        data["newCreatedDateUtc"] = this.newCreatedDateUtc ? this.newCreatedDateUtc.toISOString() : <any>undefined;
-        data["previousTrialEndDateUtc"] = this.previousTrialEndDateUtc ? this.previousTrialEndDateUtc.toISOString() : <any>undefined;
-        data["newTrialEndDateUtc"] = this.newTrialEndDateUtc ? this.newTrialEndDateUtc.toISOString() : <any>undefined;
+        data["dayShift"] = this.dayShift;
+        data["chatMessagesUpdated"] = this.chatMessagesUpdated;
+        data["foodEntriesUpdated"] = this.foodEntriesUpdated;
+        data["dailySummariesUpdated"] = this.dailySummariesUpdated;
+        data["userProfilesUpdated"] = this.userProfilesUpdated;
+        data["dailyTargetsUpdated"] = this.dailyTargetsUpdated;
+        data["mealSelectionsUpdated"] = this.mealSelectionsUpdated;
+        data["foodFavoritesUpdated"] = this.foodFavoritesUpdated;
+        data["chatMessagesDeleted"] = this.chatMessagesDeleted;
+        data["foodEntriesDeleted"] = this.foodEntriesDeleted;
+        data["dailySummariesDeleted"] = this.dailySummariesDeleted;
+        data["userProfilesDeleted"] = this.userProfilesDeleted;
+        data["dailyTargetsDeleted"] = this.dailyTargetsDeleted;
+        data["mealSelectionsDeleted"] = this.mealSelectionsDeleted;
+        data["totalUpdated"] = this.totalUpdated;
+        data["totalDeleted"] = this.totalDeleted;
         return data;
     }
 }
@@ -4196,11 +4261,26 @@ export interface IAdjustAccountDatesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     accountId?: string | undefined;
-    previousCreatedDateUtc?: Date | undefined;
-    newCreatedDateUtc?: Date | undefined;
-    previousTrialEndDateUtc?: Date | undefined;
-    newTrialEndDateUtc?: Date | undefined;
+    dayShift?: number;
+    chatMessagesUpdated?: number;
+    foodEntriesUpdated?: number;
+    dailySummariesUpdated?: number;
+    userProfilesUpdated?: number;
+    dailyTargetsUpdated?: number;
+    mealSelectionsUpdated?: number;
+    foodFavoritesUpdated?: number;
+    chatMessagesDeleted?: number;
+    foodEntriesDeleted?: number;
+    dailySummariesDeleted?: number;
+    userProfilesDeleted?: number;
+    dailyTargetsDeleted?: number;
+    mealSelectionsDeleted?: number;
+    totalUpdated?: number;
+    totalDeleted?: number;
 }
 
 export enum AssistantModeTypes {
@@ -4557,6 +4637,9 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     messages?: ChatMessage[] | undefined;
 
     constructor(data?: IChatMessagesResponse) {
@@ -4584,6 +4667,9 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -4615,6 +4701,9 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -4635,6 +4724,9 @@ export interface IChatMessagesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     messages?: ChatMessage[] | undefined;
 }
 
@@ -4689,6 +4781,9 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -4719,6 +4814,9 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.dataCleared = _data["dataCleared"];
             this.clearedAccountId = _data["clearedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -4755,6 +4853,9 @@ export class ClearAccountDataResponse implements IClearAccountDataResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["dataCleared"] = this.dataCleared;
         data["clearedAccountId"] = this.clearedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -4780,6 +4881,9 @@ export interface IClearAccountDataResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     dataCleared?: boolean;
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -4841,6 +4945,9 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     feedbackEntry?: FeedbackEntry;
 
     constructor(data?: ICompleteFeedbackResponse) {
@@ -4868,6 +4975,9 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.feedbackEntry = _data["feedbackEntry"] ? FeedbackEntry.fromJS(_data["feedbackEntry"]) : <any>undefined;
         }
     }
@@ -4895,6 +5005,9 @@ export class CompleteFeedbackResponse implements ICompleteFeedbackResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["feedbackEntry"] = this.feedbackEntry ? this.feedbackEntry.toJSON() : <any>undefined;
         return data;
     }
@@ -4911,6 +5024,9 @@ export interface ICompleteFeedbackResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     feedbackEntry?: FeedbackEntry;
 }
 
@@ -5413,6 +5529,9 @@ export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFile
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -5444,6 +5563,9 @@ export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFile
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.openAiFileId = _data["openAiFileId"];
             this.openAiFileApiId = _data["openAiFileApiId"];
             this.vectorStoreId = _data["vectorStoreId"];
@@ -5475,6 +5597,9 @@ export class ConfirmGuidelineFileUploadResponse implements IConfirmGuidelineFile
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["openAiFileId"] = this.openAiFileId;
         data["openAiFileApiId"] = this.openAiFileApiId;
         data["vectorStoreId"] = this.vectorStoreId;
@@ -5495,6 +5620,9 @@ export interface IConfirmGuidelineFileUploadResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -5513,6 +5641,9 @@ export class CreateAuthHandoffTokenResponse implements ICreateAuthHandoffTokenRe
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     handoffUrl?: string | undefined;
 
     constructor(data?: ICreateAuthHandoffTokenResponse) {
@@ -5540,6 +5671,9 @@ export class CreateAuthHandoffTokenResponse implements ICreateAuthHandoffTokenRe
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.handoffUrl = _data["handoffUrl"];
         }
     }
@@ -5567,6 +5701,9 @@ export class CreateAuthHandoffTokenResponse implements ICreateAuthHandoffTokenRe
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["handoffUrl"] = this.handoffUrl;
         return data;
     }
@@ -5583,6 +5720,9 @@ export interface ICreateAuthHandoffTokenResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     handoffUrl?: string | undefined;
 }
 
@@ -5637,6 +5777,9 @@ export class CreateCheckoutSessionResponse implements ICreateCheckoutSessionResp
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     checkoutUrl?: string | undefined;
 
     constructor(data?: ICreateCheckoutSessionResponse) {
@@ -5664,6 +5807,9 @@ export class CreateCheckoutSessionResponse implements ICreateCheckoutSessionResp
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.checkoutUrl = _data["checkoutUrl"];
         }
     }
@@ -5691,6 +5837,9 @@ export class CreateCheckoutSessionResponse implements ICreateCheckoutSessionResp
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["checkoutUrl"] = this.checkoutUrl;
         return data;
     }
@@ -5707,6 +5856,9 @@ export interface ICreateCheckoutSessionResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     checkoutUrl?: string | undefined;
 }
 
@@ -5751,6 +5903,9 @@ export class CreateRetroactiveFavoritesResponse implements ICreateRetroactiveFav
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     usersProcessed?: number;
     foodEntriesProcessed?: number;
     favoritesCreated?: number;
@@ -5781,6 +5936,9 @@ export class CreateRetroactiveFavoritesResponse implements ICreateRetroactiveFav
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.usersProcessed = _data["usersProcessed"];
             this.foodEntriesProcessed = _data["foodEntriesProcessed"];
             this.favoritesCreated = _data["favoritesCreated"];
@@ -5811,6 +5969,9 @@ export class CreateRetroactiveFavoritesResponse implements ICreateRetroactiveFav
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["usersProcessed"] = this.usersProcessed;
         data["foodEntriesProcessed"] = this.foodEntriesProcessed;
         data["favoritesCreated"] = this.favoritesCreated;
@@ -5830,6 +5991,9 @@ export interface ICreateRetroactiveFavoritesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     usersProcessed?: number;
     foodEntriesProcessed?: number;
     favoritesCreated?: number;
@@ -5883,6 +6047,9 @@ export class CreateSharedMealResponse implements ICreateSharedMealResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     shareToken?: string | undefined;
     shareUrl?: string | undefined;
     preview?: MealPreview;
@@ -5913,6 +6080,9 @@ export class CreateSharedMealResponse implements ICreateSharedMealResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.shareToken = _data["shareToken"];
             this.shareUrl = _data["shareUrl"];
             this.preview = _data["preview"] ? MealPreview.fromJS(_data["preview"]) : <any>undefined;
@@ -5943,6 +6113,9 @@ export class CreateSharedMealResponse implements ICreateSharedMealResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["shareToken"] = this.shareToken;
         data["shareUrl"] = this.shareUrl;
         data["preview"] = this.preview ? this.preview.toJSON() : <any>undefined;
@@ -5962,6 +6135,9 @@ export interface ICreateSharedMealResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     shareToken?: string | undefined;
     shareUrl?: string | undefined;
     preview?: MealPreview;
@@ -6107,6 +6283,9 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -6137,6 +6316,9 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.accountDeleted = _data["accountDeleted"];
             this.deletedAccountId = _data["deletedAccountId"];
             this.totalRecordsDeleted = _data["totalRecordsDeleted"];
@@ -6173,6 +6355,9 @@ export class DeleteAccountResponse implements IDeleteAccountResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["accountDeleted"] = this.accountDeleted;
         data["deletedAccountId"] = this.deletedAccountId;
         data["totalRecordsDeleted"] = this.totalRecordsDeleted;
@@ -6198,6 +6383,9 @@ export interface IDeleteAccountResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     accountDeleted?: boolean;
     deletedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
@@ -6251,6 +6439,9 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     deleted?: boolean;
 
     constructor(data?: IDeleteFeedbackResponse) {
@@ -6278,6 +6469,9 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.deleted = _data["deleted"];
         }
     }
@@ -6305,6 +6499,9 @@ export class DeleteFeedbackResponse implements IDeleteFeedbackResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["deleted"] = this.deleted;
         return data;
     }
@@ -6321,6 +6518,9 @@ export interface IDeleteFeedbackResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     deleted?: boolean;
 }
 
@@ -6379,6 +6579,9 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
 
     constructor(data?: IDeleteFoodEntryResponse) {
         if (data) {
@@ -6405,6 +6608,9 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
         }
     }
 
@@ -6431,6 +6637,9 @@ export class DeleteFoodEntryResponse implements IDeleteFoodEntryResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         return data;
     }
 }
@@ -6446,6 +6655,9 @@ export interface IDeleteFoodEntryResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
 }
 
 export class DeleteGuidelineFileRequest implements IDeleteGuidelineFileRequest {
@@ -6495,6 +6707,9 @@ export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
 
     constructor(data?: IDeleteGuidelineFileResponse) {
         if (data) {
@@ -6521,6 +6736,9 @@ export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
         }
     }
 
@@ -6547,6 +6765,9 @@ export class DeleteGuidelineFileResponse implements IDeleteGuidelineFileResponse
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         return data;
     }
 }
@@ -6562,6 +6783,9 @@ export interface IDeleteGuidelineFileResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
 }
 
 export class DirectLogMealRequest implements IDirectLogMealRequest {
@@ -7334,6 +7558,9 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -7362,6 +7589,9 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.accountId = _data["accountId"];
             if (_data["dataCounts"]) {
                 this.dataCounts = {} as any;
@@ -7396,6 +7626,9 @@ export class GetAccountDataCountsResponse implements IGetAccountDataCountsRespon
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["accountId"] = this.accountId;
         if (this.dataCounts) {
             data["dataCounts"] = {};
@@ -7419,6 +7652,9 @@ export interface IGetAccountDataCountsResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     accountId?: string | undefined;
     dataCounts?: { [key: string]: number; } | undefined;
     totalDataCount?: number;
@@ -7465,6 +7701,9 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     accounts?: Account[] | undefined;
 
     constructor(data?: IGetAllAccountsResponse) {
@@ -7492,6 +7731,9 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             if (Array.isArray(_data["accounts"])) {
                 this.accounts = [] as any;
                 for (let item of _data["accounts"])
@@ -7523,6 +7765,9 @@ export class GetAllAccountsResponse implements IGetAllAccountsResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         if (Array.isArray(this.accounts)) {
             data["accounts"] = [];
             for (let item of this.accounts)
@@ -7543,6 +7788,9 @@ export interface IGetAllAccountsResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     accounts?: Account[] | undefined;
 }
 
@@ -7629,6 +7877,9 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     dailySummary?: DailySummary;
 
     constructor(data?: IGetDetailedSummaryResponse) {
@@ -7656,6 +7907,9 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.dailySummary = _data["dailySummary"] ? DailySummary.fromJS(_data["dailySummary"]) : <any>undefined;
         }
     }
@@ -7683,6 +7937,9 @@ export class GetDetailedSummaryResponse implements IGetDetailedSummaryResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["dailySummary"] = this.dailySummary ? this.dailySummary.toJSON() : <any>undefined;
         return data;
     }
@@ -7699,6 +7956,9 @@ export interface IGetDetailedSummaryResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     dailySummary?: DailySummary;
 }
 
@@ -7743,6 +8003,9 @@ export class GetFavoritesResponse implements IGetFavoritesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     favorites?: FavoriteFoodDto[] | undefined;
 
     constructor(data?: IGetFavoritesResponse) {
@@ -7770,6 +8033,9 @@ export class GetFavoritesResponse implements IGetFavoritesResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             if (Array.isArray(_data["favorites"])) {
                 this.favorites = [] as any;
                 for (let item of _data["favorites"])
@@ -7801,6 +8067,9 @@ export class GetFavoritesResponse implements IGetFavoritesResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         if (Array.isArray(this.favorites)) {
             data["favorites"] = [];
             for (let item of this.favorites)
@@ -7821,6 +8090,9 @@ export interface IGetFavoritesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     favorites?: FavoriteFoodDto[] | undefined;
 }
 
@@ -7835,6 +8107,9 @@ export class GetFeedbackResponse implements IGetFeedbackResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     feedbackEntries?: FeedbackEntry[] | undefined;
     feedbackEntry?: FeedbackEntry;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
@@ -7864,6 +8139,9 @@ export class GetFeedbackResponse implements IGetFeedbackResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             if (Array.isArray(_data["feedbackEntries"])) {
                 this.feedbackEntries = [] as any;
                 for (let item of _data["feedbackEntries"])
@@ -7901,6 +8179,9 @@ export class GetFeedbackResponse implements IGetFeedbackResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         if (Array.isArray(this.feedbackEntries)) {
             data["feedbackEntries"] = [];
             for (let item of this.feedbackEntries)
@@ -7927,6 +8208,9 @@ export interface IGetFeedbackResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     feedbackEntries?: FeedbackEntry[] | undefined;
     feedbackEntry?: FeedbackEntry;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
@@ -7995,6 +8279,9 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 
     constructor(data?: IGetFeedbackWithAccountInfoResponse) {
@@ -8022,6 +8309,9 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             if (Array.isArray(_data["feedbackWithAccounts"])) {
                 this.feedbackWithAccounts = [] as any;
                 for (let item of _data["feedbackWithAccounts"])
@@ -8053,6 +8343,9 @@ export class GetFeedbackWithAccountInfoResponse implements IGetFeedbackWithAccou
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         if (Array.isArray(this.feedbackWithAccounts)) {
             data["feedbackWithAccounts"] = [];
             for (let item of this.feedbackWithAccounts)
@@ -8073,6 +8366,9 @@ export interface IGetFeedbackWithAccountInfoResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     feedbackWithAccounts?: FeedbackWithAccount[] | undefined;
 }
 
@@ -8127,6 +8423,9 @@ export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploa
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     signedUrl?: string | undefined;
     objectName?: string | undefined;
     expiresAt?: Date | undefined;
@@ -8156,6 +8455,9 @@ export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploa
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.signedUrl = _data["signedUrl"];
             this.objectName = _data["objectName"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
@@ -8185,6 +8487,9 @@ export class GetGuidelineFileUploadUrlResponse implements IGetGuidelineFileUploa
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["signedUrl"] = this.signedUrl;
         data["objectName"] = this.objectName;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
@@ -8203,6 +8508,9 @@ export interface IGetGuidelineFileUploadUrlResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     signedUrl?: string | undefined;
     objectName?: string | undefined;
     expiresAt?: Date | undefined;
@@ -8259,6 +8567,9 @@ export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrl
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     signedUrl?: string | undefined;
     expiresAt?: Date | undefined;
     fileName?: string | undefined;
@@ -8289,6 +8600,9 @@ export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrl
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.signedUrl = _data["signedUrl"];
             this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
             this.fileName = _data["fileName"];
@@ -8319,6 +8633,9 @@ export class GetGuidelineFileViewUrlResponse implements IGetGuidelineFileViewUrl
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["signedUrl"] = this.signedUrl;
         data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
         data["fileName"] = this.fileName;
@@ -8338,6 +8655,9 @@ export interface IGetGuidelineFileViewUrlResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     signedUrl?: string | undefined;
     expiresAt?: Date | undefined;
     fileName?: string | undefined;
@@ -8385,6 +8705,9 @@ export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     files?: OpenAiFile[] | undefined;
 
     constructor(data?: IGetGuidelineFilesResponse) {
@@ -8412,6 +8735,9 @@ export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             if (Array.isArray(_data["files"])) {
                 this.files = [] as any;
                 for (let item of _data["files"])
@@ -8443,6 +8769,9 @@ export class GetGuidelineFilesResponse implements IGetGuidelineFilesResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         if (Array.isArray(this.files)) {
             data["files"] = [];
             for (let item of this.files)
@@ -8463,6 +8792,9 @@ export interface IGetGuidelineFilesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     files?: OpenAiFile[] | undefined;
 }
 
@@ -8521,6 +8853,9 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
@@ -8551,6 +8886,9 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.originalPhrase = _data["originalPhrase"];
             this.componentId = _data["componentId"];
             if (Array.isArray(_data["alternatives"])) {
@@ -8585,6 +8923,9 @@ export class GetInstantAlternativesResponse implements IGetInstantAlternativesRe
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["originalPhrase"] = this.originalPhrase;
         data["componentId"] = this.componentId;
         if (Array.isArray(this.alternatives)) {
@@ -8608,6 +8949,9 @@ export interface IGetInstantAlternativesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     originalPhrase?: string | undefined;
     componentId?: string | undefined;
     alternatives?: ComponentMatch[] | undefined;
@@ -8661,6 +9005,9 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     age?: number | undefined;
     sex?: string | undefined;
     heightFeet?: number | undefined;
@@ -8701,6 +9048,9 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.age = _data["age"];
             this.sex = _data["sex"];
             this.heightFeet = _data["heightFeet"];
@@ -8753,6 +9103,9 @@ export class GetProfileAndTargetsResponse implements IGetProfileAndTargetsRespon
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["age"] = this.age;
         data["sex"] = this.sex;
         data["heightFeet"] = this.heightFeet;
@@ -8794,6 +9147,9 @@ export interface IGetProfileAndTargetsResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     age?: number | undefined;
     sex?: string | undefined;
     heightFeet?: number | undefined;
@@ -8861,6 +9217,9 @@ export class GetSharedMealResponse implements IGetSharedMealResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     mealData?: MealSelection;
     sharedByAccountId?: string | undefined;
     isExpired?: boolean;
@@ -8890,6 +9249,9 @@ export class GetSharedMealResponse implements IGetSharedMealResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.mealData = _data["mealData"] ? MealSelection.fromJS(_data["mealData"]) : <any>undefined;
             this.sharedByAccountId = _data["sharedByAccountId"];
             this.isExpired = _data["isExpired"];
@@ -8919,6 +9281,9 @@ export class GetSharedMealResponse implements IGetSharedMealResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["mealData"] = this.mealData ? this.mealData.toJSON() : <any>undefined;
         data["sharedByAccountId"] = this.sharedByAccountId;
         data["isExpired"] = this.isExpired;
@@ -8937,6 +9302,9 @@ export interface IGetSharedMealResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     mealData?: MealSelection;
     sharedByAccountId?: string | undefined;
     isExpired?: boolean;
@@ -8996,6 +9364,9 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -9024,6 +9395,9 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             if (Array.isArray(_data["messages"])) {
                 this.messages = [] as any;
                 for (let item of _data["messages"])
@@ -9056,6 +9430,9 @@ export class GetUserChatMessagesResponse implements IGetUserChatMessagesResponse
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         if (Array.isArray(this.messages)) {
             data["messages"] = [];
             for (let item of this.messages)
@@ -9077,6 +9454,9 @@ export interface IGetUserChatMessagesResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     messages?: ChatMessage[] | undefined;
     accountId?: string | undefined;
     accountEmail?: string | undefined;
@@ -9503,6 +9883,9 @@ export class MigrateCanonicalUnitsResponse implements IMigrateCanonicalUnitsResp
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     migratedCount?: number;
     errorCount?: number;
 
@@ -9531,6 +9914,9 @@ export class MigrateCanonicalUnitsResponse implements IMigrateCanonicalUnitsResp
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.migratedCount = _data["migratedCount"];
             this.errorCount = _data["errorCount"];
         }
@@ -9559,6 +9945,9 @@ export class MigrateCanonicalUnitsResponse implements IMigrateCanonicalUnitsResp
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["migratedCount"] = this.migratedCount;
         data["errorCount"] = this.errorCount;
         return data;
@@ -9576,6 +9965,9 @@ export interface IMigrateCanonicalUnitsResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     migratedCount?: number;
     errorCount?: number;
 }
@@ -9963,6 +10355,9 @@ export class RelogFavoriteResponse implements IRelogFavoriteResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     food?: Food;
 
     constructor(data?: IRelogFavoriteResponse) {
@@ -9990,6 +10385,9 @@ export class RelogFavoriteResponse implements IRelogFavoriteResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.food = _data["food"] ? Food.fromJS(_data["food"]) : <any>undefined;
         }
     }
@@ -10017,6 +10415,9 @@ export class RelogFavoriteResponse implements IRelogFavoriteResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["food"] = this.food ? this.food.toJSON() : <any>undefined;
         return data;
     }
@@ -10033,6 +10434,9 @@ export interface IRelogFavoriteResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     food?: Food;
 }
 
@@ -10083,6 +10487,9 @@ export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
 
     constructor(data?: IRemoveFavoriteResponse) {
         if (data) {
@@ -10109,6 +10516,9 @@ export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
         }
     }
 
@@ -10135,6 +10545,9 @@ export class RemoveFavoriteResponse implements IRemoveFavoriteResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         return data;
     }
 }
@@ -10150,6 +10563,9 @@ export interface IRemoveFavoriteResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
 }
 
 export class Request implements IRequest {
@@ -10193,6 +10609,9 @@ export class Response implements IResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
 
     constructor(data?: IResponse) {
         if (data) {
@@ -10219,6 +10638,9 @@ export class Response implements IResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
         }
     }
 
@@ -10245,6 +10667,9 @@ export class Response implements IResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         return data;
     }
 }
@@ -10260,6 +10685,9 @@ export interface IResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
 }
 
 export class RunChatRequest implements IRunChatRequest {
@@ -10397,6 +10825,9 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 
@@ -10425,6 +10856,9 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.searchPhrase = _data["searchPhrase"];
             if (Array.isArray(_data["foodOptions"])) {
                 this.foodOptions = [] as any;
@@ -10457,6 +10891,9 @@ export class SearchFoodPhraseResponse implements ISearchFoodPhraseResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["searchPhrase"] = this.searchPhrase;
         if (Array.isArray(this.foodOptions)) {
             data["foodOptions"] = [];
@@ -10478,6 +10915,9 @@ export interface ISearchFoodPhraseResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     searchPhrase?: string | undefined;
     foodOptions?: Food[] | undefined;
 }
@@ -10557,6 +10997,9 @@ export class SearchLogsResponse implements ISearchLogsResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 
@@ -10585,6 +11028,9 @@ export class SearchLogsResponse implements ISearchLogsResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             if (Array.isArray(_data["items"])) {
                 this.items = [] as any;
                 for (let item of _data["items"])
@@ -10617,6 +11063,9 @@ export class SearchLogsResponse implements ISearchLogsResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         if (Array.isArray(this.items)) {
             data["items"] = [];
             for (let item of this.items)
@@ -10638,6 +11087,9 @@ export interface ISearchLogsResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     items?: LogEntryDto[] | undefined;
     nextPageToken?: string | undefined;
 }
@@ -11153,6 +11605,9 @@ export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -11183,6 +11638,9 @@ export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.openAiFileId = _data["openAiFileId"];
             this.openAiFileApiId = _data["openAiFileApiId"];
             this.vectorStoreId = _data["vectorStoreId"];
@@ -11213,6 +11671,9 @@ export class UploadGuidelineFileResponse implements IUploadGuidelineFileResponse
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["openAiFileId"] = this.openAiFileId;
         data["openAiFileApiId"] = this.openAiFileApiId;
         data["vectorStoreId"] = this.vectorStoreId;
@@ -11232,6 +11693,9 @@ export interface IUploadGuidelineFileResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     openAiFileId?: string | undefined;
     openAiFileApiId?: string | undefined;
     vectorStoreId?: string | undefined;
@@ -11393,6 +11857,9 @@ export class ValidateHandoffResponse implements IValidateHandoffResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     isValid?: boolean;
     errorCode?: string | undefined;
     redirectPath?: string | undefined;
@@ -11422,6 +11889,9 @@ export class ValidateHandoffResponse implements IValidateHandoffResponse {
             this.messageId = _data["messageId"];
             this.foodId = _data["foodId"];
             this.mealSelectionIsPending = _data["mealSelectionIsPending"];
+            this.isRestricted = _data["isRestricted"];
+            this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.restrictedAccessRedirectUrl = _data["restrictedAccessRedirectUrl"];
             this.isValid = _data["isValid"];
             this.errorCode = _data["errorCode"];
             this.redirectPath = _data["redirectPath"];
@@ -11451,6 +11921,9 @@ export class ValidateHandoffResponse implements IValidateHandoffResponse {
         data["messageId"] = this.messageId;
         data["foodId"] = this.foodId;
         data["mealSelectionIsPending"] = this.mealSelectionIsPending;
+        data["isRestricted"] = this.isRestricted;
+        data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["restrictedAccessRedirectUrl"] = this.restrictedAccessRedirectUrl;
         data["isValid"] = this.isValid;
         data["errorCode"] = this.errorCode;
         data["redirectPath"] = this.redirectPath;
@@ -11469,6 +11942,9 @@ export interface IValidateHandoffResponse {
     messageId?: string | undefined;
     foodId?: string | undefined;
     mealSelectionIsPending?: boolean | undefined;
+    isRestricted?: boolean;
+    restrictedAccessPhase?: string | undefined;
+    restrictedAccessRedirectUrl?: string | undefined;
     isValid?: boolean;
     errorCode?: string | undefined;
     redirectPath?: string | undefined;

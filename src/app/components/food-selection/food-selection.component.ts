@@ -36,6 +36,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
   @Output() selectionCanceled = new EventEmitter<void>();
   @Output() updatedMessage = new EventEmitter<DisplayMessage>();
   @Output() shareMeal = new EventEmitter<void>();
+  @Output() restrictedAccess = new EventEmitter<{phase: string, redirectUrl: string}>();
   @ViewChild(SearchFoodComponent) addFoodComponent?: SearchFoodComponent;
   @ViewChild('mealNameInput') mealNameInput?: ElementRef<HTMLInputElement>;
 
@@ -651,6 +652,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
       // Call backend using service - following established pattern
       const response = await this.foodSelectionService.hydrateAlternateSelection(request).toPromise();
+
+      // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
+      if (response?.isRestricted) {
+        this.restrictedAccess.emit({
+          phase: response.restrictedAccessPhase || '',
+          redirectUrl: response.restrictedAccessRedirectUrl || ''
+        });
+        return;
+      }
 
       if (response?.isSuccess && response.foodOptions && response.foodOptions.length > 0) {
         const responseFood = response.foodOptions[0];
@@ -1586,6 +1596,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
     const response = await this.foodSelectionService.updateFoodPhrase(request).toPromise();
 
+    // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
+    if (response?.isRestricted) {
+      this.restrictedAccess.emit({
+        phase: response.restrictedAccessPhase || '',
+        redirectUrl: response.restrictedAccessRedirectUrl || ''
+      });
+      return;
+    }
+
     if (response?.isSuccess && response.foodOptions && response.foodOptions.length > 0) {
       // Capture UI state before rebuilding
       const oldFood = this.computedFoods[foodIndex];
@@ -1957,6 +1976,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
       const response = await this.foodSelectionService.getInstantAlternatives(request).toPromise();
 
+      // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
+      if (response?.isRestricted) {
+        this.restrictedAccess.emit({
+          phase: response.restrictedAccessPhase || '',
+          redirectUrl: response.restrictedAccessRedirectUrl || ''
+        });
+        return;
+      }
+
       if (response?.isSuccess && response.alternatives) {
         // Get currently selected food to preserve it
         const foodIndex = this.findFoodIndexForComponent(componentId);
@@ -2058,6 +2086,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
       const response = await this.foodSelectionService.getInstantAlternatives(request).toPromise();
 
+      // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
+      if (response?.isRestricted) {
+        this.restrictedAccess.emit({
+          phase: response.restrictedAccessPhase || '',
+          redirectUrl: response.restrictedAccessRedirectUrl || ''
+        });
+        return;
+      }
+
       if (response?.isSuccess && response.alternatives) {
         // Set success state
         const foodIndex = this.findFoodIndexForComponent(componentId);
@@ -2148,6 +2185,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       });
 
       const response = await this.foodSelectionService.getInstantAlternatives(request).toPromise();
+
+      // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
+      if (response?.isRestricted) {
+        this.restrictedAccess.emit({
+          phase: response.restrictedAccessPhase || '',
+          redirectUrl: response.restrictedAccessRedirectUrl || ''
+        });
+        return;
+      }
 
       if (response?.isSuccess && response.alternatives) {
         // Set success state
@@ -2380,6 +2426,15 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
 
       const response = await this.foodSelectionService.getInstantAlternatives(request).toPromise();
 
+      // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
+      if (response?.isRestricted) {
+        this.restrictedAccess.emit({
+          phase: response.restrictedAccessPhase || '',
+          redirectUrl: response.restrictedAccessRedirectUrl || ''
+        });
+        return;
+      }
+
       if (response?.isSuccess && response.alternatives) {
         this.quickSearchResults = response.alternatives;
       } else {
@@ -2390,7 +2445,7 @@ export class FoodSelectionComponent implements OnInit, OnChanges {
       this.quickSearchResults = [];
     } finally {
       this.isQuickSearching = false;
-      this.cdr.detectChanges(); 
+      this.cdr.detectChanges();
     }
   }
 

@@ -93,10 +93,10 @@ export class SignupPage {
         duration: 1500
       });
 
-      // Navigate to chat - use navigateBack only if user came from chat (forced upgrade)
+      // Navigate to chat - use navigateBack if user has a pending continuation (clicked upgrade button)
       // This ensures ionViewWillEnter fires properly when returning to a cached tab page
-      if (this.accountsService.isForcedUpgradeFromGuest) {
-        console.log('[SignupPage] Navigating back to chat (forced upgrade flow)...');
+      if (this.accountsService.hasPendingUpgradeContinuation) {
+        console.log('[SignupPage] Navigating back to chat (pending continuation)...');
         this.navController.navigateBack('/app/chat');
       } else {
         console.log('[SignupPage] Navigating to chat (normal signup)...');

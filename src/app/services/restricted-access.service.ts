@@ -4,11 +4,6 @@ import { Subject } from 'rxjs';
 import { NutritionAmbitionApiService, ShowRestrictedMessageRequest, ChatMessage } from './nutrition-ambition-api.service';
 import { DateService } from './date.service';
 
-export interface RestrictedAccessEvent {
-  phase: string;
-  redirectUrl: string;
-}
-
 @Injectable({
   providedIn: 'root'
 })
@@ -17,7 +12,7 @@ export class RestrictedAccessService {
   private restrictedMessageSubject = new Subject<ChatMessage[]>();
   public restrictedMessage$ = this.restrictedMessageSubject.asObservable();
 
-  // Prevent duplicate handling when multiple 403s arrive simultaneously
+  // Prevent duplicate handling when multiple restricted access responses arrive simultaneously
   private isHandling = false;
 
   constructor(
@@ -62,26 +57,5 @@ export class RestrictedAccessService {
     } finally {
       this.isHandling = false;
     }
-  }
-
-  /**
-   * Checks if an HTTP error response is a restricted access error.
-   */
-  isRestrictedAccessError(error: any): boolean {
-    return error?.status === 403 && error?.error?.isRestricted === true;
-  }
-
-  /**
-   * Extracts restricted access info from an error response.
-   */
-  getRestrictedAccessInfo(error: any): RestrictedAccessEvent | null {
-    if (!this.isRestrictedAccessError(error)) {
-      return null;
-    }
-
-    return {
-      phase: error.error.phase || '',
-      redirectUrl: error.error.redirectUrl || ''
-    };
   }
 }

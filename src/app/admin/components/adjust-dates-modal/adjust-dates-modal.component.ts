@@ -41,11 +41,8 @@ addIcons({
 export class AdjustDatesModalComponent implements OnInit {
   @Input() account!: Account;
 
-  // Created date adjustment (for moving start date back)
-  createdDateAdjustment = -3; // Default to -3 days (move back 3 days)
-
-  // Trial end date adjustment
-  trialEndDateAdjustment = 0;
+  // Single day shift value - negative moves everything back in time
+  dayShift = -1;
 
   isSubmitting = false;
 
@@ -61,22 +58,12 @@ export class AdjustDatesModalComponent implements OnInit {
     this.modalController.dismiss();
   }
 
-  // Created date controls
-  decrementCreatedDate() {
-    this.createdDateAdjustment--;
+  decrementDayShift() {
+    this.dayShift--;
   }
 
-  incrementCreatedDate() {
-    this.createdDateAdjustment++;
-  }
-
-  // Trial end date controls
-  decrementTrialEndDate() {
-    this.trialEndDateAdjustment--;
-  }
-
-  incrementTrialEndDate() {
-    this.trialEndDateAdjustment++;
+  incrementDayShift() {
+    this.dayShift++;
   }
 
   // Format date for display
@@ -92,104 +79,75 @@ export class AdjustDatesModalComponent implements OnInit {
     });
   }
 
-  // Calculate what the new date would be
+  // Calculate what the new created date would be
   getProjectedCreatedDate(): Date | null {
     if (!this.account.createdDateUtc) return null;
     const date = new Date(this.account.createdDateUtc);
-    date.setDate(date.getDate() + this.createdDateAdjustment);
+    date.setDate(date.getDate() + this.dayShift);
     return date;
   }
 
+  // Calculate what the new trial end date would be
   getProjectedTrialEndDate(): Date | null {
-    if (!this.account.trialEndDateUtc && this.trialEndDateAdjustment === 0) return null;
-    if (!this.account.trialEndDateUtc) {
-      // If no trial end date, it will be created from now + adjustment
-      const date = new Date();
-      date.setDate(date.getDate() + this.trialEndDateAdjustment);
-      return date;
-    }
+    if (!this.account.trialEndDateUtc) return null;
     const date = new Date(this.account.trialEndDateUtc);
-    date.setDate(date.getDate() + this.trialEndDateAdjustment);
+    date.setDate(date.getDate() + this.dayShift);
     return date;
   }
 
-  // Check if any changes are pending
-  hasChanges(): boolean {
-    return this.createdDateAdjustment !== 0 || this.trialEndDateAdjustment !== 0;
-  }
-
-  async applyCreatedDateChange() {
-    if (this.createdDateAdjustment === 0) return;
+  async applyShift() {
+    if (this.dayShift === 0) return;
 
     this.isSubmitting = true;
     try {
       const response = await this.adminService.adjustAccountDates(
         this.account.id!,
-        this.createdDateAdjustment,
-        undefined
+        this.dayShift
       );
 
       if (response.isSuccess) {
+        // Build detailed message
+        const parts: string[] = [];
+        if (response.totalUpdated && response.totalUpdated > 0) {
+          parts.push(`${response.totalUpdated} records shifted`);
+        }
+        if (response.totalDeleted && response.totalDeleted > 0) {
+          parts.push(`${response.totalDeleted} future-dated records deleted`);
+        }
+
+        const message = parts.length > 0
+          ? `Dates shifted by ${this.dayShift} days. ${parts.join(', ')}.`
+          : `Dates shifted by ${this.dayShift} days.`;
+
         await this.toastService.showToast({
-          message: `Created date adjusted by ${this.createdDateAdjustment} days`,
-          duration: 3000,
+          message: message,
+          duration: 4000,
           color: 'success'
         });
+
         // Update local account data
-        if (response.newCreatedDateUtc) {
-          this.account.createdDateUtc = response.newCreatedDateUtc;
+        if (this.account.createdDateUtc) {
+          const newCreated = new Date(this.account.createdDateUtc);
+          newCreated.setDate(newCreated.getDate() + this.dayShift);
+          this.account.createdDateUtc = newCreated;
         }
-        this.createdDateAdjustment = 0;
+        if (this.account.trialEndDateUtc) {
+          const newTrialEnd = new Date(this.account.trialEndDateUtc);
+          newTrialEnd.setDate(newTrialEnd.getDate() + this.dayShift);
+          this.account.trialEndDateUtc = newTrialEnd;
+        }
+
+        this.dayShift = -1; // Reset to default
       } else {
         await this.toastService.showToast({
-          message: response.errors?.[0]?.errorMessage || 'Failed to adjust created date',
+          message: response.errors?.[0]?.errorMessage || 'Failed to shift dates',
           duration: 3000,
           color: 'danger'
         });
       }
     } catch (error) {
       await this.toastService.showToast({
-        message: 'Error adjusting created date',
-        duration: 3000,
-        color: 'danger'
-      });
-    } finally {
-      this.isSubmitting = false;
-    }
-  }
-
-  async applyTrialEndDateChange() {
-    if (this.trialEndDateAdjustment === 0) return;
-
-    this.isSubmitting = true;
-    try {
-      const response = await this.adminService.adjustAccountDates(
-        this.account.id!,
-        undefined,
-        this.trialEndDateAdjustment
-      );
-
-      if (response.isSuccess) {
-        await this.toastService.showToast({
-          message: `Trial end date adjusted by ${this.trialEndDateAdjustment} days`,
-          duration: 3000,
-          color: 'success'
-        });
-        // Update local account data
-        if (response.newTrialEndDateUtc) {
-          this.account.trialEndDateUtc = response.newTrialEndDateUtc;
-        }
-        this.trialEndDateAdjustment = 0;
-      } else {
-        await this.toastService.showToast({
-          message: response.errors?.[0]?.errorMessage || 'Failed to adjust trial end date',
-          duration: 3000,
-          color: 'danger'
-        });
-      }
-    } catch (error) {
-      await this.toastService.showToast({
-        message: 'Error adjusting trial end date',
+        message: 'Error shifting dates',
         duration: 3000,
         color: 'danger'
       });

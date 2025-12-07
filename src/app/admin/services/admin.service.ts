@@ -606,18 +606,18 @@ export class AdminService {
   }
 
   /**
-   * Adjust account dates (created date and/or trial end date)
+   * Shift all dates for an account by the specified number of days.
+   * This shifts dates across all collections: Account, ChatMessages, FoodEntries,
+   * DailySummaries, UserProfiles, DailyTargets, MealSelections, and FoodFavorites.
    */
   async adjustAccountDates(
     accountId: string,
-    createdDateAdjustmentDays?: number,
-    trialEndDateAdjustmentDays?: number
+    dayShift: number
   ): Promise<AdjustAccountDatesResponse> {
     try {
       const request = new AdjustAccountDatesRequest({
         accountId: accountId,
-        createdDateAdjustmentDays: createdDateAdjustmentDays,
-        trialEndDateAdjustmentDays: trialEndDateAdjustmentDays
+        dayShift: dayShift
       });
       const response = await firstValueFrom(this.apiService.adjustAccountDates(request));
       return response;

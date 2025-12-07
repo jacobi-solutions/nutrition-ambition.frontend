@@ -46,6 +46,11 @@
     }
   }
 
+  .current-values,
+  .projected-values {
+    margin-bottom: 8px;
+  }
+
   .current-value,
   .projected-value {
     display: flex;
