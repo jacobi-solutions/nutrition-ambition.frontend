@@ -4,7 +4,6 @@ import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodP
 import { AuthService } from './auth.service';
 import { DateService } from './date.service';
 import { RestrictedAccessService } from './restricted-access.service';
-import { AccountsService } from './accounts.service';
 
 @Injectable({ providedIn: 'root' })
 export class ChatStreamService {
@@ -17,8 +16,7 @@ export class ChatStreamService {
   constructor(
     private authService: AuthService,
     private dateService: DateService,
-    private restrictedAccessService: RestrictedAccessService,
-    private accountsService: AccountsService
+    private restrictedAccessService: RestrictedAccessService
   ) {}
 
   /**
@@ -150,7 +148,6 @@ export class ChatStreamService {
                   if (parsed.isRestricted) {
                     clearInterval(timeoutCheck);
                     reader.cancel();
-                    this.accountsService.setSkipUpgradeContinuation();
                     this.restrictedAccessService.handleRestrictedAccess(
                       parsed.restrictedAccessPhase || '',
                       parsed.restrictedAccessRedirectUrl || ''

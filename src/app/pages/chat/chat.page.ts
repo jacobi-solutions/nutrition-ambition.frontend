@@ -121,7 +121,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   private learnMoreAboutSubscription: Subscription;
   private editFoodSelectionStartedSubscription: Subscription;
   private restrictedMessageSubscription: Subscription;
-  private routerSubscription: Subscription;
   private keyboardHideListener: any;
   private viewportResizeHandler: (() => void) | null = null;
   private lastViewportHeight = 0;
@@ -211,32 +210,23 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       this.loadChatHistory(this.dateService.getSelectedDate());
     });
 
+    // Subscribe to router navigation events to reload chat history when navigating back to this page
+    // This is needed because the page is cached (Ionic's IonicRouteStrategy) and ngOnInit doesn't re-run
+    // Guard: only load if not already loading (prevents duplicate calls when date subscription also fires)
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd && event.urlAfterRedirects === '/app/chat')
+    ).subscribe(() => {
+      if (!this.isLoadingHistory) {
+        this.loadChatHistory(this.dateService.getSelectedDate());
+      }
+    });
+
     // Subscribe to account changes to check restricted access status
     this.accountsService.account$.subscribe(account => {
       this.isRestrictedAccess = account?.isRestrictedAccess ?? false;
       this.restrictedAccessPhase = account?.restrictedAccessPhase ?? '';
     });
 
-    // Subscribe to router events to detect navigation TO this page
-    // This is needed because ionViewWillEnter may not fire when navigating
-    // back to a cached tab page from outside the tabs (e.g., from /signup)
-    this.routerSubscription = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: NavigationEnd) => {
-      // Only handle if we're navigating TO the chat page
-      if (event.urlAfterRedirects === '/app/chat' || event.urlAfterRedirects.startsWith('/app/chat?')) {
-        console.log('[ChatPage] Router NavigationEnd to /app/chat detected');
-        // Check for pending upgrade continuation - this handles the case where
-        // ionViewWillEnter doesn't fire when returning from signup
-        if (this.accountsService.hasPendingUpgradeContinuation) {
-          console.log('[ChatPage] Router event: User just upgraded, reloading chat history');
-          // Force reload chat history to get the welcome message and trigger continuation
-          // The flags will be consumed in checkForConversationContinuation
-          this.loadChatHistory(this.dateService.getSelectedDate());
-        }
-      }
-    });
-    
     // Subscribe to context note changes
     this.contextNoteSubscription = this.chatService.contextNote$.subscribe(note => {
       this.contextNote = note;
@@ -359,10 +349,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       this.restrictedMessageSubscription.unsubscribe();
     }
 
-    if (this.routerSubscription) {
-      this.routerSubscription.unsubscribe();
-    }
-
     // Clean up streaming timeout
     if (this.streamUpdateTimeout) {
       clearTimeout(this.streamUpdateTimeout);
@@ -396,16 +382,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     console.log('[ChatPage] ionViewWillEnter called');
     // Firebase Analytics: Track page view when entering the page
     this.analytics.trackPageView('Chat');
-
-    // Check if user just upgraded - if so, reload chat history and trigger continuation
-    // This needs to happen before other checks since the flags will be consumed in checkForConversationContinuation
-    if (this.accountsService.hasPendingUpgradeContinuation) {
-      console.log('[ChatPage] ionViewWillEnter: User just upgraded, reloading chat history');
-      // Force reload chat history to get the welcome message and trigger continuation
-      // The flags will be consumed in checkForConversationContinuation
-      this.loadChatHistory(this.dateService.getSelectedDate());
-      return; // Skip other checks since we're reloading
-    }
 
     // Check for completed pending edits when entering the chat page
     const pendingMessages = this.chatService.consumePendingEditMessages();
@@ -617,16 +593,15 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
             // Check for incomplete meals after messages are loaded
             this.checkForIncompleteMeals();
 
-            // Check if we need to trigger conversation continuation after guest upgrade
-            this.checkForConversationContinuation();
+            // Check if we need to trigger conversation continuation after upgrade
+            // The backend sets needsContinuation=true when user sent a message in RestrictedAccess mode
+            if (response.needsContinuation) {
+              console.log('[ChatPage] Backend indicated needsContinuation=true, triggering continuation');
+              this.triggerConversationContinuation();
+            }
 
             // Scroll at the end of the next event cycle
             this.scrollToBottom();
-          } else {
-            console.log('[ChatPage] No messages returned, checking for conversation continuation anyway');
-            // Still check for conversation continuation even if no messages returned
-            // (welcome message might not have been saved yet, but flag is set)
-            this.checkForConversationContinuation();
           }
         }
       });
@@ -660,47 +635,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       // Backend handles all retry logic automatically
       this.handleIncompleteMeal(incompleteMealMessage);
     }
-  }
-
-  /**
-   * Check if we need to trigger conversation continuation after a forced guest upgrade.
-   * This is called after chat history is loaded, when user returns from signup
-   * after clicking "Create your account" from a restricted access message.
-   */
-  private checkForConversationContinuation(): void {
-    console.log('[ConversationContinuation] checkForConversationContinuation called');
-
-    // First check if there's a pending continuation (user clicked upgrade button)
-    // Don't consume yet - just peek at the value
-    const hasPendingContinuation = this.accountsService.hasPendingUpgradeContinuation;
-    console.log('[ConversationContinuation] hasPendingContinuation:', hasPendingContinuation);
-
-    if (!hasPendingContinuation) {
-      // No pending continuation - don't consume any flags, they might be needed later
-      // (e.g., user navigated to chat but hasn't clicked "Create your account" yet)
-      console.log('[ConversationContinuation] No pending continuation, skipping');
-      return;
-    }
-
-    // Now we know there's a pending continuation - check if we should skip it
-    // Consume both flags since we're making the final decision
-    const shouldSkip = this.accountsService.consumeSkipUpgradeContinuation();
-    this.accountsService.consumePendingUpgradeContinuation(); // Consume pending flag too
-
-    if (shouldSkip) {
-      console.log('[ConversationContinuation] Skip flag was set (FAB/edit scenario), skipping continuation');
-      return;
-    }
-
-    // Don't trigger if there's already a stream in progress
-    if (this.isStreamingActive) {
-      console.log('[ConversationContinuation] Stream already active, skipping');
-      return;
-    }
-
-    console.log('[ConversationContinuation] Triggering conversation continuation...');
-    // Trigger conversation continuation to pick up any pending actions
-    this.triggerConversationContinuation();
   }
 
   /**
@@ -1772,8 +1706,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   async createManualFoodEntry(): Promise<void> {
     // If user is in restricted access mode, trigger the restricted access flow instead
     if (this.isRestrictedAccess && this.restrictedAccessPhase) {
-      // Set skip flag - FAB click has nothing to continue after upgrade
-      this.accountsService.setSkipUpgradeContinuation();
       const redirectUrl = this.restrictedAccessPhase === 'guestUpgrade' ? '/signup' : '/account-management';
       this.restrictedAccessService.handleRestrictedAccess(this.restrictedAccessPhase, redirectUrl);
       return;
@@ -1794,7 +1726,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
       // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
       if (response?.isRestricted) {
-        this.accountsService.setSkipUpgradeContinuation();
         this.restrictedAccessService.handleRestrictedAccess(
           response.restrictedAccessPhase || '',
           response.restrictedAccessRedirectUrl || ''
@@ -1974,7 +1905,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
       next: (response: ChatMessagesResponse) => {
         // Handle restricted access
         if (response?.isRestricted) {
-          this.accountsService.setSkipUpgradeContinuation();
           this.restrictedAccessService.handleRestrictedAccess(
             response.restrictedAccessPhase || '',
             response.restrictedAccessRedirectUrl || ''
@@ -2021,7 +1951,6 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
 
   // Handle restricted access event from food-selection component
   onRestrictedAccess(event: {phase: string, redirectUrl: string}): void {
-    this.accountsService.setSkipUpgradeContinuation();
     this.restrictedAccessService.handleRestrictedAccess(event.phase, event.redirectUrl);
   }
 

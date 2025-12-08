@@ -1,10 +1,9 @@
-import { Component, Input, SecurityContext, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, SecurityContext, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { marked } from 'marked';
 import { ChatMessage } from '../../services/nutrition-ambition-api.service';
-import { AccountsService } from '../../services/accounts.service';
 
 /** Represents an action button extracted from markdown links */
 interface ActionLink {
@@ -40,7 +39,6 @@ export class ChatMessageComponent implements OnChanges {
   // Processed content without the action link markdown
   processedHtml: SafeHtml = '';
 
-  private accountsService = inject(AccountsService);
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -129,14 +127,8 @@ export class ChatMessageComponent implements OnChanges {
    */
   onActionClick(path: string): void {
     console.log('[ChatMessage] onActionClick called with path:', path);
-    // If user is clicking upgrade button (signup for guest, account-management for trial),
-    // set flag so chat.page.ts will call TriggerConversationContinuation after they return
-    const isUpgradePath = path === '/signup' || path.startsWith('/signup?') ||
-                          path === '/account-management' || path.startsWith('/account-management?');
-    if (isUpgradePath) {
-      console.log('[ChatMessage] Setting pendingUpgradeContinuation flag');
-      this.accountsService.setPendingUpgradeContinuation();
-    }
+    // Navigate to the action path (signup, account-management, etc.)
+    // Backend tracks conversation continuation via Account.NeedsContinuationAfterUpgrade flag
     this.router.navigateByUrl(path);
   }
 } 

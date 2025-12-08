@@ -93,15 +93,9 @@ export class SignupPage {
         duration: 1500
       });
 
-      // Navigate to chat - use navigateBack if user has a pending continuation (clicked upgrade button)
-      // This ensures ionViewWillEnter fires properly when returning to a cached tab page
-      if (this.accountsService.hasPendingUpgradeContinuation) {
-        console.log('[SignupPage] Navigating back to chat (pending continuation)...');
-        this.navController.navigateBack('/app/chat');
-      } else {
-        console.log('[SignupPage] Navigating to chat (normal signup)...');
-        this.router.navigate(['/app/chat']);
-      }
+      // Navigate to chat - backend handles conversation continuation via Account.NeedsContinuationAfterUpgrade flag
+      console.log('[SignupPage] Navigating to chat...');
+      this.navController.navigateBack('/app/chat');
     } catch (error) {
       await this.toastService.showToast({
         message: error instanceof Error ? error.message : 'Failed to create account. Please try again.',

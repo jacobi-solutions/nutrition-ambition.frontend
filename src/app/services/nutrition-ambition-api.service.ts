@@ -3764,6 +3764,7 @@ export class Account implements IAccount {
     subscriptionPriceId?: string | undefined;
     subscriptionCurrentPeriodEndUtc?: Date | undefined;
     accountDeletedDateUtc?: Date | undefined;
+    needsContinuationAfterUpgrade?: boolean;
     isRestrictedAccess?: boolean;
     restrictedAccessPhase?: string | undefined;
 
@@ -3798,6 +3799,7 @@ export class Account implements IAccount {
             this.subscriptionPriceId = _data["subscriptionPriceId"];
             this.subscriptionCurrentPeriodEndUtc = _data["subscriptionCurrentPeriodEndUtc"] ? new Date(_data["subscriptionCurrentPeriodEndUtc"].toString()) : <any>undefined;
             this.accountDeletedDateUtc = _data["accountDeletedDateUtc"] ? new Date(_data["accountDeletedDateUtc"].toString()) : <any>undefined;
+            this.needsContinuationAfterUpgrade = _data["needsContinuationAfterUpgrade"];
             this.isRestrictedAccess = _data["isRestrictedAccess"];
             this.restrictedAccessPhase = _data["restrictedAccessPhase"];
         }
@@ -3832,6 +3834,7 @@ export class Account implements IAccount {
         data["subscriptionPriceId"] = this.subscriptionPriceId;
         data["subscriptionCurrentPeriodEndUtc"] = this.subscriptionCurrentPeriodEndUtc ? this.subscriptionCurrentPeriodEndUtc.toISOString() : <any>undefined;
         data["accountDeletedDateUtc"] = this.accountDeletedDateUtc ? this.accountDeletedDateUtc.toISOString() : <any>undefined;
+        data["needsContinuationAfterUpgrade"] = this.needsContinuationAfterUpgrade;
         data["isRestrictedAccess"] = this.isRestrictedAccess;
         data["restrictedAccessPhase"] = this.restrictedAccessPhase;
         return data;
@@ -3859,6 +3862,7 @@ export interface IAccount {
     subscriptionPriceId?: string | undefined;
     subscriptionCurrentPeriodEndUtc?: Date | undefined;
     accountDeletedDateUtc?: Date | undefined;
+    needsContinuationAfterUpgrade?: boolean;
     isRestrictedAccess?: boolean;
     restrictedAccessPhase?: string | undefined;
 }
@@ -4641,6 +4645,7 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
     restrictedAccessPhase?: string | undefined;
     restrictedAccessRedirectUrl?: string | undefined;
     messages?: ChatMessage[] | undefined;
+    needsContinuation?: boolean;
 
     constructor(data?: IChatMessagesResponse) {
         if (data) {
@@ -4675,6 +4680,7 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
                 for (let item of _data["messages"])
                     this.messages!.push(ChatMessage.fromJS(item));
             }
+            this.needsContinuation = _data["needsContinuation"];
         }
     }
 
@@ -4709,6 +4715,7 @@ export class ChatMessagesResponse implements IChatMessagesResponse {
             for (let item of this.messages)
                 data["messages"].push(item.toJSON());
         }
+        data["needsContinuation"] = this.needsContinuation;
         return data;
     }
 }
@@ -4728,6 +4735,7 @@ export interface IChatMessagesResponse {
     restrictedAccessPhase?: string | undefined;
     restrictedAccessRedirectUrl?: string | undefined;
     messages?: ChatMessage[] | undefined;
+    needsContinuation?: boolean;
 }
 
 export class ClearAccountDataRequest implements IClearAccountDataRequest {

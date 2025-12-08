@@ -674,8 +674,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
     // Check if user is in restricted access mode before allowing edit
     const account = this.accountsService.currentAccount;
     if (account?.isRestrictedAccess && account?.restrictedAccessPhase) {
-      // Set skip flag - edit has nothing to continue after upgrade
-      this.accountsService.setSkipUpgradeContinuation();
       const redirectUrl = account.restrictedAccessPhase === 'guestUpgrade' ? '/signup' : '/account-management';
       this.restrictedAccessService.handleRestrictedAccess(account.restrictedAccessPhase, redirectUrl);
       return;
@@ -721,7 +719,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
         // Handle restricted access - NSwag uses responseType: 'blob' so interceptor can't check this
         if (resp?.isRestricted) {
-          this.accountsService.setSkipUpgradeContinuation();
           this.restrictedAccessService.handleRestrictedAccess(
             resp.restrictedAccessPhase || '',
             resp.restrictedAccessRedirectUrl || ''
@@ -784,7 +781,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
       next: (response) => {
         // Handle restricted access
         if (response?.isRestricted) {
-          this.accountsService.setSkipUpgradeContinuation();
           this.restrictedAccessService.handleRestrictedAccess(
             response.restrictedAccessPhase || '',
             response.restrictedAccessRedirectUrl || ''
@@ -819,7 +815,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
 
   // Handle restricted access event from food-selection component
   onRestrictedAccess(event: {phase: string, redirectUrl: string}): void {
-    this.accountsService.setSkipUpgradeContinuation();
     this.restrictedAccessService.handleRestrictedAccess(event.phase, event.redirectUrl);
     this.clearEditingState();
   }
@@ -950,7 +945,6 @@ export class DailySummaryPage implements OnInit, OnDestroy, ViewWillEnter {
         if (response?.isRestricted) {
           // Restore the food since we can't delete in restricted mode
           this.undoRemoval(foodKey);
-          this.accountsService.setSkipUpgradeContinuation();
           this.restrictedAccessService.handleRestrictedAccess(
             response.restrictedAccessPhase || '',
             response.restrictedAccessRedirectUrl || ''
