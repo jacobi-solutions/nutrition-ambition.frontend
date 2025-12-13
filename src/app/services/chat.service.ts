@@ -50,6 +50,10 @@ export class ChatService {
   private learnMoreAboutTriggerSubject = new Subject<{ topic: string, localDateKey: string }>();
   public learnMoreAboutTrigger$ = this.learnMoreAboutTriggerSubject.asObservable();
 
+  // Subject to trigger setup preferences streaming (handled by chat page)
+  private setupPreferencesTriggerSubject = new Subject<{ localDateKey: string }>();
+  public setupPreferencesTrigger$ = this.setupPreferencesTriggerSubject.asObservable();
+
 
 
   constructor(
@@ -142,6 +146,15 @@ export class ChatService {
   setupGoals(localDateKey: string, isTweaking: boolean = false): Observable<any> {
     // Emit trigger for chat page to handle the actual streaming
     this.setupGoalsTriggerSubject.next({ localDateKey, isTweaking });
+    // Return success immediately - the chat page will handle the streaming
+    return of({ isSuccess: true });
+  }
+
+  // Set up assistant preferences in chat
+  // Triggers the streaming (actual streaming handled by chat page)
+  setupPreferences(localDateKey: string): Observable<any> {
+    // Emit trigger for chat page to handle the actual streaming
+    this.setupPreferencesTriggerSubject.next({ localDateKey });
     // Return success immediately - the chat page will handle the streaming
     return of({ isSuccess: true });
   }

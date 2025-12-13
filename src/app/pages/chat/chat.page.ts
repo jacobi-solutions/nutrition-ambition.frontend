@@ -31,6 +31,7 @@ import {
     CreateSharedMealRequest,
     CreateSharedMealResponse,
     SetupGoalsRequest,
+    SetupPreferencesRequest,
     LearnMoreAboutRequest,
     TriggerConversationContinuationRequest
 } from '../../services/nutrition-ambition-api.service';
@@ -271,6 +272,11 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     // Subscribe to learn more about trigger
     this.chatService.learnMoreAboutTrigger$.subscribe(async ({ topic, localDateKey }) => {
       await this.startLearnMoreAboutStream(topic, localDateKey);
+    });
+
+    // Subscribe to setup preferences trigger
+    this.chatService.setupPreferencesTrigger$.subscribe(async ({ localDateKey }) => {
+      await this.startSetupPreferencesStream(localDateKey);
     });
 
     // Subscribe to receive the bot's response from the focusInChat method
@@ -1424,6 +1430,180 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
     );
   }
 
+  // Start setup preferences streaming
+  async startSetupPreferencesStream(localDateKey: string) {
+    // Set loading state
+    this.isLoading = true;
+    this.isStreamingActive = true; // Disable sending while streaming
+    this.hasScrolledForCurrentStream = false; // Reset scroll tracking for new stream
+
+    // Track if we've added the assistant message yet
+    let streamingMessageIndex = -1;
+    let pendingContent = '';
+
+    // Create request
+    const request = new SetupPreferencesRequest({
+      localDateKey: localDateKey
+    });
+
+    // Start the stream
+    this.activeStream = await this.chatStreamService.setupPreferencesStream(
+      request,
+      (chunk: ChatMessagesResponse) => {
+        // Check for error response and bail out early
+        if (!chunk.isSuccess && chunk.errors && chunk.errors.length > 0) {
+          console.error('Received error chunk from backend:', chunk.errors);
+          return;
+        }
+
+        // Handle both camelCase and PascalCase (backend sends PascalCase)
+        const chunkVariant = chunk as ChatMessagesResponseVariant;
+        const messages = 'messages' in chunkVariant
+          ? chunkVariant.messages
+          : (chunkVariant as any).Messages;
+
+        if (messages && messages.length > 0) {
+          const assistantMessage = messages[0];
+          const content = 'content' in assistantMessage
+            ? assistantMessage.content
+            : (assistantMessage as any).Content;
+
+          pendingContent = content;
+
+          // Clear existing timeout
+          if (this.streamUpdateTimeout) {
+            clearTimeout(this.streamUpdateTimeout);
+          }
+
+          // Throttle UI updates to every 50ms for smoother rendering
+          this.streamUpdateTimeout = setTimeout(() => {
+            this.ngZone.run(() => {
+              // Hide loading dots when first content arrives
+              this.isLoading = false;
+
+              // Skip if content is empty or whitespace
+              if (!pendingContent || pendingContent.trim().length === 0) {
+                return;
+              }
+
+              // Create the assistant message bubble on first chunk
+              if (streamingMessageIndex === -1) {
+                streamingMessageIndex = this.messages.length;
+                const streamingMessageId = `streaming-${Date.now()}`;
+                this.messages = [...this.messages, {
+                  id: streamingMessageId,
+                  text: pendingContent || '',
+                  isUser: false,
+                  timestamp: new Date(),
+                  role: MessageRoleTypes.Assistant,
+                  isStreaming: true
+                }];
+                // Scroll only once for the entire stream
+                if (!this.hasScrolledForCurrentStream) {
+                  this.scrollToBottom();
+                  this.hasScrolledForCurrentStream = true;
+                }
+              } else {
+                // Subsequent chunks - update existing message (no auto-scroll)
+                const updatedMessages = [...this.messages];
+                const existingMessage = updatedMessages[streamingMessageIndex];
+                updatedMessages[streamingMessageIndex] = {
+                  ...existingMessage,
+                  text: pendingContent || '',
+                  isStreaming: true
+                };
+                this.messages = updatedMessages;
+              }
+
+              this.cdr.detectChanges();
+            });
+          }, this.STREAM_THROTTLE_MS);
+        }
+      },
+      () => {
+        // Stream complete - ensure final update is rendered
+        if (this.streamUpdateTimeout) {
+          clearTimeout(this.streamUpdateTimeout);
+        }
+
+        // Force final update immediately
+        this.ngZone.run(() => {
+          if (streamingMessageIndex !== -1) {
+            // Message was created during streaming - update it
+            const updatedMessages = [...this.messages];
+            const existingMessage = updatedMessages[streamingMessageIndex];
+            updatedMessages[streamingMessageIndex] = {
+              ...existingMessage,
+              text: existingMessage.text || pendingContent,
+              isStreaming: false,
+              isPartial: false
+            };
+            this.messages = updatedMessages;
+            this.cdr.detectChanges();
+          } else if (pendingContent && pendingContent.trim().length > 0) {
+            // Message was never created during streaming - create it now
+            this.isLoading = false;
+            this.messages = [...this.messages, {
+              id: `streaming-${Date.now()}`,
+              text: pendingContent,
+              isUser: false,
+              timestamp: new Date(),
+              role: MessageRoleTypes.Assistant,
+              isStreaming: false
+            }];
+            this.cdr.detectChanges();
+            this.scrollToBottom();
+          }
+
+          this.isStreamingActive = false;
+          this.activeStream = null;
+
+          // Focus the input after completion (desktop only)
+          if (!this.isMobile) {
+            setTimeout(() => this.focusInput(), this.FOCUS_INPUT_DELAY_MS);
+          }
+        });
+      },
+      (error: any) => {
+        // Stream error - clean up timeout and streaming state
+        if (this.streamUpdateTimeout) {
+          clearTimeout(this.streamUpdateTimeout);
+          this.streamUpdateTimeout = null;
+        }
+
+        this.isLoading = false;
+        this.isStreamingActive = false;
+        this.activeStream = null;
+
+        // Check if message was removed by user cancellation
+        const messageStillExists = streamingMessageIndex !== -1 &&
+                                   this.messages[streamingMessageIndex] !== undefined;
+
+        // Only show error if this wasn't a user-initiated cancellation
+        if (messageStillExists) {
+          this.messages[streamingMessageIndex] = {
+            text: "Sorry, I'm having trouble right now. Please try again.",
+            isUser: false,
+            timestamp: new Date()
+          };
+        } else if (streamingMessageIndex === -1) {
+          // No streaming message created yet, add error as new message
+          this.messages = [...this.messages, {
+            text: "Sorry, I'm having trouble right now. Please try again.",
+            isUser: false,
+            timestamp: new Date()
+          }];
+        }
+
+        this.cdr.detectChanges();
+        // Focus input on error (desktop only)
+        if (!this.isMobile) {
+          this.focusInput();
+        }
+      }
+    );
+  }
+
   // Start learn more about streaming
   async startLearnMoreAboutStream(topic: string, localDateKey: string) {
     // Set loading state
@@ -1952,6 +2132,20 @@ export class ChatPage implements OnInit, AfterViewInit, OnDestroy, ViewWillEnter
   // Handle restricted access event from food-selection component
   onRestrictedAccess(event: {phase: string, redirectUrl: string}): void {
     this.restrictedAccessService.handleRestrictedAccess(event.phase, event.redirectUrl);
+  }
+
+  // Handle action button triggers from chat message component (setup-goals, setup-preferences)
+  onActionTriggered(actionPath: string): void {
+    console.log('[ChatPage] onActionTriggered:', actionPath);
+    const localDateKey = this.dateService.getSelectedDate();
+
+    if (actionPath === '/action/setup-goals') {
+      this.chatService.setupGoals(localDateKey, false);
+    } else if (actionPath === '/action/setup-preferences') {
+      this.chatService.setupPreferences(localDateKey);
+    } else {
+      console.warn('[ChatPage] Unknown action path:', actionPath);
+    }
   }
 
   // Handle edit food selection confirmation for standalone food selection components

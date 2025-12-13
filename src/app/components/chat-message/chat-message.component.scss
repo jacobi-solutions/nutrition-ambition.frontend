@@ -91,6 +91,39 @@
       }
     }
 
+    h1 {
+      font-size: 1.3em;
+      font-weight: 600;
+      margin: 0 0 0.5em 0;
+      line-height: 1.3;
+    }
+
+    h2, h3 {
+      font-size: 1.1em;
+      font-weight: 600;
+      margin: 1.25em 0 0.5em 0;
+      line-height: 1.3;
+
+      &:first-child {
+        margin-top: 0;
+      }
+
+      .step-number {
+        color: var(--color-tomato);
+        font-size: 1.2em;
+      }
+    }
+
+    h2 {
+      font-size: 1.2em;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      margin: 1em 0;
+    }
+
     a {
       color: inherit;
       text-decoration: underline;

@@ -102,7 +102,7 @@ export class PaymentSuccessPage implements OnInit, OnDestroy {
 
         // Auto-redirect after 2 seconds
         setTimeout(() => {
-          this.navigateToAccount();
+          this.navigateToChat();
         }, 2000);
       }
     } catch {
@@ -110,8 +110,8 @@ export class PaymentSuccessPage implements OnInit, OnDestroy {
     }
   }
 
-  navigateToAccount() {
-    this.router.navigate(['/account-management']);
+  navigateToChat() {
+    this.router.navigate(['/app/chat']);
   }
 
   returnToApp() {

@@ -1,4 +1,4 @@
-import { Component, Input, SecurityContext, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, SecurityContext, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -31,7 +31,10 @@ export class ChatMessageComponent implements OnChanges {
   @Input() hasActionButtons: boolean = false;
 
   // Routes that should be rendered as action buttons
-  private readonly actionRoutes = ['/signup', '/account-management'];
+  private readonly actionRoutes = ['/signup', '/account-management', '/action/setup-goals', '/action/setup-preferences'];
+
+  // Output event for action triggers that don't navigate (setup-goals, setup-preferences)
+  @Output() actionTriggered = new EventEmitter<string>();
 
   // Extracted action buttons - rendered as real Angular buttons in template
   actionLinks: ActionLink[] = [];
@@ -111,22 +114,40 @@ export class ChatMessageComponent implements OnChanges {
       console.log('[ChatMessage] Final actionLinks count:', this.actionLinks.length);
 
       // Clean up whitespace artifacts from removed links
+      // IMPORTANT: Only collapse multiple spaces on the same line, preserve newlines for markdown
       processedText = processedText
-        .replace(/\s{2,}/g, ' ')         // collapse multiple spaces
-        .replace(/\s+([.,!?])/g, '$1')   // remove space before punctuation
+        .replace(/ {2,}/g, ' ')           // collapse multiple spaces (not newlines!)
+        .replace(/ +([.,!?])/g, '$1')     // remove space before punctuation
+        .replace(/\n{3,}/g, '\n\n')       // collapse more than 2 consecutive newlines to 2
         .trim();
     }
 
-    const htmlContent = marked.parse(processedText) as string;
+    let htmlContent = marked.parse(processedText) as string;
+
+    // Wrap leading numbers in h3 tags with a span for styling (e.g., "1. " becomes "<span class="step-number">1.</span> ")
+    htmlContent = htmlContent.replace(
+      /<h3>(\d+)\.\s*/g,
+      '<h3><span class="step-number">$1.</span> '
+    );
+
     this.processedHtml = this.sanitizer.sanitize(SecurityContext.HTML, htmlContent) || '';
   }
 
   /**
-   * Navigate to the action link path
-   * If navigating to signup or account-management, set flag to trigger conversation continuation after upgrade
+   * Handle action link clicks
+   * - For /action/* paths: emit event for parent to handle (triggers streaming endpoints)
+   * - For other paths: navigate directly (signup, account-management)
    */
   onActionClick(path: string): void {
     console.log('[ChatMessage] onActionClick called with path:', path);
+
+    // Check if this is an action trigger path (not a navigation path)
+    if (path.startsWith('/action/')) {
+      // Emit event for parent component to handle the streaming
+      this.actionTriggered.emit(path);
+      return;
+    }
+
     // Navigate to the action path (signup, account-management, etc.)
     // Backend tracks conversation continuation via Account.NeedsContinuationAfterUpgrade flag
     this.router.navigateByUrl(path);

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse, SetupGoalsRequest, LearnMoreAboutRequest, BarcodeSearchRequest, TriggerConversationContinuationRequest } from './nutrition-ambition-api.service';
+import { ChatMessagesResponse, RunChatRequest, DirectLogMealRequest, SearchFoodPhraseResponse, SetupGoalsRequest, SetupPreferencesRequest, LearnMoreAboutRequest, BarcodeSearchRequest, TriggerConversationContinuationRequest } from './nutrition-ambition-api.service';
 import { AuthService } from './auth.service';
 import { DateService } from './date.service';
 import { RestrictedAccessService } from './restricted-access.service';
@@ -512,6 +512,146 @@ export class ChatStreamService {
 
     } catch (err) {
       console.error('[SetupGoals] Stream start error', err);
+      onError(err);
+      return null;
+    }
+  }
+
+  async setupPreferencesStream(
+    request: SetupPreferencesRequest,
+    onChunk: (data: ChatMessagesResponse) => void,
+    onComplete: () => void,
+    onError: (error: any) => void
+  ): Promise<EventSource | null> {
+    const url = `${this.baseUrl}/SetupPreferences`;
+
+    try {
+      const token = await this.authService.getIdToken();
+      if (!token) {
+        onError(new Error('No auth token available'));
+        return null;
+      }
+
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const clientVersion = '1.0.0';
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'X-Timezone': timezone,
+          'X-Client-Version': clientVersion
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[SetupPreferences] HTTP error response:', errorText);
+
+        // Check for 403 restricted access response
+        if (response.status === 403) {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.isRestricted) {
+              this.restrictedAccessService.handleRestrictedAccess(
+                errorData.phase || '',
+                errorData.redirectUrl || ''
+              );
+              onComplete(); // Complete gracefully instead of error
+              return null;
+            }
+          } catch {
+            // Not a JSON response, continue with normal error handling
+          }
+        }
+
+        onError(new Error(`HTTP error! status: ${response.status}`));
+        return null;
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        onError(new Error('No response body'));
+        return null;
+      }
+
+      let buffer = '';
+      let lastChunkTime = Date.now();
+
+      const timeoutCheck = setInterval(() => {
+        if (Date.now() - lastChunkTime > this.STREAM_TIMEOUT_MS) {
+          console.error('[SetupPreferences] Stream timeout');
+          clearInterval(timeoutCheck);
+          reader.cancel();
+          onError(new Error('Stream timeout - no data received'));
+        }
+      }, this.TIMEOUT_CHECK_INTERVAL_MS);
+
+      const processStream = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+              clearInterval(timeoutCheck);
+              onComplete();
+              break;
+            }
+
+            lastChunkTime = Date.now();
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.trim() === '') continue;
+
+              if (line.startsWith('data: ')) {
+                try {
+                  const jsonData = line.substring(6);
+                  const rawData = JSON.parse(jsonData);
+                  const parsed = ChatMessagesResponse.fromJS(rawData);
+
+                  if (!parsed.isSuccess && parsed.errors && parsed.errors.length > 0) {
+                    console.error('[SetupPreferences] Error response:', parsed.errors);
+                    clearInterval(timeoutCheck);
+                    reader.cancel();
+                    onError(new Error(parsed.errors[0]?.errorMessage || 'Server error'));
+                    return;
+                  }
+
+                  onChunk(parsed);
+                } catch (err) {
+                  console.error('[SetupPreferences] Parse error:', err);
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[SetupPreferences] Stream processing error:', err);
+          clearInterval(timeoutCheck);
+          onError(err);
+        }
+      };
+
+      processStream();
+
+      return {
+        close: () => {
+          clearInterval(timeoutCheck);
+          reader.cancel();
+        },
+        readyState: 1
+      } as any;
+
+    } catch (err) {
+      console.error('[SetupPreferences] Stream start error', err);
       onError(err);
       return null;
     }

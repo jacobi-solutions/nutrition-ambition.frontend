@@ -182,7 +182,17 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    types3(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse>;
+    types3(body: SetupPreferencesRequest | undefined): Observable<ChatMessagesResponse>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    setupPreferences(body: SetupPreferencesRequest | undefined): Observable<void>;
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types4(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -192,7 +202,7 @@ export interface INutritionAmbitionApiService {
      * @param body (optional) 
      * @return Success
      */
-    types4(body: TriggerConversationContinuationRequest | undefined): Observable<ChatMessagesResponse>;
+    types5(body: TriggerConversationContinuationRequest | undefined): Observable<ChatMessagesResponse>;
     /**
      * @param body (optional) 
      * @return Success
@@ -2162,8 +2172,8 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    types3(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse> {
-        let url_ = this.baseUrl + "/api/Conversation/LearnMoreAbout/types";
+    types3(body: SetupPreferencesRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/SetupPreferences/types";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -2193,6 +2203,114 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
     }
 
     protected processTypes3(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ChatMessagesResponse.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ChatMessagesResponse>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    setupPreferences(body: SetupPreferencesRequest | undefined): Observable<void> {
+        let url_ = this.baseUrl + "/api/Conversation/SetupPreferences";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processSetupPreferences(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processSetupPreferences(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<void>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<void>;
+        }));
+    }
+
+    protected processSetupPreferences(response: HttpResponseBase): Observable<void> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return _observableOf<void>(null as any);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<void>(null as any);
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Success
+     */
+    types4(body: LearnMoreAboutRequest | undefined): Observable<ChatMessagesResponse> {
+        let url_ = this.baseUrl + "/api/Conversation/LearnMoreAbout/types";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processTypes4(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processTypes4(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ChatMessagesResponse>;
+        }));
+    }
+
+    protected processTypes4(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -2270,7 +2388,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
      * @param body (optional) 
      * @return Success
      */
-    types4(body: TriggerConversationContinuationRequest | undefined): Observable<ChatMessagesResponse> {
+    types5(body: TriggerConversationContinuationRequest | undefined): Observable<ChatMessagesResponse> {
         let url_ = this.baseUrl + "/api/Conversation/TriggerConversationContinuation/types";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -2287,11 +2405,11 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processTypes4(response_);
+            return this.processTypes5(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processTypes4(response_ as any);
+                    return this.processTypes5(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<ChatMessagesResponse>;
                 }
@@ -2300,7 +2418,7 @@ export class NutritionAmbitionApiService implements INutritionAmbitionApiService
         }));
     }
 
-    protected processTypes4(response: HttpResponseBase): Observable<ChatMessagesResponse> {
+    protected processTypes5(response: HttpResponseBase): Observable<ChatMessagesResponse> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -3764,9 +3882,11 @@ export class Account implements IAccount {
     subscriptionPriceId?: string | undefined;
     subscriptionCurrentPeriodEndUtc?: Date | undefined;
     accountDeletedDateUtc?: Date | undefined;
-    needsContinuationAfterUpgrade?: boolean;
+    continuationMessageId?: string | undefined;
     isRestrictedAccess?: boolean;
     restrictedAccessPhase?: string | undefined;
+    assistantPreferences?: CommunicationPreferences;
+    nutritionixRemoteUserId?: string | undefined;
 
     constructor(data?: IAccount) {
         if (data) {
@@ -3799,9 +3919,11 @@ export class Account implements IAccount {
             this.subscriptionPriceId = _data["subscriptionPriceId"];
             this.subscriptionCurrentPeriodEndUtc = _data["subscriptionCurrentPeriodEndUtc"] ? new Date(_data["subscriptionCurrentPeriodEndUtc"].toString()) : <any>undefined;
             this.accountDeletedDateUtc = _data["accountDeletedDateUtc"] ? new Date(_data["accountDeletedDateUtc"].toString()) : <any>undefined;
-            this.needsContinuationAfterUpgrade = _data["needsContinuationAfterUpgrade"];
+            this.continuationMessageId = _data["continuationMessageId"];
             this.isRestrictedAccess = _data["isRestrictedAccess"];
             this.restrictedAccessPhase = _data["restrictedAccessPhase"];
+            this.assistantPreferences = _data["assistantPreferences"] ? CommunicationPreferences.fromJS(_data["assistantPreferences"]) : <any>undefined;
+            this.nutritionixRemoteUserId = _data["nutritionixRemoteUserId"];
         }
     }
 
@@ -3834,9 +3956,11 @@ export class Account implements IAccount {
         data["subscriptionPriceId"] = this.subscriptionPriceId;
         data["subscriptionCurrentPeriodEndUtc"] = this.subscriptionCurrentPeriodEndUtc ? this.subscriptionCurrentPeriodEndUtc.toISOString() : <any>undefined;
         data["accountDeletedDateUtc"] = this.accountDeletedDateUtc ? this.accountDeletedDateUtc.toISOString() : <any>undefined;
-        data["needsContinuationAfterUpgrade"] = this.needsContinuationAfterUpgrade;
+        data["continuationMessageId"] = this.continuationMessageId;
         data["isRestrictedAccess"] = this.isRestrictedAccess;
         data["restrictedAccessPhase"] = this.restrictedAccessPhase;
+        data["assistantPreferences"] = this.assistantPreferences ? this.assistantPreferences.toJSON() : <any>undefined;
+        data["nutritionixRemoteUserId"] = this.nutritionixRemoteUserId;
         return data;
     }
 }
@@ -3862,9 +3986,11 @@ export interface IAccount {
     subscriptionPriceId?: string | undefined;
     subscriptionCurrentPeriodEndUtc?: Date | undefined;
     accountDeletedDateUtc?: Date | undefined;
-    needsContinuationAfterUpgrade?: boolean;
+    continuationMessageId?: string | undefined;
     isRestrictedAccess?: boolean;
     restrictedAccessPhase?: string | undefined;
+    assistantPreferences?: CommunicationPreferences;
+    nutritionixRemoteUserId?: string | undefined;
 }
 
 export class AccountInfoResponse implements IAccountInfoResponse {
@@ -4292,6 +4418,7 @@ export enum AssistantModeTypes {
     GoalSetting = "GoalSetting",
     UserFeedback = "UserFeedback",
     RestrictedAccess = "RestrictedAccess",
+    AssistantPreferences = "AssistantPreferences",
 }
 
 export class BarcodeSearchRequest implements IBarcodeSearchRequest {
@@ -4896,6 +5023,60 @@ export interface IClearAccountDataResponse {
     clearedAccountId?: string | undefined;
     totalRecordsDeleted?: number;
     deletedRecordsByType?: { [key: string]: number; } | undefined;
+}
+
+export class CommunicationPreferences implements ICommunicationPreferences {
+    style?: CommunicationStyle;
+    knowledge?: KnowledgeLevel;
+    explanation?: ExplanationPreference;
+    customResponseGuidance?: string | undefined;
+
+    constructor(data?: ICommunicationPreferences) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.style = _data["style"];
+            this.knowledge = _data["knowledge"];
+            this.explanation = _data["explanation"];
+            this.customResponseGuidance = _data["customResponseGuidance"];
+        }
+    }
+
+    static fromJS(data: any): CommunicationPreferences {
+        data = typeof data === 'object' ? data : {};
+        let result = new CommunicationPreferences();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["style"] = this.style;
+        data["knowledge"] = this.knowledge;
+        data["explanation"] = this.explanation;
+        data["customResponseGuidance"] = this.customResponseGuidance;
+        return data;
+    }
+}
+
+export interface ICommunicationPreferences {
+    style?: CommunicationStyle;
+    knowledge?: KnowledgeLevel;
+    explanation?: ExplanationPreference;
+    customResponseGuidance?: string | undefined;
+}
+
+export enum CommunicationStyle {
+    Concise = "Concise",
+    Balanced = "Balanced",
+    Detailed = "Detailed",
 }
 
 export class CompleteFeedbackRequest implements ICompleteFeedbackRequest {
@@ -6930,6 +7111,12 @@ export class ErrorDto implements IErrorDto {
 export interface IErrorDto {
     errorMessage?: string | undefined;
     errorCode?: string | undefined;
+}
+
+export enum ExplanationPreference {
+    Minimal = "Minimal",
+    Balanced = "Balanced",
+    InDepth = "InDepth",
 }
 
 export class FavoriteFoodDto implements IFavoriteFoodDto {
@@ -9525,6 +9712,12 @@ export interface IHydrateAlternateSelectionRequest {
     foodEntryId?: string | undefined;
 }
 
+export enum KnowledgeLevel {
+    Beginner = "Beginner",
+    Intermediate = "Intermediate",
+    Advanced = "Advanced",
+}
+
 export class LearnMoreAboutRequest implements ILearnMoreAboutRequest {
     topic?: string | undefined;
     localDateKey?: string | undefined;
@@ -11192,6 +11385,42 @@ export class SetupGoalsRequest implements ISetupGoalsRequest {
 export interface ISetupGoalsRequest {
     localDateKey?: string | undefined;
     isTweaking?: boolean;
+}
+
+export class SetupPreferencesRequest implements ISetupPreferencesRequest {
+    localDateKey?: string | undefined;
+
+    constructor(data?: ISetupPreferencesRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.localDateKey = _data["localDateKey"];
+        }
+    }
+
+    static fromJS(data: any): SetupPreferencesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SetupPreferencesRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["localDateKey"] = this.localDateKey;
+        return data;
+    }
+}
+
+export interface ISetupPreferencesRequest {
+    localDateKey?: string | undefined;
 }
 
 export class ShowRestrictedMessageRequest implements IShowRestrictedMessageRequest {

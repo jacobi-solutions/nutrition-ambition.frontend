@@ -68,7 +68,8 @@
             [timestamp]="message.timestamp"
             [role]="message.role"
             [isStreaming]="message.isStreaming || false"
-            [hasActionButtons]="message.hasActionButtons || false">
+            [hasActionButtons]="message.hasActionButtons || false"
+            (actionTriggered)="onActionTriggered($event)">
           </app-chat-message>
         </ng-container>
 

@@ -25,7 +25,7 @@
         <div *ngIf="processingComplete" class="complete-state">
           <h2>All Set!</h2>
           <p>Your subscription is now active.</p>
-          <p class="redirect-text">Redirecting you to your account...</p>
+          <p class="redirect-text">Taking you to the chat...</p>
         </div>
 
         <!-- Processing Timeout State -->
@@ -40,8 +40,8 @@
           <ion-button
             expand="block"
             class="salmon-button"
-            (click)="navigateToAccount()">
-            Go to Account Management
+            (click)="navigateToChat()">
+            Go to Chat
           </ion-button>
           <ion-button
             *ngIf="showReturnToApp"
